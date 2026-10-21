@@ -1,0 +1,19 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# runtime data
+data/
+*.sqlite
+*.sqlite-*
+
+# node
+node_modules/
+dist/
+npm-debug.log*
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/

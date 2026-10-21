@@ -1,0 +1,88 @@
+// HTTP + WebSocket server. REST for snapshots and producer actions, WS for pushing updates
+// to every graphic. Spike scope: no auth yet; binds to localhost by default.
+
+import Fastify from "fastify";
+import fastifyStatic from "@fastify/static";
+import fastifyWebsocket from "@fastify/websocket";
+import { fileURLToPath } from "node:url";
+import { config } from "./config.ts";
+import { Store } from "./store.ts";
+import { Poller, type PollUpdate, type PollerStatus } from "./poller.ts";
+import { buildTicker, defaultProducerState, type ProducerState } from "./ticker.ts";
+import type { WebSocket } from "ws";
+
+const store = new Store(config.dbPath);
+const poller = new Poller(store, config.pollIntervalMs, config.resultsType);
+const app = Fastify({ logger: { level: "warn" } });
+
+await app.register(fastifyWebsocket);
+await app.register(fastifyStatic, {
+  root: fileURLToPath(new URL("../public", import.meta.url)),
+  prefix: "/",
+});
+
+const clients = new Set<WebSocket>();
+function broadcast(msg: unknown): void {
+  const s = JSON.stringify(msg);
+  for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(s);
+}
+
+poller.on("update", (u: PollUpdate) => {
+  broadcast({ type: "update", changed: u.changed, events: u.events, status: u.status, ticker: buildTicker(store) });
+});
+poller.on("status", (status: PollerStatus) => broadcast({ type: "status", status }));
+
+function snapshot() {
+  return {
+    type: "snapshot",
+    races: store.allRaces(),
+    events: store.recentEvents(50),
+    status: poller.status,
+    ticker: buildTicker(store),
+    producer: store.getJson<ProducerState>("producer", defaultProducerState),
+  };
+}
+
+app.get("/ws", { websocket: true }, (socket) => {
+  clients.add(socket);
+  socket.send(JSON.stringify(snapshot()));
+  socket.on("close", () => clients.delete(socket));
+});
+
+app.get("/api/snapshot", () => snapshot());
+app.get("/api/status", () => ({ status: poller.status, clients: clients.size }));
+app.get("/api/races", () => store.allRaces());
+app.get("/api/races/:id", (req, reply) => {
+  const race = store.getRace((req.params as { id: string }).id);
+  return race ?? reply.code(404).send({ error: "no such race" });
+});
+app.get("/api/events", () => store.recentEvents(100));
+app.get("/api/ticker", () => buildTicker(store));
+
+// Producer state (spike: unauthenticated, local only)
+app.get("/api/producer", () => store.getJson<ProducerState>("producer", defaultProducerState));
+app.put("/api/producer", (req) => {
+  const body = req.body as Partial<ProducerState>;
+  const next = { ...store.getJson<ProducerState>("producer", defaultProducerState), ...body };
+  store.setJson("producer", next);
+  broadcast({ type: "ticker", ticker: buildTicker(store), producer: next });
+  return next;
+});
+app.post("/api/producer/manual", (req) => {
+  const { text } = req.body as { text: string };
+  const state = store.getJson<ProducerState>("producer", defaultProducerState);
+  state.manualItems.push({ id: crypto.randomUUID(), text, createdAt: new Date().toISOString() });
+  store.setJson("producer", state);
+  broadcast({ type: "ticker", ticker: buildTicker(store), producer: state });
+  return state;
+});
+app.post("/api/poll", async () => {
+  await poller.tick();
+  return poller.status;
+});
+
+app.get("/healthz", () => ({ ok: true, lastSuccess: poller.status.lastSuccess }));
+
+await app.listen({ port: config.port, host: config.host });
+console.log(`ap-ind listening on http://${config.host}:${config.port} (results type: ${config.resultsType}, poll ${config.pollIntervalMs / 1000}s)`);
+poller.start();

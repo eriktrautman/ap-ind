@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Race Result</title>
+<style>
+  /* 1920x1080 full-screen race result. ?id=<raceID> required; ?bg=green|black optional. */
+  :root {
+    --panel: #0e1420;
+    --panel-edge: #16213a;
+    --fg: #f4f6fa;
+    --muted: #9aa7bd;
+    --rule: #2a3a5c;
+    --dem: #3b82f6;
+    --gop: #ef4444;
+    --ind: #a855f7;
+    --call: #facc15;
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; font-family: var(--font); color: var(--fg); }
+  body.bg-green { background: #00ff00; }
+  body.bg-black { background: #000; }
+
+  .panel {
+    position: absolute; left: 96px; top: 80px; width: 1728px; height: 920px; /* title-safe */
+    background: linear-gradient(160deg, var(--panel), var(--panel-edge));
+    border-radius: 8px; padding: 56px 72px; box-sizing: border-box;
+    display: grid; grid-template-rows: auto 1fr auto; gap: 40px;
+    font-variant-numeric: tabular-nums;
+  }
+  .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--rule); padding-bottom: 24px; }
+  .title { font-size: 64px; font-weight: 700; letter-spacing: -0.01em; }
+  .title small { font-size: 32px; font-weight: 400; color: var(--muted); margin-left: 20px; }
+  .reporting { font-size: 34px; color: var(--muted); }
+  .reporting b { color: var(--fg); }
+  .call { display: inline-block; background: var(--call); color: #1a1600; font-weight: 700; font-size: 26px; padding: 6px 16px; border-radius: 4px; margin-left: 20px; vertical-align: middle; letter-spacing: 0.06em; }
+
+  .rows { display: grid; align-content: start; gap: 28px; }
+  .row { display: grid; grid-template-columns: 560px 1fr 200px 300px; align-items: center; gap: 32px; font-size: 40px; }
+  .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name .party { display: inline-block; min-width: 56px; text-align: center; margin-right: 18px; padding: 2px 10px; border-radius: 4px; font-size: 28px; font-weight: 700; color: #fff; }
+  .name .inc { color: var(--muted); font-size: 26px; margin-left: 10px; }
+  .name .check { color: var(--call); margin-left: 12px; }
+  .bar { height: 48px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 4px; transition: width 900ms cubic-bezier(.2,.8,.2,1); }
+  .pct { text-align: right; font-weight: 700; font-size: 48px; }
+  .votes { text-align: right; color: var(--muted); }
+  .dem .party, .dem .bar i { background: var(--dem); }
+  .gop .party, .gop .bar i { background: var(--gop); }
+  .ind .party, .ind .bar i { background: var(--ind); }
+  .row.featured .name { color: #e9d5ff; }
+
+  .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 24px; border-top: 2px solid var(--rule); padding-top: 20px; }
+  .dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #22c55e; margin-right: 10px; vertical-align: middle; }
+  .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
+  .empty { font-size: 40px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head">
+    <div class="title" id="title">Loading…</div>
+    <div class="reporting" id="reporting"></div>
+  </div>
+  <div class="rows" id="rows"></div>
+  <div class="foot">
+    <span><span class="dot" id="dot"></span>Source: AP <span id="rtype"></span></span>
+    <span id="updated"></span>
+  </div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, partyClass, fmt } from "./feed.js";
+
+  const params = new URLSearchParams(location.search);
+  const raceId = params.get("id");
+  const bg = params.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const MAX_ROWS = 5;
+
+  const $ = (id) => document.getElementById(id);
+  const pTag = (p) => p === "Dem" ? "D" : p === "GOP" ? "R" : p === "Ind" ? "I" : p;
+  const escape = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  function render(race) {
+    if (!race) { $("title").textContent = "Race not found"; $("rows").innerHTML = `<div class="empty">No race with id ${escape(raceId ?? "(none)")}. Open /api/races for ids.</div>`; return; }
+    const office = race.office === "S" ? "U.S. Senate" : "U.S. House";
+    $("title").innerHTML = `${escape(race.stateName)} <small>${office} · ${escape(race.seat)}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("reporting").innerHTML = race.totalVotes
+      ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in`
+      : "No results yet";
+    $("rtype").textContent = race.rankedChoice ? "· ranked choice, first-round totals" : "";
+    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+
+    const max = Math.max(1, ...race.candidates.map((c) => c.pct));
+    const rows = $("rows");
+    const seen = new Set();
+    race.candidates.slice(0, MAX_ROWS).forEach((c) => {
+      seen.add(c.id);
+      let row = rows.querySelector(`[data-id="${c.id}"]`);
+      if (!row) {
+        row = document.createElement("div");
+        row.dataset.id = c.id;
+        row.innerHTML = `<div class="name"></div><div class="bar"><i></i></div><div class="pct"></div><div class="votes"></div>`;
+        rows.appendChild(row);
+      }
+      row.className = `row ${partyClass(c.party)} ${c.featured ? "featured" : ""}`;
+      row.querySelector(".name").innerHTML =
+        `<span class="party">${pTag(c.party)}</span>${escape(c.name)}` +
+        (c.incumbent ? '<span class="inc">inc.</span>' : "") + (c.winner ? '<span class="check">✓</span>' : "");
+      row.querySelector(".bar i").style.width = `${(c.pct / max) * 100}%`;
+      row.querySelector(".pct").textContent = `${c.pct.toFixed(1)}%`;
+      row.querySelector(".votes").textContent = fmt(c.votes);
+    });
+    for (const el of [...rows.children]) if (!seen.has(el.dataset.id)) el.remove();
+    // keep DOM order matching vote order
+    [...rows.children].sort((a, b) => race.candidates.findIndex((c) => c.id === a.dataset.id) - race.candidates.findIndex((c) => c.id === b.dataset.id)).forEach((el) => rows.appendChild(el));
+  }
+
+  connectFeed({
+    onSnapshot: (s) => render(s.races.get(raceId)),
+    onUpdate: (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) render(s.races.get(raceId)); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>
