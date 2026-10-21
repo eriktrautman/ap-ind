@@ -20,6 +20,12 @@ await app.register(fastifyStatic, {
   root: fileURLToPath(new URL("../public", import.meta.url)),
   prefix: "/",
 });
+// Spec and look book: same files Vercel serves publicly
+await app.register(fastifyStatic, {
+  root: fileURLToPath(new URL("../docs", import.meta.url)),
+  prefix: "/docs/",
+  decorateReply: false,
+});
 
 const clients = new Set<WebSocket>();
 function broadcast(msg: unknown): void {

@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graphics Look Book</title>
+<style>
+  /* Brand tokens borrowed from independentswin.com (navy / gold / cream, Georgia + Arial).
+     Party colours are ours: muted so gold reads as the hero colour. */
+  :root {
+    --navy: #0b1f44;
+    --navy-deep: #071222;
+    --gold: #d4af37;
+    --gold-soft: #e7d7a1;
+    --ink: #1f2937;
+    --cream: #faf7f2;
+    --sand: #e7e1d6;
+    --muted: #6b7280;
+    --dem: #3b6fd6;
+    --gop: #c0392b;
+    --ind: var(--gold);
+    --ok: #2e9e5b;
+    --warn: #e08a1e;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: Arial, Helvetica, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+  a { color: var(--navy); }
+
+  header.top { background: var(--navy); color: #fff; padding: 36px 24px 28px; }
+  header.top .in { max-width: 1240px; margin: 0 auto; }
+  header.top h1 { font-family: var(--serif); font-size: 34px; margin: 0 0 6px; font-weight: 400; }
+  header.top p { margin: 0; color: #c7cfdf; max-width: 76ch; }
+  header.top .meta { margin-top: 14px; font-size: 13px; color: #9aa7bd; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+
+  nav.toc { position: sticky; top: 0; z-index: 5; background: var(--cream); border-bottom: 1px solid var(--sand); padding: 10px 24px; }
+  nav.toc .in { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; align-items: center; }
+  nav.toc a { text-decoration: none; color: var(--ink); }
+  nav.toc a:hover { color: var(--navy); text-decoration: underline; }
+  nav.toc .legend { margin-left: auto; display: flex; gap: 12px; align-items: center; font-size: 12px; color: var(--muted); }
+
+  main { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
+  section.group { margin-bottom: 56px; }
+  section.group > h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 0 0 4px; color: var(--navy); }
+  section.group > p.lede { margin: 0 0 18px; color: var(--muted); max-width: 80ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 22px 22px; }
+  @media (max-width: 440px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { display: grid; gap: 8px; min-width: 0; }
+  .card h3 { font-size: 15px; margin: 0; display: flex; align-items: baseline; gap: 8px; }
+  .card h3 .n { font-family: var(--serif); color: var(--gold); font-size: 13px; }
+  .card p { margin: 0; font-size: 13.5px; color: #4b5563; }
+  .tag { display: inline-block; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; margin-left: auto; white-space: nowrap; }
+  .tag.live { background: #dff3e7; color: #1c6b3c; }
+  .tag.pre { background: #e8edf6; color: var(--navy); }
+  .tag.both { background: #fbf1d2; color: #7a5b0a; }
+  .legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+
+  /* 16:9 mock frames. Everything inside is sized in % / em so the mock scales with the card. */
+  .mock { position: relative; aspect-ratio: 16 / 9; width: 100%; background: var(--navy-deep); border-radius: 4px; overflow: hidden; color: #fff; font-size: 11px; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+  .mock.light { background: var(--cream); color: var(--ink); }
+  .mock.key { background: repeating-conic-gradient(#8c8c8c 0 25%, #a9a9a9 0 50%) 0 0 / 14px 14px; }
+  .mock .safe { position: absolute; inset: 5% 5%; }
+  .mock .title { font-family: var(--serif); font-size: 1.8em; line-height: 1.1; }
+  .mock .sub { color: #9aa7bd; font-size: 0.95em; }
+  .mock.light .sub { color: var(--muted); }
+  .mock .foot { position: absolute; left: 5%; right: 5%; bottom: 5%; display: flex; justify-content: space-between; color: #9aa7bd; font-size: 0.85em; border-top: 1px solid #243457; padding-top: 4px; }
+  .mock .gl { color: var(--gold); }
+  .pill { display: inline-block; padding: 0 6px; border-radius: 2px; font-weight: 700; font-size: 0.85em; line-height: 1.6; }
+  .pill.call { background: var(--gold); color: var(--navy-deep); }
+  .pill.counting { background: #243457; color: #cfd8ea; }
+  .pill.open { background: #1b2a4a; color: #8f9bb3; }
+  .pill.flip { background: #fff; color: var(--navy-deep); }
+  .pill.close { background: var(--warn); color: #1a1200; }
+  .p { display: inline-block; min-width: 1.6em; text-align: center; font-weight: 700; border-radius: 2px; padding: 0 3px; font-size: 0.85em; color: #fff; }
+  .p.dem { background: var(--dem); } .p.gop { background: var(--gop); } .p.ind { background: var(--ind); color: var(--navy-deep); }
+
+  /* bar rows */
+  .rows { display: grid; gap: 6px; }
+  .row { display: grid; grid-template-columns: 34% 1fr 14%; align-items: center; gap: 6px; }
+  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .bar { height: 0.9em; background: #1b2a4a; border-radius: 2px; overflow: hidden; }
+  .row .bar i { display: block; height: 100%; }
+  .row .pc { text-align: right; font-weight: 700; }
+  .dem .bar i { background: var(--dem); } .gop .bar i { background: var(--gop); } .ind .bar i { background: var(--gold); }
+
+  /* tile map */
+  .tiles { display: grid; grid-template-columns: repeat(11, 1fr); gap: 2px; }
+  .tiles span { aspect-ratio: 1; background: #1b2a4a; border-radius: 1px; font-size: 0.6em; display: flex; align-items: center; justify-content: center; color: #6f7d99; }
+  .tiles span.e { background: transparent; }
+  .tiles span.s { background: var(--gold); color: var(--navy-deep); font-weight: 700; }
+  .tiles span.i { background: #3a4f7a; color: #cfd8ea; }
+  .tiles span.dem { background: var(--dem); color: #fff; } .tiles span.gop { background: var(--gop); color: #fff; }
+  .tiles span.lead-dem { background: #2a3f6e; color: #9fb6ea; } .tiles span.lead-gop { background: #5a2a2a; color: #e8a8a0; } .tiles span.lead-ind { background: #5c4a14; color: var(--gold-soft); }
+
+  /* county tiles */
+  .counties { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2px; }
+  .counties span { aspect-ratio: 1; border-radius: 1px; }
+
+  /* lower-third band */
+  .l3 { position: absolute; left: 0; right: 0; bottom: 8%; height: 11%; display: flex; align-items: stretch; background: linear-gradient(90deg, var(--navy-deep), var(--navy)); }
+  .l3 .brand { background: var(--gold); color: var(--navy-deep); font-weight: 700; padding: 0 1.2em; display: flex; align-items: center; letter-spacing: 0.08em; font-size: 0.8em; }
+  .l3 .txt { display: flex; align-items: center; padding: 0 1em; white-space: nowrap; overflow: hidden; font-size: 1.05em; gap: 2em; }
+
+  .big { font-family: var(--serif); font-size: 3.4em; line-height: 1; color: var(--gold); }
+  .stat { display: grid; gap: 2px; }
+  .stat .lab { font-size: 0.85em; color: #9aa7bd; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6%; }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4%; }
+  .photo { background: linear-gradient(135deg, #2a3f6e, #16244a); border-radius: 3px; display: flex; align-items: center; justify-content: center; color: #6f7d99; font-size: 0.8em; }
+  svg { display: block; width: 100%; height: auto; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; background: #16244a; border-radius: 3px; padding: 2px 6px; font-size: 0.85em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .seg { display: flex; height: 1.2em; border-radius: 2px; overflow: hidden; }
+  .seg i { display: block; height: 100%; }
+  .quote { font-family: var(--serif); font-size: 1.5em; line-height: 1.25; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 0.95em; }
+  table.t td, table.t th { padding: 2px 4px; text-align: left; border-bottom: 1px solid #1b2a4a; }
+  table.t th { color: #9aa7bd; font-weight: 400; font-size: 0.85em; }
+  table.t td.r, table.t th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .note { background: #fff; border: 1px solid var(--sand); border-left: 3px solid var(--gold); padding: 10px 14px; margin: 0 0 24px; font-size: 14px; max-width: 90ch; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <h1>Graphics Look Book</h1>
+    <p>Every graphic we could build for the election-night broadcast, grouped by segment type. Each card is a sketch at broadcast proportion (16:9) with sample numbers, not a finished design. Use it to decide which ones we actually need.</p>
+    <div class="meta">
+      <span>Draft 1 · Oct 21 2026</span>
+      <span>Colours borrowed from independentswin.com (navy, gold, cream)</span>
+      <span>Slate: Osborn NE-SEN · Bodnar MT-SEN · Achilles ID-SEN · Bengs SD-SEN · Kiley CA-6 · Hill AK-AL · Zabel ID-1</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="in">
+    <a href="#persistent">A. Persistent &amp; lower thirds</a>
+    <a href="#deepdive">B. Slate race deep dives</a>
+    <a href="#movement">C. The independent movement</a>
+    <a href="#updates">D. Election updates</a>
+    <a href="#states">E. Status language</a>
+    <span class="legend"><span class="tag live">live</span> AP data, updates on air <span class="tag pre">prepared</span> built before the night <span class="tag both">both</span></span>
+  </div>
+</nav>
+
+<main>
+
+<div class="note">All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the slate candidate is the first thing the eye lands on.</div>
+
+<!-- ============================================================ A -->
+<section class="group" id="persistent">
+  <h2>A. Persistent elements and lower thirds</h2>
+  <p class="lede">Layers that sit over camera for long stretches. Each one is its own keyable URL so the switcher can stack them independently.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="mock key">
+        <div class="l3"><div class="brand">INDEPENDENTS</div><div class="txt"><span>NE-SEN · Osborn (I) 46.0% · Ricketts (R) 48.0% · 38% in</span><span class="gl">◆ AP CALL · ID-1 · Zabel (I) wins</span><span>MT-SEN · Bodnar (I) 34% · Alme (R) 50% · 61% in</span></div></div>
+      </div>
+      <h3><span class="n">A1</span> Live ticker <span class="tag live">live</span></h3>
+      <p>Continuous crawl of producer-pinned races with AP calls and manual items spliced in. Built in the spike.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock key">
+        <div class="l3" style="height:14%;bottom:7%"><div class="brand" style="font-size:0.7em">LIVE</div><div class="txt" style="flex-direction:column;align-items:flex-start;justify-content:center;gap:0;line-height:1.2"><span style="font-size:1.3em;font-family:var(--serif)">Dan Osborn</span><span class="sub">Independent candidate, U.S. Senate, Nebraska</span></div></div>
+      </div>
+      <h3><span class="n">A2</span> Name and title lower third <span class="tag pre">prepared</span></h3>
+      <p>Standard identifier for guests, candidates and correspondents. Pre-built for everyone on the rundown, with a live variant that appends the candidate's current share.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock key">
+        <div style="position:absolute;right:4%;top:6%;background:var(--navy-deep);border-left:3px solid var(--gold);padding:5px 9px;min-width:34%">
+          <div class="sub" style="font-size:0.8em">NEBRASKA · U.S. SENATE</div>
+          <div style="display:flex;justify-content:space-between;gap:8px"><span><span class="p ind">I</span> Osborn</span><b>46.0</b></div>
+          <div style="display:flex;justify-content:space-between;gap:8px"><span><span class="p gop">R</span> Ricketts</span><b>48.0</b></div>
+          <div class="sub" style="font-size:0.8em;margin-top:3px"><span class="pill counting">38% IN</span> Osborn −2.0</div>
+        </div>
+      </div>
+      <h3><span class="n">A3</span> Race-status bug <span class="tag live">live</span></h3>
+      <p>Corner box pinned during a deep dive so the race's live numbers stay on screen while the anchor and guests talk.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock key">
+        <div style="position:absolute;left:0;right:0;top:30%;background:var(--gold);color:var(--navy-deep);padding:3% 5%;display:flex;align-items:center;gap:4%">
+          <div style="font-weight:700;letter-spacing:.1em;font-size:0.9em;border-right:2px solid var(--navy-deep);padding-right:3%">AP<br>CALL</div>
+          <div><div class="title" style="font-size:2em">Zabel wins Idaho's 1st</div><div style="font-size:1em">Independent defeats incumbent Fulcher (R) · first independent House flip of the night</div></div>
+        </div>
+      </div>
+      <h3><span class="n">A4</span> AP call alert <span class="tag live">live</span></h3>
+      <p>Full-width slab that animates in when AP calls a race we care about, then collapses into the ticker. Fired automatically by the event engine; producer can suppress.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock key">
+        <div style="position:absolute;left:0;right:0;top:0;height:9%;background:var(--navy-deep);display:flex;align-items:center;padding:0 3%;gap:2.5%;font-size:0.72em;white-space:nowrap;overflow:hidden">
+          <span class="gl" style="font-weight:700">POLLS CLOSE</span>
+          <span>7:00 ET <b>IN · KY · VT · VA · GA · SC</b></span><span class="sub">·</span>
+          <span>8:00 ET <b>ME · 15 more</b></span><span class="sub">·</span>
+          <span>9:00 ET <b>NE · SD · MT (10:00)</b></span>
+          <span style="margin-left:auto">next in <b class="gl">14:32</b></span>
+        </div>
+      </div>
+      <h3><span class="n">A5</span> Poll-closing strip <span class="tag live">live</span></h3>
+      <p>Top-edge band showing the next closing times and a countdown, with slate states in gold. Drives the rhythm of the first three hours.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock key">
+        <div style="position:absolute;left:4%;bottom:8%;display:flex;gap:4px">
+          <span class="chip"><span class="p ind">I</span> NE <b>−2.0</b> <span class="pill counting">38%</span></span>
+          <span class="chip"><span class="p ind">I</span> ID-1 <span class="pill call">CALL</span></span>
+          <span class="chip"><span class="p ind">I</span> MT <b>−16</b> <span class="pill counting">61%</span></span>
+          <span class="chip"><span class="p ind">I</span> SD <span class="pill open">OPEN</span></span>
+        </div>
+      </div>
+      <h3><span class="n">A6</span> Slate strip <span class="tag live">live</span></h3>
+      <p>Seven compact chips, one per slate race, each with margin and status. Sits above the ticker or alone during movement segments so the slate is never off screen.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ B -->
+<section class="group" id="deepdive">
+  <h2>B. Slate race deep dives</h2>
+  <p class="lede">A set built once per slate race (seven times). The prepared ones are ready before air; the live ones fill in as returns arrive. Shown here for Nebraska.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2" style="grid-template-columns:36% 1fr">
+          <div class="photo">photo</div>
+          <div>
+            <div class="sub">INDEPENDENT · U.S. SENATE · NEBRASKA</div>
+            <div class="title">Dan Osborn</div>
+            <div style="margin-top:6px;line-height:1.35">Navy veteran and union mechanic. Led the 2021 Kellogg's strike in Omaha. Lost to Fischer by 6.7 in 2024. Says he will not caucus with either party.</div>
+            <div class="chips" style="margin-top:8px"><span class="chip">Age 51</span><span class="chip">Omaha</span><span class="chip">2024: 46.5%</span></div>
+          </div>
+        </div>
+        <div class="foot"><span>Candidate profile</span><span class="gl">United Independents slate</span></div>
+      </div>
+      <h3><span class="n">B1</span> Candidate profile <span class="tag pre">prepared</span></h3>
+      <p>Photo, one-paragraph bio and three facts. One per slate candidate, plus a shorter variant for their major-party opponents.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">THE MATCHUP · NEBRASKA · U.S. SENATE</div>
+          <div class="cols3" style="margin-top:6px;text-align:center">
+            <div><div class="photo" style="aspect-ratio:1;width:60%;margin:0 auto 4px">photo</div><span class="p ind">I</span> <b>Osborn</b><div class="sub">Challenger</div></div>
+            <div style="align-self:center"><div class="sub">LAST POLL · SurveyUSA Sept 8–13</div><div class="big" style="font-size:2.2em">46 – 42</div><div class="sub">n=503 LV · Osborn +4</div><div style="margin-top:6px" class="sub">2020 result: Sasse (R) +40</div></div>
+            <div><div class="photo" style="aspect-ratio:1;width:60%;margin:0 auto 4px">photo</div><span class="p gop">R</span> <b>Ricketts</b><div class="sub">Incumbent</div></div>
+          </div>
+        </div>
+        <div class="foot"><span>Race setup</span><span>Polls close 8:00 CT</span></div>
+      </div>
+      <h3><span class="n">B2</span> Race setup <span class="tag pre">prepared</span></h3>
+      <p>The matchup at a glance before results: both candidates, incumbency, latest poll, last result for the seat and closing time.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">POLLING TREND · NE-SEN · 2026</div>
+          <svg viewBox="0 0 320 120" style="margin-top:4px">
+            <g stroke="#243457" stroke-width="0.5"><line x1="30" y1="20" x2="310" y2="20"/><line x1="30" y1="55" x2="310" y2="55"/><line x1="30" y1="90" x2="310" y2="90"/></g>
+            <g fill="#9aa7bd" font-size="7"><text x="4" y="23">55</text><text x="4" y="58">45</text><text x="4" y="93">35</text><text x="40" y="112">Mar</text><text x="130" y="112">Jun</text><text x="220" y="112">Sep</text><text x="285" y="112">Nov</text></g>
+            <polyline fill="none" stroke="#c0392b" stroke-width="2" points="40,40 90,44 140,48 190,52 240,58 290,62"/>
+            <polyline fill="none" stroke="#d4af37" stroke-width="2.5" points="40,80 90,74 140,70 190,64 240,56 290,48"/>
+            <circle cx="290" cy="48" r="3" fill="#d4af37"/><circle cx="290" cy="62" r="3" fill="#c0392b"/>
+            <text x="296" y="50" fill="#d4af37" font-size="8" font-weight="700">46</text><text x="296" y="65" fill="#e8a8a0" font-size="8">42</text>
+          </svg>
+        </div>
+        <div class="foot"><span>Polling average, public polls only</span><span>Source: campaign-disclosed polls</span></div>
+      </div>
+      <h3><span class="n">B3</span> Polling trend <span class="tag pre">prepared</span></h3>
+      <p>Line chart of the public polls through the year. Needs us to compile the polls; AP does not provide them.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2" style="grid-template-columns:1fr 46%">
+          <div>
+            <div class="sub">PATH TO VICTORY · NE-SEN</div>
+            <div class="title" style="font-size:1.4em;margin:4px 0">Where Osborn needs to run ahead of 2024</div>
+            <div style="line-height:1.4">Douglas and Lancaster: hold 2024 margins.<br>Sarpy: flip from −4.<br>Rural 3rd District: stay above 35%.</div>
+          </div>
+          <div class="counties" id="pathmap"></div>
+        </div>
+        <div class="foot"><span>County map, 2024 Senate result shaded</span><span class="gl">targets outlined</span></div>
+      </div>
+      <h3><span class="n">B4</span> Path to victory map <span class="tag pre">prepared</span></h3>
+      <p>County map shaded by the 2024 result with the counties that decide this race outlined. Needs 2024 county data, which we source separately.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title">Nebraska <span class="sub" style="font-family:var(--sans);font-size:0.5em">U.S. Senate</span></div><div class="sub"><b style="color:#fff">38%</b> of expected vote in</div></div>
+          <div class="rows" style="margin-top:10px">
+            <div class="row gop"><span class="nm"><span class="p gop">R</span> Pete Ricketts <span class="sub">inc.</span></span><div class="bar"><i style="width:100%"></i></div><span class="pc">48.0</span></div>
+            <div class="row ind"><span class="nm"><span class="p ind">I</span> Dan Osborn</span><div class="bar"><i style="width:96%"></i></div><span class="pc">46.0</span></div>
+            <div class="row ind"><span class="nm"><span class="p ind">AFi</span> Chuck Conboy</span><div class="bar"><i style="width:6%"></i></div><span class="pc">2.7</span></div>
+          </div>
+        </div>
+        <div class="foot"><span>● Source: AP</span><span>Updated 9:41 PM CT</span></div>
+      </div>
+      <h3><span class="n">B5</span> Live race result <span class="tag live">live</span></h3>
+      <p>The workhorse: candidates, bars, share, votes, expected vote in, AP call badge. Built in the spike.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2" style="grid-template-columns:1fr 48%">
+          <div>
+            <div class="sub">COUNTY RESULTS · NE-SEN</div>
+            <div class="title" style="font-size:1.4em;margin:4px 0">Osborn leads in Douglas, Lancaster, Sarpy</div>
+            <table class="t" style="margin-top:6px"><tr><th>County</th><th class="r">Osb</th><th class="r">Rick</th><th class="r">In</th></tr><tr><td>Douglas</td><td class="r gl">58.1</td><td class="r">39.7</td><td class="r">52%</td></tr><tr><td>Lancaster</td><td class="r gl">55.0</td><td class="r">42.9</td><td class="r">41%</td></tr><tr><td>Sarpy</td><td class="r gl">49.8</td><td class="r">47.1</td><td class="r">36%</td></tr><tr><td>Hall</td><td class="r">41.2</td><td class="r">56.5</td><td class="r">70%</td></tr></table>
+          </div>
+          <div class="counties" id="livemap"></div>
+        </div>
+        <div class="foot"><span>Shade = leader, opacity = share reporting</span><span>● AP county level</span></div>
+      </div>
+      <h3><span class="n">B6</span> Live county map <span class="tag live">live</span></h3>
+      <p>Choropleth that fills in as counties report, with the biggest counties listed beside it. Requires AP county-level entitlement (P1 in the spec).</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">MARGIN THROUGH THE NIGHT · NE-SEN</div>
+          <svg viewBox="0 0 320 120" style="margin-top:4px">
+            <line x1="30" y1="60" x2="310" y2="60" stroke="#6f7d99" stroke-width="0.7" stroke-dasharray="2 2"/>
+            <g fill="#9aa7bd" font-size="7"><text x="2" y="30">Osb +10</text><text x="2" y="63">even</text><text x="2" y="96">Rick +10</text><text x="40" y="112">8:00</text><text x="120" y="112">9:00</text><text x="200" y="112">10:00</text><text x="280" y="112">11:00</text></g>
+            <path d="M40,95 L70,88 L100,70 L130,52 L160,48 L190,56 L220,62 L250,66 L270,64" fill="none" stroke="#d4af37" stroke-width="2.5"/>
+            <circle cx="270" cy="64" r="3.5" fill="#d4af37"/><text x="277" y="67" fill="#d4af37" font-size="8" font-weight="700">−2.0</text>
+            <g fill="#9aa7bd" font-size="6.5"><text x="40" y="100">5% in</text><text x="130" y="44">Omaha reports</text><text x="236" y="82">38% in</text></g>
+          </svg>
+        </div>
+        <div class="foot"><span>Lead in points, every AP update</span><span>● live</span></div>
+      </div>
+      <h3><span class="n">B7</span> Margin tracker <span class="tag live">live</span></h3>
+      <p>Lead over time as returns come in, annotated with what reported when. Comes free from the snapshots we store every poll.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">VOTES STILL OUT · NE-SEN</div>
+          <div class="title" style="font-size:1.4em;margin:4px 0 8px">Ricketts needs 52% of what's left</div>
+          <div class="seg"><i style="width:48%;background:var(--gop)"></i><i style="width:46%;background:var(--gold)"></i><i style="width:6%;background:#3a4f7a"></i></div>
+          <div class="sub" style="display:flex;justify-content:space-between;margin-top:2px"><span>Ricketts 329k</span><span>Osborn 316k</span><span>other</span></div>
+          <div class="cols3" style="margin-top:10px">
+            <div class="stat"><span class="big" style="font-size:2em">62%</span><span class="lab">expected vote remaining</span></div>
+            <div class="stat"><span class="big" style="font-size:2em;color:#fff">~1.05M</span><span class="lab">est. votes still to count</span></div>
+            <div class="stat"><span class="big" style="font-size:2em;color:#fff">Douglas</span><span class="lab">largest outstanding (48% in)</span></div>
+          </div>
+        </div>
+        <div class="foot"><span>Based on AP expected vote (eevp)</span><span>● live</span></div>
+      </div>
+      <h3><span class="n">B8</span> Votes still out <span class="tag live">live</span></h3>
+      <p>Turns AP's expected-vote figure into the number that matters: what share of the remaining vote each candidate needs.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">RANKED CHOICE · ALASKA AT-LARGE</div>
+          <table class="t" style="margin-top:6px"><tr><th>Candidate</th><th class="r">Round 1</th><th class="r">Round 2</th><th class="r">Final</th></tr>
+            <tr><td><span class="p gop">R</span> Begich</td><td class="r">46.1</td><td class="r">47.9</td><td class="r">50.6</td></tr>
+            <tr><td><span class="p ind">I</span> Hill</td><td class="r gl">41.8</td><td class="r gl">44.6</td><td class="r gl">49.4</td></tr>
+            <tr><td><span class="p dem">D</span> Peltola-backed</td><td class="r">9.2</td><td class="r sub">elim.</td><td class="r"></td></tr>
+            <tr><td>Other</td><td class="r">2.9</td><td class="r sub">elim.</td><td class="r"></td></tr></table>
+          <div class="sub" style="margin-top:6px">Transfers shown as arrows between rounds in the full-size version.</div>
+        </div>
+        <div class="foot"><span>AK and ME use ranked choice</span><span>● AP RCV rounds</span></div>
+      </div>
+      <h3><span class="n">B9</span> Ranked-choice rounds <span class="tag live">live</span></h3>
+      <p>Round-by-round table for Alaska (Hill) and Maine. AP's feed carries the rounds; tabulation usually lands days later, so this is partly a post-night graphic.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2">
+          <div><div class="sub">2024 · SENATE</div><div class="rows" style="margin-top:6px"><div class="row gop"><span class="nm">Fischer</span><div class="bar"><i style="width:100%"></i></div><span class="pc">53.2</span></div><div class="row ind"><span class="nm">Osborn</span><div class="bar"><i style="width:87%"></i></div><span class="pc">46.5</span></div></div></div>
+          <div><div class="sub">TONIGHT · 38% IN</div><div class="rows" style="margin-top:6px"><div class="row gop"><span class="nm">Ricketts</span><div class="bar"><i style="width:100%"></i></div><span class="pc">48.0</span></div><div class="row ind"><span class="nm">Osborn</span><div class="bar"><i style="width:96%"></i></div><span class="pc">46.0</span></div></div></div>
+        </div>
+        <div class="safe" style="top:auto;bottom:16%"><div class="title" style="font-size:1.3em">Osborn running <span class="gl">+4.7</span> ahead of his 2024 pace in counted counties</div></div>
+        <div class="foot"><span>Same-county comparison</span><span class="gl">prepared + live</span></div>
+      </div>
+      <h3><span class="n">B10</span> Then vs now <span class="tag both">both</span></h3>
+      <p>Tonight's numbers beside the last result, compared county by county so the swing is real rather than an artefact of which counties have reported.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe" style="display:grid;grid-template-rows:1fr auto">
+          <div class="quote" style="align-self:center">“I'm not going to Washington to join a team. I'm going to fix the thing.”</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><b>Dan Osborn</b><div class="sub">Lincoln Journal Star, Sept 2026</div></div><div class="gl" style="font-size:2.5em;font-family:var(--serif)">”</div></div>
+        </div>
+      </div>
+      <h3><span class="n">B11</span> Quote card <span class="tag pre">prepared</span></h3>
+      <p>Pull quote with attribution for packages and discussion segments. Template; fill with sourced quotes.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">WHO VOTED FOR OSBORN · NE-SEN · AP VOTECAST</div>
+          <div class="rows" style="margin-top:8px;grid-template-columns:1fr 1fr;column-gap:6%">
+            <div class="row ind" style="grid-template-columns:44% 1fr 16%"><span class="nm">Independents</span><div class="bar"><i style="width:68%"></i></div><span class="pc">68</span></div>
+            <div class="row ind" style="grid-template-columns:44% 1fr 16%"><span class="nm">Union households</span><div class="bar"><i style="width:61%"></i></div><span class="pc">61</span></div>
+            <div class="row ind" style="grid-template-columns:44% 1fr 16%"><span class="nm">Under 30</span><div class="bar"><i style="width:57%"></i></div><span class="pc">57</span></div>
+            <div class="row ind" style="grid-template-columns:44% 1fr 16%"><span class="nm">Rural</span><div class="bar"><i style="width:34%"></i></div><span class="pc">34</span></div>
+            <div class="row ind" style="grid-template-columns:44% 1fr 16%"><span class="nm">Republicans</span><div class="bar"><i style="width:19%"></i></div><span class="pc">19</span></div>
+            <div class="row ind" style="grid-template-columns:44% 1fr 16%"><span class="nm">Democrats</span><div class="bar"><i style="width:88%"></i></div><span class="pc">88</span></div>
+          </div>
+        </div>
+        <div class="foot"><span>Share of each group voting Osborn</span><span>Requires AP VoteCast entitlement</span></div>
+      </div>
+      <h3><span class="n">B12</span> Who voted for the independent <span class="tag live">live</span></h3>
+      <p>Exit-poll style breakdown by group. Only possible if we license AP VoteCast; otherwise cut it. Worth asking AP about.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ C -->
+<section class="group" id="movement">
+  <h2>C. The independent movement</h2>
+  <p class="lede">For the segments about the movement as a whole: context, history, scale. Mostly prepared, with a few that update as the night's independent vote comes in.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title" style="font-size:1.5em">The slate tonight</div><div class="sub">7 races · 1 called</div></div>
+          <table class="t" style="margin-top:6px">
+            <tr><th>Race</th><th>Candidate</th><th class="r">Share</th><th class="r">Margin</th><th>Status</th></tr>
+            <tr><td>ID-1</td><td class="gl">Zabel</td><td class="r">44.1</td><td class="r gl">+3.2</td><td><span class="pill call">AP CALL</span></td></tr>
+            <tr><td>NE-SEN</td><td class="gl">Osborn</td><td class="r">46.0</td><td class="r">−2.0</td><td><span class="pill counting">38% IN</span></td></tr>
+            <tr><td>ID-SEN</td><td class="gl">Achilles</td><td class="r">32.0</td><td class="r">−30</td><td><span class="pill counting">22% IN</span></td></tr>
+            <tr><td>MT-SEN</td><td class="gl">Bodnar</td><td class="r">34.4</td><td class="r">−16</td><td><span class="pill counting">61% IN</span></td></tr>
+            <tr><td>SD-SEN</td><td class="gl">Bengs</td><td class="r">—</td><td class="r">—</td><td><span class="pill open">POLLS OPEN</span></td></tr>
+            <tr><td>CA-6</td><td class="gl">Kiley</td><td class="r">—</td><td class="r">—</td><td><span class="pill open">POLLS OPEN</span></td></tr>
+            <tr><td>AK-AL</td><td class="gl">Hill</td><td class="r">—</td><td class="r">—</td><td><span class="pill open">POLLS OPEN</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <h3><span class="n">C1</span> Slate board <span class="tag live">live</span></h3>
+      <p>All seven slate races in one table with share, margin and status. The signature graphic of the broadcast; also the default studio-wall view.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2" style="grid-template-columns:58% 1fr;align-items:center">
+          <div class="tiles" data-map="slate"></div>
+          <div><div class="title" style="font-size:1.4em">Independents on the ballot</div><div style="margin-top:6px;line-height:1.4"><span class="gl">■</span> Slate race (7)<br><span style="color:#cfd8ea">■</span> Other independent federal candidates (41 states)<br><span class="sub">■</span> No independent on the federal ballot</div><div class="big" style="font-size:1.8em;margin-top:6px">217</div><div class="sub" style="font-size:0.85em">independent congressional candidates filed in 2026</div></div>
+        </div>
+      </div>
+      <h3><span class="n">C2</span> Independents across the map <span class="tag pre">prepared</span></h3>
+      <p>Tile map of where independents are running, with the slate states in gold. Count sourced from FEC filings before the night.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols3" style="align-content:center;height:90%">
+          <div class="stat"><span class="big">43%</span><span class="lab">of Americans identify as independent (Gallup, 2025)</span></div>
+          <div class="stat"><span class="big">2</span><span class="lab">independents in the Senate today (King, Sanders)</span></div>
+          <div class="stat"><span class="big">7</span><span class="lab">slate races that could change that tonight</span></div>
+        </div>
+        <div class="foot"><span>Sources on screen</span><span></span></div>
+      </div>
+      <h3><span class="n">C3</span> Big-number stats <span class="tag pre">prepared</span></h3>
+      <p>Three or four figures with sources, for the opening of a movement segment. Template; numbers to be confirmed by editorial.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">INDEPENDENTS IN CONGRESS · 1970–2026</div>
+          <svg viewBox="0 0 320 110" style="margin-top:6px">
+            <line x1="20" y1="70" x2="310" y2="70" stroke="#3a4f7a" stroke-width="1"/>
+            <g fill="#9aa7bd" font-size="7"><text x="16" y="84">1970</text><text x="90" y="84">1990</text><text x="165" y="84">2010</text><text x="240" y="84">2020</text><text x="290" y="84">2026</text></g>
+            <g fill="#d4af37"><rect x="60" y="56" width="8" height="14"/><rect x="112" y="48" width="8" height="22"/><rect x="170" y="40" width="8" height="30"/><rect x="200" y="40" width="8" height="30"/><rect x="236" y="40" width="8" height="30"/><rect x="290" y="20" width="8" height="50" opacity="0.5"/></g>
+            <g fill="#cfd8ea" font-size="6.5"><text x="52" y="52">Byrd Jr.</text><text x="104" y="44">Sanders</text><text x="158" y="36">+ King, Lieberman</text><text x="268" y="16" fill="#d4af37">tonight?</text></g>
+          </svg>
+        </div>
+        <div class="foot"><span>Members serving as independents, by Congress</span><span>Prepared</span></div>
+      </div>
+      <h3><span class="n">C4</span> Independents in Congress, historically <span class="tag pre">prepared</span></h3>
+      <p>Timeline of independents who have served, ending on tonight's possible high-water mark. Editorial to verify the history.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">BEST INDEPENDENT SENATE RESULTS · MODERN ERA</div>
+          <div class="rows" style="margin-top:8px">
+            <div class="row ind" style="grid-template-columns:48% 1fr 12%"><span class="nm">King · ME 2018</span><div class="bar"><i style="width:100%"></i></div><span class="pc">54.3</span></div>
+            <div class="row ind" style="grid-template-columns:48% 1fr 12%"><span class="nm">Osborn · NE 2024</span><div class="bar"><i style="width:86%"></i></div><span class="pc">46.5</span></div>
+            <div class="row ind" style="grid-template-columns:48% 1fr 12%"><span class="nm">McMullin · UT 2022</span><div class="bar"><i style="width:79%"></i></div><span class="pc">42.8</span></div>
+            <div class="row ind" style="grid-template-columns:48% 1fr 12%;opacity:.9"><span class="nm gl">Osborn · NE tonight</span><div class="bar"><i style="width:85%;opacity:.6"></i></div><span class="pc gl">46.0</span></div>
+          </div>
+        </div>
+        <div class="foot"><span>Non-incumbent independents, two-party races</span><span class="gl">tonight's rows update live</span></div>
+      </div>
+      <h3><span class="n">C5</span> Tonight against history <span class="tag both">both</span></h3>
+      <p>Where tonight's independent results land against the best independent performances on record. The historical rows are fixed; tonight's rows move.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2" style="grid-template-columns:1fr 1fr;align-items:center">
+          <div><div class="sub">INDEPENDENT VOTE TONIGHT · ALL FEDERAL RACES</div><div class="big">4.9M</div><div class="sub">votes for independent and third-party candidates so far</div><div style="margin-top:8px"><b class="gl">6.1%</b> <span class="sub">of all votes counted · 2024: 3.4%</span></div></div>
+          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="44" fill="none" stroke="#1b2a4a" stroke-width="14"/><circle cx="60" cy="60" r="44" fill="none" stroke="#d4af37" stroke-width="14" stroke-dasharray="16.9 259.6" transform="rotate(-90 60 60)"/><text x="60" y="65" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">6.1%</text></svg>
+        </div>
+      </div>
+      <h3><span class="n">C6</span> National independent vote <span class="tag live">live</span></h3>
+      <p>Running sum of votes for non-major-party candidates across every race in the feed, against the 2024 share. Simple to compute from what we already store.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">POLL vs RESULT · SLATE RACES</div>
+          <svg viewBox="0 0 320 110" style="margin-top:4px">
+            <g fill="#9aa7bd" font-size="7"><text x="2" y="20">Result</text><text x="2" y="104">better</text><text x="280" y="104">Final poll →</text></g>
+            <line x1="40" y1="95" x2="300" y2="15" stroke="#3a4f7a" stroke-dasharray="2 2"/>
+            <g fill="#d4af37"><circle cx="190" cy="52" r="4"/><circle cx="120" cy="78" r="4"/><circle cx="210" cy="44" r="4"/><circle cx="150" cy="60" r="4" opacity=".4"/></g>
+            <g fill="#cfd8ea" font-size="6.5"><text x="196" y="50">Osborn</text><text x="126" y="76">Bodnar</text><text x="216" y="42">Zabel</text><text x="156" y="58" fill="#6f7d99">Bengs (counting)</text></g>
+          </svg>
+        </div>
+        <div class="foot"><span>Dots above the line = outperformed the polls</span><span>● live</span></div>
+      </div>
+      <h3><span class="n">C7</span> Poll vs result <span class="tag live">live</span></h3>
+      <p>Did independents beat their polls? One dot per slate race, filling in as races are called. Pays off the "are independents under-polled" discussion.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">IF THE SLATE WINS · SENATE</div>
+          <div class="seg" style="margin-top:10px;height:2em"><i style="width:47%;background:var(--dem)"></i><i style="width:2%;background:var(--gold)"></i><i style="width:4%;background:var(--gold);opacity:.55"></i><i style="width:47%;background:var(--gop)"></i></div>
+          <div class="sub" style="display:flex;justify-content:space-between;margin-top:3px"><span>Dem 47</span><span class="gl">Ind 2 + 4 if slate sweeps</span><span>GOP 47</span></div>
+          <div class="title" style="font-size:1.4em;margin-top:12px">Four Senate seats would make independents the swing bloc</div>
+          <div class="sub" style="margin-top:4px">Scenario graphic, updates as seats are called</div>
+        </div>
+      </div>
+      <h3><span class="n">C8</span> What if the slate wins <span class="tag both">both</span></h3>
+      <p>Scenario version of the balance of power showing what an independent bloc would mean. Static scenarios before results; live once seats are called.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">HOW AN INDEPENDENT SENATOR WORKS</div>
+          <div class="cols3" style="margin-top:10px;text-align:center">
+            <div><div class="chip" style="display:block;padding:8px 4px"><b>Caucus</b></div><div class="sub" style="margin-top:4px;line-height:1.3">May caucus with a party for committee seats (King, Sanders) or with neither (Osborn's pledge)</div></div>
+            <div><div class="chip" style="display:block;padding:8px 4px"><b>Committees</b></div><div class="sub" style="margin-top:4px;line-height:1.3">Assignments come through a caucus; a true unaffiliated member negotiates them</div></div>
+            <div><div class="chip" style="display:block;padding:8px 4px"><b>Majority</b></div><div class="sub" style="margin-top:4px;line-height:1.3">Control is decided by who organizes; independents can be the deciding votes</div></div>
+          </div>
+        </div>
+      </div>
+      <h3><span class="n">C9</span> Explainer cards <span class="tag pre">prepared</span></h3>
+      <p>Three-panel explainers for recurring questions (caucusing, committees, how a majority is formed). Template; editorial writes the copy.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ D -->
+<section class="group" id="updates">
+  <h2>D. Election updates</h2>
+  <p class="lede">The recurring "where things stand" block: summary-sized charts the anchor can read in ten seconds, and the zoom-ins to key races. All live.</p>
+  <div class="grid">
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title" style="font-size:1.5em">Senate</div><div class="sub">51 for control · 35 seats up</div></div>
+          <div class="seg" style="margin-top:10px;height:2.2em"><i style="width:44%;background:var(--dem)"></i><i style="width:3%;background:var(--dem);opacity:.5"></i><i style="width:2%;background:var(--gold)"></i><i style="width:1%;background:var(--gold);opacity:.5"></i><i style="width:5%;background:#3a4f7a"></i><i style="width:3%;background:var(--gop);opacity:.5"></i><i style="width:42%;background:var(--gop)"></i></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:1.1em"><b style="color:#9fb6ea">44 <span class="sub" style="font-weight:400">+3 leading</span></b><b class="gl">2 <span class="sub" style="font-weight:400">+1 leading</span></b><b style="color:#e8a8a0">42 <span class="sub" style="font-weight:400">+3 leading</span></b></div>
+          <div class="sub" style="margin-top:8px">Solid = called or not up · faded = leading · grey = too early</div>
+        </div>
+        <div class="foot"><span>● AP calls</span><span>9:41 PM ET</span></div>
+      </div>
+      <h3><span class="n">D1</span> Balance of power, Senate <span class="tag live">live</span></h3>
+      <p>Seat bar with called, leading and undecided segments; independents as their own gold block in the middle. House version identical with 218.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title" style="font-size:1.5em">House</div><div class="sub">218 for control · 435 seats</div></div>
+          <div class="seg" style="margin-top:10px;height:2.2em"><i style="width:38%;background:var(--dem)"></i><i style="width:6%;background:var(--dem);opacity:.5"></i><i style="width:0.6%;background:var(--gold)"></i><i style="width:14%;background:#3a4f7a"></i><i style="width:7%;background:var(--gop);opacity:.5"></i><i style="width:34%;background:var(--gop)"></i></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:1.1em"><b style="color:#9fb6ea">167 <span class="sub" style="font-weight:400">+26</span></b><b class="gl">1</b><b style="color:#e8a8a0">149 <span class="sub" style="font-weight:400">+31</span></b></div>
+          <div class="chips" style="margin-top:8px"><span class="chip">Flips: <b style="color:#9fb6ea">D +4</b></span><span class="chip"><b style="color:#e8a8a0">R +3</b></span><span class="chip"><b class="gl">I +1</b> ID-1</span></div>
+        </div>
+        <div class="foot"><span>● AP calls</span><span>9:41 PM ET</span></div>
+      </div>
+      <h3><span class="n">D2</span> Balance of power, House <span class="tag live">live</span></h3>
+      <p>Same form with a flips row, since an independent House flip is itself a headline.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe" style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:auto 1fr 1fr;gap:6px">
+          <div class="sub" style="grid-column:1/-1">KEY RACES · 9:41 PM ET</div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>NE-SEN</b><span class="gl">Osborn 46.0</span><span>Ricketts 48.0</span><span class="pill counting">38% IN</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>ID-1</b><span class="gl">Zabel 44.1</span><span>Fulcher 40.9</span><span class="pill call">AP CALL</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>MT-SEN</b><span>Alme 50.0</span><span class="gl">Bodnar 34.4</span><span class="pill counting">61% IN</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>ID-SEN</b><span>Risch 62.0</span><span class="gl">Achilles 32.0</span><span class="pill counting">22% IN</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>SD-SEN</b><span class="gl">Bengs</span><span>Rounds</span><span class="pill open">OPEN</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>CA-6</b><span class="gl">Kiley</span><span>Pan</span><span class="pill open">OPEN</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>AK-AL</b><span class="gl">Hill</span><span>Begich</span><span class="pill open">OPEN</span></div>
+          <div class="chip" style="display:grid;gap:2px;align-content:start"><b>ME-SEN</b><span>Jackson 47.0</span><span>Collins 35.0</span><span class="pill call">AP CALL</span></div>
+        </div>
+        <div class="foot"><span>● AP</span><span>Producer picks the eight</span></div>
+      </div>
+      <h3><span class="n">D3</span> Key races grid <span class="tag live">live</span></h3>
+      <p>Eight small race cards on one screen with status pills. The summary the anchor reads through at the top of every update block.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe" style="display:grid;grid-template-columns:1fr 1fr;gap:5%">
+          <div style="background:#0f1d3d;border-radius:3px;padding:6%;border-left:3px solid var(--gold)">
+            <div class="sub">NEBRASKA · U.S. SENATE</div>
+            <div class="rows" style="margin-top:6px"><div class="row gop"><span class="nm">Ricketts</span><div class="bar"><i style="width:100%"></i></div><span class="pc">48.0</span></div><div class="row ind"><span class="nm">Osborn</span><div class="bar"><i style="width:96%"></i></div><span class="pc">46.0</span></div></div>
+            <div style="margin-top:6px;display:flex;gap:4px;align-items:center"><span class="pill counting">38% IN</span><span class="sub">Osborn −2.0 · Douglas 48% in</span></div>
+          </div>
+          <div style="display:grid;align-content:center;gap:4px">
+            <div class="sub">STATUS</div>
+            <div class="title" style="font-size:1.3em">Too early to call</div>
+            <div style="line-height:1.4">Omaha and Lincoln still counting. Osborn's margin has narrowed from +7 to −2 as rural counties report.</div>
+            <div class="sub">Next: Douglas County update expected ~10:15</div>
+          </div>
+        </div>
+        <div class="foot"><span>● AP</span><span>Zoom-in</span></div>
+      </div>
+      <h3><span class="n">D4</span> Race zoom-in <span class="tag live">live</span></h3>
+      <p>Mid-size card for one race, with a status headline (polls open / counting / too close / called / flip) and a producer-written line of context.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe cols2" style="grid-template-columns:58% 1fr;align-items:center">
+          <div class="tiles" data-map="status"></div>
+          <div><div class="title" style="font-size:1.4em">Where it stands</div><div style="margin-top:6px;line-height:1.5"><span style="color:var(--dem)">■</span> Dem called <span style="color:#2a3f6e">■</span> leading<br><span style="color:var(--gop)">■</span> GOP called <span style="color:#5a2a2a">■</span> leading<br><span class="gl">■</span> Ind called <span style="color:#5c4a14">■</span> leading<br><span class="sub">■</span> counting / polls open</div><div class="sub" style="margin-top:8px">Senate races shown; House by district on the full-size version</div></div>
+        </div>
+      </div>
+      <h3><span class="n">D5</span> Status map <span class="tag live">live</span></h3>
+      <p>Tile map of every Senate race coloured by called/leading party. The glance-at-the-whole-country graphic.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">CALLS SO FAR · 9:41 PM ET</div>
+          <svg viewBox="0 0 320 100" style="margin-top:6px">
+            <line x1="20" y1="50" x2="310" y2="50" stroke="#3a4f7a"/>
+            <g fill="#9aa7bd" font-size="7"><text x="14" y="70">7pm</text><text x="90" y="70">8pm</text><text x="165" y="70">9pm</text><text x="240" y="70">10pm</text></g>
+            <g><circle cx="30" cy="50" r="4" fill="#c0392b"/><circle cx="38" cy="50" r="4" fill="#3b6fd6"/><circle cx="48" cy="50" r="4" fill="#c0392b"/><circle cx="100" cy="50" r="4" fill="#3b6fd6"/><circle cx="108" cy="50" r="4" fill="#3b6fd6"/><circle cx="118" cy="50" r="4" fill="#c0392b"/><circle cx="175" cy="50" r="4" fill="#c0392b"/><circle cx="200" cy="50" r="6" fill="#d4af37"/><circle cx="215" cy="50" r="4" fill="#3b6fd6"/></g>
+            <g font-size="7"><text x="186" y="36" fill="#d4af37" font-weight="700">ID-1 Zabel</text><text x="92" y="36" fill="#cfd8ea">ME-SEN Jackson</text></g>
+            <g font-size="7" fill="#9aa7bd"><text x="20" y="92">9 Senate calls · 61 House calls · 1 independent</text></g>
+          </svg>
+        </div>
+      </div>
+      <h3><span class="n">D6</span> Calls timeline <span class="tag live">live</span></h3>
+      <p>Every AP call as a dot on a clock line, independents enlarged and labelled. Gives the update block a sense of pace.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title" style="font-size:1.5em">Idaho</div><div class="sub">3 federal races</div></div>
+          <table class="t" style="margin-top:6px">
+            <tr><th>Race</th><th>Leader</th><th class="r">Share</th><th>Runner-up</th><th class="r">Share</th><th>Status</th></tr>
+            <tr><td>Senate</td><td><span class="p gop">R</span> Risch</td><td class="r">62.0</td><td class="gl"><span class="p ind">I</span> Achilles</td><td class="r">32.0</td><td><span class="pill counting">22%</span></td></tr>
+            <tr><td>House 1</td><td class="gl"><span class="p ind">I</span> Zabel</td><td class="r">44.1</td><td><span class="p gop">R</span> Fulcher</td><td class="r">40.9</td><td><span class="pill call">CALL</span></td></tr>
+            <tr><td>House 2</td><td><span class="p gop">R</span> Simpson</td><td class="r">58.3</td><td><span class="p dem">D</span> Roth</td><td class="r">38.0</td><td><span class="pill counting">31%</span></td></tr>
+          </table>
+        </div>
+        <div class="foot"><span>● AP</span><span>Polls closed 10:00 ET / 8:00 MT</span></div>
+      </div>
+      <h3><span class="n">D7</span> State overview <span class="tag live">live</span></h3>
+      <p>Every federal race in one state. Useful when a state closes or when two slate candidates share a state (Idaho).</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">NATIONAL HOUSE VOTE · ALL DISTRICTS</div>
+          <div class="seg" style="margin-top:10px;height:2.2em"><i style="width:47.5%;background:var(--dem)"></i><i style="width:6.1%;background:var(--gold)"></i><i style="width:46.4%;background:var(--gop)"></i></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:1.1em"><b style="color:#9fb6ea">47.5%</b><b class="gl">6.1%</b><b style="color:#e8a8a0">46.4%</b></div>
+          <div class="cols3" style="margin-top:12px"><div class="stat"><span style="font-size:1.6em;font-weight:700">51.2M</span><span class="lab">Democratic votes</span></div><div class="stat"><span class="gl" style="font-size:1.6em;font-weight:700">6.6M</span><span class="lab">Independent + third party</span></div><div class="stat"><span style="font-size:1.6em;font-weight:700">50.0M</span><span class="lab">Republican votes</span></div></div>
+        </div>
+        <div class="foot"><span>● AP, sum of all House races</span><span>62% of expected vote in</span></div>
+      </div>
+      <h3><span class="n">D8</span> National popular vote <span class="tag live">live</span></h3>
+      <p>Votes summed across every House race, with the independent share as its own segment. Cheap to compute, and it makes the movement's size concrete.</p>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">TOO CLOSE TO CALL</div>
+          <table class="t" style="margin-top:6px">
+            <tr><th>Race</th><th>Leader</th><th class="r">Margin</th><th class="r">Votes</th><th class="r">In</th></tr>
+            <tr><td>NE-SEN</td><td><span class="p gop">R</span> Ricketts</td><td class="r">+2.0</td><td class="r">13,989</td><td class="r">38%</td></tr>
+            <tr><td>CA-6</td><td class="gl"><span class="p ind">I</span> Kiley</td><td class="r gl">+0.4</td><td class="r">1,204</td><td class="r">44%</td></tr>
+            <tr><td>AK-AL</td><td><span class="p gop">R</span> Begich</td><td class="r">+1.8</td><td class="r">4,102</td><td class="r">57%</td></tr>
+            <tr><td>PA-7</td><td><span class="p dem">D</span> Wild</td><td class="r">+0.9</td><td class="r">2,870</td><td class="r">91%</td></tr>
+          </table>
+          <div class="sub" style="margin-top:6px">Races under 3 points with more than 25% of the vote in, slate races first</div>
+        </div>
+        <div class="foot"><span>● AP</span><span>auto-generated</span></div>
+      </div>
+      <h3><span class="n">D9</span> Too close to call <span class="tag live">live</span></h3>
+      <p>Auto-generated list of the tightest uncalled races, slate races pinned to the top. No producer input needed.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================================ E -->
+<section class="group" id="states">
+  <h2>E. Status language</h2>
+  <p class="lede">One vocabulary of race states used across every graphic, so the anchor and the audience learn it once. Derived directly from AP fields.</p>
+  <div class="grid">
+    <div class="card">
+      <div class="mock" style="aspect-ratio:auto;padding:4%">
+        <table class="t">
+          <tr><th>Pill</th><th>Meaning</th><th>From AP</th></tr>
+          <tr><td><span class="pill open">POLLS OPEN</span></td><td>No votes reported, polls not yet closed</td><td>votes = 0, before pollClosingTime</td></tr>
+          <tr><td><span class="pill counting">38% IN</span></td><td>Counting; the number is AP's expected-vote estimate</td><td>eevp (falls back to precincts %)</td></tr>
+          <tr><td><span class="pill close">TOO CLOSE</span></td><td>Uncalled, margin under 3 points with over 25% in</td><td>our rule on top of AP numbers</td></tr>
+          <tr><td><span class="pill call">AP CALL</span></td><td>AP has declared a winner</td><td>raceCallStatus = Called, winner = X</td></tr>
+          <tr><td><span class="pill flip">FLIP</span></td><td>Called for a different party than the seat holder</td><td>flippedSeat</td></tr>
+          <tr><td><span class="pill counting">RCV</span></td><td>Ranked choice; first-round totals until tabulation</td><td>rankedChoice, rankedChoiceVoting rounds</td></tr>
+        </table>
+      </div>
+      <h3><span class="n">E1</span> Race status pills</h3>
+      <p>Each state has one pill, one colour, one phrase. Gold is reserved for the independent and for calls, so it always means "pay attention".</p>
+    </div>
+    <div class="card">
+      <div class="mock" style="aspect-ratio:auto;padding:4%">
+        <div class="rows">
+          <div class="row ind"><span class="nm"><span class="p ind">I</span> Independent / slate</span><div class="bar"><i style="width:100%"></i></div><span class="pc">gold</span></div>
+          <div class="row dem"><span class="nm"><span class="p dem">D</span> Democrat</span><div class="bar"><i style="width:100%"></i></div><span class="pc">blue</span></div>
+          <div class="row gop"><span class="nm"><span class="p gop">R</span> Republican</span><div class="bar"><i style="width:100%"></i></div><span class="pc">red</span></div>
+          <div class="row"><span class="nm"><span class="p" style="background:#3a4f7a">Lib</span> Other minor party</span><div class="bar"><i style="width:100%;background:#3a4f7a"></i></div><span class="pc">slate</span></div>
+        </div>
+        <div class="sub" style="margin-top:8px">Freshness dot on every live graphic: green under 60 s since the last AP update, amber under 3 min, red beyond.</div>
+      </div>
+      <h3><span class="n">E2</span> Colour roles</h3>
+      <p>Party colours muted; gold for independents is the only saturated colour, so it carries the story on every screen. The freshness dot is the one honest signal that data may be stale.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // Tile map layout (approximate US grid, 11 columns)
+  const GRID = [
+    "AK . . . . . . . . . ME",
+    ". . . . . . . . . VT NH",
+    "WA ID MT ND MN IL WI MI NY MA .",
+    "OR NV WY SD IA IN OH PA NJ CT RI",
+    "CA UT CO NE MO KY WV VA MD DE .",
+    ". AZ NM KS AR TN NC SC DC . .",
+    ". . . OK LA MS AL GA . . .",
+    "HI . . TX . . . . FL . .",
+  ];
+  const SLATE = new Set(["NE", "MT", "ID", "SD", "CA", "AK"]);
+  const HAS_IND = new Set(["ME", "VT", "NH", "WA", "OR", "NV", "WY", "ND", "MN", "WI", "MI", "NY", "MA", "IA", "IL", "OH", "PA", "NJ", "CT", "UT", "CO", "MO", "KY", "VA", "MD", "AZ", "NM", "KS", "TN", "NC", "SC", "GA", "OK", "LA", "AL", "TX", "FL", "HI", "WV", "AR", "MS"]);
+  // sample Senate status for the status map
+  const STATUS = { ME: "dem", NE: "lead-gop", MT: "lead-gop", ID: "lead-gop", SD: "e", WY: "gop", WV: "gop", KY: "gop", SC: "gop", GA: "dem", VA: "dem", NH: "lead-dem", MI: "lead-dem", NC: "lead-gop", TX: "lead-gop", IA: "gop", MN: "lead-dem", IL: "dem", NJ: "dem", DE: "dem", MA: "dem", RI: "dem", OR: "lead-dem", CO: "lead-dem", NM: "lead-dem", KS: "lead-gop", OK: "gop", AR: "gop", LA: "gop", MS: "gop", AL: "gop", TN: "gop", AK: "lead-ind", MT_: "" };
+  for (const el of document.querySelectorAll(".tiles[data-map]")) {
+    const mode = el.dataset.map;
+    el.innerHTML = GRID.flatMap((row) => row.split(" ")).map((st) => {
+      if (st === ".") return '<span class="e"></span>';
+      let cls = "";
+      if (mode === "slate") cls = SLATE.has(st) ? "s" : HAS_IND.has(st) ? "i" : "";
+      else if (mode === "status") cls = STATUS[st] ? (STATUS[st] === "e" ? "" : STATUS[st]) : "";
+      return `<span class="${cls}">${st}</span>`;
+    }).join("");
+  }
+  // county tile mocks: deterministic pseudo-random shading
+  function counties(id, live) {
+    const el = document.getElementById(id); if (!el) return;
+    let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    let html = "";
+    for (let i = 0; i < 84; i++) {
+      const r = rnd(); const lead = r > 0.72 ? "gold" : "gop"; const rep = live ? rnd() : 1;
+      const color = lead === "gold" ? "212,175,55" : "192,57,43";
+      const outline = !live && r > 0.72 ? "box-shadow: inset 0 0 0 1.5px #fff;" : "";
+      html += `<span style="background: rgba(${color},${live ? 0.25 + rep * 0.75 : 0.85});${outline}"></span>`;
+    }
+    el.innerHTML = html;
+  }
+  counties("pathmap", false); counties("livemap", true);
+</script>
+</body>
+</html>
