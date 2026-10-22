@@ -40,7 +40,7 @@
     <div class="map"><svg id="map" viewBox="0 0 900 560"></svg><div class="legend" id="legend"></div></div>
     <div><table><thead><tr><th>Area</th><th class="r">In</th><th class="r" id="th-now">2026</th><th class="r" id="th-then">2024</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · 2024 presidential result by area from AP · like-for-like over areas reporting</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and 2024 · like-for-like over areas reporting</span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -95,7 +95,7 @@
     $("title").innerHTML = `${esc(cand.last)} vs the 2024 ${esc(ticketName)} vote <small>${esc(race.stateName)} · ${esc(office)}</small>`;
     $("th-now").textContent = `${cand.last} 2026`; $("th-then").textContent = `${ticketName} 2024`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
-    $("updated").textContent = demo ? "SAMPLE · Nebraska's 2024 Senate result standing in for tonight's count" : `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = demo ? "SAMPLE: 2024 Senate result standing in for tonight" : `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
     const color = cand.featured ? "#d4af37" : cand.party === "GOP" ? "#ef4444" : cand.party === "Dem" ? "#3b82f6" : "#a855f7";
     $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead of ${esc(ticketName)} 2024</span><span><i style="background:var(--behind)"></i>behind</span><span><i style="background:#1b2a4a"></i>under ${MIN_IN}% in</span>`;
 
