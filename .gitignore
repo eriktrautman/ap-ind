@@ -19,3 +19,5 @@ npm-debug.log*
 .idea/
 .vercel
 docs/g/
+public/photos/congress/
+public/photos/bp/

@@ -10,7 +10,7 @@
     ["Spec", docs + "spec.html"],
     ["Graphics data options", docs + "graphics-data-options.html"],
   ];
-  if (local) links.push(["Candidate index", "/candidates.html"], ["Ticker", "/g/ticker.html?bg=black"], ["Race chart", "/g/race.html?id=28594&bg=black"]);
+  if (local) links.push(["Candidate index", "/candidates.html"], ["Photos", "/photos.html"], ["Ticker", "/g/ticker.html?bg=black"], ["Race chart", "/g/race.html?id=28594&bg=black"]);
   else links.push(["GitHub", "https://github.com/eriktrautman/ap-ind"]);
 
   const here = location.pathname.replace(/\/$/, "/index.html");

@@ -152,6 +152,9 @@
   table.t th { color: #9aa7bd; font-weight: 400; font-size: 0.85em; }
   table.t td.r, table.t th.r { text-align: right; font-variant-numeric: tabular-nums; }
   .note { background: #fff; border: 1px solid var(--sand); border-left: 3px solid var(--gold); padding: 10px 14px; margin: 0 0 24px; font-size: 14px; max-width: 90ch; }
+  .tablewrap { overflow-x: auto; background: #fff; border: 1px solid var(--sand); border-radius: 6px; max-width: 110ch; }
+  #bible table.t td, #bible table.t th { border-bottom: 1px solid var(--sand); padding: 7px 12px; vertical-align: top; }
+  #bible table.t th { color: var(--muted); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
   .note-title { font-family: var(--serif); font-size: 17px; color: var(--navy); margin: 0 0 6px; }
   details.note summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; margin: 0; }
   details.note summary::-webkit-details-marker { display: none; }
@@ -183,6 +186,7 @@
     <a href="#deepdive">B. Featured race deep dives</a>
     <a href="#movement">C. The independent movement</a>
     <a href="#updates">D. Election updates</a>
+    <a href="#bible">Bible</a>
     <a href="#states">E. Status language</a>
     <span class="legend"><span class="tag live">live</span> AP data, updates on air <span class="tag pre">prepared</span> built before the night <span class="tag both">both</span> <label><input type="checkbox" id="safe-toggle"> title-safe guide</label></span>
   </div>
@@ -865,6 +869,21 @@
 </section>
 
 <!-- ============================================================ E -->
+<section class="group" id="bible">
+  <h2>Graphics bible categories</h2>
+  <p class="lede">The production team catalogues every on-air graphic under six categories. Sections on this page map to them as follows; Show graphics (titles, logo, transitions, segment graphics, CTAs) and Credits are produced outside this system.</p>
+  <div class="tablewrap">
+  <table class="t" style="font-size:14px;color:var(--ink)">
+    <tr><th>Bible category</th><th>This page</th><th>Rule</th></tr>
+    <tr><td><b>ID</b> graphics / lower thirds</td><td>A2, A3</td><td>Names and parties from AP; titles and photos from the candidate index.</td></tr>
+    <tr><td><b>Election</b> graphics</td><td>A4–A6, B5–B10, C1, D1–D11</td><td>Interpretation of AP data; every card carries its data line and key note.</td></tr>
+    <tr><td><b>Description</b> graphics</td><td>B1–B4, B11, B12, C2–C9</td><td>Any third-party data is sourced on screen.</td></tr>
+    <tr><td><b>Data</b> graphics</td><td>A1</td><td>The real-time ticker.</td></tr>
+    <tr><td><b>Show</b> graphics, <b>Credits</b></td><td>—</td><td>Outside this system.</td></tr>
+  </table>
+  </div>
+</section>
+
 <section class="group" id="states">
   <h2>E. Status language</h2>
   <p class="lede">One vocabulary of race states used across every graphic, so the anchor and the audience learn it once. Derived directly from AP fields.</p>

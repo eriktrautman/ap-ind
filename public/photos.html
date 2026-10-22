@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candidate Photos</title>
+<style>
+  :root { --navy: #0b1f44; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --dem: #3b6fd6; --gop: #c0392b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.4; }
+  header { background: var(--navy); color: #fff; padding: 24px; }
+  header .in, main { max-width: 1500px; margin: 0 auto; }
+  header h1 { font-family: Georgia, serif; font-weight: 400; font-size: 28px; margin: 0 0 4px; }
+  header p { margin: 0; color: #c7cfdf; max-width: 90ch; }
+  main { padding: 20px 24px 60px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; background: #fff; border: 1px solid var(--sand); border-radius: 6px; padding: 10px 14px; margin-bottom: 18px; font-size: 13px; }
+  .bar label { display: inline-flex; gap: 5px; align-items: center; }
+  .bar select, .bar input { font: inherit; }
+  .count { color: var(--muted); margin-left: auto; }
+  h2 { font-family: Georgia, serif; font-weight: 400; font-size: 18px; color: var(--navy); margin: 22px 0 8px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .ph { background: #fff; border: 1px solid var(--sand); border-radius: 6px; overflow: hidden; font-size: 12px; }
+  .ph .img { aspect-ratio: 4 / 5; background: #16244a; display: flex; align-items: center; justify-content: center; color: #6f7d99; overflow: hidden; }
+  .ph img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+  .ph.featured .img { box-shadow: inset 0 0 0 3px var(--gold); }
+  .ph .nm { font-weight: 700; padding: 6px 7px 0; }
+  .ph .sub { color: var(--muted); padding: 0 7px; }
+  .ph .conf { display: inline-block; margin: 5px 7px 7px; padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: 700; }
+  .c-verified { background: #dff3e7; color: #1c6b3c; } .c-high { background: #e8edf6; color: #1f3a6e; } .c-medium { background: #fdf3e3; color: #7a5b0a; } .c-low { background: #fde3e0; color: #8f1d12; } .c-none { background: #eee; color: #555; }
+  .p { display: inline-block; min-width: 1.6em; text-align: center; font-weight: 700; border-radius: 3px; padding: 0 4px; font-size: 10px; color: #fff; background: #3a4f7a; }
+  .p.dem { background: var(--dem); } .p.gop { background: var(--gop); } .p.ind { background: var(--gold); color: #1a1600; }
+  .ph a { color: var(--navy); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<script src="/docs/nav.js"></script>
+<header><div class="in">
+  <h1>Candidate Photos</h1>
+  <p>Every candidate in every race with an independent or third-party candidate on the ballot. Gold-framed cards are the featured races (hand-verified). Official congressional portraits are public domain. Ballotpedia-sourced photos carry an automatic confidence and need a human look before air: <b>low</b> means neither the filename nor the exact name matched, so check those first.</p>
+</div></header>
+<main>
+  <div class="bar">
+    <label>State <select id="f-state"><option value="">all</option></select></label>
+    <label>Confidence <select id="f-conf"><option value="">all</option><option>verified</option><option>high</option><option>medium</option><option>low</option><option value="none">no photo</option></select></label>
+    <label>Source <select id="f-src"><option value="">all</option><option>curated</option><option>congress</option><option>ballotpedia</option></select></label>
+    <label><input type="checkbox" id="f-ind"> independents only</label>
+    <label>Find <input id="f-q" placeholder="name" size="14"></label>
+    <span class="count" id="count"></span>
+  </div>
+  <div id="out"></div>
+</main>
+<script type="module">
+  import { partyClass } from "/g/feed.js";
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const data = await fetch("/api/photos").then((r) => r.json());
+  const all = Object.entries(data.photos ?? {}).map(([id, e]) => ({ id, ...e }));
+  const states = [...new Set(all.map((e) => e.race.slice(0, 2)))].sort();
+  const sel = document.getElementById("f-state");
+  for (const s of states) sel.insertAdjacentHTML("beforeend", `<option>${s}</option>`);
+  const $ = (id) => document.getElementById(id);
+
+  function render() {
+    const st = $("f-state").value, conf = $("f-conf").value, src = $("f-src").value, ind = $("f-ind").checked, q = $("f-q").value.trim().toLowerCase();
+    const rows = all.filter((e) =>
+      (!st || e.race.startsWith(st + "-")) &&
+      (!conf || (conf === "none" ? !(e.file || e.remote) : e.confidence === conf)) &&
+      (!src || e.source === src) && (!ind || e.featured) && (!q || e.name.toLowerCase().includes(q)));
+    $("count").textContent = `${rows.length} of ${all.length} · generated ${data.generated ?? "never (run scripts/fetch-candidate-photos.py then build-photo-index.py)"}`;
+    const byRace = new Map();
+    for (const e of rows) byRace.set(e.race, [...(byRace.get(e.race) ?? []), e]);
+    const races = [...byRace.keys()].sort((a, b) => a.slice(0, 2).localeCompare(b.slice(0, 2)) || (a.includes("SEN") ? -1 : 1) || a.localeCompare(b, undefined, { numeric: true }));
+    $("out").innerHTML = races.map((r) => `<h2>${esc(r)}</h2><div class="grid">` + byRace.get(r).sort((a, b) => b.featured - a.featured || a.name.localeCompare(b.name)).map((e) => {
+      const img = e.file ?? e.remote;
+      const conf = e.confidence ?? "none";
+      return `<div class="ph ${e.featured ? "featured" : ""}">
+        <div class="img">${img ? `<img src="${esc(img)}" alt="${esc(e.name)}" loading="lazy">` : "no photo"}</div>
+        <div class="nm">${esc(e.name)}</div>
+        <div class="sub"><span class="p ${partyClass(e.party)}">${esc(e.party)}</span> · AP ${esc(e.id)}</div>
+        <div class="sub">${e.page ? `<a href="${esc(e.page)}" target="_blank" rel="noopener">${esc(e.source ?? "")}</a>` : esc(e.source ?? "")}${e.note ? ` · ${esc(e.note)}` : ""}</div>
+        <span class="conf c-${conf}">${conf}</span>
+      </div>`;
+    }).join("") + `</div>`).join("");
+  }
+  for (const id of ["f-state", "f-conf", "f-src", "f-ind", "f-q"]) $(id).addEventListener("input", render);
+  render();
+</script>
+</body>
+</html>

@@ -289,6 +289,23 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
       <li>Wall and graphics: pick the wall view; stage a full-screen graphic (choose race, chamber, state) and copy its URL for the graphics operator.</li>
       <li>Event log with mute per event type.</li>
     </ul>
+
+    <h3>Graphics bible</h3>
+    <p>Every graphic used on air is registered in one catalogue (the graphics bible) under the production team's six categories. The categories below are the production team's; the right column says what this system supplies to each.</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>Category</th><th>Definition</th><th>From this system</th></tr></thead>
+      <tbody>
+        <tr><td>ID</td><td>ID graphics and lower thirds: on-screen identification of guests, talent and candidates.</td><td>Name/title lower thirds (section A of the graphics data options); names and parties from AP, titles and photos from the candidate index.</td></tr>
+        <tr><td>Election</td><td>Election graphics: interpretation of AP data.</td><td>Race results, balance of power, status maps, county maps, featured-races board, calls and zoom-ins (sections B and D). Live from the feed.</td></tr>
+        <tr><td>Description</td><td>Description graphics: infographics, charts and any data cut to as part of a story arc. Third-party data must be sourced on screen.</td><td>Movement and context graphics (section C) and the prepared deep-dive cards (B1–B4). Every card's data line names the source; anything not from AP carries its source in the graphic.</td></tr>
+        <tr><td>Data</td><td>Data graphics: the real-time news ticker.</td><td>The ticker (A1), fed by the producer-curated queue and the event engine.</td></tr>
+        <tr><td>Show</td><td>Show graphics: titles, animated logo, transitions, segment graphics, calls to action (social media and similar).</td><td>Not produced by this system. Served through the same keyable-page mechanism if the design team delivers them as web assets; otherwise handled on the switcher or graphics PC directly.</td></tr>
+        <tr><td>Credits</td><td>End-of-show credits.</td><td>Not produced by this system.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Each registered graphic records: bible category, the page URL and parameters, data source (AP, AP-derived, mixed, outside; see the audit on the graphics data options page), the on-air key note if any, prepared or live, and who signed it off. The control panel's staging list is generated from this catalogue so nothing unregistered can be cued.</p>
   </section>
 
   <section>
