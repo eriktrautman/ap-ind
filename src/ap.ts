@@ -23,6 +23,8 @@ export interface ApReportingUnit {
   statePostal: string;
   stateName: string;
   reportingunitID?: string;
+  reportingunitName?: string;
+  fipsCode?: string;
   reportingunitLevel: number; // 0 national, 1 state, 2 county
   level: string;
   lastUpdated: string;

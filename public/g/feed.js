@@ -57,6 +57,7 @@ export function connectFeed(handlers) {
     import("./sample-data.js").then(({ SAMPLE }) => {
       const now = new Date().toISOString();
       apply({ ...SAMPLE, status: { ...SAMPLE.status, lastSuccess: now, lastAttempt: now } });
+      handlers.onUpdate?.(state, { type: "counties", changed: [], states: [] });
       state.connected = true;
       handlers.onStatus?.(state);
       // keep the freshness dot green while the demo is open

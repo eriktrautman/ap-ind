@@ -69,6 +69,17 @@ app.get("/api/races/:id", (req, reply) => {
   return race ?? reply.code(404).send({ error: "no such race" });
 });
 app.get("/api/events", () => store.recentEvents(100));
+app.get("/api/races/:id/counties", (req, reply) => {
+  const data = store.getJson<unknown>(`counties:${(req.params as { id: string }).id}`, null);
+  return data ?? reply.code(404).send({ error: "no county data for this race (featured states only, every 2 minutes)" });
+});
+app.get("/api/baseline/pres2024/:state", async (req, reply) => {
+  const { readFile } = await import("node:fs/promises");
+  const all = JSON.parse(await readFile(new URL("../config/baseline-2024-pres.json", import.meta.url), "utf8"));
+  const st = all.states[(req.params as { state: string }).state.toUpperCase()];
+  return st ?? reply.code(404).send({ error: "no 2024 baseline for this state" });
+});
+poller.on("counties", (states: string[]) => broadcast({ type: "counties", states }));
 app.get("/api/ticker", () => buildTicker(store));
 
 // Producer state (spike: unauthenticated, local only)

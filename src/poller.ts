@@ -3,12 +3,16 @@
 
 import { EventEmitter } from "node:events";
 import { fetchAp, initialUrl, ApHttpError } from "./ap.ts";
-import { normalizeRace, type Race } from "./model.ts";
+import { normalizeRace, normalizeCounties, type Race } from "./model.ts";
+import candidateIndex from "../config/candidates.json" with { type: "json" };
 import { diffRace, type ElectionEvent } from "./events.ts";
 import type { Store } from "./store.ts";
 
+const COUNTY_INTERVAL_MS = 120_000;
+
 export interface PollerStatus {
   running: boolean;
+  countyFetched: Record<string, string>;
   intervalMs: number;
   lastAttempt: string | null;
   lastSuccess: string | null;
@@ -30,6 +34,7 @@ export class Poller extends EventEmitter {
   status: PollerStatus;
   private store: Store;
   private timer: NodeJS.Timeout | null = null;
+  private countyTimer: NodeJS.Timeout | null = null;
   private inFlight = false;
 
   constructor(store: Store, intervalMs: number, resultsType: string) {
@@ -38,18 +43,42 @@ export class Poller extends EventEmitter {
     this.status = {
       running: false, intervalMs, lastAttempt: null, lastSuccess: null, lastError: null,
       consecutiveErrors: 0, raceCount: store.allRaces().length, lastChangedCount: 0,
-      apTimestamp: null, resultsType,
+      apTimestamp: null, resultsType, countyFetched: {},
     };
   }
 
   start(): void {
     this.status.running = true;
     void this.tick();
+    void this.countyTick();
+    this.countyTimer = setInterval(() => void this.countyTick(), COUNTY_INTERVAL_MS);
+  }
+
+  /** County-level units for the featured states (for county maps and 2024 comparisons). */
+  async countyTick(): Promise<void> {
+    const states = [...new Set(candidateIndex.races.filter((r) => r.featured).map((r) => r.label.slice(0, 2)))];
+    for (const st of states) {
+      try {
+        const u = new URL(initialUrl());
+        u.searchParams.set("level", "ru");
+        u.searchParams.set("statePostal", st);
+        const { data } = await fetchAp(u.toString());
+        for (const ar of data.races) {
+          const units = normalizeCounties(ar);
+          if (units.length) this.store.setJson(`counties:${ar.raceID}`, { fetched: new Date().toISOString(), state: st, units });
+        }
+        this.status.countyFetched[st] = new Date().toISOString();
+      } catch (err) {
+        console.error(`[poller] county fetch ${st}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    this.emit("counties", states);
   }
 
   stop(): void {
     this.status.running = false;
     if (this.timer) clearTimeout(this.timer);
+    if (this.countyTimer) clearInterval(this.countyTimer);
   }
 
   setInterval(ms: number): void {

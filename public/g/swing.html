@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Versus 2024 Presidential</title>
+<style>
+  /* 1920x1080 full-screen: a candidate's share tonight against their 2024 presidential ticket, by voting area.
+     ?id=<raceID> required. ?who=ind (default) | main. ?vs=dem|gop overrides the ticket. ?bg=black|green. ?demo=1 */
+  :root { --panel: #0e1420; --panel-edge: #16213a; --fg: #f4f6fa; --muted: #9aa7bd; --rule: #2a3a5c; --dem: #3b82f6; --gop: #ef4444; --ind: #a855f7; --gold: #facc15; --ok: #2ecc71; --behind: #5c6b85; --font: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; font-family: var(--font); color: var(--fg); font-variant-numeric: tabular-nums; }
+  body.bg-green { background: #00ff00; } body.bg-black { background: #000; }
+  .panel { position: absolute; left: 96px; top: 80px; width: 1728px; height: 920px; background: linear-gradient(160deg, var(--panel), var(--panel-edge)); border-radius: 8px; padding: 52px 72px; box-sizing: border-box; display: grid; grid-template-rows: auto auto 1fr auto; gap: 28px; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--rule); padding-bottom: 20px; }
+  .title { font-size: 56px; font-weight: 700; letter-spacing: -0.01em; }
+  .title small { font-size: 30px; font-weight: 400; color: var(--muted); margin-left: 18px; }
+  .reporting { font-size: 30px; color: var(--muted); } .reporting b { color: var(--fg); }
+  .headline { font-size: 40px; line-height: 1.2; }
+  .headline b { font-size: 54px; }
+  .ahead { color: var(--ok); } .behind { color: #f87171; }
+  .body { display: grid; grid-template-columns: 1fr 640px; gap: 56px; min-height: 0; overflow: hidden; }
+  .map { background: rgba(0,0,0,.25); border-radius: 8px; padding: 16px; position: relative; }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .legend { position: absolute; left: 24px; bottom: 18px; display: flex; gap: 22px; font-size: 22px; color: var(--muted); }
+  .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; vertical-align: -3px; margin-right: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 28px; align-self: start; }
+  th { text-align: left; color: var(--muted); font-weight: 400; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 2px solid var(--rule); }
+  td { padding: 9px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  td.r, th.r { text-align: right; } td.b { font-weight: 700; }
+  .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 22px; border-top: 2px solid var(--rule); padding-top: 18px; }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; margin-right: 10px; vertical-align: middle; }
+  .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
+  .empty { font-size: 36px; color: var(--muted); align-self: center; text-align: center; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div class="title" id="title">Loading…</div><div class="reporting" id="reporting"></div></div>
+  <div class="headline" id="headline"></div>
+  <div class="body">
+    <div class="map"><svg id="map" viewBox="0 0 900 560"></svg><div class="legend" id="legend"></div></div>
+    <div><table><thead><tr><th>Area</th><th class="r">In</th><th class="r" id="th-now">2026</th><th class="r" id="th-then">2024</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · 2024 presidential result by area from AP · like-for-like over areas reporting</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness, fmt } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  const raceId = q.get("id"), who = q.get("who") ?? "ind", demo = !!q.get("demo"), bg = q.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const normName = (n) => String(n ?? "").toLowerCase().replace(/\s+(county|parish|borough|census area|municipality|city and borough|town|city)$/i, "").replace(/[^a-z0-9]/g, "");
+  const MIN_IN = 10; // an area needs this much of its expected vote in to count
+  let race = null, counties = null, baseline = null, geo = null;
+
+  async function loadStatic() {
+    if (!race) return;
+    const st = race.state;
+    // demo mode (docs site, no server): static copies of the baseline and geometry
+    baseline ??= demo
+      ? await (await fetch(`./baseline-2024-pres.json`)).json().then((d) => d.states[st] ?? null).catch(() => null)
+      : await (await fetch(`/api/baseline/pres2024/${st}`)).json().catch(() => null);
+    if (!geo) {
+      const topo = await (await fetch(`/geo/${st}.json`)).json();
+      const obj = topo.objects[Object.keys(topo.objects)[0]];
+      const feats = topojson.feature(topo, obj).features;
+      const fc = { type: "FeatureCollection", features: feats };
+      const [lon, lat] = d3.geoCentroid(fc);
+      geo = { feats, kind: feats[0]?.properties?.kind ?? "county", path: d3.geoPath(d3.geoConicEqualArea().rotate([-lon, 0]).center([0, lat]).parallels([lat - 6, lat + 6]).fitSize([900, 560], fc)) };
+    }
+  }
+  async function loadCounties() {
+    if (demo) { const { SAMPLE_COUNTIES } = await import("./sample-counties.js"); counties = SAMPLE_COUNTIES[raceId] ?? null; return; }
+    try { const d = await (await fetch(`/api/races/${raceId}/counties`)).json(); counties = d.units ?? null; } catch { counties = null; }
+  }
+
+  function pick() {
+    const ind = race.candidates.find((c) => c.featured);
+    const main = race.candidates.filter((c) => !c.featured).sort((a, b) => b.votes - a.votes)[0] ?? race.candidates.find((c) => c.id !== ind?.id);
+    const cand = who === "main" ? main : (ind ?? race.candidates[0]);
+    const ticket = q.get("vs") ?? (cand.party === "GOP" ? "gop" : "dem");
+    return { cand, ticket };
+  }
+  const unitKey = (u) => geo.kind === "county" ? String(u.fips) : normName(u.name);
+  const featKey = (d) => geo.kind === "county" ? String(d.id) : normName(d.properties.name);
+  const baseFor = (u) => { if (!baseline) return null; return baseline.units[u.fips] ?? Object.values(baseline.units).find((b) => normName(b.name) === normName(u.name)) ?? null; };
+
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const { cand, ticket } = pick();
+    const ticketName = baseline?.tickets?.[ticket] ?? (ticket === "gop" ? "Trump" : "Harris");
+    const office = race.office === "S" ? "U.S. Senate" : race.label.endsWith("AL") ? "U.S. House, at large" : `U.S. House, ${race.seat}`;
+    $("title").innerHTML = `${esc(cand.last)} vs the 2024 ${esc(ticketName)} vote <small>${esc(race.stateName)} · ${esc(office)}</small>`;
+    $("th-now").textContent = `${cand.last} 2026`; $("th-then").textContent = `${ticketName} 2024`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("updated").textContent = demo ? "SAMPLE · Nebraska's 2024 Senate result standing in for tonight's count" : `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    const color = cand.featured ? "#d4af37" : cand.party === "GOP" ? "#ef4444" : cand.party === "Dem" ? "#3b82f6" : "#a855f7";
+    $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead of ${esc(ticketName)} 2024</span><span><i style="background:var(--behind)"></i>behind</span><span><i style="background:#1b2a4a"></i>under ${MIN_IN}% in</span>`;
+
+    if (!counties || !baseline) {
+      $("headline").innerHTML = `<span style="color:var(--muted)">${!baseline ? "No 2024 area-level baseline for this state (statewide only)." : "Waiting for county results."}</span>`;
+      $("rows").innerHTML = ""; drawMap(new Map(), color); return;
+    }
+    // per-area comparison
+    const rows = [];
+    let nowV = 0, nowT = 0, thenV = 0, thenT = 0;
+    for (const u of counties) {
+      const tot = Object.values(u.votes).reduce((s, v) => s + v, 0);
+      const inPct = u.eevp || u.precinctsPct;
+      const b = baseFor(u);
+      if (!b) continue;
+      const share = tot ? (u.votes[cand.id] ?? 0) / tot * 100 : null;
+      const base = ticket === "gop" ? b.gopPct : b.demPct;
+      const ok = tot > 0 && inPct >= MIN_IN;
+      if (ok) { nowV += u.votes[cand.id] ?? 0; nowT += tot; thenV += ticket === "gop" ? b.gop : b.dem; thenT += b.total; }
+      rows.push({ u, b, inPct, share, base, diff: ok && share !== null ? share - base : null, ok });
+    }
+    const agg = nowT && thenT ? (nowV / nowT * 100) - (thenV / thenT * 100) : null;
+    const reportingAreas = rows.filter((r) => r.ok).length;
+    const label = geo.kind === "town" ? "towns" : geo.kind === "house-district" ? "districts" : "counties";
+    $("headline").innerHTML = agg === null
+      ? `<span style="color:var(--muted)">No ${label} with enough of the vote in yet.</span>`
+      : `${esc(cand.last)} is running <b class="${agg >= 0 ? "ahead" : "behind"}">${agg >= 0 ? "+" : ""}${agg.toFixed(1)}</b> points ${agg >= 0 ? "ahead of" : "behind"} the ${esc(ticketName)} 2024 vote across ${reportingAreas} ${label} reporting`;
+    // table: biggest areas by 2024 total
+    rows.sort((a, b) => b.b.total - a.b.total);
+    $("rows").innerHTML = rows.slice(0, 7).map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r">${Math.round(r.inPct)}%</td><td class="r b">${r.share === null ? "—" : r.share.toFixed(1) + "%"}</td><td class="r">${r.base.toFixed(1)}%</td><td class="r b ${r.diff === null ? "" : r.diff >= 0 ? "ahead" : "behind"}">${r.diff === null ? "—" : (r.diff >= 0 ? "+" : "") + r.diff.toFixed(1)}</td></tr>`).join("");
+    drawMap(new Map(rows.map((r) => [unitKey(r.u), r])), color);
+  }
+
+  function drawMap(byKey, color) {
+    const svg = d3.select("#map");
+    const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
+    sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
+      .attr("fill", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return "#1b2a4a"; return r.diff >= 0 ? color : "#5c6b85"; })
+      .attr("fill-opacity", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return 1; return 0.3 + Math.min(1, Math.abs(r.diff) / 15) * 0.7; });
+  }
+
+  const feed = connectFeed({
+    onSnapshot: async (s) => { race = s.races.get(raceId); await loadStatic(); await loadCounties(); render(); },
+    onUpdate: async (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } if (msg.type === "counties") { await loadCounties(); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+  if (!demo) setInterval(async () => { await loadCounties(); render(); }, 60_000);
+</script>
+</body>
+</html>

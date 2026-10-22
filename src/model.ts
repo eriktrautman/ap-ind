@@ -104,3 +104,28 @@ export function normalizeRace(r: ApRace): Race | null {
     candidates,
   };
 }
+
+export interface CountyUnit {
+  fips: string | null;
+  name: string;
+  precinctsPct: number;
+  eevp: number;
+  lastUpdated: string | null;
+  votes: Record<string, number>; // candidateID -> votes
+}
+
+const NOT_A_PERSON_SET = new Set(["Total Write-ins", "Other", "Write-ins", "Blank", "Scattering"]);
+
+/** Sub-state reporting units (counties, or towns/districts where AP uses them) for one AP race. */
+export function normalizeCounties(r: ApRace): CountyUnit[] {
+  return r.reportingUnits
+    .filter((u) => u.reportingunitLevel === 2)
+    .map((u) => ({
+      fips: u.fipsCode ?? null,
+      name: (u.reportingunitName ?? "").replace(/ County$/, ""),
+      precinctsPct: u.precinctsReportingPct ?? 0,
+      eevp: u.eevp ?? 0,
+      lastUpdated: u.lastUpdated ?? null,
+      votes: Object.fromEntries(u.candidates.filter((c) => !NOT_A_PERSON_SET.has(c.last)).map((c) => [c.candidateID, c.voteCount ?? 0])),
+    }));
+}
