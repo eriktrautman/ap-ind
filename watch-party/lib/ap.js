@@ -23,23 +23,70 @@ export async function fetchAp(path, params) {
   return res.json();
 }
 
+// Every office the key returns for Nov 3: federal, statewide, ballot measures, big-city mayors.
+// State legislatures and other local offices are not in the entitlement.
+export const OFFICES = "S,H,G,A,SS,L,USD,RR,I,M";
+
 export async function fetchRaces(level, extra = {}) {
   const { electionDate, resultsType } = cfg();
-  return fetchAp(`/elections/${electionDate}`, { officeID: "S,H", level, resultsType, ...extra });
+  return fetchAp(`/elections/${electionDate}`, { officeID: OFFICES, level, resultsType, ...extra });
 }
 
-const MAJOR = new Set(["Dem", "GOP"]);
+// Party codes that never mean "independent": the two majors, nonpartisan, and ballot-measure sides.
+const NOT_INDEPENDENT = new Set(["Dem", "GOP", "NP", "Yes", "No"]);
 const PLACEHOLDER = new Set(["Total Write-ins", "Other", "Write-ins", "Blank", "Scattering"]);
 const AT_LARGE = new Set(["AK", "DE", "ND", "SD", "VT", "WY"]);
 
-export function raceLabel(state, office, seatNum, seatName) {
+/** Office code → { kind, short badge, long title }. kind groups the site's filters. */
+export const OFFICE = {
+  S:   { kind: "federal",   badge: "SENATE",   title: "U.S. Senate" },
+  H:   { kind: "federal",   badge: "HOUSE",    title: "U.S. House" },
+  USD: { kind: "federal",   badge: "DELEGATE", title: "U.S. Delegate" },
+  G:   { kind: "governor",  badge: "GOVERNOR", title: "Governor" },
+  L:   { kind: "statewide", badge: "LT GOV",   title: "Lieutenant Governor" },
+  A:   { kind: "statewide", badge: "AG",       title: "Attorney General" },
+  SS:  { kind: "statewide", badge: "SEC STATE", title: "Secretary of State" },
+  RR:  { kind: "statewide", badge: "RR COMM",  title: "Railroad Commissioner" },
+  I:   { kind: "measure",   badge: "MEASURE",  title: "Ballot measure" },
+  M:   { kind: "local",     badge: "MAYOR",    title: "Mayor" },
+};
+
+const slug = (s) => String(s ?? "").toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+const MEASURE_CODE = { Proposition: "PROP", Amendment: "AMEND", "Constitutional Amendment": "AMEND", Question: "Q", Measure: "MEASURE", Issue: "ISSUE", Proposal: "PROPOSAL", Initiative: "INIT" };
+
+/** Short, URL-safe, human-readable id: GA-SEN, NE-2, AK-AL, AZ-GOV, AZ-PROP-316, CA-MAYOR-LOS-ANGELES. */
+export function raceLabel(state, office, seatNum, seatName, r = {}) {
   if (office === "S") return `${state}-SEN`;
-  if (AT_LARGE.has(state) || /at large/i.test(seatName ?? "")) return `${state}-AL`;
-  return `${state}-${seatNum ?? "?"}`;
+  if (office === "H") return AT_LARGE.has(state) || /at large/i.test(seatName ?? "") ? `${state}-AL` : `${state}-${seatNum ?? "?"}`;
+  if (office === "G") return `${state}-GOV`;
+  if (office === "A") return `${state}-AG`;
+  if (office === "SS") return `${state}-SOS`;
+  if (office === "L") return `${state}-LTGOV`;
+  if (office === "USD") return `${state}-DELEGATE`;
+  if (office === "RR") return `${state}-RRC${seatNum ? "-" + seatNum : ""}`;
+  if (office === "I") {
+    const num = (seatName ?? "").match(/^\s*([A-Z0-9-]+)\s*-/i)?.[1];
+    return `${state}-${MEASURE_CODE[r.officeName] ?? "MEASURE"}-${num ?? r.raceID}`;
+  }
+  if (office === "M") return `${state}-MAYOR${seatName ? "-" + slug(seatName) : ""}`;
+  return `${state}-${office}-${r.raceID}`;
+}
+
+/** Display title for a race page or row. */
+export function raceTitle(state, stateName, office, seatName, r = {}) {
+  if (office === "S") return "U.S. Senate";
+  if (office === "H") return AT_LARGE.has(state) || /at large/i.test(seatName ?? "") ? "U.S. House, at large" : `U.S. House, ${seatName ?? ""}`;
+  if (office === "I") {
+    const m = (seatName ?? "").match(/^\s*([A-Z0-9-]+)\s*-\s*(.*)$/i);
+    return m ? `${r.officeName ?? "Measure"} ${m[1]}: ${m[2]}` : (r.officeName ?? "Ballot measure");
+  }
+  if (office === "M") return seatName ? `Mayor of ${seatName}` : "Mayor";
+  if (office === "RR") return `Railroad Commissioner${seatName ? ", " + seatName : ""}`;
+  return OFFICE[office]?.title ?? r.officeName ?? office;
 }
 
 export function isIndependent(c) {
-  return !MAJOR.has(c.party) && !PLACEHOLDER.has(c.last);
+  return !NOT_INDEPENDENT.has(c.party) && !PLACEHOLDER.has(c.last);
 }
 
 function fullName(c) {
@@ -61,12 +108,16 @@ function unitCandidates(u) {
 /** Normalize an AP race from its state-level unit. Returns null for national aggregates. */
 export function normalizeRace(r) {
   const ru = r.reportingUnits.find((u) => u.reportingunitLevel === 1) ?? r.reportingUnits[0];
-  if (!ru || ru.reportingunitLevel === 0 || (r.officeID !== "S" && r.officeID !== "H")) return null;
+  if (!ru || ru.reportingunitLevel === 0 || !OFFICE[r.officeID]) return null;
   const candidates = unitCandidates(ru);
   const winner = candidates.find((c) => c.winner);
+  const nonpartisan = /nonpartisan/i.test(r.raceType ?? "") || r.officeID === "I";
   return {
     id: r.raceID, state: ru.statePostal, stateName: ru.stateName, office: r.officeID,
-    seat: r.seatName ?? "", label: raceLabel(ru.statePostal, r.officeID, r.seatNum, r.seatName),
+    kind: OFFICE[r.officeID].kind, officeName: r.officeName ?? OFFICE[r.officeID].title, nonpartisan,
+    title: raceTitle(ru.statePostal, ru.stateName, r.officeID, r.seatName, r),
+    description: r.officeID === "I" ? (r.description ?? "") : undefined, summary: r.officeID === "I" ? (r.summary ?? "") : undefined, category: r.officeID === "I" ? (r.category ?? "") : undefined,
+    seat: r.seatName ?? "", label: raceLabel(ru.statePostal, r.officeID, r.seatNum, r.seatName, r),
     callStatus: r.raceCallStatus ?? "", called: !!winner || r.raceCallStatus === "Called",
     precinctsPct: ru.precinctsReportingPct ?? 0, eevp: ru.eevp ?? r.eevp ?? 0,
     totalVotes: candidates.reduce((s, c) => s + c.votes, 0),

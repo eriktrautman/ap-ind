@@ -89,8 +89,8 @@
 
 <h2>1. What it is</h2>
 <ul>
-  <li><b>Race list.</b> Every race with an independent (204: 27 Senate, 177 House; 756 candidates), one row per race with the independent first: photos, vote counts, shares, expected vote in, status. Filter by state, office, status; sort by margin, share, or how much is in. Star races to pin them to the top (kept on the device).</li>
-  <li><b>Race page.</b> One URL per race (<code>/race/NE-SEN</code>) with a small dashboard: the race summary, head-to-head bars for every candidate, a county map that fills in as counties report, with hover or tap to inspect, and the same counties as a sortable table beneath.</li>
+  <li><b>Race list.</b> Every race the AP key returns for Nov 3 (644: 35 Senate, 435 House, 1 delegate, 36 governor, 68 other statewide, 60 ballot measures, 9 big-city mayors), one row per race with the independent first where there is one: photos, vote counts, shares, expected vote in, status. A badge on each row names the kind of race. Filter by kind (Senate, House, governor, other statewide, ballot measures, mayors), independent on ballot, state, status; sort by margin, share, or how much is in. Star races to pin them in a "Your races" panel at the top (kept on the device). State legislatures and other local offices are not in the entitlement.</li>
+  <li><b>Race page.</b> One URL per race (<code>/race/NE-SEN</code>, <code>/race/AZ-GOV</code>, <code>/race/VA-Q-1</code>) with a small dashboard: the race summary, head-to-head bars for every candidate, a county map that fills in as counties report, with hover or tap to inspect, and the same counties as a sortable table beneath.</li>
   <li><b>Live.</b> The page refreshes itself every minute without a reload, and always shows "data as of", AP feed status, and how much of the expected vote is counted.</li>
   <li><b>Phone first.</b> Most viewers will be at a watch party holding a phone; the desktop layout is the phone layout with the county map alongside.</li>
 </ul>
@@ -160,8 +160,8 @@
 <table>
   <thead><tr><th>Request</th><th>Cadence</th><th>Per hour</th><th>Why</th></tr></thead>
   <tbody>
-    <tr><td>National state-level feed (all races, delta cursor)</td><td>every 60 s</td><td>60</td><td>Race totals, calls, expected vote for all 204 races</td></tr>
-    <tr><td>County-level feed per state (level=ru), 45 states with an independent race</td><td>each state every 5 min, staggered 9 per minute</td><td>540</td><td>County map and table; county totals move slower than state totals</td></tr>
+    <tr><td>National state-level feed (all races, delta cursor)</td><td>every 60 s</td><td>60</td><td>Race totals, calls, expected vote for all 644 races</td></tr>
+    <tr><td>County-level feed per state (level=ru), 51 states and DC</td><td>each state every 5 min, staggered 9 per minute</td><td>540</td><td>County map and table; county totals move slower than state totals</td></tr>
     <tr><td>Full (non-delta) refresh of the national feed</td><td>every 10 min</td><td>6</td><td>Catches AP corrections the delta cursor cannot see</td></tr>
     <tr><td>Reports: Trend, PollHours, Candidates</td><td>hourly / at start</td><td>~3</td><td>Holdovers, closing times, roster</td></tr>
   </tbody>
@@ -229,7 +229,7 @@
 <h2>7. Open questions</h2>
 <ol>
   <li>Domain and branding: whose site is this (United Independents, the broadcast, neutral)? It changes the header, the about page, and whether candidates will share it.</li>
-  <li>Which races: every race with any non-major candidate (204, includes Libertarian and Green nominees polling under 2%), or a curated list? The feed makes both trivial; the list page gets long at 204.</li>
+  <li>Which races: decided. Every race the key covers, with an "independent on ballot" filter; ballot measures and mayors included since they cost nothing extra.</li>
   <li>AP rate limit for a second poller (account rep).</li>
   <li>Photos for the ~500 non-featured candidates: ship with initials where confidence is low, or hold for a human pass first?</li>
   <li>Should candidates be able to claim a race page (a link to their own site, a statement)? Adds accounts and moderation; probably not for this cycle.</li>

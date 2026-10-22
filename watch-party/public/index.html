@@ -7,18 +7,24 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<div class="topbar"><b>IND Election Night</b><span class="subbrand">Watch Party</span><span class="tag">Every Senate and House race · Nov 3 2026</span><span class="status" id="status"><span class="dot off"></span><span>loading</span></span></div>
+<div class="topbar"><b>IND Election Night</b><span class="subbrand">Watch Party</span><span class="tag">Every federal, governor, statewide, ballot-measure and big-city mayor race · Nov 3 2026</span><span class="status" id="status"><span class="dot off"></span><span>loading</span></span></div>
 <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
 <main>
   <div class="filters" id="filters">
     <span class="chip on" data-f="all">All races</span>
     <span class="chip" data-f="ind">Independent on ballot</span>
     <span class="chip" data-f="starred">★ Starred</span>
+    <span class="chip" data-f="featured">Featured</span>
+    <span class="sep"></span>
     <span class="chip" data-f="S">Senate</span>
     <span class="chip" data-f="H">House</span>
+    <span class="chip" data-f="governor">Governor</span>
+    <span class="chip" data-f="statewide">Other statewide</span>
+    <span class="chip" data-f="measure">Ballot measures</span>
+    <span class="chip" data-f="local">Mayors</span>
+    <span class="sep"></span>
     <span class="chip" data-f="counting">Counting</span>
     <span class="chip" data-f="called">Called</span>
-    <span class="chip" data-f="featured">Featured</span>
     <select id="state"><option value="">All states</option></select>
     <select id="sort"><option value="closest">Closest first</option><option value="margin">Independent leading first</option><option value="in">Most counted first</option><option value="label">By state</option></select>
     <input id="q" placeholder="Search name" size="14">
@@ -27,9 +33,9 @@
   <div id="list"><div class="empty">Loading races…</div></div>
   <div class="asof" id="asof"></div>
 </main>
-<footer>Results are unofficial and come from the Associated Press. "% in" is AP's estimate of the expected vote counted, not precincts. "AP CALL" is AP's projection. Stars are saved on this device.</footer>
+<footer>Results are unofficial and come from the Associated Press. "% in" is AP's estimate of the expected vote counted, not precincts. "AP CALL" is AP's projection. Stars are saved on this device. State legislatures and other local offices are not in our AP feed.</footer>
 <script type="module">
-  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass, winMark } from "/app.js";
+  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass, winMark, kindBadge, isSide } from "/app.js";
   const $ = (id) => document.getElementById(id);
   let index = null, status = null, filter = "all", nextAt = Date.now() + REFRESH_MS;
   let starred = stars.get();
@@ -43,6 +49,7 @@
   }
 
   function rowHtml(r) {
+      if (r.kind === "measure") return measureRow(r);
       const ind = r.candidates.find((c) => c.independent) ?? r.candidates[0];
       if (!ind) return "";
       const others = r.candidates.filter((c) => c.id !== ind.id).slice(0, 2);
@@ -50,8 +57,20 @@
       const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}${winMark(c)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
       return `<div class="race">
         <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
-        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${winMark(ind)}${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})${winMark(c)}`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
+        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${kindBadge(r)}${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${winMark(ind)}${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})${winMark(c)}`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
         <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
+      </div>`;
+  }
+
+  function measureRow(r) {
+      const yes = r.candidates.find((c) => c.party === "Yes") ?? r.candidates[0], no = r.candidates.find((c) => c.party === "No");
+      if (!yes) return "";
+      const mg = r.totalVotes ? Math.round((yes.pct - (no?.pct ?? 0)) * 10) / 10 : null;
+      const line = r.totalVotes ? `Yes ${pct(yes.pct)}${winMark(yes)} · No ${pct(no?.pct)}${no ? winMark(no) : ""} · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
+      return `<div class="race">
+        <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
+        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(yes)}${no ? face(no) : ""}</span><span class="txt"><span class="nm">${kindBadge(r)}${esc(r.state)} · ${esc(r.title)}</span><span class="sub">${statusPill(r)} ${line}${r.category ? ` · ${esc(r.category)}` : ""}</span></span></a>
+        <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>Yes margin</span></div>
       </div>`;
   }
 
@@ -63,9 +82,10 @@
     const q = $("q").value.trim().toLowerCase(), st = sel.value, sort = $("sort").value;
     let rows = index.races.filter((r) =>
       (filter === "all") || (filter === "ind" && r.hasIndependent) || (filter === "starred") || (filter === "S" && r.office === "S") || (filter === "H" && r.office === "H") ||
+      (filter === "governor" && r.kind === "governor") || (filter === "statewide" && r.kind === "statewide") || (filter === "measure" && r.kind === "measure") || (filter === "local" && r.kind === "local") ||
       (filter === "counting" && !r.called && r.totalVotes > 0) || (filter === "called" && r.called) || (filter === "featured" && r.featured));
     if (st) rows = rows.filter((r) => r.state === st);
-    if (q) rows = rows.filter((r) => r.candidates.some((c) => c.name.toLowerCase().includes(q)) || r.label.toLowerCase().includes(q));
+    if (q) rows = rows.filter((r) => r.candidates.some((c) => c.name.toLowerCase().includes(q)) || r.label.toLowerCase().includes(q) || (r.title ?? "").toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q));
     const m = (r) => indMargin(r);
     rows.sort((a, b) => {
       if (sort === "label") return a.label.localeCompare(b.label, undefined, { numeric: true });
@@ -87,7 +107,8 @@
       rows = rows.filter((r) => !starred.has(r.label));
       $("list").innerHTML = rows.length ? rows.map(rowHtml).join("") : `<div class="empty">No races match.</div>`;
     }
-    $("asof").innerHTML = `<span>${rows.length} of ${index.races.length} races · ${index.races.filter((r) => r.hasIndependent).length} with an independent · ${index.races.filter((r) => r.called).length} called</span><span>Snapshot ${new Date(index.generated).toLocaleTimeString("en-US")} · AP feed time ${new Date(index.apTimestamp).toLocaleTimeString("en-US")}</span>`;
+    const n = (k) => index.races.filter((r) => r.kind === k).length;
+    $("asof").innerHTML = `<span>${rows.length} of ${index.races.length} races · ${n("federal")} federal, ${n("governor")} governor, ${n("statewide")} other statewide, ${n("measure")} ballot measures, ${n("local")} mayor · ${index.races.filter((r) => r.hasIndependent).length} with an independent · ${index.races.filter((r) => r.called).length} called</span><span>Snapshot ${new Date(index.generated).toLocaleTimeString("en-US")} · AP feed time ${new Date(index.apTimestamp).toLocaleTimeString("en-US")}</span>`;
   }
 
   $("filters").addEventListener("click", (e) => {

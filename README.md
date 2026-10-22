@@ -60,6 +60,10 @@ cd watch-party && node scripts/sync-photos.mjs              # pull the set onto 
 
 The broadcast server serves photos from `public/photos/` so air does not depend on the CDN; the Watch Party reads the CDN URLs from the manifest.
 
+## Watch Party
+
+`watch-party/` is a separate Vercel project (https://ind-watch-party.vercel.app): a poller writes JSON snapshots to Vercel Blob and static pages read them. It covers every race the AP key returns (Senate, House, governor, other statewide offices, ballot measures, big-city mayors; not state legislatures). Run the poller locally with `cd watch-party && node --env-file=.env.blob --env-file=../.env scripts/run-local.mjs`.
+
 ## Secrets
 
 The AP key lives only in `.env` (gitignored) and is sent as a request header, so it never appears in URLs or logs. Never commit `.env`.

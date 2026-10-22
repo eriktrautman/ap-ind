@@ -8,10 +8,16 @@ export const pct = (n) => `${Number(n ?? 0).toFixed(1)}%`;
 export const partyClass = (p) => (p === "Dem" ? "dem" : p === "GOP" ? "gop" : "oth");
 export const candClass = (c) => (c.independent ? "ind" : partyClass(c.party));
 export const tag = (c) => (c.party === "Dem" ? "D" : c.party === "GOP" ? "R" : c.independent ? "I" : c.party);
+export const isSide = (c) => c.party === "Yes" || c.party === "No"; // ballot-measure "candidates"
+/** Small grey badge naming the kind of race, so every row says what it is. */
+export const BADGE = { S: "SENATE", H: "HOUSE", USD: "DELEGATE", G: "GOVERNOR", L: "LT GOV", A: "ATTY GEN", SS: "SEC STATE", RR: "RR COMM", I: "MEASURE", M: "MAYOR" };
+export const kindBadge = (r) => `<span class="kind k-${esc(r.kind ?? "federal")}" title="${esc(r.officeName ?? "")}">${esc(BADGE[r.office] ?? r.office)}</span>`;
+export const candColor = (c) => c.independent ? "#d4af37" : c.party === "GOP" ? "#c0392b" : c.party === "Dem" ? "#3b6fd6" : c.party === "Yes" ? "#0b1f44" : c.party === "No" ? "#8a93a6" : "#6f7d99";
 export const winMark = (c) => (c.winner ? '<span class="win" title="AP has called this race">✓</span>' : "");
 export const initials = (name) => name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
 export function face(c, cls = "") {
+  if (isSide(c)) return `<span class="face ${cls} side ${c.party.toLowerCase()}" title="${esc(c.party)}">${esc(c.party.toUpperCase())}</span>`;
   const inner = c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(initials(c.name))}'))">` : esc(initials(c.name));
   return `<span class="face ${cls} ${c.independent ? "ind" : partyClass(c.party)}" title="${esc(c.name)}">${inner}</span>`;
 }

@@ -1,7 +1,8 @@
-// One poll cycle: national state-level feed for every race with an independent, county
+// One poll cycle: national state-level feed for every race the key covers (federal, governor,
+// statewide offices, ballot measures, big-city mayors), county
 // units for a rotating subset of states, written as JSON files to Vercel Blob.
 //
-//   index.json       every race with an independent, totals and candidates (rewritten each run)
+//   index.json       every race, totals and candidates (rewritten each run)
 //   state/<ST>.json  that state's races with county units (rewritten when the state's slot runs)
 //   status.json      poller health and freshness
 //
@@ -74,6 +75,7 @@ export async function pollOnce({ run = Date.now(), log = console.log } = {}) {
   status.raceCount = races.length;
   status.withIndependent = races.filter((r) => r.hasIndependent).length;
   status.called = races.filter((r) => r.called).length;
+  status.byKind = Object.fromEntries(["federal", "governor", "statewide", "measure", "local"].map((k) => [k, races.filter((r) => r.kind === k).length]));
   status.counting = races.filter((r) => !r.called && r.totalVotes > 0).length;
 
   const index = {
