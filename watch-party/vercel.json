@@ -1,0 +1,15 @@
+{
+  "framework": null,
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "crons": [
+    { "path": "/api/poll", "schedule": "0 0 * * *" }
+  ],
+  "rewrites": [
+    { "source": "/race/:label", "destination": "/race" },
+    { "source": "/data/:path*", "destination": "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com/:path*" }
+  ],
+  "headers": [
+    { "source": "/data/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=30, s-maxage=60, stale-while-revalidate=300" }] }
+  ]
+}

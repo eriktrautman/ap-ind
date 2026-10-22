@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IND Election Night</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="topbar"><b>IND Election Night</b><span>Every Senate and House race · Nov 3 2026</span><span class="status" id="status"><span class="dot off"></span><span>loading</span></span></div>
+<div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
+<main>
+  <div class="filters" id="filters">
+    <span class="chip on" data-f="all">All races</span>
+    <span class="chip" data-f="ind">Independent on ballot</span>
+    <span class="chip" data-f="starred">★ Starred</span>
+    <span class="chip" data-f="S">Senate</span>
+    <span class="chip" data-f="H">House</span>
+    <span class="chip" data-f="counting">Counting</span>
+    <span class="chip" data-f="called">Called</span>
+    <span class="chip" data-f="featured">Featured</span>
+    <select id="state"><option value="">All states</option></select>
+    <select id="sort"><option value="closest">Closest first</option><option value="margin">Independent leading first</option><option value="in">Most counted first</option><option value="label">By state</option></select>
+    <input id="q" placeholder="Search name" size="14">
+  </div>
+  <div id="list"><div class="empty">Loading races…</div></div>
+  <div class="asof" id="asof"></div>
+</main>
+<footer>Results are unofficial and come from the Associated Press. "% in" is AP's estimate of the expected vote counted, not precincts. "AP CALL" is AP's projection. Stars are saved on this device.</footer>
+<script type="module">
+  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass } from "/app.js";
+  const $ = (id) => document.getElementById(id);
+  let index = null, status = null, filter = "all", nextAt = Date.now() + REFRESH_MS;
+  let starred = stars.get();
+
+  async function load() {
+    try { status = await getJSON("status.json"); } catch { status = null; }
+    try { index = await getJSON("index.json"); } catch (e) { index = null; }
+    testBanner(status);
+    nextAt = Date.now() + REFRESH_MS;
+    render();
+  }
+
+  function render() {
+    renderStatus($("status"), status, nextAt);
+    if (!index) { $("list").innerHTML = `<div class="empty">No data yet. The poller has not written its first snapshot.</div>`; return; }
+    const sel = $("state");
+    if (sel.options.length === 1) for (const st of [...new Set(index.races.map((r) => r.state))].sort()) sel.insertAdjacentHTML("beforeend", `<option>${st}</option>`);
+    const q = $("q").value.trim().toLowerCase(), st = sel.value, sort = $("sort").value;
+    let rows = index.races.filter((r) =>
+      (filter === "all") || (filter === "ind" && r.hasIndependent) || (filter === "starred" && starred.has(r.label)) || (filter === "S" && r.office === "S") || (filter === "H" && r.office === "H") ||
+      (filter === "counting" && !r.called && r.totalVotes > 0) || (filter === "called" && r.called) || (filter === "featured" && r.featured));
+    if (st) rows = rows.filter((r) => r.state === st);
+    if (q) rows = rows.filter((r) => r.candidates.some((c) => c.name.toLowerCase().includes(q)) || r.label.toLowerCase().includes(q));
+    const m = (r) => indMargin(r);
+    rows.sort((a, b) => {
+      const sa = starred.has(a.label), sb = starred.has(b.label);
+      if (sa !== sb) return sa ? -1 : 1;
+      if (sort === "label") return a.label.localeCompare(b.label, undefined, { numeric: true });
+      if (sort === "in") return (b.eevp || b.precinctsPct) - (a.eevp || a.precinctsPct);
+      const ma = m(a), mb = m(b);
+      if (ma === null && mb === null) return a.label.localeCompare(b.label);
+      if (ma === null) return 1; if (mb === null) return -1;
+      return sort === "margin" ? mb - ma : Math.abs(ma) - Math.abs(mb);
+    });
+    $("list").innerHTML = rows.length ? rows.map((r) => {
+      const ind = r.candidates.find((c) => c.independent) ?? r.candidates[0];
+      if (!ind) return "";
+      const others = r.candidates.filter((c) => c.id !== ind.id).slice(0, 2);
+      const mg = m(r);
+      const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
+      return `<div class="race">
+        <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
+        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span style="min-width:0"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
+        <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
+      </div>`;
+    }).join("") : `<div class="empty">No races match.</div>`;
+    $("asof").innerHTML = `<span>${rows.length} of ${index.races.length} races · ${index.races.filter((r) => r.hasIndependent).length} with an independent · ${index.races.filter((r) => r.called).length} called</span><span>Snapshot ${new Date(index.generated).toLocaleTimeString("en-US")} · AP feed time ${new Date(index.apTimestamp).toLocaleTimeString("en-US")}</span>`;
+  }
+
+  $("filters").addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip"); if (!chip) return;
+    for (const c of $("filters").querySelectorAll(".chip")) c.classList.toggle("on", c === chip);
+    filter = chip.dataset.f; render();
+  });
+  $("list").addEventListener("click", (e) => { const s = e.target.closest(".star"); if (!s) return; starred = stars.toggle(s.dataset.id); render(); });
+  for (const id of ["state", "sort", "q"]) $(id).addEventListener("input", render);
+  setInterval(() => renderStatus($("status"), status, nextAt), 1000);
+  setInterval(load, REFRESH_MS);
+  load();
+</script>
+</body>
+</html>

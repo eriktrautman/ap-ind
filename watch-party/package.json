@@ -1,0 +1,15 @@
+{
+  "name": "ind-watch-party",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Public watch-party site: every race with an independent candidate, from the AP Elections API",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "poll": "node scripts/run-local.mjs",
+    "poll:once": "node scripts/run-local.mjs --once"
+  },
+  "dependencies": {
+    "@vercel/blob": "^1.1.1"
+  }
+}

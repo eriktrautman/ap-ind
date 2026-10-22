@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Race · IND Election Night</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="topbar"><a href="/">‹ All races</a><span class="status" id="status"><span class="dot off"></span><span>loading</span></span></div>
+<div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
+<main>
+  <div class="racehead"><h1 id="title">Loading…</h1><div class="sub" id="subtitle"></div></div>
+  <div class="bars" id="bars"></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid2">
+    <div>
+      <div class="countymap"><svg id="map" viewBox="0 0 400 260"></svg><div class="tip" id="tip"></div></div>
+      <div class="legend" id="legend"></div>
+      <div class="note" id="mapnote"></div>
+    </div>
+    <div>
+      <table class="ct" id="counties"><thead><tr><th data-k="name">County</th><th class="r" data-k="in">In</th><th class="r" data-k="ind">Independent</th><th class="r" data-k="lead">Leader</th><th class="r" data-k="total">Votes</th></tr></thead><tbody></tbody></table>
+      <div class="note" id="ctnote"></div>
+    </div>
+  </div>
+  <div class="asof" id="asof"></div>
+</main>
+<footer>Results are unofficial and come from the Associated Press. County colour is the leader among votes counted so far in that county; opacity is how much of the county's expected vote is in. "Votes still out" is derived from AP's expected-vote estimate and moves as AP revises it.</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script type="module">
+  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, testBanner, REFRESH_MS, tag, candClass, FIPS } from "/app.js";
+  const $ = (id) => document.getElementById(id);
+  const label = decodeURIComponent(location.pathname.split("/race/")[1] ?? "") || new URLSearchParams(location.search).get("r") || "";
+  const state = label.slice(0, 2);
+  document.title = `${label} · IND Election Night`;
+  let status = null, race = null, counties = null, stateGen = null, geo = null, nextAt = Date.now() + REFRESH_MS, sortKey = "total", sortDir = -1, hl = null;
+  const color = (c) => c.independent ? "#d4af37" : c.party === "GOP" ? "#c0392b" : c.party === "Dem" ? "#3b6fd6" : "#6f7d99";
+
+  async function load(full = false) {
+    try { status = await getJSON("status.json"); } catch { status = null; }
+    try { const idx = await getJSON("index.json"); race = idx.races.find((r) => r.label === label) ?? null; } catch { race = null; }
+    try { const st = await getJSON(`state/${state}.json`); const r = st.races.find((r) => r.label === label); counties = r?.counties ?? null; stateGen = st.generated; } catch { counties = null; }
+    testBanner(status); nextAt = Date.now() + REFRESH_MS;
+    render();
+  }
+
+  function leaderIn(unit) {
+    if (!race) return null;
+    const entries = race.candidates.map((c) => [c, unit.votes[c.id] ?? 0]).sort((a, b) => b[1] - a[1]);
+    return entries[0][1] > 0 ? entries[0][0] : null;
+  }
+
+  async function ensureGeo() {
+    if (geo) return geo;
+    const us = await (await fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json")).json();
+    const pre = FIPS[state];
+    const feats = topojson.feature(us, us.objects.counties).features.filter((d) => String(d.id).startsWith(pre));
+    const path = d3.geoPath(d3.geoMercator().fitSize([400, 260], { type: "FeatureCollection", features: feats }));
+    geo = { feats, path };
+    return geo;
+  }
+
+  async function renderMap() {
+    const { feats, path } = await ensureGeo();
+    const byFips = new Map((counties ?? []).map((u) => [u.fips, u]));
+    const svg = d3.select("#map");
+    const sel = svg.selectAll("path.c").data(feats, (d) => d.id);
+    sel.enter().append("path").attr("class", "c").attr("d", path).attr("stroke", "#071222").attr("stroke-width", 0.5)
+      .on("mousemove", (e, d) => showTip(e, d)).on("mouseleave", () => { $("tip").style.display = "none"; setHl(null); })
+      .on("click", (e, d) => { const u = byFips.get(String(d.id)); if (u) document.querySelector(`tr[data-fips="${u.fips}"]`)?.scrollIntoView({ block: "nearest" }); })
+      .merge(sel)
+      .attr("fill", (d) => { const u = byFips.get(String(d.id)); const l = u && leaderIn(u); return l ? color(l) : "#3a4f7a"; })
+      .attr("fill-opacity", (d) => { const u = byFips.get(String(d.id)); if (!u || !leaderIn(u)) return 1; const inPct = (u.eevp || u.precinctsPct) / 100; return 0.35 + Math.min(1, inPct) * 0.65; })
+      .attr("stroke", (d) => (hl && String(d.id) === hl ? "#fff" : "#071222")).attr("stroke-width", (d) => (hl && String(d.id) === hl ? 2 : 0.5));
+    function showTip(e, d) {
+      const u = byFips.get(String(d.id)); const box = $("tip");
+      setHl(String(d.id));
+      if (!u) { box.textContent = `${d.properties.name}: no results`; }
+      else {
+        const top = race.candidates.map((c) => [c, u.votes[c.id] ?? 0]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        const tot = top.reduce((s, [, v]) => s + v, 0) || 1;
+        box.innerHTML = `<b>${esc(u.name)}</b> · ${Math.round(u.eevp || u.precinctsPct)}% in<br>` + top.map(([c, v]) => `${esc(c.last)} ${pct((v / tot) * 100)} (${fmt(v)})`).join("<br>");
+      }
+      box.style.display = "block";
+    }
+  }
+
+  function setHl(fips) {
+    hl = fips;
+    for (const tr of document.querySelectorAll("#counties tbody tr")) tr.classList.toggle("hl", tr.dataset.fips === fips);
+    d3.select("#map").selectAll("path.c").attr("stroke", (d) => (hl && String(d.id) === hl ? "#fff" : "#071222")).attr("stroke-width", (d) => (hl && String(d.id) === hl ? 2 : 0.5));
+  }
+
+  function render() {
+    renderStatus($("status"), status, nextAt);
+    if (!race) { $("title").textContent = label ? `${label}: no data yet` : "No race selected"; return; }
+    const ind = race.candidates.find((c) => c.independent) ?? race.candidates[0];
+    $("title").textContent = `${race.stateName} · ${race.office === "S" ? "U.S. Senate" : race.label.endsWith("AL") ? "U.S. House, at large" : "U.S. House, " + race.seat}`;
+    $("subtitle").innerHTML = `${statusPill(race)} ${race.totalVotes ? `${fmt(race.totalVotes)} votes counted` : ""}${race.pollClose ? ` · polls close ${new Date(race.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : ""}${race.rankedChoice ? " · ranked choice: first-choice totals only" : ""}`;
+    const max = Math.max(1, ...race.candidates.map((c) => c.pct));
+    $("bars").innerHTML = race.candidates.map((c) => `<div class="row ${candClass(c)}"><div class="cand">${face(c)}<span class="n"><span class="p ${c.independent ? "ind" : candClass(c)}">${esc(tag(c))}</span> ${esc(c.name)}${c.incumbent ? ' <small style="color:var(--muted)">inc.</small>' : ""}${c.winner ? " ✓" : ""}</span></div><div class="bar"><i style="width:${(c.pct / max) * 100}%"></i></div><span class="pc">${pct(c.pct)}</span><span class="vt">${fmt(c.votes)}</span></div>`).join("");
+    const mg = indMargin(race);
+    const expected = race.eevp ? race.totalVotes / (race.eevp / 100) : null;
+    const out = expected ? Math.max(0, expected - race.totalVotes) : null;
+    let need = null;
+    if (ind && out && mg !== null) { const best = race.candidates.filter((c) => c.id !== ind.id).sort((a, b) => b.votes - a.votes)[0]; const deficit = (best?.votes ?? 0) - ind.votes; need = Math.min(100, Math.max(0, ((out / 2 + deficit / 2) / out) * 100)); }
+    $("kpis").innerHTML = `<div class="kpi"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind?.last ?? "independent")} margin, points</span></div><div class="kpi"><b>${out === null ? "—" : "~" + fmt(Math.round(out / 1000) * 1000)}</b><span>votes still out (AP estimate)</span></div><div class="kpi"><b>${need === null || race.called ? "—" : need.toFixed(1) + "%"}</b><span>of remaining ${esc(ind?.last ?? "")} needs</span></div>`;
+    $("legend").innerHTML = race.candidates.slice(0, 4).map((c) => `<span><i style="background:${color(c)}"></i>${esc(c.last)} leads</span>`).join("") + `<span><i style="background:#3a4f7a"></i>no results</span><span>opacity = share counted</span>`;
+    $("mapnote").textContent = counties ? `${counties.filter((u) => Object.values(u.votes).some((v) => v > 0)).length} of ${counties.length} counties reporting · county data as of ${stateGen ? new Date(stateGen).toLocaleTimeString("en-US") : "—"} (refreshes every 5 min)` : "County data not yet available for this state.";
+    renderMap().catch((e) => { $("mapnote").textContent = `Map unavailable (${e.message})`; });
+    // county table
+    const rows = (counties ?? []).map((u) => { const tot = Object.values(u.votes).reduce((s, v) => s + v, 0); const l = leaderIn(u); return { u, tot, ind: ind ? (u.votes[ind.id] ?? 0) : 0, indPct: tot && ind ? ((u.votes[ind.id] ?? 0) / tot) * 100 : 0, lead: l, leadPct: l && tot ? ((u.votes[l.id] ?? 0) / tot) * 100 : 0, inPct: u.eevp || u.precinctsPct }; });
+    const kf = { name: (r) => r.u.name, in: (r) => r.inPct, ind: (r) => r.indPct, lead: (r) => r.leadPct, total: (r) => r.tot }[sortKey];
+    rows.sort((a, b) => { const x = kf(a), y = kf(b); return (typeof x === "string" ? x.localeCompare(y) : x - y) * sortDir; });
+    $("counties").querySelector("tbody").innerHTML = rows.length ? rows.map((r) => `<tr data-fips="${esc(r.u.fips)}" class="${hl === r.u.fips ? "hl" : ""}"><td>${esc(r.u.name)}</td><td class="r">${Math.round(r.inPct)}%</td><td class="r">${r.tot ? `<b>${pct(r.indPct)}</b> ${fmt(r.ind)}` : "—"}</td><td class="r">${r.lead ? `${esc(r.lead.last)} ${pct(r.leadPct)}` : "—"}</td><td class="r">${fmt(r.tot)}</td></tr>`).join("") : `<tr><td colspan="5" class="r" style="text-align:center;color:var(--muted)">no county data yet</td></tr>`;
+    $("ctnote").textContent = rows.length ? "Click a column to sort. Hover or tap a county on the map to highlight its row." : "";
+    $("asof").innerHTML = `<span>AP last updated this race ${race.lastUpdated ? new Date(race.lastUpdated).toLocaleTimeString("en-US") : "—"}</span><span>Snapshot ${status?.generated ? new Date(status.generated).toLocaleTimeString("en-US") : "—"} · auto-refresh every minute</span>`;
+  }
+
+  document.querySelector("#counties thead").addEventListener("click", (e) => { const th = e.target.closest("th"); if (!th) return; const k = th.dataset.k; sortDir = sortKey === k ? -sortDir : (k === "name" ? 1 : -1); sortKey = k; render(); });
+  document.querySelector("#counties tbody").addEventListener("mouseover", (e) => { const tr = e.target.closest("tr"); if (tr?.dataset.fips) setHl(tr.dataset.fips); });
+  document.querySelector("#counties tbody").addEventListener("click", (e) => { const tr = e.target.closest("tr"); if (tr?.dataset.fips) setHl(tr.dataset.fips); });
+  setInterval(() => renderStatus($("status"), status, nextAt), 1000);
+  setInterval(load, REFRESH_MS);
+  load();
+</script>
+</body>
+</html>
