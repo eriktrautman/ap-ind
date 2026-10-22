@@ -5,9 +5,13 @@ body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(
 a { color: var(--navy); }
 .topbar { background: var(--navy-deep); color: #fff; padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-size: 13px; position: sticky; top: 0; z-index: 5; }
 .topbar b { font-family: var(--serif); color: var(--gold); font-size: 17px; font-weight: 400; }
+.topbar .subbrand { font-family: var(--serif); color: #fff; font-size: 15px; padding-left: 10px; margin-left: -4px; border-left: 1px solid #3a4f7a; letter-spacing: .01em; }
+.topbar .tag { color: #c7cfdf; }
+.topbar a.back { color: #c7cfdf; font-size: 12.5px; margin-left: 6px; }
+.topbar a:hover .subbrand, .topbar a:hover b { text-decoration: none; }
 .topbar a { color: #fff; text-decoration: none; }
 .status { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: #c7cfdf; font-size: 12px; text-align: right; white-space: nowrap; }
-@media (max-width: 640px) { .topbar > span:not(.status) { display: none; } .status .long { display: none; } }
+@media (max-width: 640px) { .topbar .tag { display: none; } .status .long { display: none; } }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; }
 .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
 .testbanner { background: var(--warn); color: #1a1200; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; letter-spacing: .04em; }

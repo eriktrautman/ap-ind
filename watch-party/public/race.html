@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Race · IND Election Night</title>
+<title>Race · Watch Party · IND Election Night</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<div class="topbar"><a href="/">‹ All races</a><span class="status" id="status"><span class="dot off"></span><span>loading</span></span></div>
+<div class="topbar"><a href="/"><b>IND Election Night</b><span class="subbrand">Watch Party</span></a><a href="/" class="back">‹ All races</a><span class="status" id="status"><span class="dot off"></span><span>loading</span></span></div>
 <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
 <main>
   <div class="racehead"><h1 id="title">Loading…</h1><div class="sub" id="subtitle"></div></div>
@@ -34,7 +34,7 @@
   const $ = (id) => document.getElementById(id);
   const label = decodeURIComponent(location.pathname.split("/race/")[1] ?? "") || new URLSearchParams(location.search).get("r") || "";
   const state = label.slice(0, 2);
-  document.title = `${label} · IND Election Night`;
+  document.title = `${label} · Watch Party · IND Election Night`;
   let status = null, race = null, counties = null, stateGen = null, geo = null, nextAt = Date.now() + REFRESH_MS, sortKey = "total", sortDir = -1, hl = null;
   const color = (c) => c.independent ? "#d4af37" : c.party === "GOP" ? "#c0392b" : c.party === "Dem" ? "#3b6fd6" : "#6f7d99";
 
