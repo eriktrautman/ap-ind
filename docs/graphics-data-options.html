@@ -69,6 +69,11 @@
   /* Key note: the caveat the anchor must say when this graphic is on screen. */
   .card .keynote { font-size: 12.5px; padding: 6px 9px; border-radius: 4px; background: #fff3f0; color: #7a1d12; border-left: 3px solid #b11e2d; }
   .card .keynote b { letter-spacing: .04em; font-size: 11px; }
+  .card details.datanotes { font-size: 12.5px; color: var(--muted); }
+  .card details.datanotes summary { cursor: pointer; font-weight: 700; color: var(--navy); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+  .card details.datanotes ul { margin: 6px 0 0; padding-left: 0; list-style: none; display: grid; gap: 4px; }
+  .card details.datanotes li { display: grid; gap: 2px; }
+  .card details.datanotes code { font-size: 11.5px; color: var(--ink); background: #f3f1ea; padding: 1px 5px; border-radius: 3px; word-break: break-all; }
   /* Live embed: the real 1920x1080 graphic page in demo mode, scaled to the card. */
   .embed { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000; overflow: hidden; }
   .embed iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: top left; pointer-events: none; }
@@ -186,6 +191,7 @@
     <a href="#deepdive">B. Featured race deep dives</a>
     <a href="#movement">C. The independent movement</a>
     <a href="#updates">D. Election updates</a>
+    <a href="#reports">F. AP reports</a>
     <a href="#bible">Bible</a>
     <a href="#states">E. Status language</a>
     <span class="legend"><span class="tag live">live</span> AP data, updates on air <span class="tag pre">prepared</span> built before the night <span class="tag both">both</span> <label><input type="checkbox" id="safe-toggle"> title-safe guide</label></span>
@@ -204,13 +210,13 @@
 <details class="note" id="audit">
   <summary class="note-title">Data Audit</summary>
   <div class="note-body">Every card below carries a data line. <span style="background:#f1f5ee;color:#1c4d2c;padding:1px 6px;border-radius:3px">AP</span> straight from the feed · <span style="background:#eef2f9;color:#1f3a6e;padding:1px 6px;border-radius:3px">AP-derived</span> computed from AP fields only · <span style="background:#fdf3e3;color:#6b4a0b;padding:1px 6px;border-radius:3px">mixed</span> AP plus a dataset supplied by the project · <span style="background:#e08a1e;color:#1a1200;padding:1px 6px;border-radius:3px;font-weight:700">outside data</span> the chart cannot be made from the feed; a dataset that must be built and verified (card outlined orange).<br><br>
-  What the AP feed provides (verified Oct 21): per-candidate votes at state and county level; precincts reporting and AP's expected-vote estimate (<code>eevp</code>) per unit; race calls, winner and call time; seat flips; incumbency and party; ranked-choice rounds; poll closing times; and <b>past elections (2020, 2022, 2024) at the same detail</b>, which covers every "vs last time" comparison.<br><br>
+  What the AP feed provides (verified Oct 21): per-candidate votes at state and county level; precincts reporting and AP's expected-vote estimate (<code>eevp</code>) per unit; race calls, winner and call time; seat flips; incumbency and party; ranked-choice rounds; poll closing times; and <b>past elections (2020, 2022, 2024) at the same detail</b>, which covers every "vs last time" comparison. The reports feed (<code>/v3/reports</code>, section F) adds balance-of-power tables, poll hours by district, the filed-candidate roster, vote-type and advance-voting rules, 2024 count timing and party names.<br><br>
   <b>Outside datasets to build and confirm:</b>
   <ol style="margin:6px 0 0;padding-left:20px">
     <li>Pre-election polling for the seven featured races (B2, B3, C7)</li>
     <li>Candidate bios, photos and photo rights (A2, B1, B2, B2 ✓; candidate index in progress)</li>
     <li>Sourced quotes (B11)</li>
-    <li>Current Senate composition of the 65 seats <em>not</em> up this cycle, for balance-of-power baselines (C8, D3)</li>
+    <li><s>Current Senate composition of the 65 seats not up this cycle</s> — now from the AP Trend report (F1)</li>
     <li>History of independents in Congress and best independent results before 2020 (C4, C5)</li>
     <li>Movement statistics: independent filings count (FEC), identification polling such as Gallup (C2, C3)</li>
     <li>AP VoteCast, a separate AP product not covered by the key (B12)</li>
@@ -869,6 +875,156 @@
 </section>
 
 <!-- ============================================================ E -->
+
+<!-- ============================================================ F -->
+<section class="group" id="reports">
+  <h2>F. From the AP reports feed</h2>
+  <p class="lede">AP publishes reference tables and roll-ups beside the results feed at <code>/v3/reports</code>. These cards use real values from those reports (pulled Oct 22) and replace several datasets that were previously marked as outside data.</p>
+  <div class="grid">
+
+    <div class="card half">
+      <div class="mock">
+        <div class="safe">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title" style="font-size:1.5em">Senate · AP balance of power</div><div class="sub">35 seats up · 51 for control</div></div>
+          <div class="seg" style="margin-top:10px;height:2.2em"><i style="width:32%;background:var(--dem)"></i><i style="width:2%;background:var(--gold)"></i><i style="width:35%;background:#3a4f7a"></i><i style="width:31%;background:var(--gop)"></i></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:1.05em"><b style="color:#9fb6ea">32 <span class="sub" style="font-weight:400">holdovers</span></b><b class="gl">2 <span class="sub" style="font-weight:400">caucus with Dem</span></b><b>35 <span class="sub" style="font-weight:400">insufficient vote</span></b><b style="color:#e8a8a0">31 <span class="sub" style="font-weight:400">holdovers</span></b></div>
+          <table class="t" style="margin-top:10px;width:70%"><tr><th></th><th class="r">Won</th><th class="r">Leading</th><th class="r">Holdovers</th><th class="r">Trend</th><th class="r">Current</th></tr>
+            <tr><td style="color:#9fb6ea">Dem</td><td class="r">0</td><td class="r">0</td><td class="r">32</td><td class="r">32</td><td class="r">45</td></tr>
+            <tr><td class="gl">Others caucus with Dem</td><td class="r">0</td><td class="r">0</td><td class="r">2</td><td class="r">2</td><td class="r">2</td></tr>
+            <tr><td style="color:#e8a8a0">GOP</td><td class="r">0</td><td class="r">0</td><td class="r">31</td><td class="r">31</td><td class="r">53</td></tr>
+            <tr><td class="gl">Others (independents in 30 races)</td><td class="r">0</td><td class="r">0</td><td class="r">0</td><td class="r">0</td><td class="r">0</td></tr></table>
+        </div>
+        <div class="foot"><span>Source: AP Trend report, Senate, pre-election state</span><span>● live</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F1</span> Balance of power from AP Trend <span class="tag live">live</span></h3>
+      <p>AP's own balance-of-power table: won, leading, holdovers (seats not up), winning trend and current composition, by party, with independents broken out by caucus. D3 and C8 should read this rather than summing calls over a hand-kept seats-not-up table.</p></div>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">HOUSE · AP TREND · CURRENT</div>
+          <div class="cols3" style="margin-top:8px;text-align:center">
+            <div class="stat"><span class="big" style="font-size:2.4em;color:#9fb6ea">215</span><span class="lab">Dem</span></div>
+            <div class="stat"><span class="big" style="font-size:2.4em">1</span><span class="lab">independent (caucuses GOP)</span></div>
+            <div class="stat"><span class="big" style="font-size:2.4em;color:#e8a8a0">219</span><span class="lab">GOP</span></div>
+          </div>
+          <div class="sub" style="margin-top:10px">All 435 seats up · 230 races with a third candidate · net change tracked as winners and leaders per party</div>
+        </div>
+        <div class="foot"><span>AP Trend report, House</span><span>● live</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F2</span> House composition and net change <span class="tag live">live</span></h3>
+      <p>Current House by party from AP, including the one sitting independent, plus AP's winners/leaders net-change counters as calls come in. Feeds D4.</p></div>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">POLL CLOSING · FEATURED STATES · AP POLL HOURS</div>
+          <table class="t" style="margin-top:6px"><tr><th>Race</th><th>Local</th><th class="r">Eastern</th></tr>
+            <tr><td>NE-SEN · NE-1, NE-2</td><td>8:00 pm CT</td><td class="r">9:00 pm</td></tr>
+            <tr><td>NE-3 <span class="sub">two zones</span></td><td>7:00 pm MT / 8:00 pm CT</td><td class="r">9:00 pm</td></tr>
+            <tr><td>SD-SEN <span class="sub">two zones</span></td><td>7:00 pm CT / 7:00 pm MT</td><td class="r">8:00 / 9:00 pm</td></tr>
+            <tr><td>MT-SEN</td><td>8:00 pm MT</td><td class="r">10:00 pm</td></tr>
+            <tr><td>ID-SEN · ID-1 <span class="sub">two zones</span></td><td>8:00 pm MT / 8:00 pm PT</td><td class="r">10:00 / 11:00 pm</td></tr>
+            <tr><td>CA-6</td><td>8:00 pm PT</td><td class="r">11:00 pm</td></tr>
+            <tr><td>AK-AL <span class="sub">two zones</span></td><td>8:00 pm AKST / HST</td><td class="r">12:00 / 1:00 am</td></tr></table>
+        </div>
+        <div class="foot"><span>AP PollHours report, by congressional district</span><span>prepared</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F3</span> Closing times by district <span class="tag pre">prepared</span></h3>
+      <p>AP's poll-hours table by state and congressional district, with local, Eastern and UTC closes. Resolves the split-time-zone problem on A5 for Nebraska, South Dakota, Idaho and Alaska.</p></div>
+    </div>
+
+    <div class="card half">
+      <div class="mock">
+        <div class="safe" style="display:grid;grid-template-columns:1fr 1fr;gap:5%">
+          <div>
+            <div class="sub">HOW NEBRASKA COUNTS · AP ADVANCE-VOTING RULES</div>
+            <div class="title" style="font-size:1.4em;margin:4px 0 8px">Mail ballots land early</div>
+            <table class="t"><tr><td>Absentee</td><td>Anyone, no excuse</td></tr>
+              <tr><td>Early in-person</td><td>Oct 5 – Nov 2, county office</td></tr>
+              <tr><td>Mail processed</td><td>From the second Friday before election day</td></tr>
+              <tr><td>Mail counted</td><td>Election day, before and after close (county discretion)</td></tr>
+              <tr><td>Cure deadline</td><td>Nov 10</td></tr>
+              <tr><td>All-mail counties</td><td>11 of 93</td></tr></table>
+          </div>
+          <div>
+            <div class="sub">WHAT AP REPORTS SEPARATELY</div>
+            <div style="margin-top:8px;display:grid;gap:6px">
+              <div class="chip" style="justify-content:space-between"><span>Election-day in person</span><b class="gl">yes</b></div>
+              <div class="chip" style="justify-content:space-between"><span>Absentee / mail</span><b class="gl">yes</b></div>
+              <div class="chip" style="justify-content:space-between"><span>Advance total</span><b class="gl">yes</b></div>
+              <div class="chip" style="justify-content:space-between"><span>Provisional</span><b class="gl">yes</b></div>
+            </div>
+            <div class="sub" style="margin-top:8px">Expected vote and turnout available for all 93 counties by vote type</div>
+          </div>
+        </div>
+        <div class="foot"><span>AP AdvVotes and VoteTypeAvailability reports</span><span>prepared · one per featured state</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F4</span> How this state counts <span class="tag pre">prepared</span></h3>
+      <p>Per featured state: who can vote early or by mail, when mail is processed and counted, cure deadlines, and which vote types AP will report separately. The data behind "why the margin just moved"; annotates B7.</p></div>
+    </div>
+
+    <div class="card half">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">WHEN TO EXPECT RESULTS · 2024 ACTUALS · AP VOTE-COUNT TIMING</div>
+          <table class="t" style="margin-top:6px"><tr><th>State</th><th class="r">First report</th><th class="r">50% counted</th><th class="r">90% counted</th><th class="r">Not counted on the night</th></tr>
+            <tr><td>Nebraska</td><td class="r">9:00 pm</td><td class="r">10:55 pm</td><td class="r">3:15 am</td><td class="r">3.3%</td></tr>
+            <tr><td>South Dakota</td><td class="r">9:00 pm</td><td class="r">1:45 am</td><td class="r">next day</td><td class="r">8.0%</td></tr>
+            <tr><td>Idaho</td><td class="r">11:13 pm</td><td class="r">12:45 am</td><td class="r">5:28 am</td><td class="r">5.9%</td></tr>
+            <tr><td>Montana</td><td class="r">10:00 pm</td><td class="r">3:43 am</td><td class="r">next day</td><td class="r">10.5%</td></tr>
+            <tr><td>Alaska</td><td class="r">1:07 am</td><td class="r">2:07 am</td><td class="r gl">Nov 15</td><td class="r gl">25.1%</td></tr>
+            <tr><td>California</td><td class="r">11:12 pm</td><td class="r">12:56 am</td><td class="r gl">Nov 14</td><td class="r gl">38.3%</td></tr></table>
+          <div class="sub" style="margin-top:6px">Times Eastern, 2024 general election. Alaska's ranked-choice tabulation and California's mail count run for days.</div>
+        </div>
+        <div class="foot"><span>AP elninfo StateVoteCountTiming 2024</span><span>prepared</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F5</span> When to expect results <span class="tag pre">prepared</span></h3>
+      <p>AP's record of when each state first reported, reached 50% and 90%, stopped for the night, and how much was left uncounted in 2024. Sets expectations on air and in the rundown: AK-AL and CA-6 will not be decided on the night.</p></div>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">BALLOT ROSTER · NE-SEN · AP CANDIDATES REPORT</div>
+          <table class="t" style="margin-top:6px"><tr><th>Candidate</th><th>Party</th><th>Status</th><th class="r">AP photo</th></tr>
+            <tr><td>Pete Ricketts</td><td>GOP</td><td><span class="pill counting">ON BALLOT</span> inc.</td><td class="r gl">yes</td></tr>
+            <tr><td>Dan Osborn</td><td>IND</td><td><span class="pill counting">ON BALLOT</span></td><td class="r gl">yes</td></tr>
+            <tr><td>Chuck Conboy</td><td>AFi</td><td><span class="pill counting">ON BALLOT</span></td><td class="r">no</td></tr>
+            <tr><td>Robin Richards</td><td>NWk</td><td><span class="pill counting">ON BALLOT</span></td><td class="r">no</td></tr>
+            <tr><td>Mike Marvin</td><td>LMN</td><td><span class="pill counting">ON BALLOT</span> <span class="sub">suspended</span></td><td class="r">yes</td></tr>
+            <tr><td class="sub">Cindy Burbank</td><td class="sub">DEM</td><td><span class="pill open">WITHDREW</span></td><td class="r sub">—</td></tr></table>
+        </div>
+        <div class="foot"><span>AP Candidates report, USSenate2026</span><span>prepared</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F6</span> Ballot roster and status <span class="tag pre">prepared</span></h3>
+      <p>AP's filed-candidate roster: who is on the general ballot, who lost a primary or withdrew, incumbency, and whether AP holds a photo. Reconciles the candidate index and the ticker's candidate list against AP's own records.</p></div>
+    </div>
+
+    <div class="card">
+      <div class="mock">
+        <div class="safe">
+          <div class="sub">PARTY NAMES · AP PARTY CODES</div>
+          <table class="t" style="margin-top:6px"><tr><th>Code</th><th>On screen</th></tr>
+            <tr><td><span class="p ind">NP</span></td><td>Non-Partisan (Osborn, Hill)</td></tr>
+            <tr><td><span class="p ind">NPP</span></td><td>No Party Preference (Kiley)</td></tr>
+            <tr><td><span class="p ind">Ind</span></td><td>Independent</td></tr>
+            <tr><td><span class="p ind">AFi</span></td><td>America First</td></tr>
+            <tr><td><span class="p ind">NWk</span></td><td>Nebraska Working People</td></tr>
+            <tr><td><span class="p ind">LMN</span></td><td>Legal Marijuana NOW</td></tr>
+            <tr><td><span class="p" style="background:#3a4f7a">Lib</span></td><td>Libertarian</td></tr></table>
+        </div>
+        <div class="foot"><span>AP parties report (full code list)</span><span>reference</span></div>
+      </div>
+      <div class="cap"><h3><span class="n">F7</span> Party names from AP codes <span class="tag pre">prepared</span></h3>
+      <p>The results feed carries codes only. AP's party-code table supplies the names every graphic should print instead of "AFi" or "NWk".</p></div>
+    </div>
+
+  </div>
+</section>
+
 <section class="group" id="bible">
   <h2>Graphics bible categories</h2>
   <p class="lede">The production team catalogues every on-air graphic under six categories. Sections on this page map to them as follows; Show graphics (titles, logo, transitions, segment graphics, CTAs) and Credits are produced outside this system.</p>
@@ -1099,7 +1255,7 @@
     "A2": ["mixed", "name and party from AP; title line from the candidate index; live share from AP"],
     "A3": ["ap", "votes, eevp, call status"],
     "A4": ["ap", "winner, winnerDateTime, flippedSeat; \"first of the night\" counted from the event log"],
-    "A5": ["ap", "pollClosingTime per state unit"],
+    "A5": ["ap", "closing times by state and congressional district from the AP PollHours report (local, ET, UTC)"],
     "A6": ["ap", "votes, eevp, call status for the featured races"],
     "B1": ["ext", "bio, photo and photo rights from the candidate index; the 2024 result line can come from AP's 2024 feed"],
     "B2": ["ext", "poll numbers from the compiled polling dataset, photos from the candidate index; last result for the seat from AP 2020/2024 feed; closing time from AP"],
@@ -1121,12 +1277,12 @@
     "C5": ["mixed", "tonight from AP; 2020–2024 rows from AP's past feeds; older rows (King 2018) need an outside source"],
     "C6": ["derived", "sum of non-Dem/GOP votes across every race; 2024 share from AP's 2024 feed"],
     "C7": ["mixed", "results from AP; poll numbers from the compiled polling dataset"],
-    "C8": ["mixed", "called seats from AP; the 65 seats not up this cycle are a maintained static table"],
+    "C8": ["derived", "holdovers and current composition from the AP Trend report; the scenario arithmetic is the project's"],
     "C9": ["ext", "editorial copy, no data"],
     "D1": ["ap", "call status, winner, leader per Senate race; map geometry is Census (us-atlas)"],
     "D2": ["ap", "call status and leader per House race; map geometry is Census (us-atlas)"],
-    "D3": ["mixed", "35 races from AP; the 65 seats not up are a maintained static table"],
-    "D4": ["ap", "all 435 seats are up, so calls and leaders come entirely from AP"],
+    "D3": ["ap", "won, leading and holdovers by party from the AP Senate Trend report; race detail from the results feed"],
+    "D4": ["ap", "won, leading and net change by party from the AP House Trend report; flips from the results feed"],
     "D5": ["ap", "votes, eevp, call status; producer chooses the eight"],
     "D6": ["mixed", "numbers from AP; status headline from the house status rules; context line typed by a producer"],
     "D7": ["ap", "call status and leader per Senate race"],
@@ -1134,8 +1290,71 @@
     "D9": ["ap", "all federal races in the state"],
     "D10": ["derived", "sum of House votes by party from AP; 2024 share from AP's 2024 feed"],
     "D11": ["derived", "AP votes and eevp; the \"under 3 points, over 25% in\" rule is a house rule"],
+    "F1": ["ap", "AP Trend report, Senate"],
+    "F2": ["ap", "AP Trend report, House and by state"],
+    "F3": ["ap", "AP PollHours report"],
+    "F4": ["ap", "AP AdvVotes and VoteTypeAvailability reports"],
+    "F5": ["ap", "AP StateVoteCountTiming report, 2024"],
+    "F6": ["ap", "AP Candidates reports"],
+    "F7": ["ap", "AP party-codes report"],
   };
   const KIND = { ap: "AP", derived: "AP-DERIVED", mixed: "MIXED", ext: "OUTSIDE DATA" };
+
+
+  // Data notes: the endpoints and fields each card reads. R = results feed, RP = reports feed.
+  const R = "GET /v3/elections/2026-11-03?officeID=S,H&level=state (delta via nextrequest)";
+  const RC = "GET /v3/elections/2026-11-03?statePostal=XX&level=ru (county units with FIPS, per featured state)";
+  const H24 = "GET /v3/elections/2024-11-05?... (same shape; 2020 and 2022 also readable)";
+  const RP = (id) => `GET /v3/reports/${id}`;
+  const IDX = "config/candidates.json and public/photos (project data, keyed by AP candidateID)";
+  const ENDPOINTS = {
+    "A1": [[R, "candidates[].voteCount, reportingUnits[].eevp, raceCallStatus, winner"], ["/api/producer", "pinned races and manual items"]],
+    "A2": [[R, "first, last, party, incumbent"], [IDX, "title line and photo"], [RP("parties-partycodes-Live"), "party name"]],
+    "A3": [[R, "voteCount, eevp, raceCallStatus"]],
+    "A4": [[R, "winner, winnerDateTime, flippedSeat"], ["event log", "ordinal of the call among the night's calls"]],
+    "A5": [[RP("PollHours-PollHoursCD2026-Live"), "pollClosingLocal, pollClosingET, pollClosingUTC by state and CD"]],
+    "A6": [[R, "voteCount, eevp, raceCallStatus for the seven featured races"]],
+    "B1": [[IDX, "bio, photo, credit"], [H24, "2024 result line"], [RP("Candidates-USSenate2026-Live / Candidates-USHouse2026-Live"), "ballot status, incumbency"]],
+    "B2": [["compiled polling dataset", "poll, sponsor, dates"], [IDX, "photos"], [H24, "last result for the seat"], [RP("PollHours-PollHoursCD2026-Live"), "closing time"]],
+    "B2 ✓": [[R, "voteCount, winner, winnerDateTime, flippedSeat, eevp"], [IDX, "photo, history line"]],
+    "B3": [["compiled polling dataset", "all public polls for the race"]],
+    "B4": [[H24 + " with level=ru", "2024 county results by FIPS"], ["editorial", "target counties and notes"]],
+    "B5": [[R, "voteCount, eevp, incumbent, raceCallStatus, winner"]],
+    "B6": [[RC, "voteCount and eevp per county unit; fipsCode"]],
+    "B7": [["stored snapshots", "every poll of R, replayed"], [RP("VoteTypeAvailability-Live"), "which vote types report separately"], [RP("AdvVotes-advvotingrules2026-Live"), "when mail is processed and counted"]],
+    "B8": [[RC, "voteCount and eevp per county; remaining = counted ÷ eevp − counted"]],
+    "B9": [[R, "candidates[].rankedChoiceVoting[] (rounds, eliminated)"]],
+    "B10": [[RC, "tonight by county"], [H24 + " with level=ru", "2024 by county, joined on FIPS"]],
+    "B11": [["editorial", "sourced quotes"]],
+    "B12": [["AP VoteCast", "separate AP product; not in this key"]],
+    "C1": [[R, "voteCount, eevp, raceCallStatus for the seven featured races"]],
+    "C2": [[R, "candidates[].party per race (which states have a non-major candidate)"], ["FEC", "filings count"]],
+    "C3": [["editorial", "Gallup identification share; current independents in the Senate (also in the Trend report as 'Others caucus with Dem')"]],
+    "C4": [["editorial / Congress.gov", "historical membership"]],
+    "C5": [[R, "tonight"], [H24, "2020, 2022, 2024 rows"], ["editorial", "pre-2020 rows"]],
+    "C6": [[R, "sum of voteCount for non-Dem/GOP candidates across all races"], [H24, "2024 share"], [RP("parties-partycodes-Live"), "which codes count as independent or third party"]],
+    "C7": [[R, "results"], ["compiled polling dataset", "final poll per race"]],
+    "C8": [[RP("Trend-s-20261103-US-Live"), "Holdovers, Current, Won, Leading by party incl. 'Others caucus with Dem/GOP'"], [R, "calls in the featured races"]],
+    "C9": [["editorial", "copy only"]],
+    "D1": [[R, "raceCallStatus, winner, leader per Senate race"], ["us-atlas states-10m", "geometry"]],
+    "D2": [[R, "raceCallStatus, winner, leader per House race"], ["us-atlas states-10m", "geometry"]],
+    "D3": [[RP("Trend-s-20261103-US-Live"), "Won, Leading, Holdovers, Winning Trend, Current by party"], [R, "per-race detail"]],
+    "D4": [[RP("Trend-h-20261103-US-Live"), "Won, Leading, Current, NetChange by party"], [R, "flippedSeat per race"]],
+    "D5": [[R, "voteCount, eevp, raceCallStatus"], ["/api/producer", "which eight races"]],
+    "D6": [[R, "voteCount, eevp, raceCallStatus"], ["/api/producer", "context line"]],
+    "D7": [[R, "raceCallStatus, winner, leader per Senate race"]],
+    "D8": [[R, "winnerDateTime per race"], ["event log", "ordering"]],
+    "D9": [[R, "all races where statePostal = XX"]],
+    "D10": [[R, "sum of House voteCount by party"], [H24, "2024 share"], [RP("parties-partycodes-Live"), "party grouping"]],
+    "D11": [[R, "voteCount, eevp, raceCallStatus; threshold applied by the project"]],
+    "F1": [[RP("Trend-s-20261103-US-Live"), "trendtable.party[].trend (Won, Leading, Holdovers, Winning Trend, Current, InsufficientVote), NetChange"]],
+    "F2": [[RP("Trend-h-20261103-US-Live"), "same fields for the House"], [RP("Trend-hbystate-20261103-US-Live"), "per-state breakdown"]],
+    "F3": [[RP("PollHours-PollHoursCD2026-Live"), "StatePollingHours[] by statePostal and jurisdictionCode (CD)"]],
+    "F4": [[RP("AdvVotes-advvotingrules2026-Live"), "stateAdvanceVotingDetails[] (absentee rules, processing and counting timing, cure deadlines)"], [RP("VoteTypeAvailability-Live"), "voteTypeAvailability[] per state (which vote types AP reports, by reporting unit)"]],
+    "F5": [[RP("elninfo-StateVoteCountTiming2024-Live"), "firstReportAt, pct50ReachedAt, pct90ReachedAt, endedForNightAt, pctNotCountedElectionNight per state"]],
+    "F6": [[RP("Candidates-USSenate2026-Live"), "CandidateInformation[] (PolID, Party, Status, Incumbent, HasPhoto)"], [RP("Candidates-USHouse2026-Live"), "same for the House"]],
+    "F7": [[RP("parties-partycodes-Live"), "PoliticalPartyCodes.party[] (code, name)"]],
+  };
 
   // Key notes: what the anchor has to say, or avoid saying, while this graphic is up.
   const EEVP = "\"% in\" is AP's estimate of the expected total vote (eevp), not precincts reporting. It is a moving estimate and can be badly off early in the night; say \"of the expected vote\", never \"of precincts\".";
@@ -1163,7 +1382,7 @@
     "C8": "Scenario only. An independent winning does not mean an independent bloc: Bodnar has not committed on caucusing; Osborn, Bengs and Hill say neither party. Say \"could\", not \"will\".",
     "D1": CALL + " Hatched states are leading-but-uncalled; say \"leading\", not \"winning\".",
     "D2": CALL + " State shading is the majority of called seats, not the whole delegation.",
-    "D3": LEADING + " The 65 seats not up are a static table; independents count as independents, not as either caucus.",
+    "D3": LEADING + " Holdovers (the 65 seats not up) come from AP's Trend table; independents are counted in their own rows by caucus, not as either party.",
     "D4": LEADING,
     "D5": EEVP,
     "D6": "The status headline (\"too early to call\", \"too close\") is a house rule, not AP's. Only AP calls races.",
@@ -1172,6 +1391,9 @@
     "D9": EEVP,
     "D10": "A partial national sum is skewed by which states have closed and by uncontested seats; compare to 2024 only at similar completeness.",
     "D11": "\"Too close to call\" here is a house threshold (under 3 points, over 25% in), not AP's judgement.",
+    "F1": "\"Leading\" in AP's table means ahead in counted votes, not projected; only \"Won\" is a call. Independents are counted in their own rows, by caucus.",
+    "F3": "Closing times are when polls close, not when results start; many states report nothing for an hour or more after close.",
+    "F5": "2024 timing is a guide, not a promise; states change procedures between cycles.",
   };
 
   document.getElementById("safe-toggle").addEventListener("change", (e) => document.body.classList.toggle("show-safe", e.target.checked));
@@ -1194,6 +1416,7 @@
     const cap = n.closest(".cap");
     cap.insertAdjacentHTML("beforeend", `<div class="data"><b>${KIND[d[0]]}</b> · ${d[1]}</div>`);
     if (NOTES[key]) cap.insertAdjacentHTML("beforeend", `<div class="keynote"><b>KEY NOTE · SAY ON AIR</b> · ${NOTES[key]}</div>`);
+    if (ENDPOINTS[key]) cap.insertAdjacentHTML("beforeend", `<details class="datanotes"><summary>Data notes</summary><ul>${ENDPOINTS[key].map(([ep, f]) => `<li><code>${ep}</code><span>${f}</span></li>`).join("")}</ul></details>`);
   }
 </script>
 </body>

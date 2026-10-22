@@ -88,6 +88,16 @@ def bp_pages(state):
     return [f"https://ballotpedia.org/United_States_Senate_election_in_{n},_2026",
             f"https://ballotpedia.org/United_States_House_of_Representatives_elections_in_{n},_2026"]
 
+def ordinal(n):
+    return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+def bp_district_page(c):
+    # House candidates are listed on the district page, not the state overview.
+    n = STATE_NAMES[c["state"]]
+    m = re.match(r"[A-Z]{2}-(\d+|AL)", c["race"])
+    d = "At-Large" if (not m or m.group(1) == "AL") else ordinal(int(m.group(1)))
+    return f"https://ballotpedia.org/{n}%27s_{d}_Congressional_District_election,_2026"
+
 def bp_rows(page_html):
     rows = []
     for row in ROW.findall(page_html):
@@ -116,6 +126,7 @@ def main():
     mpath = f"{WORK}/manifest.json"
     if os.path.exists(mpath):
         manifest = json.load(open(mpath))
+        manifest = {k: v for k, v in manifest.items() if v.get("source")}   # retry anything that failed last time
     def save():
         json.dump(manifest, open(mpath, "w"), indent=1)
 
@@ -133,8 +144,7 @@ def main():
             open(f"{WORK}/raw/{c['id']}.jpg", "wb").write(data)
             manifest[c["id"]] = {"source": "congress", "url": url, "license": "Public domain (official congressional portrait)", "credit": "U.S. Congress",
                                  "page": f"https://bioguide.congress.gov/search/bio/{m['bioguide']}", "confidence": conf, "matched": f"{m['first']} {m['last']} ({m['bioguide']})"}
-        else:
-            manifest[c["id"]] = {"source": None, "note": f"no portrait in archive for {m['bioguide']}"}
+        # no portrait in the archive (new members): fall through to the Ballotpedia phase
         save()
 
     # ballotpedia, state by state
@@ -149,9 +159,18 @@ def main():
             h = get(url)
             if h:
                 rows += bp_rows(h)
+        district_rows = {}
         for c in cands:
+            if c["office"] == "H":
+                if c["race"] not in district_rows:
+                    h = get(bp_district_page(c))
+                    district_rows[c["race"]] = bp_rows(h) if h else []
+        for c in cands:
+            rows_for = district_rows.get(c["race"], []) if c["office"] == "H" else rows
+            if not rows_for:
+                rows_for = rows
             ln = last_token(c["name"]); fn = norm(c["name"]).split()[0] if norm(c["name"]) else ""
-            hits = [r for r in rows if last_token(r["name"]) == ln]
+            hits = [r for r in rows_for if last_token(r["name"]) == ln]
             if len(hits) > 1:
                 hits = [r for r in hits if norm(r["name"]).split()[0][:1] == fn[:1]] or hits
             if len(hits) > 1:
