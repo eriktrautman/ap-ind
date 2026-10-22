@@ -6,7 +6,8 @@
 <title>ap-ind</title>
 <style>
   :root { color-scheme: light dark; }
-  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; line-height: 1.5; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; line-height: 1.5; }
+  main { max-width: 760px; margin: 40px auto; padding: 0 16px; }
   h1 { font-size: 22px; margin-bottom: 4px; }
   .status { font-family: Menlo, monospace; font-size: 13px; padding: 10px 14px; border: 1px solid #8884; border-radius: 4px; margin: 16px 0 28px; white-space: pre-wrap; }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin-right: 6px; }
@@ -18,14 +19,21 @@
 </style>
 </head>
 <body>
+<script src="/docs/nav.js"></script>
+<main>
 <h1>ap-ind</h1>
-<div>AP Elections API middleware for election night. Spike build.</div>
+<div>AP Elections API middleware for election night. Demo build.</div>
 <div class="status" id="status">Loading status…</div>
 
 <h2>Design</h2>
 <ul>
-  <li><a href="/docs/lookbook.html">Graphics look book</a> — every graphic we could build, by segment, with sample data</li>
+  <li><a href="/docs/graphics-data-options.html">Graphics data options</a> — every graphic we could build, by segment, with sample data</li>
   <li><a href="/docs/spec.html">Technical spec</a></li>
+</ul>
+
+<h2>Data</h2>
+<ul>
+  <li><a href="/candidates.html">Candidate index</a> — bios, photos and live numbers for the featured races</li>
 </ul>
 
 <h2>Graphics (1920×1080)</h2>
@@ -68,5 +76,6 @@
   const state = connectFeed({ onSnapshot: (s) => { renderStatus(s); renderRaces(s); }, onUpdate: renderStatus, onStatus: renderStatus });
   setInterval(() => renderStatus(state), 5000); // keep the "s ago" counter moving
 </script>
+</main>
 </body>
 </html>

@@ -87,6 +87,12 @@ app.post("/api/poll", async () => {
   return poller.status;
 });
 
+// Candidate index: curated bios and photo credits keyed by AP candidateID (config/candidates.json).
+app.get("/api/candidates", async () => {
+  const { readFile } = await import("node:fs/promises");
+  return JSON.parse(await readFile(new URL("../config/candidates.json", import.meta.url), "utf8"));
+});
+
 app.get("/healthz", () => ({ ok: true, lastSuccess: poller.status.lastSuccess }));
 
 await app.listen({ port: config.port, host: config.host });

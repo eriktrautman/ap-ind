@@ -52,9 +52,12 @@ function fullName(c: ApCandidate): string {
   return [c.first, c.last, c.suffix].filter(Boolean).join(" ");
 }
 
+// States with a single House seat. AP names these "District 1"; broadcasters say "at large".
+const AT_LARGE = new Set(["AK", "DE", "ND", "SD", "VT", "WY"]);
+
 export function raceLabel(state: string, office: "S" | "H", seatNum?: string, seatName?: string): string {
   if (office === "S") return `${state}-SEN`;
-  if (seatName?.toLowerCase().includes("at large")) return `${state}-AL`;
+  if (AT_LARGE.has(state) || seatName?.toLowerCase().includes("at large")) return `${state}-AL`;
   return `${state}-${seatNum ?? "?"}`;
 }
 

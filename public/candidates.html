@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candidate Index</title>
+<style>
+  :root { --navy: #0b1f44; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --dem: #3b6fd6; --gop: #c0392b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.45; }
+  header { background: var(--navy); color: #fff; padding: 28px 24px 22px; }
+  header .in, main { max-width: 1400px; margin: 0 auto; }
+  header h1 { font-family: Georgia, serif; font-weight: 400; font-size: 30px; margin: 0 0 4px; }
+  header p { margin: 0; color: #c7cfdf; max-width: 80ch; }
+  main { padding: 24px; }
+  h2 { font-family: Georgia, serif; font-weight: 400; font-size: 22px; color: var(--navy); margin: 28px 0 10px; }
+  a { color: var(--navy); }
+
+  .faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .face { background: #fff; border: 1px solid var(--sand); border-radius: 6px; overflow: hidden; text-align: center; }
+  .face .img { aspect-ratio: 1; background: #16244a; display: flex; align-items: center; justify-content: center; color: #6f7d99; font-size: 12px; overflow: hidden; }
+  .face img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+  .face.featured .img { box-shadow: inset 0 0 0 3px var(--gold); }
+  .face .nm { font-weight: 700; padding: 6px 6px 0; }
+  .face .sub { color: var(--muted); font-size: 12px; padding: 0 6px 8px; }
+
+  .p { display: inline-block; min-width: 1.8em; text-align: center; font-weight: 700; border-radius: 3px; padding: 0 5px; font-size: 11px; color: #fff; background: #3a4f7a; }
+  .p.dem { background: var(--dem); } .p.gop { background: var(--gop); } .p.ind { background: var(--gold); color: #1a1600; }
+  .tablewrap { overflow-x: auto; background: #fff; border: 1px solid var(--sand); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--sand); }
+  th { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; background: #fbfaf7; position: sticky; top: 0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td img { width: 56px; height: 56px; object-fit: cover; object-position: center top; border-radius: 4px; display: block; }
+  tr.featured td:first-child { border-left: 3px solid var(--gold); }
+  .ok { color: #1c6b3c; } .warn { color: #a7651a; } .bad { color: #b11e2d; }
+  .small { color: var(--muted); font-size: 12px; }
+  .race-head td { background: var(--navy); color: #fff; font-family: Georgia, serif; font-size: 15px; }
+  .race-head .small { color: #c7cfdf; }
+  .note { background: #fff; border: 1px solid var(--sand); border-left: 3px solid var(--gold); padding: 10px 14px; margin: 0 0 18px; max-width: 100ch; }
+</style>
+</head>
+<body>
+<script src="/docs/nav.js"></script>
+<header><div class="in">
+  <h1>Candidate Index</h1>
+  <p>Everyone on the ballot in the featured races: live numbers from AP, bios and photos curated by us. Photos are served from <code>/photos/&lt;AP candidateID&gt;.jpg</code> so every graphic can reference a candidate by the same id AP uses.</p>
+</div></header>
+<main>
+  <div class="note" id="status">Loading…</div>
+  <h2>Faces</h2>
+  <div class="faces" id="faces"></div>
+  <h2>Index</h2>
+  <div class="tablewrap">
+    <table id="table">
+      <thead><tr>
+        <th>Photo</th><th>Candidate</th><th>Party</th><th>Age</th><th>Residence</th><th>Occupation</th><th>Prior offices</th><th>Military</th><th>Education</th><th>Race notes</th><th>Links</th><th>Live share</th><th>Photo source</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+<script type="module">
+  import { partyClass, fmt } from "/g/feed.js";
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const year = new Date().getFullYear();
+  const [idx, races] = await Promise.all([fetch("/api/candidates").then((r) => r.json()), fetch("/api/races").then((r) => r.json())]);
+  const raceById = new Map(races.map((r) => [r.id, r]));
+  const live = new Map(); for (const r of races) for (const c of r.candidates) live.set(c.id, { ...c, race: r });
+
+  // Served photo = our cleared file; a permission-needed photo is shown from the campaign's URL for the demo only.
+  const src = (c) => c.photo?.file ? `/photos/${c.photo.file}` : c.photo?.remote ?? null;
+  const withPhoto = idx.candidates.filter((c) => c.photo?.file).length;
+  const needPerm = idx.candidates.filter((c) => c.photo?.usage === "needs-permission").length;
+  document.getElementById("status").innerHTML =
+    `<b>${idx.candidates.length}</b> candidates in <b>${idx.races.length}</b> featured races · <b>${withPhoto}</b> cleared photos in the repo (public domain or Creative Commons, each verified against a second source)` +
+    (needPerm ? ` · <span class="warn"><b>${needPerm}</b> shown from campaign sites and need permission before air</span>` : "") +
+    ` · updated ${esc(idx.updated)}`;
+
+  const faces = document.getElementById("faces");
+  const order = idx.races.map((r) => r.raceId);
+  const sorted = [...idx.candidates].sort((a, b) => order.indexOf(a.raceId) - order.indexOf(b.raceId) || (b.featured - a.featured));
+  for (const c of sorted.filter((c) => c.featured || src(c))) {
+    faces.insertAdjacentHTML("beforeend", `<div class="face ${c.featured ? "featured" : ""}">
+      <div class="img">${src(c) ? `<img src="${esc(src(c))}" alt="${esc(c.name)}">` : "no photo"}</div>
+      <div class="nm">${esc(c.name)}</div><div class="sub">${esc(c.race)} · <span class="p ${partyClass(c.party)}">${esc(c.partyLabel ?? c.party)}</span></div></div>`);
+  }
+
+  const tbody = document.querySelector("#table tbody");
+  let lastRace = null;
+  for (const c of sorted) {
+    if (c.raceId !== lastRace) {
+      const r = raceById.get(c.raceId); const meta = idx.races.find((x) => x.raceId === c.raceId);
+      tbody.insertAdjacentHTML("beforeend", `<tr class="race-head"><td colspan="13">${esc(meta?.title ?? c.race)} <span class="small">· ${esc(c.race)} · AP race ${esc(c.raceId)}${r ? ` · ${r.called ? "AP called" : `${Math.round(r.eevp || r.precinctsPct)}% in`}` : ""}</span></td></tr>`);
+      lastRace = c.raceId;
+    }
+    const l = live.get(c.id);
+    const links = [["site", c.sites?.campaign], ["wiki", c.sites?.wikipedia], ["ballotpedia", c.sites?.ballotpedia]].filter(([, u]) => u).map(([k, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${k}</a>`).join(" · ");
+    const ph = c.photo;
+    const photoCell = ph
+      ? `<span class="${ph.usage === "needs-permission" ? "warn" : "ok"}">${esc(ph.license ?? "")}</span><div class="small">${esc(ph.credit ?? "")} · <a href="${esc(ph.page ?? ph.source)}" target="_blank" rel="noopener">source</a></div><div class="small">${esc(ph.verified ?? "")}</div>` +
+        (ph.file && ph.remote ? `<div class="small warn">Newer campaign photo available (needs permission)</div>` : "")
+      : `<span class="bad">none</span>`;
+    tbody.insertAdjacentHTML("beforeend", `<tr class="${c.featured ? "featured" : ""}">
+      <td>${src(c) ? `<img src="${esc(src(c))}" alt="">` : ""}</td>
+      <td><b>${esc(c.name)}</b>${c.incumbent ? ' <span class="small">inc.</span>' : ""}<div class="small">AP ${esc(c.id)}</div></td>
+      <td><span class="p ${partyClass(c.party)}">${esc(c.party)}</span><div class="small">${esc(c.partyLabel ?? "")}</div></td>
+      <td class="num">${c.born ? year - c.born : ""}</td>
+      <td>${esc(c.residence)}</td><td>${esc(c.occupation)}</td><td>${esc(c.priorOffices)}</td><td>${esc(c.military)}</td><td>${esc(c.education)}</td>
+      <td class="small">${esc(c.notes)}</td>
+      <td class="small">${links}</td>
+      <td class="num">${l ? `${l.pct.toFixed(1)}%<div class="small">${fmt(l.votes)}</div>` : '<span class="small">not in feed</span>'}</td>
+      <td>${photoCell}</td>
+    </tr>`);
+  }
+</script>
+</body>
+</html>

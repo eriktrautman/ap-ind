@@ -18,3 +18,4 @@ npm-debug.log*
 .vscode/
 .idea/
 .vercel
+docs/g/

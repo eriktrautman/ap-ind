@@ -51,6 +51,19 @@ export function connectFeed(handlers) {
     };
     ws.onerror = () => ws.close();
   }
+  // Demo mode (?demo=1): render an embedded sample snapshot and never touch the network.
+  // Used by the docs site, where no server runs.
+  if (new URLSearchParams(location.search).get("demo")) {
+    import("./sample-data.js").then(({ SAMPLE }) => {
+      const now = new Date().toISOString();
+      apply({ ...SAMPLE, status: { ...SAMPLE.status, lastSuccess: now, lastAttempt: now } });
+      state.connected = true;
+      handlers.onStatus?.(state);
+      // keep the freshness dot green while the demo is open
+      setInterval(() => { state.status.lastSuccess = new Date().toISOString(); handlers.onStatus?.(state); }, 30_000);
+    });
+    return state;
+  }
   // Render from a plain fetch first so the page is populated before the socket is up.
   pollOnce().then(open);
   return state;

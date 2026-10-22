@@ -58,6 +58,23 @@
   .card.wide { grid-column: 1 / -1; }
   @media (min-width: 820px) { .card.half { grid-column: span 2; } .card.half .mock { font-size: 15px; } }
   @media (min-width: 900px) { .card.wide .mock { aspect-ratio: 16 / 7; } }
+  /* Data-source audit: every card says where its numbers come from. Cards needing data AP does not ship are flagged. */
+  .card .data { font-size: 12.5px; padding: 6px 9px; border-radius: 4px; background: #f1f5ee; color: #1c4d2c; }
+  .card .data b { letter-spacing: .04em; font-size: 11px; }
+  .card.derived .data { background: #eef2f9; color: #1f3a6e; }
+  .card.mixed .data { background: #fdf3e3; color: #6b4a0b; }
+  .card.ext { border-color: #e08a1e; box-shadow: 0 0 0 2px #f6d9b0; }
+  .card.ext .data { background: #e08a1e; color: #1a1200; }
+  .card.ext .data b { color: #1a1200; }
+  /* Key note: the caveat the anchor must say when this graphic is on screen. */
+  .card .keynote { font-size: 12.5px; padding: 6px 9px; border-radius: 4px; background: #fff3f0; color: #7a1d12; border-left: 3px solid #b11e2d; }
+  .card .keynote b { letter-spacing: .04em; font-size: 11px; }
+  /* Live embed: the real 1920x1080 graphic page in demo mode, scaled to the card. */
+  .embed { position: relative; aspect-ratio: 16 / 9; width: 100%; background: #000; overflow: hidden; }
+  .embed iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: top left; pointer-events: none; }
+  .embed .open { position: absolute; right: 8px; top: 8px; background: rgba(7,18,34,.85); color: #fff; font-size: 12px; padding: 3px 9px; border-radius: 3px; text-decoration: none; border: 1px solid #3a4f7a; }
+  .embed .open:hover { background: #0b1f44; }
+  .embed .live-tag { position: absolute; left: 8px; top: 8px; background: var(--gold); color: #1a1600; font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border-radius: 3px; }
   .map-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 1.1em; color: #cfd8ea; }
   .map-legend span { display: inline-flex; align-items: center; gap: 4px; }
   .map-legend svg { width: 18px; height: 12px; }
@@ -136,11 +153,12 @@
 </style>
 </head>
 <body>
+<script src="nav.js"></script>
 
 <header class="top">
   <div class="in">
     <h1>Graphics Look Book</h1>
-    <p>Every graphic we could build for the election-night broadcast, grouped by segment type. Each card is a sketch at broadcast proportion (16:9) with sample numbers, not a finished design. Use it to decide which ones we actually need.</p>
+    <p>Candidate graphics for the election-night broadcast, grouped by segment type. Each card is a sketch at broadcast proportion (16:9) with sample numbers, not a finished design. The page is the basis for selecting which graphics to build.</p>
     <div class="meta">
       <span>Draft 1 · Oct 21 2026</span>
       <span>Colours borrowed from independentswin.com (navy, gold, cream)</span>
@@ -162,7 +180,23 @@
 
 <main>
 
-<div class="note">All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the featured candidate is the first thing the eye lands on.<br><br><b>This is television.</b> Every graphic keeps its content inside the title-safe area (the dashed box on each sketch: 10% in from each side, 9% top and bottom), uses one headline number per idea, and sets nothing smaller than 28px at 1080p. If a sketch here looks dense, the full-size version will show less, not smaller.</div>
+<div class="note">All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the featured candidate is the first thing the eye lands on.<br><br><b>This is television.</b> Every graphic keeps its content inside the title-safe area (the dashed box on each sketch: 10% in from each side, 9% top and bottom), uses one headline number per idea, and sets nothing smaller than 28px at 1080p. Where a sketch is dense, the full-size version shows fewer items at the same minimum size.</div>
+
+<div class="note" id="audit">
+  <b>Data audit.</b> Every card below carries a data line. <span style="background:#f1f5ee;color:#1c4d2c;padding:1px 6px;border-radius:3px">AP</span> straight from the feed · <span style="background:#eef2f9;color:#1f3a6e;padding:1px 6px;border-radius:3px">AP-derived</span> computed from AP fields only · <span style="background:#fdf3e3;color:#6b4a0b;padding:1px 6px;border-radius:3px">mixed</span> AP plus a dataset supplied by the project · <span style="background:#e08a1e;color:#1a1200;padding:1px 6px;border-radius:3px;font-weight:700">outside data</span> the chart cannot be made from the feed; a dataset that must be built and verified (card outlined orange).<br><br>
+  What the AP feed provides (verified Oct 21): per-candidate votes at state and county level; precincts reporting and AP's expected-vote estimate (<code>eevp</code>) per unit; race calls, winner and call time; seat flips; incumbency and party; ranked-choice rounds; poll closing times; and <b>past elections (2020, 2022, 2024) at the same detail</b>, which covers every "vs last time" comparison.<br><br>
+  <b>Outside datasets to build and confirm:</b>
+  <ol style="margin:6px 0 0;padding-left:20px">
+    <li>Pre-election polling for the seven featured races (B2, B3, C7)</li>
+    <li>Candidate bios, photos and photo rights (A2, B1, B2, B2 ✓; candidate index in progress)</li>
+    <li>Sourced quotes (B11)</li>
+    <li>Current Senate composition of the 65 seats <em>not</em> up this cycle, for balance-of-power baselines (C8, D3)</li>
+    <li>History of independents in Congress and best independent results before 2020 (C4, C5)</li>
+    <li>Movement statistics: independent filings count (FEC), identification polling such as Gallup (C2, C3)</li>
+    <li>AP VoteCast, a separate AP product not covered by the key (B12)</li>
+    <li>Editorial context lines written by producers during the night (B4 targets, D6)</li>
+  </ol>
+</div>
 
 <!-- ============================================================ A -->
 <section class="group" id="persistent">
@@ -170,12 +204,10 @@
   <p class="lede">Layers that sit over camera for long stretches. Each one is its own keyable URL so the switcher can stack them independently.</p>
   <div class="grid">
 
-    <div class="card">
-      <div class="mock key">
-        <div class="l3"><div class="brand">INDEPENDENTS</div><div class="txt"><span>NE-SEN · Osborn (I) 46.0% · Ricketts (R) 48.0% · 38% in</span><span class="gl">◆ AP CALL · ID-1 · Zabel (I) wins</span><span>MT-SEN · Bodnar (I) 34% · Alme (R) 50% · 61% in</span></div></div>
-      </div>
+    <div class="card half">
+      <div class="embed" data-src="/g/ticker.html?demo=1&amp;bg=black"><span class="live-tag">WORKING PAGE · SAMPLE DATA</span><a class="open" target="_blank" rel="noopener">Open full screen ↗</a></div>
       <div class="cap"><h3><span class="n">A1</span> Live ticker <span class="tag live">live</span></h3>
-      <p>Continuous crawl of producer-pinned races with AP calls and manual items spliced in. Built in the spike.</p></div>
+      <p>Continuous crawl of producer-pinned races with AP calls and manual items spliced in. Built in the demo. The crawl above is the real page running on an embedded sample snapshot; on the server it runs on the live feed.</p></div>
     </div>
 
     <div class="card">
@@ -207,7 +239,7 @@
         </div>
       </div>
       <div class="cap"><h3><span class="n">A4</span> AP call alert <span class="tag live">live</span></h3>
-      <p>Full-width slab that animates in when AP calls a race we care about, then collapses into the ticker. Fired automatically by the event engine; producer can suppress.</p></div>
+      <p>Full-width slab that animates in when AP calls a race of interest, then collapses into the ticker. Fired automatically by the event engine; producer can suppress.</p></div>
     </div>
 
     <div class="card">
@@ -318,7 +350,7 @@
         <div class="foot"><span>Polling average, public polls only</span><span>Source: campaign-disclosed polls</span></div>
       </div>
       <div class="cap"><h3><span class="n">B3</span> Polling trend <span class="tag pre">prepared</span></h3>
-      <p>Line chart of the public polls through the year. Needs us to compile the polls; AP does not provide them.</p></div>
+      <p>Line chart of the public polls through the year. Requires a compiled polling dataset; AP does not provide polls.</p></div>
     </div>
 
     <div class="card half">
@@ -339,23 +371,13 @@
         <div class="foot"><span>2024 Senate result by county · <span class="gl">■</span> Osborn <span style="color:#e8a8a0">■</span> Fischer</span><span>targets outlined</span></div>
       </div>
       <div class="cap"><h3><span class="n">B4</span> Path to victory map <span class="tag pre">prepared</span></h3>
-      <p>County map shaded by the 2024 result with the counties that decide this race outlined. Needs 2024 county data, which we source separately.</p></div>
+      <p>County map shaded by the 2024 result with the counties that decide this race outlined. 2024 county results come from AP's 2024 feed, confirmed readable (Oct 21).</p></div>
     </div>
 
-    <div class="card">
-      <div class="mock">
-        <div class="safe">
-          <div style="display:flex;justify-content:space-between;align-items:baseline"><div class="title">Nebraska <span class="sub" style="font-family:var(--sans);font-size:0.5em">U.S. Senate</span></div><div class="sub"><b style="color:#fff">38%</b> of expected vote in</div></div>
-          <div class="rows" style="margin-top:10px">
-            <div class="row gop"><span class="nm"><span class="p gop">R</span> Pete Ricketts <span class="sub">inc.</span></span><div class="bar"><i style="width:100%"></i></div><span class="pc">48.0</span></div>
-            <div class="row ind"><span class="nm"><span class="p ind">I</span> Dan Osborn</span><div class="bar"><i style="width:96%"></i></div><span class="pc">46.0</span></div>
-            <div class="row ind"><span class="nm"><span class="p ind">AFi</span> Chuck Conboy</span><div class="bar"><i style="width:6%"></i></div><span class="pc">2.7</span></div>
-          </div>
-        </div>
-        <div class="foot"><span>● Source: AP</span><span>Updated 9:41 PM CT</span></div>
-      </div>
+    <div class="card half">
+      <div class="embed" data-src="/g/race.html?demo=1&amp;id=28594&amp;bg=black"><span class="live-tag">WORKING PAGE · SAMPLE DATA</span><a class="open" target="_blank" rel="noopener">Open full screen ↗</a></div>
       <div class="cap"><h3><span class="n">B5</span> Live race result <span class="tag live">live</span></h3>
-      <p>The workhorse: candidates, bars, share, votes, expected vote in, AP call badge. Built in the spike.</p></div>
+      <p>The standard result card: candidates, bars, share, votes, expected vote in, AP call badge. Built in the demo. Shown above is the real page on an embedded sample snapshot (Nebraska, AP test data).</p></div>
     </div>
 
     <div class="card half">
@@ -389,7 +411,7 @@
         <div class="foot"><span>Lead in points, every AP update</span><span>● live</span></div>
       </div>
       <div class="cap"><h3><span class="n">B7</span> Margin tracker <span class="tag live">live</span></h3>
-      <p>Lead over time as returns come in, annotated with what reported when. Comes free from the snapshots we store every poll.</p></div>
+      <p>Lead over time as returns come in, annotated with what reported when. Computed from the snapshot stored at every poll.</p></div>
     </div>
 
     <div class="card half">
@@ -472,7 +494,7 @@
         <div class="foot"><span>Share of each group voting Osborn</span><span>Requires AP VoteCast entitlement</span></div>
       </div>
       <div class="cap"><h3><span class="n">B12</span> Who voted for the independent <span class="tag live">live</span></h3>
-      <p>Exit-poll style breakdown by group. Only possible if we license AP VoteCast; otherwise cut it. Worth asking AP about.</p></div>
+      <p>Exit-poll style breakdown by group. Requires an AP VoteCast licence; otherwise cut. Licensing to be raised with AP.</p></div>
     </div>
 
   </div>
@@ -570,13 +592,13 @@
         </div>
       </div>
       <div class="cap"><h3><span class="n">C6</span> National independent vote <span class="tag live">live</span></h3>
-      <p>Running sum of votes for non-major-party candidates across every race in the feed, against the 2024 share. Simple to compute from what we already store.</p></div>
+      <p>Running sum of votes for non-major-party candidates across every race in the feed, against the 2024 share. Computed from stored snapshots.</p></div>
     </div>
 
     <div class="card">
       <div class="mock">
         <div class="safe">
-          <div class="sub">POLL vs RESULT · SLATE RACES</div>
+          <div class="sub">POLL vs RESULT · FEATURED RACES</div>
           <svg viewBox="0 0 320 110" style="margin-top:4px">
             <g fill="#9aa7bd" font-size="7"><text x="2" y="20">Result</text><text x="2" y="104">better</text><text x="280" y="104">Final poll →</text></g>
             <line x1="40" y1="95" x2="300" y2="15" stroke="#3a4f7a" stroke-dasharray="2 2"/>
@@ -587,13 +609,13 @@
         <div class="foot"><span>Dots above the line = outperformed the polls</span><span>● live</span></div>
       </div>
       <div class="cap"><h3><span class="n">C7</span> Poll vs result <span class="tag live">live</span></h3>
-      <p>Did independents beat their polls? One dot per featured race, filling in as races are called. Pays off the "are independents under-polled" discussion.</p></div>
+      <p>Did independents beat their polls? One dot per featured race, filling in as races are called. Supports the discussion of whether independents are under-polled.</p></div>
     </div>
 
     <div class="card">
       <div class="mock">
         <div class="safe">
-          <div class="sub">IF THE SLATE WINS · SENATE</div>
+          <div class="sub">IF THE FEATURED CANDIDATES WIN · SENATE</div>
           <div class="seg" style="margin-top:10px;height:2em"><i style="width:47%;background:var(--dem)"></i><i style="width:2%;background:var(--gold)"></i><i style="width:4%;background:var(--gold);opacity:.55"></i><i style="width:47%;background:var(--gop)"></i></div>
           <div class="sub" style="display:flex;justify-content:space-between;margin-top:3px"><span>Dem 47</span><span class="gl">Ind 2 + 4 if featured sweep</span><span>GOP 47</span></div>
           <div class="title" style="font-size:1.4em;margin-top:12px">Four Senate seats would make independents the swing bloc</div>
@@ -752,7 +774,7 @@
         </div>
       </div>
       <div class="cap"><h3><span class="n">D7</span> Status map <span class="tag live">live</span></h3>
-      <p>Tile map of every Senate race coloured by called/leading party. The glance-at-the-whole-country graphic.</p></div>
+      <p>Tile map of every Senate race coloured by called/leading party. The whole-country overview.</p></div>
     </div>
 
     <div class="card">
@@ -800,7 +822,7 @@
         <div class="foot"><span>● AP, sum of all House races</span><span>62% of expected vote in</span></div>
       </div>
       <div class="cap"><h3><span class="n">D10</span> National popular vote <span class="tag live">live</span></h3>
-      <p>Votes summed across every House race, with the independent share as its own segment. Cheap to compute, and it makes the movement's size concrete.</p></div>
+      <p>Votes summed across every House race, with the independent share as its own segment. Cheap to compute; makes the movement's size concrete.</p></div>
     </div>
 
     <div class="card">
@@ -836,7 +858,7 @@
           <tr><th>Pill</th><th>Meaning</th><th>From AP</th></tr>
           <tr><td><span class="pill open">POLLS OPEN</span></td><td>No votes reported, polls not yet closed</td><td>votes = 0, before pollClosingTime</td></tr>
           <tr><td><span class="pill counting">38% IN</span></td><td>Counting; the number is AP's expected-vote estimate</td><td>eevp (falls back to precincts %)</td></tr>
-          <tr><td><span class="pill close">TOO CLOSE</span></td><td>Uncalled, margin under 3 points with over 25% in</td><td>our rule on top of AP numbers</td></tr>
+          <tr><td><span class="pill close">TOO CLOSE</span></td><td>Uncalled, margin under 3 points with over 25% in</td><td>house rule on AP numbers</td></tr>
           <tr><td><span class="pill call">AP CALL</span></td><td>AP has declared a winner</td><td>raceCallStatus = Called, winner = X</td></tr>
           <tr><td><span class="pill flip">FLIP</span></td><td>Called for a different party than the seat holder</td><td>flippedSeat</td></tr>
           <tr><td><span class="pill counting">RCV</span></td><td>Ranked choice; first-round totals until tabulation</td><td>rankedChoice, rankedChoiceVoting rounds</td></tr>
@@ -856,7 +878,7 @@
         <div class="sub" style="margin-top:8px">Freshness dot on every live graphic: green under 60 s since the last AP update, amber under 3 min, red beyond.</div>
       </div>
       <div class="cap"><h3><span class="n">E2</span> Colour roles</h3>
-      <p>Party colours muted; gold for independents is the only saturated colour, so it carries the story on every screen. The freshness dot is the one honest signal that data may be stale.</p></div>
+      <p>Party colours muted; gold for independents is the only saturated colour, so it carries the story on every screen. The freshness dot is the only indicator that data may be stale.</p></div>
     </div>
   </div>
 </section>
@@ -1034,6 +1056,107 @@
     }
   }
   drawMaps().catch((e) => { for (const id of ["senate-map", "house-map"]) document.getElementById(id).outerHTML = `<div class="sub">Map could not load (${e.message})</div>`; });
+
+  // Data-source audit, one entry per card. kind: ap | derived | mixed | ext.
+  const DATA = {
+    "A1": ["ap", "votes, eevp, calls per race; producer pins and manual items come from the control panel"],
+    "A2": ["mixed", "name and party from AP; title line from the candidate index; live share from AP"],
+    "A3": ["ap", "votes, eevp, call status"],
+    "A4": ["ap", "winner, winnerDateTime, flippedSeat; \"first of the night\" counted from the event log"],
+    "A5": ["ap", "pollClosingTime per state unit"],
+    "A6": ["ap", "votes, eevp, call status for the featured races"],
+    "B1": ["ext", "bio, photo and photo rights from the candidate index; the 2024 result line can come from AP's 2024 feed"],
+    "B2": ["ext", "poll numbers from the compiled polling dataset, photos from the candidate index; last result for the seat from AP 2020/2024 feed; closing time from AP"],
+    "B2 ✓": ["mixed", "shares, margin, flip and call time from AP; photo and history line from the candidate index"],
+    "B3": ["ext", "polling series must be compiled; AP carries no polls"],
+    "B4": ["derived", "2024 county results from AP's 2024 feed (confirmed); which counties are \"targets\" and the notes are editorial"],
+    "B5": ["ap", "votes, eevp, incumbent, call status"],
+    "B6": ["ap", "county-level votes and eevp (confirmed Oct 21)"],
+    "B7": ["derived", "margin recomputed from every stored AP snapshot"],
+    "B8": ["derived", "county votes and AP's per-county eevp estimate; remaining = counted ÷ eevp − counted; the \"needs\" figure is derived here. Caveat: eevp is AP's estimate and moves"],
+    "B9": ["ap", "rankedChoiceVoting rounds per candidate (tabulation timing is the state's)"],
+    "B10": ["derived", "tonight from the live feed, 2024 from AP's 2024 county feed, matched by county FIPS"],
+    "B11": ["ext", "quotes must be sourced and cleared by editorial"],
+    "B12": ["ext", "AP VoteCast is a separate AP product; not in the entitlement"],
+    "C1": ["ap", "votes, eevp, call status for the seven races"],
+    "C2": ["mixed", "which states have an independent on the federal ballot comes from AP's candidate list; the 217 filings count is FEC"],
+    "C3": ["ext", "Gallup identification share, current independents in the Senate: editorial facts to confirm"],
+    "C4": ["ext", "historical membership must be compiled (Congress.gov / editorial)"],
+    "C5": ["mixed", "tonight from AP; 2020–2024 rows from AP's past feeds; older rows (King 2018) need an outside source"],
+    "C6": ["derived", "sum of non-Dem/GOP votes across every race; 2024 share from AP's 2024 feed"],
+    "C7": ["mixed", "results from AP; poll numbers from the compiled polling dataset"],
+    "C8": ["mixed", "called seats from AP; the 65 seats not up this cycle are a maintained static table"],
+    "C9": ["ext", "editorial copy, no data"],
+    "D1": ["ap", "call status, winner, leader per Senate race; map geometry is Census (us-atlas)"],
+    "D2": ["ap", "call status and leader per House race; map geometry is Census (us-atlas)"],
+    "D3": ["mixed", "35 races from AP; the 65 seats not up are a maintained static table"],
+    "D4": ["ap", "all 435 seats are up, so calls and leaders come entirely from AP"],
+    "D5": ["ap", "votes, eevp, call status; producer chooses the eight"],
+    "D6": ["mixed", "numbers from AP; status headline from the house status rules; context line typed by a producer"],
+    "D7": ["ap", "call status and leader per Senate race"],
+    "D8": ["derived", "winnerDateTime from AP, plotted from the event log"],
+    "D9": ["ap", "all federal races in the state"],
+    "D10": ["derived", "sum of House votes by party from AP; 2024 share from AP's 2024 feed"],
+    "D11": ["derived", "AP votes and eevp; the \"under 3 points, over 25% in\" rule is a house rule"],
+  };
+  const KIND = { ap: "AP", derived: "AP-DERIVED", mixed: "MIXED", ext: "OUTSIDE DATA" };
+
+  // Key notes: what the anchor has to say, or avoid saying, while this graphic is up.
+  const EEVP = "\"% in\" is AP's estimate of the expected total vote (eevp), not precincts reporting. It is a moving estimate and can be badly off early in the night; say \"of the expected vote\", never \"of precincts\".";
+  const CALL = "\"AP call\" is the Associated Press's projection, not an official result. Results are unofficial until states certify.";
+  const LEADING = "A lead in counted votes is not a win. Which counties and which ballot types (mail, early, election day) have reported decides the early shape; large counties often report late.";
+  const NOTES = {
+    "A1": "Shares are of votes counted so far; a race item without \"AP CALL\" is still open.",
+    "A3": EEVP,
+    "A4": CALL + " \"Flip\" means a different party than the seat's current holder, per AP's flippedSeat.",
+    "A5": "Closing time is AP's per-state value. Nebraska, Idaho, South Dakota, North Dakota, Kentucky and Tennessee span two time zones; polls close at different local times inside the state.",
+    "A6": "Margin is of votes counted so far; \"38%\" is of the expected vote, not precincts.",
+    "B2": "Name the pollster, sponsor and dates on air; several featured-race polls are campaign-sponsored.",
+    "B2 ✓": CALL,
+    "B3": "Polls are not predictions; many are campaign-sponsored. Averages hide big house effects in small-sample state polls.",
+    "B4": "Targets are editorial analysis, not AP's. The map shows 2024; it is not a forecast.",
+    "B5": EEVP + " " + CALL,
+    "B6": "Colour shows who leads among votes counted in that county so far, not who will win it. Land doesn't vote: a mostly red map can be a tied race.",
+    "B7": "Swings in the line come from which areas report when, not from voters changing. Expect a late shift when mail and city ballots land.",
+    "B8": "\"Still to count\" is derived from AP's expected-vote estimate (eevp) and will move as AP revises it; treat the \"needs X%\" figure as approximate and re-state it when it changes.",
+    "B9": "Alaska and Maine tabulate ranked-choice rounds days after election night; on the night only first-choice totals exist. A first-round leader under 50% can lose. Do not call a winner from round one.",
+    "B10": "Compares only counties that have reported; the swing figure can flip as more counties come in.",
+    "C1": EEVP + " " + CALL,
+    "C5": "Historical rows are context, not a like-for-like comparison: different years, opponents and turnout.",
+    "C6": "A partial national sum is skewed toward whichever states have closed; the West Coast lands last.",
+    "C8": "Scenario only. An independent winning does not mean an independent bloc: Bodnar has not committed on caucusing; Osborn, Bengs and Hill say neither party. Say \"could\", not \"will\".",
+    "D1": CALL + " Hatched states are leading-but-uncalled; say \"leading\", not \"winning\".",
+    "D2": CALL + " State shading is the majority of called seats, not the whole delegation.",
+    "D3": LEADING + " The 65 seats not up are a static table; independents count as independents, not as either caucus.",
+    "D4": LEADING,
+    "D5": EEVP,
+    "D6": "The status headline (\"too early to call\", \"too close\") is a house rule, not AP's. Only AP calls races.",
+    "D7": CALL,
+    "D8": "Call times are AP's winnerDateTime in UTC; convert to the broadcast time zone.",
+    "D9": EEVP,
+    "D10": "A partial national sum is skewed by which states have closed and by uncontested seats; compare to 2024 only at similar completeness.",
+    "D11": "\"Too close to call\" here is a house threshold (under 3 points, over 25% in), not AP's judgement.",
+  };
+
+  // Working-page embeds: load the real graphic in demo mode and scale 1920x1080 to the card width.
+  for (const box of document.querySelectorAll(".embed[data-src]")) {
+    const src = box.dataset.src;
+    const iframe = document.createElement("iframe");
+    iframe.src = src; iframe.title = "graphic preview"; iframe.loading = "lazy";
+    box.prepend(iframe);
+    box.querySelector(".open").href = src;
+    const fit = () => { iframe.style.transform = `scale(${box.clientWidth / 1920})`; };
+    new ResizeObserver(fit).observe(box); fit();
+  }
+
+  for (const n of document.querySelectorAll(".card .cap h3 .n")) {
+    const key = n.textContent.trim();
+    const d = DATA[key]; if (!d) continue;
+    const card = n.closest(".card"); card.classList.add(d[0]);
+    const cap = n.closest(".cap");
+    cap.insertAdjacentHTML("beforeend", `<div class="data"><b>${KIND[d[0]]}</b> · ${d[1]}</div>`);
+    if (NOTES[key]) cap.insertAdjacentHTML("beforeend", `<div class="keynote"><b>KEY NOTE · SAY ON AIR</b> · ${NOTES[key]}</div>`);
+  }
 </script>
 </body>
 </html>

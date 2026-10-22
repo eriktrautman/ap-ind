@@ -35,9 +35,8 @@
   body {
     background: var(--bg); color: var(--fg); font-family: var(--font-body);
     font-size: 15px; line-height: 1.5; margin: 0;
-    padding: 32px 16px 64px;
   }
-  main { max-width: 860px; margin: 0 auto; display: grid; gap: 40px; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; display: grid; gap: 40px; }
   h1 { font-size: 28px; font-weight: 600; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
   h2 { font-size: 18px; font-weight: 600; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); text-wrap: balance; }
   h3 { font-size: 15px; font-weight: 600; margin: 18px 0 6px; }
@@ -80,11 +79,12 @@
 </style>
 </head>
 <body>
+<script src="nav.js"></script>
 <main>
   <header>
     <h1>Election Night Pipeline Spec</h1>
     <div class="meta">
-      <span>v0.3</span>
+      <span>v0.4</span>
       <span>2026-10-21</span>
       <span>Air date: 2026-11-03 (confirmed)</span>
       <span>Feed: AP Elections API</span>
@@ -93,16 +93,16 @@
 
   <section>
     <h2>1. Scope and assumptions</h2>
-    <p>An 8-hour live broadcast on election night, oriented around independent and third-party candidates in federal races (Senate and House) with national context (balance of power, notable calls). We build the middleware between the AP Elections API and four outputs:</p>
+    <p>An 8-hour live broadcast on election night, oriented around independent and third-party candidates in federal races (Senate and House) with national context (balance of power, notable calls). The middleware sits between the AP Elections API and four outputs:</p>
     <ul>
       <li><strong>Ticker</strong>: a dynamic lower third of curated results, delivered to the Ross Carbonite as a keyable layer.</li>
-      <li><strong>Full-screen graphics</strong>: race results, balance of power, an "independents board", state views. Also delivered to the Carbonite.</li>
+      <li><strong>Full-screen graphics</strong>: race results, balance of power, an independents board, state views. Also delivered to the Carbonite.</li>
       <li><strong>Studio wall</strong>: a browser on the in-studio screen showing whatever the producer selects; the anchor talks to it.</li>
       <li><strong>Control panel</strong>: status, ticker curation, wall/graphic selection. Web-served, access-restricted.</li>
       <li><strong>Race browser</strong> (tier 2): all races and their numbers, separately deployable.</li>
     </ul>
-    <p>Confirmed: election day is 3 Nov 2026 and we hold an AP Elections API key. Still to confirm: the key's entitlements cover national and state-level results for all Senate and House races; the studio has a wired internet connection and a machine we can put on its LAN.</p>
-    <p>This document is the working description of the architecture and plan. It is updated as decisions are made; the <a href="#questions">open questions</a> at the end are the current unknowns.</p>
+    <p>Confirmed: election day is 3 Nov 2026; an AP Elections API key is held, and its entitlements cover all Senate and House races at state and county level (verified Oct 21, section 4). Still to confirm: the studio has a wired internet connection and a machine that can be placed on its LAN.</p>
+    <p>This document describes the architecture and plan and is updated as decisions are made. The <a href="#questions">open questions</a> in section 9 list the current unknowns.</p>
   </section>
 
   <section>
@@ -211,20 +211,20 @@
     <h3>Stack</h3>
     <ul>
       <li>Node 24+ running TypeScript directly (no build step) with the built-in <code>node:sqlite</code>, so there are no native dependencies and nothing to compile on either machine. Fastify for REST, <code>@fastify/websocket</code> for push. One process.</li>
-      <li>Graphics and panel: plain HTML/JS modules sharing one feed client (<code>public/g/feed.js</code>). Svelte and D3 are available if a graphic needs them; the spike did not. All fonts and assets served by us; graphics pages make no third-party requests.</li>
+      <li>Graphics and panel: plain HTML/JS modules sharing one feed client (<code>public/g/feed.js</code>). Svelte and D3 are available if a graphic needs them; the demo uses only d3-geo (with Census geometry) for the county and national maps. The server hosts all fonts and assets; graphics pages make no third-party requests.</li>
       <li>Process management: pm2 (same commands on macOS, Linux or Windows: <code>pm2 start</code>, <code>pm2 logs</code>, <code>pm2 restart</code>, <code>pm2 startup</code> for boot). Caddy as a plain binary in front where TLS or an auth gate is needed.</li>
-      <li>Deploy is <code>git pull &amp;&amp; npm ci &amp;&amp; pm2 restart ap-ind</code>, scripted, and the only way either machine changes.</li>
+      <li>Deploy is a script that runs <code>git pull &amp;&amp; npm ci &amp;&amp; pm2 restart ap-ind</code>. It is the only way either machine changes.</li>
     </ul>
 
     <h3>Why not containers or serverless</h3>
-    <p>Docker was in v0.1 by habit. The system is one process and one file, with no native modules; a container adds an image build, a volume for SQLite and one more layer to debug on the night, in exchange for nothing we need. Dropped.</p>
-    <p>The team's usual host is Vercel. The middleware's core (a poller on a 20 s cadence, a WebSocket server, a growing SQLite file) is a long-running process, which Vercel's serverless model does not run. Vercel hosts what fits: the race browser (tier 2, read-only, public) and these docs. A Vercel-native variant of the middleware is possible (Vercel Cron triggers each poll at a 1-minute minimum, state in a hosted DB such as Neon or Turso, graphics poll REST every 10–15 s instead of a socket); it is slower, adds two vendors to the critical path and is a second architecture to maintain, so it is held in reserve as the cloud fallback only if rehearsal shows the studio machine cannot be trusted.</p>
+    <p>Containers were considered and rejected. The system is one process and one file with no native modules; a container adds an image build, a volume for SQLite and one more layer to debug on the night, without benefit.</p>
+    <p>Serverless was also rejected. The team's usual host is Vercel, whose serverless model does not run long-lived processes, and the middleware core (a poller on a 20 s cadence, a WebSocket server, a growing SQLite file) is one. Vercel hosts what fits: the race browser (tier 2, read-only, public) and these docs. A Vercel-native variant of the middleware is possible (Vercel Cron triggers each poll at a 1-minute minimum, state in a hosted DB such as Neon or Turso, graphics poll REST every 10–15 s instead of a socket). It is slower, adds two vendors to the critical path and is a second architecture to maintain. It is held in reserve as the cloud fallback if rehearsal shows the studio machine cannot be trusted.</p>
   </section>
 
   <section>
     <h2>4. Data pipeline</h2>
     <h3>AP Elections API</h3>
-    <p>The feed is a REST API keyed by election date (confirmed in the spike: <strong>v3.2</strong>). One request returns races with candidates and reporting units; AP returns a <code>nextrequest</code> URL that yields only what changed since, which keeps polling cheap. The key is sent as an <code>x-api-key</code> header, so request URLs, including the stored <code>nextrequest</code> cursor, contain no secret.</p>
+    <p>The feed is a REST API keyed by election date (version <strong>v3.2</strong>, verified Oct 21). One request returns races with candidates and reporting units; AP returns a <code>nextrequest</code> URL that yields only what changed since, which keeps polling cheap. The key is sent as an <code>x-api-key</code> header, so request URLs, including the stored <code>nextrequest</code> cursor, contain no secret.</p>
 <pre>GET https://api.ap.org/v3/elections/2026-11-03
     ?officeID=S,H            Senate + House
     &amp;level=state             state-level reporting units (county = P1)
@@ -237,17 +237,21 @@
       reportingUnits: [ { statePostal, reportingunitLevel (0 national, 1 state), precinctsReportingPct, eevp, lastUpdated,
         candidates: [ { candidateID, first, last, party, voteCount, incumbent, winner: "X", winnerDateTime,
                         rankedChoiceVoting: [ { eliminated, votes } ] } ] } ] } ] }</pre>
-    <p>Poller loop: fetch, store raw response (gzip, keyed by timestamp), normalize, write snapshot, compute diff against the previous snapshot, emit events, broadcast diff. Cadence 20 s by default, configurable live. On 429 or 5xx: exponential backoff, keep serving last-good, flag status amber. A race seen for the first time is a baseline, not news, so a cold start mid-evening does not announce every call already made.</p>
-    <div class="note">Spike findings (Oct 21): the test feed returns 467 races (432 House, 35 Senate, 51 states) and 30+ non-major party codes (<code>Ind</code>, <code>NPA</code>, <code>Lib</code>, <code>Grn</code>, <code>Una</code>, <code>NP</code>…). The test data is a finished election, so delta behaviour over time is untested until AP's scheduled live test. Ranked-choice races (AK, ME) expose first-round totals at state level plus per-candidate RCV rounds. Candidate <code>last</code> can carry suffixes such as "(write-in)". Quota is still unconfirmed with AP.</div>
+    <p>Poller loop: fetch, store raw response (gzip, keyed by timestamp), normalize, write snapshot, compute diff against the previous snapshot, emit events, broadcast diff. Cadence 20 s by default, configurable live. On 429 or 5xx: exponential backoff, keep serving last-good, flag status amber. A race seen for the first time is recorded as a baseline and emits no events, so a cold start mid-evening does not announce every call already made.</p>
+    <div class="note"><b>Verified against the live key (Oct 21).</b> The test feed returns 470 races (435 House, 35 Senate, 51 states) and 30+ non-major party codes (<code>Ind</code>, <code>NPA</code>, <code>Lib</code>, <code>Grn</code>, <code>Una</code>, <code>NP</code>…). <b>County level is included</b> (<code>level=ru</code>, with county FIPS codes); request it per state, since a national county-level pull times out at AP's gateway. <b>Past elections are included</b>: 2020, 2022 and 2024 at the same detail, which covers every "versus last time" comparison without an outside dataset. Ranked-choice races (AK, ME) expose first-round totals plus per-candidate RCV rounds. Candidate <code>last</code> can carry suffixes such as "(write-in)". No photos, bios or polls; these are built separately (see the candidate index). AP exposes no rate-limit headers; the quota is unconfirmed with the account rep.<br><br>
+    <b>The test feed was reset on Oct 21</b> from a finished election to zero votes, apparently ahead of a scheduled simulated count. The delta poller did not see the reset: AP's <code>nextrequest</code> cursor returns only units updated <em>after</em> the last fetch, and the reset data carried older timestamps. Delta polling cannot see a backwards correction. Build-phase fix: a full (non-delta) refresh every few minutes, reconciled against the snapshot, with deltas in between for speed.</div>
+
+    <h3>What AP does not supply</h3>
+    <p>Candidate photos and biographies, polling, historical membership of Congress, and AP VoteCast (a separate product). The <code>config/candidates.json</code> index covers the featured races: bios compiled from public sources and keyed by AP <code>candidateID</code>, with photos in <code>public/photos/&lt;id&gt;.jpg</code> restricted to public-domain or Creative Commons images, each visually verified against a second source before inclusion. Campaign-owned photos are referenced by URL and flagged as needing permission; they are not in the repository. The <a href="graphics-data-options.html">graphics data options</a> page audits every proposed graphic by data source.</p>
 
     <h3>Internal model</h3>
 <pre>Race      { id, state, office (S|H), seat, district, callStatus, calledAt,
             precinctsPct, expectedVotePct, lastUpdated, candidates[] }
 Candidate { id, name, party, votes, pct, incumbent, winner,
-            featured: bool  // independent / third-party of interest, from our curated list }
+            featured: bool  // independent / third-party of interest, from the curated list }
 Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATURED_MOVE | MANUAL),
             raceId, text, priority, expiresAt }</pre>
-    <p><span class="ind">Featured</span> candidates come from a curated list we maintain (AP party codes <code>Ind</code>, <code>Una</code>, <code>Lib</code>, <code>Grn</code> and any named candidate). Independents are the story, so they get their own event type and colour across all graphics.</p>
+    <p><span class="ind">Featured</span> candidates come from a maintained curated list (AP party codes <code>Ind</code>, <code>Una</code>, <code>Lib</code>, <code>Grn</code>, plus any named candidate). Independents are the subject of the broadcast, so they have their own event type and colour across all graphics.</p>
 
     <h3>Client protocol</h3>
     <p>On connect a client receives the full snapshot plus producer state, then diffs. If the socket drops it polls <code>/api/snapshot</code> every 5 s until it reconnects. Every page shows a freshness badge driven by <code>lastSuccessfulPoll</code>: green under 60 s, amber under 3 min, red beyond.</p>
@@ -289,19 +293,19 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
 
   <section>
     <h2>6. Getting graphics into the Carbonite</h2>
-    <p>The Carbonite takes SDI (and on some models HDMI) video inputs; it has no browser. Our pages have to become video. Options, in order of preference:</p>
+    <p>The Carbonite takes SDI (and on some models HDMI) video inputs and has no browser, so the pages must be rendered to video. Options, in order of preference:</p>
     <div class="tablewrap">
     <table>
       <thead><tr><th>Opt</th><th>Path</th><th>Notes</th></tr></thead>
       <tbody>
-        <tr><td>A</td><td>Graphics PC running CasparCG Server with a Blackmagic DeckLink (e.g. Duo 2). CasparCG renders our HTML and outputs fill and key on two SDI outputs; Carbonite does a linear key.</td><td>True alpha, standard broadcast workflow, free software. Needs the PC and card (~$500–1000) and one SDI pair per layer.</td></tr>
+        <tr><td>A</td><td>Graphics PC running CasparCG Server with a Blackmagic DeckLink (e.g. Duo 2). CasparCG renders the HTML pages and outputs fill and key on two SDI outputs; Carbonite does a linear key.</td><td>True alpha, standard broadcast workflow, free software. Needs the PC and card (~$500–1000) and one SDI pair per layer.</td></tr>
         <tr><td>B</td><td>Graphics PC, Chromium full-screen on a second display, HDMI→SDI converter, Carbonite chroma or luma key over a green or black page background.</td><td>Cheapest, works with any PC. Edges on anti-aliased text are worse than linear key; fine for a ticker, acceptable for full-screens.</td></tr>
-        <tr><td>C</td><td>Ross XPression (if the facility has it) reading our JSON via DataLinq, with the templates built in XPression.</td><td>Native to the production team's workflow, but graphics are then built twice (web for the wall, XPression for air).</td></tr>
+        <tr><td>C</td><td>Ross XPression (if the facility has it) reading the server's JSON via DataLinq, with the templates built in XPression.</td><td>Native to the production team's workflow, but graphics are then built twice (web for the wall, XPression for air).</td></tr>
         <tr><td>D</td><td>NDI with alpha (OBS browser source → NDI → NDI/SDI converter supporting fill+key, or native NDI input if the Carbonite has it).</td><td>Depends on the specific Carbonite model and converters on hand.</td></tr>
       </tbody>
     </table>
     </div>
-    <div class="rec">Recommendation: A, with B as the fallback we can set up in an afternoon. Both let the production team treat each graphic as a plain video source, which is what "self-contained" means on their side. Full-screens and the ticker each get their own output so they can be layered independently.</div>
+    <div class="rec">Recommendation: A, with B as a fallback that can be set up in an afternoon. Both let the production team treat each graphic as a plain video source. Full-screens and the ticker each get their own output so they can be layered independently.</div>
   </section>
 
   <section>
@@ -310,7 +314,7 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
       <div>
         <h3>Reliability</h3>
         <ul>
-          <li>Primary on a machine on the studio LAN, so the graphics PC and wall keep being served even if studio internet drops (an outage then only stops new data). Identical code on a small VPS polling AP independently as the mirror. Graphics pages resolve the server through one hostname we can repoint; the control panel shows which one is live.</li>
+          <li>Primary on a machine on the studio LAN, so the graphics PC and wall keep being served even if studio internet drops (an outage then only stops new data). Identical code on a small VPS polling AP independently as the mirror. Graphics pages resolve the server through one hostname that can be repointed; the control panel shows which one is live.</li>
           <li>AP or internet outage: last-good data served, staleness badge on every page, alert in the panel. Nothing on air goes blank.</li>
           <li>Every raw AP response is kept. Replay mode feeds a recording back through the poller at 1× or faster for rehearsal and post-mortems.</li>
           <li>Process supervised by pm2 (restart on crash, start on boot, log rotation); state is in SQLite so a restart resumes within one poll from the persisted <code>nextrequest</code> cursor.</li>
@@ -323,7 +327,7 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
         <ul>
           <li>AP key lives only in server environment, loaded from a gitignored <code>.env</code> (template in <code>.env.example</code>); browsers never call AP and the key never appears in logs or the repo.</li>
           <li>Control panel: username/password login with session cookie, CSRF protection, request rate limiting, audit log of producer actions.</li>
-          <li>Default posture: not reachable from the public internet. Studio access over LAN; remote producers over Tailscale (or Cloudflare Access). If we must expose it publicly, Caddy enforces TLS, auth and rate limits at the edge.</li>
+          <li>Default posture: not reachable from the public internet. Studio access over LAN; remote producers over Tailscale (or Cloudflare Access). If public exposure is required, Caddy enforces TLS, auth and rate limits at the edge.</li>
           <li>Graphics and wall pages are read-only; when served remotely they require a signed token in the URL so they cannot be enumerated.</li>
           <li>Race browser (tier 2) can be public; it is read-only, cached, and hosted on Vercel alongside these docs.</li>
         </ul>
@@ -337,29 +341,30 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
     <table>
       <thead><tr><th>Dates</th><th>Phase</th><th>Deliverable</th></tr></thead>
       <tbody>
-        <tr><td>Oct 21</td><td>Spike (done)</td><td>Poller against AP test data, SQLite snapshots, WebSocket feed, event engine first pass, ticker page and race-result chart rendering at 1920×1080. API version confirmed (v3.2). Quota still to confirm with AP.</td></tr>
-        <tr><td>Oct 22–29</td><td>Build</td><td>Control panel, remaining full-screens (balance of power, independents board, state overview), wall page, replay mode, auth, pm2 deployment to the studio machine and the VPS mirror. Carbonite path (option A or B) proven in the studio with real hardware.</td></tr>
+        <tr><td>Oct 21</td><td>Demo (done)</td><td>AP v3 poller with delta cursor, SQLite snapshots with every raw response kept, event engine, WebSocket feed, ticker and race-result graphics at 1920×1080, candidate index with verified photos, the graphics data options page with a per-chart data audit and on-air key notes, and this spec. County-level and historical AP access confirmed.</td></tr>
+        <tr><td>Oct 22–29</td><td>Build</td><td>Periodic full refresh in the poller; per-state county polling for the featured states; control panel with login; the chosen graphics from the data-options page (national status maps, featured-races board, balance of power, county maps, votes-still-out); wall page; replay mode; pm2 deployment to the studio machine and a mirror host. Carbonite path (option A or B) proven in the studio with real hardware.</td></tr>
         <tr><td>Oct 30–Nov 2</td><td>Rehearse</td><td>Full dress rehearsal on replayed data at 4× speed with the production team; run against AP's scheduled test (dates to confirm); runbook and failure drills (kill AP, kill studio server, kill internet).</td></tr>
         <tr><td>Nov 3</td><td>Air</td><td>Engineer on site; cloud mirror warm; watchdog on.</td></tr>
         <tr><td>After</td><td>Tier 2</td><td>Race browser, county map, if time allows before or value remains after.</td></tr>
       </tbody>
     </table>
     </div>
-    <p>The spike is deliberately narrow: it answers whether the AP data shape and cadence support the ticker and charts as designed. Everything after it depends on those answers.</p>
+    <p>The demo confirmed that the AP data shape, cadence and entitlements support the ticker and charts as designed, including county maps and prior-year comparisons. The build phase turns the chosen graphics into air-ready pages and adds the operational layer (auth, refresh, deployment, rehearsal).</p>
   </section>
 
   <section>
     <h2 id="questions">9. Open questions</h2>
     <ol class="q">
-      <li><strong>AP entitlements.</strong> We have a key. Which entitlements does it carry: national and state levels for all Senate and House races, or a subset of states? County level? What polling interval does the contract allow, and when are AP's pre-election test runs? (The spike will answer most of this empirically.)</li>
-      <li><strong>Which independents.</strong> Who is on the curated list? Should "independent" mean AP party codes outside Dem/GOP, a named list we maintain, or both? Do major-party candidates in races with a strong independent get featured too?</li>
+      <li><strong>AP quota and test dates.</strong> Entitlements are confirmed (all Senate and House races, state and county level, past elections). Still needed from the account rep: the polling interval the contract allows, the dates of AP's scheduled live tests, and whether VoteCast is wanted and licensable.</li>
+      <li><strong>Which independents.</strong> Who is on the curated list? Should "independent" mean AP party codes outside Dem/GOP, a maintained named list, or both? Are major-party candidates in races with a strong independent also featured?</li>
       <li><strong>Carbonite details.</strong> Which model (Black, Ultra, Mosaic, other), how many free inputs, SDI or HDMI, 1080i59.94 or 1080p? Does the facility already own XPression, a DeckLink, CasparCG, or NDI converters? Who is the graphics operator on the night?</li>
-      <li><strong>Studio wall.</strong> Resolution and aspect, what drives it today, and whether it is on the same LAN as the Carbonite.</li>
-      <li><strong>Network.</strong> Is studio internet wired and reliable? Is there a backup (LTE)? Can we place and remotely administer a mini-PC there?</li>
+      <li><strong>Studio wall.</strong> Resolution and aspect, what currently drives it, and whether it is on the same LAN as the Carbonite.</li>
+      <li><strong>Network.</strong> Is studio internet wired and reliable? Is there a backup (LTE)? Can a mini-PC be placed there and administered remotely?</li>
       <li><strong>Operators.</strong> How many producers use the control panel, from where (studio, remote), and on what devices?</li>
-      <li><strong>Design.</strong> Is there a brand or style guide, fonts, and party colours, and who owns graphic design? We can ship a clean default set.</li>
-      <li><strong>Context data.</strong> Do we need 2024 or 2022 results for comparison (margin swing, prior independent share)? AP's live API does not supply these; we would source them separately.</li>
-      <li><strong>Hardware budget.</strong> Can we buy a DeckLink and a mini-PC this week if option A is chosen?</li>
+      <li><strong>Design.</strong> Is there a brand or style guide, fonts, and party colours, and who owns graphic design? A clean default set can be shipped.</li>
+      <li><strong>Outside data.</strong> Prior-year results come from AP. Still to build and verify: polling for the featured races, candidate bios and photo rights (index started), quotes, the composition of the 65 Senate seats not up this cycle, and the history of independents in Congress. Who owns editorial verification?</li>
+      <li><strong>Public demo hosting.</strong> The live server cannot run on Vercel (long-lived process, WebSockets, SQLite). A shareable copy of the demo needs a small persistent host (Railway, Render, Fly or a VPS) behind a password. Vercel keeps the docs only, or is retired once the server also serves them.</li>
+      <li><strong>Hardware budget.</strong> Can a DeckLink and a mini-PC be bought this week if option A is chosen?</li>
       <li><strong>Air window.</strong> Exact on-air hours and time zone, and whether anything else (anchor tablet, social clips) should draw from the same feed.</li>
     </ol>
   </section>

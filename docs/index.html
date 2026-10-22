@@ -3,20 +3,54 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ap-ind docs</title>
+<title>ap-ind</title>
 <style>
-  body { font-family: Arial, Helvetica, sans-serif; max-width: 680px; margin: 48px auto; padding: 0 16px; line-height: 1.5; color: #1f2937; background: #faf7f2; }
-  h1 { font-family: Georgia, serif; font-weight: 400; color: #0b1f44; margin-bottom: 4px; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; line-height: 1.5; color: #1f2937; background: #faf7f2; }
+  main { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 8px; opacity: 0.7; }
+  ul { padding-left: 20px; } li { margin: 4px 0; }
   a { color: #0b1f44; }
-  li { margin: 6px 0; }
+  code { font-family: Menlo, monospace; font-size: 13px; }
+  .status { font-family: Menlo, monospace; font-size: 13px; padding: 10px 14px; border: 1px solid #8884; border-radius: 4px; margin: 16px 0 28px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #9ca3af; margin-right: 6px; }
+  .local { color: #6b7280; }
+  .tag { display: inline-block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: #e7e1d6; color: #4b5563; margin-left: 6px; }
 </style>
 </head>
 <body>
+<script src="nav.js"></script>
+<main>
 <h1>ap-ind</h1>
-<p>Election-night graphics pipeline for the independents broadcast. Working documents:</p>
+<div>AP Elections API middleware for election night. Demo build.</div>
+<div class="status"><span class="dot"></span>Docs site · no live data. The server that polls AP and serves the graphics and candidate index runs on the studio machine (or locally with <code>npm run dev</code>). This site holds the documents only.</div>
+
+<h2>Design</h2>
 <ul>
+  <li><a href="graphics-data-options.html">Graphics data options</a> — candidate graphics by segment, with a data audit and on-air key notes</li>
   <li><a href="spec.html">Technical spec</a> — requirements, architecture, plan, open questions</li>
-  <li><a href="lookbook.html">Graphics look book</a> — every graphic we could build, by segment</li>
 </ul>
+
+<h2>Data <span class="tag">server only</span></h2>
+<ul class="local">
+  <li>Candidate index — bios, verified photos and live numbers for the featured races</li>
+</ul>
+
+<h2>Graphics (1920×1080) <span class="tag">server only</span></h2>
+<ul class="local">
+  <li>Ticker (transparent, green key or black)</li>
+  <li>Race result, one page per race by AP race id</li>
+</ul>
+
+<h2>API <span class="tag">server only</span></h2>
+<ul class="local">
+  <li><code>/api/status</code> · <code>/api/snapshot</code> · <code>/api/races</code> · <code>/api/events</code> · <code>/api/ticker</code> · <code>/api/producer</code> · <code>/api/candidates</code> · <code>/healthz</code> · WebSocket <code>/ws</code></li>
+</ul>
+
+<h2>Code</h2>
+<ul>
+  <li><a href="https://github.com/eriktrautman/ap-ind">github.com/eriktrautman/ap-ind</a> — clone, put an AP key in <code>.env</code>, <code>npm install</code>, <code>npm run dev</code></li>
+</ul>
+</main>
 </body>
 </html>

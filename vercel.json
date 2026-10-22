@@ -1,6 +1,10 @@
 {
   "outputDirectory": "docs",
-  "buildCommand": "",
+  "buildCommand": "rm -rf docs/g && cp -r public/g docs/g",
   "framework": null,
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/lookbook", "destination": "/graphics-data-options", "permanent": true },
+    { "source": "/lookbook.html", "destination": "/graphics-data-options", "permanent": true }
+  ]
 }
