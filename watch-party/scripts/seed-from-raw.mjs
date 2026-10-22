@@ -23,7 +23,7 @@ for (const r of races) {
   r.featured = [...curated.values()].some((c) => c.raceId === r.id && c.featured);
   for (const c of r.candidates) {
     const k = curated.get(c.id);
-    c.photo = k?.photo?.file ? "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/public/photos/" + k.photo.file : k?.photo?.remote ?? null;
+    c.photo = null; // seed data carries no photos; the poller fills them from config/photos.json
   }
 }
 const generated = new Date().toISOString();

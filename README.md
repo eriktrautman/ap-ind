@@ -39,8 +39,26 @@ Producer controls (no auth yet; bind to localhost or put behind a password): `PU
 
 ## Data
 
-- `config/candidates.json`: curated bios keyed by AP `candidateID`. Photos in `public/photos/<id>.jpg` are public domain or Creative Commons only, each verified against a second source; campaign-owned photos are referenced by URL and flagged `needs-permission`.
+- `config/candidates.json`: curated bios for the featured races, keyed by AP `candidateID`.
+- `config/photos.json`: photo manifest for every candidate in every race: source, licence, confidence, and the CDN URL. Images are not in the repository.
 - `config/featured.json`: candidate ids to feature regardless of party code. Any non-Democrat, non-Republican candidate is featured by default.
+- `config/baseline-2024-pres.json`: 2024 presidential result by voting area for the featured states, from AP.
+- `watch-party/public/geo/<ST>.json`: map geometry per state, matching AP's reporting units (counties; towns in New England; House districts in Alaska). Built by `scripts/build-geo.mjs`.
+
+## Photos
+
+Sources, in order: official congressional portraits (public domain), hand-verified photos for the featured races, Ballotpedia for the rest. Each photo records its source and an automatic confidence; low-confidence photos are withheld until a person checks them at `/photos.html`.
+
+Photos are served from the project's own CDN (Vercel Blob) under a random path prefix, never hotlinked. Pipeline:
+
+```sh
+python3 -I scripts/fetch-candidate-photos.py <work-dir>     # crawl sources into <work-dir>/raw
+python3 -I scripts/build-photo-index.py <work-dir>          # resize into public/photos/, write config/photos.json
+cd watch-party && node --env-file=.env.blob scripts/upload-photos.mjs   # push to the CDN, record URLs in the manifest
+cd watch-party && node scripts/sync-photos.mjs              # pull the set onto a machine (studio server) for local serving
+```
+
+The broadcast server serves photos from `public/photos/` so air does not depend on the CDN; the Watch Party reads the CDN URLs from the manifest.
 
 ## Secrets
 

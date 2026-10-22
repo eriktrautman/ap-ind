@@ -11,7 +11,6 @@ import { put } from "@vercel/blob";
 import { fetchRaces, normalizeRace, normalizeCounties, cfg } from "./ap.js";
 
 const CANDIDATE_INDEX = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/config/candidates.json";
-const PHOTO_BASE = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/public/photos/";
 const COUNTY_SLOTS = 5; // each state's counties refresh every 5 runs
 
 let curatedCache = null;
@@ -65,9 +64,9 @@ export async function pollOnce({ run = Date.now(), log = console.log } = {}) {
     for (const c of r.candidates) {
       const k = cur.get(c.id);
       const m = ph.get(c.id);
-      // hand-verified photo first; otherwise the crawler's photo when confidence is not low (Ballotpedia hotlinked, per fair use)
-      c.photo = k?.photo?.file ? PHOTO_BASE + k.photo.file : k?.photo?.remote
-        ?? ((m && m.confidence && m.confidence !== "low") ? (m.source === "congress" ? m.url : m.url) : null);
+      // Photos are served only from our own CDN copies (config/photos.json cdn field); nothing is hotlinked.
+      // Low-confidence photos are withheld until a person has checked them.
+      c.photo = m?.cdn && m.confidence !== "low" ? m.cdn : null;
       c.partyLabel = k?.partyLabel ?? null;
     }
   }

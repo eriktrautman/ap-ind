@@ -37,13 +37,14 @@
 <script src="/docs/nav.js"></script>
 <header><div class="in">
   <h1>Candidate Photos</h1>
-  <p>Every candidate in every race with an independent or third-party candidate on the ballot. Gold-framed cards are the featured races (hand-verified). Official congressional portraits are public domain. Ballotpedia-sourced photos carry an automatic confidence and need a human look before air: <b>low</b> means neither the filename nor the exact name matched, so check those first.</p>
+  <p>Every candidate in every Senate and House race. Gold-framed cards are the featured races (hand-verified). Official congressional portraits are public domain. Ballotpedia-sourced photos carry an automatic confidence and need a human look before air: <b>low</b> means neither the filename nor the exact name matched, so check those first. Cleared photos are served from our CDN (<code>cdn</code> in <code>config/photos.json</code>); nothing is hotlinked.</p>
 </div></header>
 <main>
   <div class="bar">
     <label>State <select id="f-state"><option value="">all</option></select></label>
     <label>Confidence <select id="f-conf"><option value="">all</option><option>verified</option><option>high</option><option>medium</option><option>low</option><option value="none">no photo</option></select></label>
     <label>Source <select id="f-src"><option value="">all</option><option>curated</option><option>congress</option><option>ballotpedia</option></select></label>
+    <label><input type="checkbox" id="f-nocdn"> not on CDN</label>
     <label><input type="checkbox" id="f-ind"> independents only</label>
     <label>Find <input id="f-q" placeholder="name" size="14"></label>
     <span class="count" id="count"></span>
@@ -65,13 +66,13 @@
     const rows = all.filter((e) =>
       (!st || e.race.startsWith(st + "-")) &&
       (!conf || (conf === "none" ? !(e.file || e.remote) : e.confidence === conf)) &&
-      (!src || e.source === src) && (!ind || e.featured) && (!q || e.name.toLowerCase().includes(q)));
+      (!src || e.source === src) && (!ind || e.featured) && (!q || e.name.toLowerCase().includes(q)) && (!$("f-nocdn").checked || !e.cdn));
     $("count").textContent = `${rows.length} of ${all.length} · generated ${data.generated ?? "never (run scripts/fetch-candidate-photos.py then build-photo-index.py)"}`;
     const byRace = new Map();
     for (const e of rows) byRace.set(e.race, [...(byRace.get(e.race) ?? []), e]);
     const races = [...byRace.keys()].sort((a, b) => a.slice(0, 2).localeCompare(b.slice(0, 2)) || (a.includes("SEN") ? -1 : 1) || a.localeCompare(b, undefined, { numeric: true }));
     $("out").innerHTML = races.map((r) => `<h2>${esc(r)}</h2><div class="grid">` + byRace.get(r).sort((a, b) => b.featured - a.featured || a.name.localeCompare(b.name)).map((e) => {
-      const img = e.file ?? e.remote;
+      const img = e.cdn ?? e.file;
       const conf = e.confidence ?? "none";
       return `<div class="ph ${e.featured ? "featured" : ""}">
         <div class="img">${img ? `<img src="${esc(img)}" alt="${esc(e.name)}" loading="lazy">` : "no photo"}</div>
@@ -82,7 +83,7 @@
       </div>`;
     }).join("") + `</div>`).join("");
   }
-  for (const id of ["f-state", "f-conf", "f-src", "f-ind", "f-q"]) $(id).addEventListener("input", render);
+  for (const id of ["f-state", "f-conf", "f-src", "f-ind", "f-q", "f-nocdn"]) $(id).addEventListener("input", render);
   render();
 </script>
 </body>

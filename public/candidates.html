@@ -69,12 +69,12 @@
   const live = new Map(); for (const r of races) for (const c of r.candidates) live.set(c.id, { ...c, race: r });
 
   // Served photo = our cleared file; a permission-needed photo is shown from the campaign's URL for the demo only.
-  const src = (c) => c.photo?.file ? `/photos/${c.photo.file}` : c.photo?.remote ?? null;
+  const src = (c) => c.photo?.file ? `/photos/${c.photo.file}` : null;
   const withPhoto = idx.candidates.filter((c) => c.photo?.file).length;
-  const needPerm = idx.candidates.filter((c) => c.photo?.usage === "needs-permission").length;
+  const needPerm = idx.candidates.filter((c) => c.photo?.usage === "fair-use").length;
   document.getElementById("status").innerHTML =
     `<b>${idx.candidates.length}</b> candidates in <b>${idx.races.length}</b> featured races · <b>${withPhoto}</b> cleared photos in the repo (public domain or Creative Commons, each verified against a second source)` +
-    (needPerm ? ` · <span class="warn"><b>${needPerm}</b> shown from campaign sites and need permission before air</span>` : "") +
+    (needPerm ? ` · <span class="warn"><b>${needPerm}</b> campaign-sourced (fair use)</span>` : "") +
     ` · updated ${esc(idx.updated)}`;
 
   const faces = document.getElementById("faces");
@@ -98,8 +98,8 @@
     const links = [["site", c.sites?.campaign], ["wiki", c.sites?.wikipedia], ["ballotpedia", c.sites?.ballotpedia]].filter(([, u]) => u).map(([k, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${k}</a>`).join(" · ");
     const ph = c.photo;
     const photoCell = ph
-      ? `<span class="${ph.usage === "needs-permission" ? "warn" : "ok"}">${esc(ph.license ?? "")}</span><div class="small">${esc(ph.credit ?? "")} · <a href="${esc(ph.page ?? ph.source)}" target="_blank" rel="noopener">source</a></div><div class="small">${esc(ph.verified ?? "")}</div>` +
-        (ph.file && ph.remote ? `<div class="small warn">Newer campaign photo available (needs permission)</div>` : "")
+      ? `<span class="${ph.usage === "fair-use" ? "warn" : "ok"}">${esc(ph.license ?? "")}</span><div class="small">${esc(ph.credit ?? "")} · <a href="${esc(ph.page ?? ph.source)}" target="_blank" rel="noopener">source</a></div><div class="small">${esc(ph.verified ?? "")}</div>` +
+        (ph.remote ? `<div class="small warn">Newer campaign photo available: <a href="${esc(ph.remote)}" target="_blank" rel="noopener">source</a></div>` : "")
       : `<span class="bad">none</span>`;
     tbody.insertAdjacentHTML("beforeend", `<tr class="${c.featured ? "featured" : ""}">
       <td>${src(c) ? `<img src="${esc(src(c))}" alt="">` : ""}</td>

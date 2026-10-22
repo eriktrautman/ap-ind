@@ -1,46 +1,733 @@
 {
-  "_comment": "Curated candidate index for the featured races, keyed by AP candidateID. Photos in public/photos/<id>.jpg are public domain or Creative Commons only and were visually verified against a second source on the date in photo.verified. A photo with usage 'needs-permission' is NOT in the repo; photo.remote points at the campaign's own image and must be cleared with the campaign before air. Bios compiled Oct 21 2026 from Wikipedia, Ballotpedia, campaign sites and press; verify before stating on air.",
-  "updated": "2026-10-21",
-  "races": [
-    { "raceId": "28594", "label": "NE-SEN", "title": "Nebraska · U.S. Senate", "featured": true, "featuredCandidateId": "168007" },
-    { "raceId": "27607", "label": "MT-SEN", "title": "Montana · U.S. Senate (open)", "featured": true, "featuredCandidateId": "177955" },
-    { "raceId": "13252", "label": "ID-SEN", "title": "Idaho · U.S. Senate", "featured": true, "featuredCandidateId": "162421" },
-    { "raceId": "42003", "label": "SD-SEN", "title": "South Dakota · U.S. Senate", "featured": true, "featuredCandidateId": "70405" },
-    { "raceId": "5696", "label": "CA-6", "title": "California · 6th District", "featured": true, "featuredCandidateId": "69756" },
-    { "raceId": "2015", "label": "AK-AL", "title": "Alaska · At-large (ranked choice)", "featured": true, "featuredCandidateId": "177719" },
-    { "raceId": "13253", "label": "ID-1", "title": "Idaho · 1st District", "featured": true, "featuredCandidateId": "178015" }
-  ],
-  "candidates": [
-    { "id": "168007", "raceId": "28594", "race": "NE-SEN", "name": "Dan Osborn", "party": "NP", "partyLabel": "Independent (nonpartisan on the ballot)", "featured": true, "incumbent": false, "born": 1975, "residence": "Omaha", "occupation": "Industrial mechanic and steamfitter; led the 2021 Kellogg's strike as union local president", "priorOffices": "None. 2024 Senate candidate (other seat), lost to Fischer 53.2–46.5", "military": "U.S. Navy, 4 years, USS Constellation; later Army National Guard", "education": "Roncalli Catholic H.S., Omaha", "sites": { "campaign": "https://www.osbornforsenate.com/", "wikipedia": "https://en.wikipedia.org/wiki/Dan_Osborn", "ballotpedia": "https://ballotpedia.org/Dan_Osborn" }, "notes": "Pledges to caucus with neither party. Endorsed by Nebraska Democrats (not a Democrat). Qualified by petition. Averages roughly even to Ricketts +2.", "photo": { "file": "168007.jpg", "license": "CC BY 4.0", "credit": "Ramseywill / j_images via Wikimedia Commons", "page": "https://commons.wikimedia.org/wiki/File:Osborn_Headshot_2_(cropped).jpg", "usage": "ok", "verified": "2026-10-21 vs osbornforsenate.com hero photo: match" } },
-    { "id": "51566", "raceId": "28594", "race": "NE-SEN", "name": "Pete Ricketts", "party": "GOP", "partyLabel": "Republican", "featured": false, "incumbent": true, "born": 1964, "residence": "Omaha", "occupation": "U.S. Senator since 2023; former Ameritrade COO", "priorOffices": "Governor of Nebraska 2015–2023; appointed to the Senate Jan 2023, won the 2024 special", "military": null, "education": "B.A., MBA, University of Chicago", "sites": { "campaign": "https://petericketts.com/", "wikipedia": "https://en.wikipedia.org/wiki/Pete_Ricketts", "ballotpedia": "https://ballotpedia.org/Pete_Ricketts" }, "notes": "2024 special: 62.6% vs Love (D) 37.4%. Seeking a first full term. Democratic nominee withdrew July 2026.", "photo": { "file": "51566.jpg", "license": "Public domain (U.S. Senate official portrait, 2023)", "credit": "U.S. Senate Photographic Services", "page": "https://commons.wikimedia.org/wiki/File:Sen._Pete_Ricketts_official_portrait,_118th_Congress.jpg", "usage": "ok", "verified": "2026-10-21 vs Ballotpedia photo: match" } },
-    { "id": "179197", "raceId": "28594", "race": "NE-SEN", "name": "Chuck Conboy", "party": "AFi", "partyLabel": "America First Party of Nebraska", "featured": false, "incumbent": false, "born": null, "residence": "Papillion", "occupation": "Account manager (unconfirmed)", "priorOffices": null, "military": null, "education": null, "sites": { "ballotpedia": "https://ballotpedia.org/Chuck_Conboy" }, "notes": "Nominated by convention Sept 2026. No FEC receipts. ~2% in one poll.", "photo": null },
-    { "id": "129622", "raceId": "28594", "race": "NE-SEN", "name": "Robin Richards", "party": "NWk", "partyLabel": "Nebraska Working People Party", "featured": false, "incumbent": false, "born": null, "residence": "Ralston", "occupation": "Business manager, Nebraska Arts Council; party chair", "priorOffices": "Ralston school board since 2020", "military": null, "education": "B.A., University of Nebraska Omaha", "sites": { "ballotpedia": "https://ballotpedia.org/Robin_Richards" }, "notes": "Democrats alleged a Ricketts-aligned spoiler effort; court kept her on the ballot Sept 2026. $0 FEC receipts.", "photo": null },
-    { "id": "175130", "raceId": "28594", "race": "NE-SEN", "name": "Mike Marvin", "party": "LMN", "partyLabel": "Legal Marijuana NOW", "featured": false, "incumbent": false, "born": null, "residence": "Omaha", "occupation": "Retired public-employee union director", "priorOffices": null, "military": null, "education": null, "sites": { "campaign": "https://marvinforsenate.com/", "ballotpedia": "https://ballotpedia.org/Mike_Marvin" }, "notes": "SUSPENDED campaign Aug 21 2026 (health) and endorsed Osborn; still on the ballot.", "photo": null },
-
-    { "id": "177955", "raceId": "27607", "race": "MT-SEN", "name": "Seth Bodnar", "party": "Ind", "partyLabel": "Independent", "featured": true, "incumbent": false, "born": 1979, "residence": "Missoula", "occupation": "Former president, University of Montana (2018–Jan 2026); former GE executive", "priorOffices": "None elected", "military": "U.S. Army 2003–2022, retired lieutenant colonel; 101st Airborne (Iraq); Green Beret", "education": "West Point (first in class, 2001); Oxford (Rhodes Scholar)", "sites": { "campaign": "https://sethformontana.com/", "wikipedia": "https://en.wikipedia.org/wiki/Seth_Bodnar", "ballotpedia": "https://ballotpedia.org/Seth_Bodnar" }, "notes": "CAUCUS POSITION UNRESOLVED: advisers say neither party; he has not committed on the record. Do not state a pledge on air. Backed by Jon Tester. Quantus (R) Oct 15–18: Alme 44, Bodnar 28, Bankhead 21; his own poll had him +2.", "photo": { "file": "177955.jpg", "license": "CC BY-SA 4.0", "credit": "Todd Goodrich / University of Montana via Wikimedia Commons", "page": "https://commons.wikimedia.org/wiki/File:Seth_Bodnar_-_President_at_University_of_Montana_(cropped).jpg", "usage": "ok", "verified": "2026-10-21 vs Ballotpedia photo: match (2019 photo, no beard then)" } },
-    { "id": "171710", "raceId": "27607", "race": "MT-SEN", "name": "Kurt Alme", "party": "GOP", "partyLabel": "Republican", "featured": false, "incumbent": false, "born": 1966, "residence": "Billings", "occupation": "Attorney; former U.S. Attorney for Montana (resigned Mar 2026 to run)", "priorOffices": "U.S. Attorney 2017–2020 and 2025–2026; Montana budget director; Dept. of Revenue director. First run for office", "military": null, "education": "B.S. Colorado; J.D. Harvard", "sites": { "campaign": "https://almeforsenate.com/", "wikipedia": "https://en.wikipedia.org/wiki/Kurt_Alme", "ballotpedia": "https://ballotpedia.org/Kurt_Alme" }, "notes": "Open seat: Daines withdrew at the filing deadline and endorsed him; Trump endorsed same day. 2020: Daines 55–45. Leads October polls.", "photo": { "file": "171710.jpg", "license": "Public domain (U.S. Dept. of Justice portrait, 2017)", "credit": "U.S. Department of Justice", "page": "https://commons.wikimedia.org/wiki/File:Kurt_G._Alme_official_photo.jpg", "usage": "ok", "verified": "2026-10-21 vs almeforsenate.com portrait: match. Photo is 9 years old; campaign has a newer one (needs permission)", "remote": "https://almeforsenate.com/wp-content/uploads/2026/03/kurt-alme-scaled-e1776955402265.jpeg" } },
-    { "id": "171696", "raceId": "27607", "race": "MT-SEN", "name": "Alani Bankhead", "party": "Dem", "partyLabel": "Democrat", "featured": false, "incumbent": false, "born": 1983, "residence": "Helena", "occupation": "Retired Air Force lieutenant colonel; former counterintelligence special agent; leadership coach", "priorOffices": "None", "military": "U.S. Air Force 2004–2025, 21 years", "education": "B.A. Penn State; graduate degree, Troy University", "sites": { "campaign": "https://alaniformt.com", "ballotpedia": "https://ballotpedia.org/Alani_Bankhead" }, "notes": "Age approximate (reported 43 in Jan 2026). Refused pressure to withdraw for Bodnar. Polling 12–21%.", "photo": { "file": "171696.jpg", "license": "Public domain (U.S. Air Force video still, 2021)", "credit": "Tech. Sgt. Nicholas Brown, U.S. Air Force", "page": "https://commons.wikimedia.org/wiki/File:Alani_Bankhead_USAF_2021.png", "usage": "ok", "verified": "2026-10-21 vs alaniformt.com photo: match. LOW QUALITY (540px video frame); request campaign headshot for air", "remote": "https://alaniformt.com/assets/alani-meet.jpg" } },
-    { "id": "70324", "raceId": "27607", "race": "MT-SEN", "name": "Kyle Austin", "party": "Lib", "partyLabel": "Libertarian", "featured": false, "incumbent": false, "born": 1983, "residence": "Billings", "occupation": "Pharmacist; pharmacy owner; farmer", "priorOffices": "None; lost GOP House primaries 2022, 2024", "military": null, "education": "Pharm.D., University of Montana", "sites": { "campaign": "https://www.kyleaustinmt.com", "ballotpedia": "https://ballotpedia.org/Kyle_Austin_(Montana)" }, "notes": "Disavowed by the state Libertarian Party. Polling 2–6%.", "photo": null },
-
-    { "id": "162421", "raceId": "13252", "race": "ID-SEN", "name": "Todd Achilles", "party": "Ind", "partyLabel": "Independent", "featured": true, "incumbent": false, "born": 1967, "residence": "Boise", "occupation": "Former tech executive (T-Mobile, HTC, HP; CEO of Evoca); public policy lecturer, Boise State", "priorOffices": "Idaho House, District 16B, as a Democrat (2024–July 2025); left the party to run", "military": "U.S. Army armor officer 1992–1995; tank commander, two Persian Gulf deployments", "education": "B.A. Claremont McKenna; MBA and M.A. Washington; M.P.P. Berkeley", "sites": { "campaign": "https://www.achillesforidaho.com/", "wikipedia": "https://en.wikipedia.org/wiki/Todd_Achilles", "ballotpedia": "https://ballotpedia.org/Todd_Achilles" }, "notes": "Pledged Oct 7 2026 to caucus with neither party and to serve no more than two terms. Democratic nominee withdrew in his favor. Polls split: Risch campaign poll Risch 49–24; ATR Sept: Achilles 46–39.", "photo": { "file": "162421.jpg", "license": "CC BY 4.0", "credit": "LibertyDad (YouTube) via Wikimedia Commons", "page": "https://commons.wikimedia.org/wiki/File:Todd_Achilles_on_LibertyDad%27s_stream.png", "usage": "ok", "verified": "2026-10-21 vs achillesforidaho.com photo: match. LOW QUALITY video still; request campaign photo for air", "remote": "https://images.squarespace-cdn.com/content/v1/65a9a82e46d17278ca5b3fd7/87faee78-cc8d-42b0-9d6a-f1ab356b652f/4B2A5689.jpg" } },
-    { "id": "15344", "raceId": "13252", "race": "ID-SEN", "name": "Jim Risch", "party": "GOP", "partyLabel": "Republican", "featured": false, "incumbent": true, "born": 1943, "residence": "Boise area", "occupation": "U.S. Senator since 2009; chair, Foreign Relations Committee", "priorOffices": "Ada County prosecutor; Idaho Senate (26 years); Lt. Governor; Governor 2006–07", "military": null, "education": "B.S. forestry and J.D., University of Idaho", "sites": { "campaign": "https://senatorrisch.com/", "wikipedia": "https://en.wikipedia.org/wiki/Jim_Risch", "ballotpedia": "https://ballotpedia.org/Jim_Risch" }, "notes": "Age 83, seeking a 4th term. 2020: 62.6% vs Jordan (D) 33.2%. Rated Safe R.", "photo": { "file": "15344.jpg", "license": "Public domain (U.S. Senate official portrait, 2009)", "credit": "U.S. Senate", "page": "https://commons.wikimedia.org/wiki/File:Jim_Risch_official_portrait.jpg", "usage": "ok", "verified": "2026-10-21 vs 2021 committee photo and senatorrisch.com: match. Portrait is 17 years old; request a current official portrait from the Senate office (also public domain)" } },
-    { "id": "67326", "raceId": "13252", "race": "ID-SEN", "name": "Natalie Fleming", "party": "Ind", "partyLabel": "Independent", "featured": false, "incumbent": false, "born": 1970, "residence": "Treasure Valley", "occupation": "Software developer", "priorOffices": "None; ran 2018 (House), 2020 (Senate), 2022 (GOP Senate primary)", "military": null, "education": "B.A. Boise State (2024)", "sites": { "campaign": "https://nataliefleming.info/", "ballotpedia": "https://ballotpedia.org/Natalie_Fleming_(Idaho)" }, "notes": "Perennial candidate. Polling 3–9%. Age approximate.", "photo": null },
-    { "id": "167082", "raceId": "13252", "race": "ID-SEN", "name": "Matt Loesby", "party": "Lib", "partyLabel": "Libertarian", "featured": false, "incumbent": false, "born": null, "residence": "Treasure Valley", "occupation": "Software engineer; Libertarian Party of Idaho officer", "priorOffices": "None; 2024 ID-1 Libertarian nominee (2.1%)", "military": null, "education": "Chapman University (2010)", "sites": { "campaign": "https://www.loesby.us/", "ballotpedia": "https://ballotpedia.org/Matt_Loesby" }, "notes": "Polling 2–5%. $0 raised.", "photo": null },
-
-    { "id": "70405", "raceId": "42003", "race": "SD-SEN", "name": "Brian Bengs", "party": "Ind", "partyLabel": "Independent", "featured": true, "incumbent": false, "born": 1970, "residence": "Hot Springs", "occupation": "Retired Air Force JAG officer and attorney; former National Park Service ranger; former professor", "priorOffices": "None. 2022 Democratic Senate nominee (lost to Thune 69.6–26.2)", "military": "U.S. Navy enlisted at 17; U.S. Air Force JAG about 19 years, retired 2016 as lieutenant colonel", "education": "J.D., University of Iowa", "sites": { "campaign": "https://bengsforsouthdakota.com/", "ballotpedia": "https://ballotpedia.org/Brian_Bengs" }, "notes": "Age approximate. Pledged (Oct 12 2026, with Osborn and Bodnar) to caucus with neither party. Forward Party endorsement. Rounds-sponsored poll Oct 2026: Rounds 54, Bengs 37. Two-way race after the Democrat withdrew.", "photo": { "file": null, "license": "Campaign copyright", "credit": "Bengs for South Dakota", "page": "https://bengsforsouthdakota.com/", "usage": "needs-permission", "verified": "2026-10-21 campaign candid vs Ballotpedia photo: match. The only public-domain image (pre-2004 Air Force portrait) could not be visually matched to him today and is not used", "remote": "https://bengsforsouthdakota.com/wp-content/uploads/2026/09/brian-bengs-candid.jpg" } },
-    { "id": "580", "raceId": "42003", "race": "SD-SEN", "name": "Mike Rounds", "party": "GOP", "partyLabel": "Republican", "featured": false, "incumbent": true, "born": 1954, "residence": "Fort Pierre", "occupation": "U.S. Senator since 2015; former insurance and real estate business owner", "priorOffices": "S.D. Senate 1991–2001; Governor 2003–2011", "military": null, "education": "B.S., South Dakota State University", "sites": { "campaign": "https://roundsforsenate.com/", "wikipedia": "https://en.wikipedia.org/wiki/Mike_Rounds", "ballotpedia": "https://ballotpedia.org/Mike_Rounds" }, "notes": "2020: 65.7% vs Ahlers (D). Trump-endorsed. Rated Safe R.", "photo": { "file": "580.jpg", "license": "Public domain (U.S. Senate official portrait, 2015)", "credit": "U.S. Senate Photographic Studio", "page": "https://commons.wikimedia.org/wiki/File:Mike_Rounds_official_Senate_portrait.jpg", "usage": "ok", "verified": "2026-10-21 vs roundsforsenate.com headshot: match" } },
-
-    { "id": "69756", "raceId": "5696", "race": "CA-6", "name": "Kevin Kiley", "party": "NPP", "partyLabel": "Independent (No Party Preference)", "featured": true, "incumbent": true, "born": 1985, "residence": "Rocklin (verify it lies inside the new district before saying so)", "occupation": "U.S. Representative (CA-3) since 2023; attorney; former teacher", "priorOffices": "California Assembly 2016–2022; U.S. House 2023–present", "military": null, "education": "A.B. Harvard; J.D. Yale", "sites": { "campaign": "https://electkevinkiley.com", "wikipedia": "https://en.wikipedia.org/wiki/Kevin_Kiley_(politician)", "ballotpedia": "https://ballotpedia.org/Kevin_Kiley" }, "notes": "Left the Republican Party Mar 9 2026 after Prop 50 redrew his district; the House's only independent. Says he will join neither caucus if re-elected. New CA-6 is D+5. Polls: Pan 39–35 (July); 37–37 (pro-Kiley, Sept). Forecasters favor Pan.", "photo": { "file": "69756.jpg", "license": "Public domain (U.S. House official portrait, 2023)", "credit": "U.S. Congress", "page": "https://commons.wikimedia.org/wiki/File:Rep._Kevin_Kiley_official_photo,_118th_Congress_2.jpg", "usage": "ok", "verified": "2026-10-21 vs Ballotpedia photo: match" } },
-    { "id": "105173", "raceId": "5696", "race": "CA-6", "name": "Richard Pan", "party": "Dem", "partyLabel": "Democrat", "featured": false, "incumbent": false, "born": 1965, "residence": "Sacramento", "occupation": "Pediatrician; UC Davis professor; former state senator", "priorOffices": "California Assembly 2010–2014; State Senate 2014–2022", "military": null, "education": "B.S. Johns Hopkins; M.D. Pittsburgh; M.P.H. Harvard", "sites": { "campaign": "https://drpanforcongress.com/", "wikipedia": "https://en.wikipedia.org/wiki/Richard_Pan", "ballotpedia": "https://ballotpedia.org/Richard_Pan" }, "notes": "Author of California's 2015 school-vaccine law. Second in the top-two primary. Favored by forecasters.", "photo": { "file": "105173.jpg", "license": "Public domain (California State Senate photo, per Commons)", "credit": "California State Senate", "page": "https://commons.wikimedia.org/wiki/File:Richard_Pan.jpg", "usage": "ok", "verified": "2026-10-21 vs Ballotpedia photo: match" } },
-
-    { "id": "177719", "raceId": "2015", "race": "AK-AL", "name": "Bill Hill", "party": "NP", "partyLabel": "Independent (undeclared)", "featured": true, "incumbent": false, "born": 1969, "residence": "Naknek (Bristol Bay)", "occupation": "Commercial fisherman; retired educator; co-owner, Bristol Bay Brailer", "priorOffices": "None elected. Superintendent, Bristol Bay Borough schools 2013–2023; Alaska Superintendent of the Year", "military": null, "education": "B.Ed., University of Alaska Anchorage", "sites": { "campaign": "https://billhillforalaskans.com/", "ballotpedia": "https://ballotpedia.org/Bill_Hill" }, "notes": "Dena'ina Athabascan. Age approximate (AP: 57). Endorsed by Alaska Democrats after their leading candidate withdrew. Has declined to say which party he would caucus with. Ranked choice: needs transfers. PPP Oct 14–15: Begich 45, Hill 44.", "photo": { "file": "177719.jpg", "license": "CC0 (public domain dedication by the campaign)", "credit": "Bill Hill for Alaskans via Wikimedia Commons", "page": "https://commons.wikimedia.org/wiki/File:Bill_Hill_(cropped_3x4).jpg", "usage": "ok", "verified": "2026-10-21 vs Ballotpedia headshot: match" } },
-    { "id": "70724", "raceId": "2015", "race": "AK-AL", "name": "Nick Begich III", "party": "GOP", "partyLabel": "Republican", "featured": false, "incumbent": true, "born": 1977, "residence": "Chugiak", "occupation": "U.S. Representative since 2025; software entrepreneur", "priorOffices": "None before Congress; lost to Peltola twice in 2022", "military": null, "education": "BBA Baylor; MBA Indiana", "sites": { "campaign": "https://www.alaskansfornickbegich.com/", "wikipedia": "https://en.wikipedia.org/wiki/Nick_Begich_III", "ballotpedia": "https://ballotpedia.org/Nick_Begich" }, "notes": "2024: beat Peltola 51.2–48.8 after three RCV rounds. Rated Likely R.", "photo": { "file": "70724.jpg", "license": "Public domain (U.S. House official portrait, 2024)", "credit": "House Creative Services / Ike Hayman", "page": "https://commons.wikimedia.org/wiki/File:Rep._Nick_Begich_III_(119th_Congress)_(cropped).jpg", "usage": "ok", "verified": "2026-10-21 vs begich.house.gov portrait: match" } },
-    { "id": "167001", "raceId": "2015", "race": "AK-AL", "name": "Eric Hafner", "party": "Dem", "partyLabel": "Democrat", "featured": false, "incumbent": false, "born": 1991, "residence": "Federal prison, Otisville, N.Y. (has never lived in Alaska)", "occupation": "Federal prisoner; perennial candidate", "priorOffices": "None; 2024 AK-AL candidate (~1%)", "military": null, "education": null, "sites": { "wikipedia": "https://en.wikipedia.org/wiki/Eric_Hafner", "ballotpedia": "https://ballotpedia.org/Eric_Hafner" }, "notes": "Serving 20 years for threats against officials. Not endorsed by Alaska Democrats. Polling 5–9%.", "photo": null },
-    { "id": "62643", "raceId": "2015", "race": "AK-AL", "name": "James McDermott", "party": "Lib", "partyLabel": "Libertarian", "featured": false, "incumbent": false, "born": 1958, "residence": "Fairbanks", "occupation": "Writer; tutor", "priorOffices": "None; Libertarian nominee 2012, 2014, 2016", "military": "U.S. Air Force, 20+ years (per 2016 report)", "education": null, "sites": { "campaign": "https://jamesmcdermott.org/", "ballotpedia": "https://ballotpedia.org/Jim_McDermott_(Alaska)" }, "notes": "Finished 8th in the primary; advanced after withdrawals. Age approximate. Polling 1–5%.", "photo": null },
-
-    { "id": "178015", "raceId": "13253", "race": "ID-1", "name": "Sarah Zabel", "party": "Ind", "partyLabel": "Independent", "featured": true, "incumbent": false, "born": 1965, "residence": "Bayview (Bonner County)", "occupation": "Retired Air Force major general; author", "priorOffices": "None; first run. Former Republican", "military": "U.S. Air Force 1987–2018, retired major general; cyber and communications; Bronze Star (Qatar 2003–04); vice director, DISA", "education": "B.S. computer science, Air Force Academy; master's degrees incl. Army War College", "sites": { "campaign": "https://www.zabelforcongress.com/", "ballotpedia": "https://ballotpedia.org/Sarah_Zabel_(Idaho)" }, "notes": "Says she would caucus with neither party. Forward Party endorsement. Polling ~5–6% in three-way surveys (July); her own poll had a two-way race at Zabel 42, Fulcher 39.", "photo": { "file": "178015.jpg", "license": "Public domain (official U.S. Air Force portrait)", "credit": "U.S. Air Force", "page": "https://www.zabelforcongress.com/who-i-am", "usage": "ok", "verified": "2026-10-21 vs 2018 DVIDS photo and campaign headshot: match. Uniformed portrait; the campaign's civilian headshot needs permission", "remote": "https://images.squarespace-cdn.com/content/v1/69078a43f0151d167a47ad4e/9c2a6da5-948d-460c-acec-6284574c286e/Sarah_Zabel-low_res+2.jpg" } },
-    { "id": "63500", "raceId": "13253", "race": "ID-1", "name": "Russ Fulcher", "party": "GOP", "partyLabel": "Republican", "featured": false, "incumbent": true, "born": 1962, "residence": "Meridian", "occupation": "U.S. Representative since 2019; former Micron executive", "priorOffices": "Idaho Senate 2005–2014; lost 2014 GOP governor primary", "military": null, "education": "B.B.A., M.B.A. Boise State", "sites": { "campaign": "https://www.russfulcher.com/", "wikipedia": "https://en.wikipedia.org/wiki/Russ_Fulcher", "ballotpedia": "https://ballotpedia.org/Russ_Fulcher" }, "notes": "2024: 71.0% vs Peterson 25.4%. Seeking a 5th term. Rated Safe R.", "photo": { "file": "63500.jpg", "license": "Public domain (U.S. House official portrait, 2018)", "credit": "U.S. House Office of Photography / Franmarie Metzler", "page": "https://commons.wikimedia.org/wiki/File:Russ_Fulcher,_official_portrait,_116th_Congress.jpg", "usage": "ok", "verified": "2026-10-21 vs Ballotpedia photo: match" } },
-    { "id": "162330", "raceId": "13253", "race": "ID-1", "name": "Kaylee Peterson", "party": "Dem", "partyLabel": "Democrat", "featured": false, "incumbent": false, "born": 1990, "residence": "Eagle", "occupation": "Grassroots organizer and political strategist; former president, Idaho Young Democrats", "priorOffices": "None; Democratic nominee for ID-1 in 2022 (26.3%) and 2024 (25.4%)", "military": null, "education": "A.A., College of Western Idaho (2023)", "sites": { "campaign": "https://www.kayleeforcongress.com/", "ballotpedia": "https://ballotpedia.org/Kaylee_Peterson" }, "notes": "Third run against Fulcher. Age approximate. Polling 27–35% (July).", "photo": { "file": null, "license": "Campaign copyright", "credit": "Kaylee Peterson for Congress", "page": "https://www.kayleeforcongress.com/about-kaylee", "usage": "needs-permission", "verified": "2026-10-21 campaign photo vs Ballotpedia headshot: match. No free-licensed image exists", "remote": "https://images.squarespace-cdn.com/content/v1/69d6cf57d14dc43f1472c9fd/650dc3e0-2f43-4498-8ad4-e60f8cf0fa6f/kaylee-dc1.png" } },
-    { "id": "112913", "raceId": "13253", "race": "ID-1", "name": "Brendan Gomez", "party": "CST", "partyLabel": "Constitution Party", "featured": false, "incumbent": false, "born": 1999, "residence": "Boise", "occupation": null, "priorOffices": "None; 2024 ID-1 nominee (1.5%)", "military": null, "education": null, "sites": { "ballotpedia": "https://ballotpedia.org/Brendan_Gomez" }, "notes": "Remains on the ballot after a Sept 2026 guilty plea (sexual exploitation material); sentencing Nov 16. Age approximate. $0 raised.", "photo": null }
-  ]
+ "_comment": "Curated candidate index for the featured races, keyed by AP candidateID. Photos in public/photos/<id>.jpg are public domain or Creative Commons only and were visually verified against a second source on the date in photo.verified. usage 'fair-use' marks a campaign-sourced photo held in the gitignored public/photos/campaign/ folder and on the CDN; photo.remote records where it came from. Bios compiled Oct 21 2026 from Wikipedia, Ballotpedia, campaign sites and press; verify before stating on air.",
+ "updated": "2026-10-21",
+ "races": [
+  {
+   "raceId": "28594",
+   "label": "NE-SEN",
+   "title": "Nebraska \u00b7 U.S. Senate",
+   "featured": true,
+   "featuredCandidateId": "168007"
+  },
+  {
+   "raceId": "27607",
+   "label": "MT-SEN",
+   "title": "Montana \u00b7 U.S. Senate (open)",
+   "featured": true,
+   "featuredCandidateId": "177955"
+  },
+  {
+   "raceId": "13252",
+   "label": "ID-SEN",
+   "title": "Idaho \u00b7 U.S. Senate",
+   "featured": true,
+   "featuredCandidateId": "162421"
+  },
+  {
+   "raceId": "42003",
+   "label": "SD-SEN",
+   "title": "South Dakota \u00b7 U.S. Senate",
+   "featured": true,
+   "featuredCandidateId": "70405"
+  },
+  {
+   "raceId": "5696",
+   "label": "CA-6",
+   "title": "California \u00b7 6th District",
+   "featured": true,
+   "featuredCandidateId": "69756"
+  },
+  {
+   "raceId": "2015",
+   "label": "AK-AL",
+   "title": "Alaska \u00b7 At-large (ranked choice)",
+   "featured": true,
+   "featuredCandidateId": "177719"
+  },
+  {
+   "raceId": "13253",
+   "label": "ID-1",
+   "title": "Idaho \u00b7 1st District",
+   "featured": true,
+   "featuredCandidateId": "178015"
+  }
+ ],
+ "candidates": [
+  {
+   "id": "168007",
+   "raceId": "28594",
+   "race": "NE-SEN",
+   "name": "Dan Osborn",
+   "party": "NP",
+   "partyLabel": "Independent (nonpartisan on the ballot)",
+   "featured": true,
+   "incumbent": false,
+   "born": 1975,
+   "residence": "Omaha",
+   "occupation": "Industrial mechanic and steamfitter; led the 2021 Kellogg's strike as union local president",
+   "priorOffices": "None. 2024 Senate candidate (other seat), lost to Fischer 53.2\u201346.5",
+   "military": "U.S. Navy, 4 years, USS Constellation; later Army National Guard",
+   "education": "Roncalli Catholic H.S., Omaha",
+   "sites": {
+    "campaign": "https://www.osbornforsenate.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Dan_Osborn",
+    "ballotpedia": "https://ballotpedia.org/Dan_Osborn"
+   },
+   "notes": "Pledges to caucus with neither party. Endorsed by Nebraska Democrats (not a Democrat). Qualified by petition. Averages roughly even to Ricketts +2.",
+   "photo": {
+    "file": "168007.jpg",
+    "license": "CC BY 4.0",
+    "credit": "Ramseywill / j_images via Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Osborn_Headshot_2_(cropped).jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs osbornforsenate.com hero photo: match"
+   }
+  },
+  {
+   "id": "51566",
+   "raceId": "28594",
+   "race": "NE-SEN",
+   "name": "Pete Ricketts",
+   "party": "GOP",
+   "partyLabel": "Republican",
+   "featured": false,
+   "incumbent": true,
+   "born": 1964,
+   "residence": "Omaha",
+   "occupation": "U.S. Senator since 2023; former Ameritrade COO",
+   "priorOffices": "Governor of Nebraska 2015\u20132023; appointed to the Senate Jan 2023, won the 2024 special",
+   "military": null,
+   "education": "B.A., MBA, University of Chicago",
+   "sites": {
+    "campaign": "https://petericketts.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Pete_Ricketts",
+    "ballotpedia": "https://ballotpedia.org/Pete_Ricketts"
+   },
+   "notes": "2024 special: 62.6% vs Love (D) 37.4%. Seeking a first full term. Democratic nominee withdrew July 2026.",
+   "photo": {
+    "file": "51566.jpg",
+    "license": "Public domain (U.S. Senate official portrait, 2023)",
+    "credit": "U.S. Senate Photographic Services",
+    "page": "https://commons.wikimedia.org/wiki/File:Sen._Pete_Ricketts_official_portrait,_118th_Congress.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs Ballotpedia photo: match"
+   }
+  },
+  {
+   "id": "179197",
+   "raceId": "28594",
+   "race": "NE-SEN",
+   "name": "Chuck Conboy",
+   "party": "AFi",
+   "partyLabel": "America First Party of Nebraska",
+   "featured": false,
+   "incumbent": false,
+   "born": null,
+   "residence": "Papillion",
+   "occupation": "Account manager (unconfirmed)",
+   "priorOffices": null,
+   "military": null,
+   "education": null,
+   "sites": {
+    "ballotpedia": "https://ballotpedia.org/Chuck_Conboy"
+   },
+   "notes": "Nominated by convention Sept 2026. No FEC receipts. ~2% in one poll.",
+   "photo": null
+  },
+  {
+   "id": "129622",
+   "raceId": "28594",
+   "race": "NE-SEN",
+   "name": "Robin Richards",
+   "party": "NWk",
+   "partyLabel": "Nebraska Working People Party",
+   "featured": false,
+   "incumbent": false,
+   "born": null,
+   "residence": "Ralston",
+   "occupation": "Business manager, Nebraska Arts Council; party chair",
+   "priorOffices": "Ralston school board since 2020",
+   "military": null,
+   "education": "B.A., University of Nebraska Omaha",
+   "sites": {
+    "ballotpedia": "https://ballotpedia.org/Robin_Richards"
+   },
+   "notes": "Democrats alleged a Ricketts-aligned spoiler effort; court kept her on the ballot Sept 2026. $0 FEC receipts.",
+   "photo": null
+  },
+  {
+   "id": "175130",
+   "raceId": "28594",
+   "race": "NE-SEN",
+   "name": "Mike Marvin",
+   "party": "LMN",
+   "partyLabel": "Legal Marijuana NOW",
+   "featured": false,
+   "incumbent": false,
+   "born": null,
+   "residence": "Omaha",
+   "occupation": "Retired public-employee union director",
+   "priorOffices": null,
+   "military": null,
+   "education": null,
+   "sites": {
+    "campaign": "https://marvinforsenate.com/",
+    "ballotpedia": "https://ballotpedia.org/Mike_Marvin"
+   },
+   "notes": "SUSPENDED campaign Aug 21 2026 (health) and endorsed Osborn; still on the ballot.",
+   "photo": null
+  },
+  {
+   "id": "177955",
+   "raceId": "27607",
+   "race": "MT-SEN",
+   "name": "Seth Bodnar",
+   "party": "Ind",
+   "partyLabel": "Independent",
+   "featured": true,
+   "incumbent": false,
+   "born": 1979,
+   "residence": "Missoula",
+   "occupation": "Former president, University of Montana (2018\u2013Jan 2026); former GE executive",
+   "priorOffices": "None elected",
+   "military": "U.S. Army 2003\u20132022, retired lieutenant colonel; 101st Airborne (Iraq); Green Beret",
+   "education": "West Point (first in class, 2001); Oxford (Rhodes Scholar)",
+   "sites": {
+    "campaign": "https://sethformontana.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Seth_Bodnar",
+    "ballotpedia": "https://ballotpedia.org/Seth_Bodnar"
+   },
+   "notes": "CAUCUS POSITION UNRESOLVED: advisers say neither party; he has not committed on the record. Do not state a pledge on air. Backed by Jon Tester. Quantus (R) Oct 15\u201318: Alme 44, Bodnar 28, Bankhead 21; his own poll had him +2.",
+   "photo": {
+    "file": "177955.jpg",
+    "license": "CC BY-SA 4.0",
+    "credit": "Todd Goodrich / University of Montana via Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Seth_Bodnar_-_President_at_University_of_Montana_(cropped).jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs Ballotpedia photo: match (2019 photo, no beard then)"
+   }
+  },
+  {
+   "id": "171710",
+   "raceId": "27607",
+   "race": "MT-SEN",
+   "name": "Kurt Alme",
+   "party": "GOP",
+   "partyLabel": "Republican",
+   "featured": false,
+   "incumbent": false,
+   "born": 1966,
+   "residence": "Billings",
+   "occupation": "Attorney; former U.S. Attorney for Montana (resigned Mar 2026 to run)",
+   "priorOffices": "U.S. Attorney 2017\u20132020 and 2025\u20132026; Montana budget director; Dept. of Revenue director. First run for office",
+   "military": null,
+   "education": "B.S. Colorado; J.D. Harvard",
+   "sites": {
+    "campaign": "https://almeforsenate.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Kurt_Alme",
+    "ballotpedia": "https://ballotpedia.org/Kurt_Alme"
+   },
+   "notes": "Open seat: Daines withdrew at the filing deadline and endorsed him; Trump endorsed same day. 2020: Daines 55\u201345. Leads October polls.",
+   "photo": {
+    "file": "171710.jpg",
+    "license": "Public domain (U.S. Dept. of Justice portrait, 2017)",
+    "credit": "U.S. Department of Justice",
+    "page": "https://commons.wikimedia.org/wiki/File:Kurt_G._Alme_official_photo.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs almeforsenate.com portrait: match. Photo is 9 years old; campaign has a newer one (needs permission)",
+    "remote": "https://almeforsenate.com/wp-content/uploads/2026/03/kurt-alme-scaled-e1776955402265.jpeg"
+   }
+  },
+  {
+   "id": "171696",
+   "raceId": "27607",
+   "race": "MT-SEN",
+   "name": "Alani Bankhead",
+   "party": "Dem",
+   "partyLabel": "Democrat",
+   "featured": false,
+   "incumbent": false,
+   "born": 1983,
+   "residence": "Helena",
+   "occupation": "Retired Air Force lieutenant colonel; former counterintelligence special agent; leadership coach",
+   "priorOffices": "None",
+   "military": "U.S. Air Force 2004\u20132025, 21 years",
+   "education": "B.A. Penn State; graduate degree, Troy University",
+   "sites": {
+    "campaign": "https://alaniformt.com",
+    "ballotpedia": "https://ballotpedia.org/Alani_Bankhead"
+   },
+   "notes": "Age approximate (reported 43 in Jan 2026). Refused pressure to withdraw for Bodnar. Polling 12\u201321%.",
+   "photo": {
+    "file": "171696.jpg",
+    "license": "Public domain (U.S. Air Force video still, 2021)",
+    "credit": "Tech. Sgt. Nicholas Brown, U.S. Air Force",
+    "page": "https://commons.wikimedia.org/wiki/File:Alani_Bankhead_USAF_2021.png",
+    "usage": "ok",
+    "verified": "2026-10-21 vs alaniformt.com photo: match. LOW QUALITY (540px video frame); request campaign headshot for air",
+    "remote": "https://alaniformt.com/assets/alani-meet.jpg"
+   }
+  },
+  {
+   "id": "70324",
+   "raceId": "27607",
+   "race": "MT-SEN",
+   "name": "Kyle Austin",
+   "party": "Lib",
+   "partyLabel": "Libertarian",
+   "featured": false,
+   "incumbent": false,
+   "born": 1983,
+   "residence": "Billings",
+   "occupation": "Pharmacist; pharmacy owner; farmer",
+   "priorOffices": "None; lost GOP House primaries 2022, 2024",
+   "military": null,
+   "education": "Pharm.D., University of Montana",
+   "sites": {
+    "campaign": "https://www.kyleaustinmt.com",
+    "ballotpedia": "https://ballotpedia.org/Kyle_Austin_(Montana)"
+   },
+   "notes": "Disavowed by the state Libertarian Party. Polling 2\u20136%.",
+   "photo": null
+  },
+  {
+   "id": "162421",
+   "raceId": "13252",
+   "race": "ID-SEN",
+   "name": "Todd Achilles",
+   "party": "Ind",
+   "partyLabel": "Independent",
+   "featured": true,
+   "incumbent": false,
+   "born": 1967,
+   "residence": "Boise",
+   "occupation": "Former tech executive (T-Mobile, HTC, HP; CEO of Evoca); public policy lecturer, Boise State",
+   "priorOffices": "Idaho House, District 16B, as a Democrat (2024\u2013July 2025); left the party to run",
+   "military": "U.S. Army armor officer 1992\u20131995; tank commander, two Persian Gulf deployments",
+   "education": "B.A. Claremont McKenna; MBA and M.A. Washington; M.P.P. Berkeley",
+   "sites": {
+    "campaign": "https://www.achillesforidaho.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Todd_Achilles",
+    "ballotpedia": "https://ballotpedia.org/Todd_Achilles"
+   },
+   "notes": "Pledged Oct 7 2026 to caucus with neither party and to serve no more than two terms. Democratic nominee withdrew in his favor. Polls split: Risch campaign poll Risch 49\u201324; ATR Sept: Achilles 46\u201339.",
+   "photo": {
+    "file": "162421.jpg",
+    "license": "CC BY 4.0",
+    "credit": "LibertyDad (YouTube) via Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Todd_Achilles_on_LibertyDad%27s_stream.png",
+    "usage": "ok",
+    "verified": "2026-10-21 vs achillesforidaho.com photo: match. LOW QUALITY video still; request campaign photo for air",
+    "remote": "https://images.squarespace-cdn.com/content/v1/65a9a82e46d17278ca5b3fd7/87faee78-cc8d-42b0-9d6a-f1ab356b652f/4B2A5689.jpg"
+   }
+  },
+  {
+   "id": "15344",
+   "raceId": "13252",
+   "race": "ID-SEN",
+   "name": "Jim Risch",
+   "party": "GOP",
+   "partyLabel": "Republican",
+   "featured": false,
+   "incumbent": true,
+   "born": 1943,
+   "residence": "Boise area",
+   "occupation": "U.S. Senator since 2009; chair, Foreign Relations Committee",
+   "priorOffices": "Ada County prosecutor; Idaho Senate (26 years); Lt. Governor; Governor 2006\u201307",
+   "military": null,
+   "education": "B.S. forestry and J.D., University of Idaho",
+   "sites": {
+    "campaign": "https://senatorrisch.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Jim_Risch",
+    "ballotpedia": "https://ballotpedia.org/Jim_Risch"
+   },
+   "notes": "Age 83, seeking a 4th term. 2020: 62.6% vs Jordan (D) 33.2%. Rated Safe R.",
+   "photo": {
+    "file": "15344.jpg",
+    "license": "Public domain (U.S. Senate official portrait, 2009)",
+    "credit": "U.S. Senate",
+    "page": "https://commons.wikimedia.org/wiki/File:Jim_Risch_official_portrait.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs 2021 committee photo and senatorrisch.com: match. Portrait is 17 years old; request a current official portrait from the Senate office (also public domain)"
+   }
+  },
+  {
+   "id": "67326",
+   "raceId": "13252",
+   "race": "ID-SEN",
+   "name": "Natalie Fleming",
+   "party": "Ind",
+   "partyLabel": "Independent",
+   "featured": false,
+   "incumbent": false,
+   "born": 1970,
+   "residence": "Treasure Valley",
+   "occupation": "Software developer",
+   "priorOffices": "None; ran 2018 (House), 2020 (Senate), 2022 (GOP Senate primary)",
+   "military": null,
+   "education": "B.A. Boise State (2024)",
+   "sites": {
+    "campaign": "https://nataliefleming.info/",
+    "ballotpedia": "https://ballotpedia.org/Natalie_Fleming_(Idaho)"
+   },
+   "notes": "Perennial candidate. Polling 3\u20139%. Age approximate.",
+   "photo": null
+  },
+  {
+   "id": "167082",
+   "raceId": "13252",
+   "race": "ID-SEN",
+   "name": "Matt Loesby",
+   "party": "Lib",
+   "partyLabel": "Libertarian",
+   "featured": false,
+   "incumbent": false,
+   "born": null,
+   "residence": "Treasure Valley",
+   "occupation": "Software engineer; Libertarian Party of Idaho officer",
+   "priorOffices": "None; 2024 ID-1 Libertarian nominee (2.1%)",
+   "military": null,
+   "education": "Chapman University (2010)",
+   "sites": {
+    "campaign": "https://www.loesby.us/",
+    "ballotpedia": "https://ballotpedia.org/Matt_Loesby"
+   },
+   "notes": "Polling 2\u20135%. $0 raised.",
+   "photo": null
+  },
+  {
+   "id": "70405",
+   "raceId": "42003",
+   "race": "SD-SEN",
+   "name": "Brian Bengs",
+   "party": "Ind",
+   "partyLabel": "Independent",
+   "featured": true,
+   "incumbent": false,
+   "born": 1970,
+   "residence": "Hot Springs",
+   "occupation": "Retired Air Force JAG officer and attorney; former National Park Service ranger; former professor",
+   "priorOffices": "None. 2022 Democratic Senate nominee (lost to Thune 69.6\u201326.2)",
+   "military": "U.S. Navy enlisted at 17; U.S. Air Force JAG about 19 years, retired 2016 as lieutenant colonel",
+   "education": "J.D., University of Iowa",
+   "sites": {
+    "campaign": "https://bengsforsouthdakota.com/",
+    "ballotpedia": "https://ballotpedia.org/Brian_Bengs"
+   },
+   "notes": "Age approximate. Pledged (Oct 12 2026, with Osborn and Bodnar) to caucus with neither party. Forward Party endorsement. Rounds-sponsored poll Oct 2026: Rounds 54, Bengs 37. Two-way race after the Democrat withdrew.",
+   "photo": {
+    "file": "campaign/70405.jpg",
+    "license": "Campaign copyright",
+    "credit": "Bengs for South Dakota",
+    "page": "https://bengsforsouthdakota.com/",
+    "usage": "fair-use",
+    "verified": "2026-10-21 campaign candid vs Ballotpedia photo: match. The only public-domain image (pre-2004 Air Force portrait) could not be visually matched to him today and is not used Hosted on our CDN under fair use for identification.",
+    "remote": "https://bengsforsouthdakota.com/wp-content/uploads/2026/09/brian-bengs-candid.jpg"
+   }
+  },
+  {
+   "id": "580",
+   "raceId": "42003",
+   "race": "SD-SEN",
+   "name": "Mike Rounds",
+   "party": "GOP",
+   "partyLabel": "Republican",
+   "featured": false,
+   "incumbent": true,
+   "born": 1954,
+   "residence": "Fort Pierre",
+   "occupation": "U.S. Senator since 2015; former insurance and real estate business owner",
+   "priorOffices": "S.D. Senate 1991\u20132001; Governor 2003\u20132011",
+   "military": null,
+   "education": "B.S., South Dakota State University",
+   "sites": {
+    "campaign": "https://roundsforsenate.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Mike_Rounds",
+    "ballotpedia": "https://ballotpedia.org/Mike_Rounds"
+   },
+   "notes": "2020: 65.7% vs Ahlers (D). Trump-endorsed. Rated Safe R.",
+   "photo": {
+    "file": "580.jpg",
+    "license": "Public domain (U.S. Senate official portrait, 2015)",
+    "credit": "U.S. Senate Photographic Studio",
+    "page": "https://commons.wikimedia.org/wiki/File:Mike_Rounds_official_Senate_portrait.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs roundsforsenate.com headshot: match"
+   }
+  },
+  {
+   "id": "69756",
+   "raceId": "5696",
+   "race": "CA-6",
+   "name": "Kevin Kiley",
+   "party": "NPP",
+   "partyLabel": "Independent (No Party Preference)",
+   "featured": true,
+   "incumbent": true,
+   "born": 1985,
+   "residence": "Rocklin (verify it lies inside the new district before saying so)",
+   "occupation": "U.S. Representative (CA-3) since 2023; attorney; former teacher",
+   "priorOffices": "California Assembly 2016\u20132022; U.S. House 2023\u2013present",
+   "military": null,
+   "education": "A.B. Harvard; J.D. Yale",
+   "sites": {
+    "campaign": "https://electkevinkiley.com",
+    "wikipedia": "https://en.wikipedia.org/wiki/Kevin_Kiley_(politician)",
+    "ballotpedia": "https://ballotpedia.org/Kevin_Kiley"
+   },
+   "notes": "Left the Republican Party Mar 9 2026 after Prop 50 redrew his district; the House's only independent. Says he will join neither caucus if re-elected. New CA-6 is D+5. Polls: Pan 39\u201335 (July); 37\u201337 (pro-Kiley, Sept). Forecasters favor Pan.",
+   "photo": {
+    "file": "69756.jpg",
+    "license": "Public domain (U.S. House official portrait, 2023)",
+    "credit": "U.S. Congress",
+    "page": "https://commons.wikimedia.org/wiki/File:Rep._Kevin_Kiley_official_photo,_118th_Congress_2.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs Ballotpedia photo: match"
+   }
+  },
+  {
+   "id": "105173",
+   "raceId": "5696",
+   "race": "CA-6",
+   "name": "Richard Pan",
+   "party": "Dem",
+   "partyLabel": "Democrat",
+   "featured": false,
+   "incumbent": false,
+   "born": 1965,
+   "residence": "Sacramento",
+   "occupation": "Pediatrician; UC Davis professor; former state senator",
+   "priorOffices": "California Assembly 2010\u20132014; State Senate 2014\u20132022",
+   "military": null,
+   "education": "B.S. Johns Hopkins; M.D. Pittsburgh; M.P.H. Harvard",
+   "sites": {
+    "campaign": "https://drpanforcongress.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Richard_Pan",
+    "ballotpedia": "https://ballotpedia.org/Richard_Pan"
+   },
+   "notes": "Author of California's 2015 school-vaccine law. Second in the top-two primary. Favored by forecasters.",
+   "photo": {
+    "file": "105173.jpg",
+    "license": "Public domain (California State Senate photo, per Commons)",
+    "credit": "California State Senate",
+    "page": "https://commons.wikimedia.org/wiki/File:Richard_Pan.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs Ballotpedia photo: match"
+   }
+  },
+  {
+   "id": "177719",
+   "raceId": "2015",
+   "race": "AK-AL",
+   "name": "Bill Hill",
+   "party": "NP",
+   "partyLabel": "Independent (undeclared)",
+   "featured": true,
+   "incumbent": false,
+   "born": 1969,
+   "residence": "Naknek (Bristol Bay)",
+   "occupation": "Commercial fisherman; retired educator; co-owner, Bristol Bay Brailer",
+   "priorOffices": "None elected. Superintendent, Bristol Bay Borough schools 2013\u20132023; Alaska Superintendent of the Year",
+   "military": null,
+   "education": "B.Ed., University of Alaska Anchorage",
+   "sites": {
+    "campaign": "https://billhillforalaskans.com/",
+    "ballotpedia": "https://ballotpedia.org/Bill_Hill"
+   },
+   "notes": "Dena'ina Athabascan. Age approximate (AP: 57). Endorsed by Alaska Democrats after their leading candidate withdrew. Has declined to say which party he would caucus with. Ranked choice: needs transfers. PPP Oct 14\u201315: Begich 45, Hill 44.",
+   "photo": {
+    "file": "177719.jpg",
+    "license": "CC0 (public domain dedication by the campaign)",
+    "credit": "Bill Hill for Alaskans via Wikimedia Commons",
+    "page": "https://commons.wikimedia.org/wiki/File:Bill_Hill_(cropped_3x4).jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs Ballotpedia headshot: match"
+   }
+  },
+  {
+   "id": "70724",
+   "raceId": "2015",
+   "race": "AK-AL",
+   "name": "Nick Begich III",
+   "party": "GOP",
+   "partyLabel": "Republican",
+   "featured": false,
+   "incumbent": true,
+   "born": 1977,
+   "residence": "Chugiak",
+   "occupation": "U.S. Representative since 2025; software entrepreneur",
+   "priorOffices": "None before Congress; lost to Peltola twice in 2022",
+   "military": null,
+   "education": "BBA Baylor; MBA Indiana",
+   "sites": {
+    "campaign": "https://www.alaskansfornickbegich.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Nick_Begich_III",
+    "ballotpedia": "https://ballotpedia.org/Nick_Begich"
+   },
+   "notes": "2024: beat Peltola 51.2\u201348.8 after three RCV rounds. Rated Likely R.",
+   "photo": {
+    "file": "70724.jpg",
+    "license": "Public domain (U.S. House official portrait, 2024)",
+    "credit": "House Creative Services / Ike Hayman",
+    "page": "https://commons.wikimedia.org/wiki/File:Rep._Nick_Begich_III_(119th_Congress)_(cropped).jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs begich.house.gov portrait: match"
+   }
+  },
+  {
+   "id": "167001",
+   "raceId": "2015",
+   "race": "AK-AL",
+   "name": "Eric Hafner",
+   "party": "Dem",
+   "partyLabel": "Democrat",
+   "featured": false,
+   "incumbent": false,
+   "born": 1991,
+   "residence": "Federal prison, Otisville, N.Y. (has never lived in Alaska)",
+   "occupation": "Federal prisoner; perennial candidate",
+   "priorOffices": "None; 2024 AK-AL candidate (~1%)",
+   "military": null,
+   "education": null,
+   "sites": {
+    "wikipedia": "https://en.wikipedia.org/wiki/Eric_Hafner",
+    "ballotpedia": "https://ballotpedia.org/Eric_Hafner"
+   },
+   "notes": "Serving 20 years for threats against officials. Not endorsed by Alaska Democrats. Polling 5\u20139%.",
+   "photo": null
+  },
+  {
+   "id": "62643",
+   "raceId": "2015",
+   "race": "AK-AL",
+   "name": "James McDermott",
+   "party": "Lib",
+   "partyLabel": "Libertarian",
+   "featured": false,
+   "incumbent": false,
+   "born": 1958,
+   "residence": "Fairbanks",
+   "occupation": "Writer; tutor",
+   "priorOffices": "None; Libertarian nominee 2012, 2014, 2016",
+   "military": "U.S. Air Force, 20+ years (per 2016 report)",
+   "education": null,
+   "sites": {
+    "campaign": "https://jamesmcdermott.org/",
+    "ballotpedia": "https://ballotpedia.org/Jim_McDermott_(Alaska)"
+   },
+   "notes": "Finished 8th in the primary; advanced after withdrawals. Age approximate. Polling 1\u20135%.",
+   "photo": null
+  },
+  {
+   "id": "178015",
+   "raceId": "13253",
+   "race": "ID-1",
+   "name": "Sarah Zabel",
+   "party": "Ind",
+   "partyLabel": "Independent",
+   "featured": true,
+   "incumbent": false,
+   "born": 1965,
+   "residence": "Bayview (Bonner County)",
+   "occupation": "Retired Air Force major general; author",
+   "priorOffices": "None; first run. Former Republican",
+   "military": "U.S. Air Force 1987\u20132018, retired major general; cyber and communications; Bronze Star (Qatar 2003\u201304); vice director, DISA",
+   "education": "B.S. computer science, Air Force Academy; master's degrees incl. Army War College",
+   "sites": {
+    "campaign": "https://www.zabelforcongress.com/",
+    "ballotpedia": "https://ballotpedia.org/Sarah_Zabel_(Idaho)"
+   },
+   "notes": "Says she would caucus with neither party. Forward Party endorsement. Polling ~5\u20136% in three-way surveys (July); her own poll had a two-way race at Zabel 42, Fulcher 39.",
+   "photo": {
+    "file": "178015.jpg",
+    "license": "Public domain (official U.S. Air Force portrait)",
+    "credit": "U.S. Air Force",
+    "page": "https://www.zabelforcongress.com/who-i-am",
+    "usage": "ok",
+    "verified": "2026-10-21 vs 2018 DVIDS photo and campaign headshot: match. Uniformed portrait; the campaign's civilian headshot needs permission",
+    "remote": "https://images.squarespace-cdn.com/content/v1/69078a43f0151d167a47ad4e/9c2a6da5-948d-460c-acec-6284574c286e/Sarah_Zabel-low_res+2.jpg"
+   }
+  },
+  {
+   "id": "63500",
+   "raceId": "13253",
+   "race": "ID-1",
+   "name": "Russ Fulcher",
+   "party": "GOP",
+   "partyLabel": "Republican",
+   "featured": false,
+   "incumbent": true,
+   "born": 1962,
+   "residence": "Meridian",
+   "occupation": "U.S. Representative since 2019; former Micron executive",
+   "priorOffices": "Idaho Senate 2005\u20132014; lost 2014 GOP governor primary",
+   "military": null,
+   "education": "B.B.A., M.B.A. Boise State",
+   "sites": {
+    "campaign": "https://www.russfulcher.com/",
+    "wikipedia": "https://en.wikipedia.org/wiki/Russ_Fulcher",
+    "ballotpedia": "https://ballotpedia.org/Russ_Fulcher"
+   },
+   "notes": "2024: 71.0% vs Peterson 25.4%. Seeking a 5th term. Rated Safe R.",
+   "photo": {
+    "file": "63500.jpg",
+    "license": "Public domain (U.S. House official portrait, 2018)",
+    "credit": "U.S. House Office of Photography / Franmarie Metzler",
+    "page": "https://commons.wikimedia.org/wiki/File:Russ_Fulcher,_official_portrait,_116th_Congress.jpg",
+    "usage": "ok",
+    "verified": "2026-10-21 vs Ballotpedia photo: match"
+   }
+  },
+  {
+   "id": "162330",
+   "raceId": "13253",
+   "race": "ID-1",
+   "name": "Kaylee Peterson",
+   "party": "Dem",
+   "partyLabel": "Democrat",
+   "featured": false,
+   "incumbent": false,
+   "born": 1990,
+   "residence": "Eagle",
+   "occupation": "Grassroots organizer and political strategist; former president, Idaho Young Democrats",
+   "priorOffices": "None; Democratic nominee for ID-1 in 2022 (26.3%) and 2024 (25.4%)",
+   "military": null,
+   "education": "A.A., College of Western Idaho (2023)",
+   "sites": {
+    "campaign": "https://www.kayleeforcongress.com/",
+    "ballotpedia": "https://ballotpedia.org/Kaylee_Peterson"
+   },
+   "notes": "Third run against Fulcher. Age approximate. Polling 27\u201335% (July).",
+   "photo": {
+    "file": "campaign/162330.jpg",
+    "license": "Campaign copyright",
+    "credit": "Kaylee Peterson for Congress",
+    "page": "https://www.kayleeforcongress.com/about-kaylee",
+    "usage": "fair-use",
+    "verified": "2026-10-21 campaign photo vs Ballotpedia headshot: match. No free-licensed image exists Hosted on our CDN under fair use for identification.",
+    "remote": "https://images.squarespace-cdn.com/content/v1/69d6cf57d14dc43f1472c9fd/650dc3e0-2f43-4498-8ad4-e60f8cf0fa6f/kaylee-dc1.png"
+   }
+  },
+  {
+   "id": "112913",
+   "raceId": "13253",
+   "race": "ID-1",
+   "name": "Brendan Gomez",
+   "party": "CST",
+   "partyLabel": "Constitution Party",
+   "featured": false,
+   "incumbent": false,
+   "born": 1999,
+   "residence": "Boise",
+   "occupation": null,
+   "priorOffices": "None; 2024 ID-1 nominee (1.5%)",
+   "military": null,
+   "education": null,
+   "sites": {
+    "ballotpedia": "https://ballotpedia.org/Brendan_Gomez"
+   },
+   "notes": "Remains on the ballot after a Sept 2026 guilty plea (sexual exploitation material); sentencing Nov 16. Age approximate. $0 raised.",
+   "photo": null
+  }
+ ]
 }
