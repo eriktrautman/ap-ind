@@ -12,7 +12,7 @@ export const initials = (name) => name.split(/\s+/).filter(Boolean).map((w) => w
 
 export function face(c, cls = "") {
   const inner = c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(initials(c.name))}'))">` : esc(initials(c.name));
-  return `<span class="face ${cls} ${c.independent ? "" : "oppo"}" title="${esc(c.name)}">${inner}</span>`;
+  return `<span class="face ${cls} ${c.independent ? "ind" : partyClass(c.party)}" title="${esc(c.name)}">${inner}</span>`;
 }
 
 export function statusPill(r) {

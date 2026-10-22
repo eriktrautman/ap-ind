@@ -23,10 +23,15 @@ main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 60px; }
 .race .star { color: #c9c3b6; font-size: 20px; text-align: center; cursor: pointer; user-select: none; } .race .star.on { color: var(--gold); }
 .race .who { display: flex; align-items: center; gap: 8px; min-width: 0; text-decoration: none; color: inherit; }
 .race .who > .txt { min-width: 0; display: block; flex: 1; }
-.faces { display: flex; flex: none; }
-.face { width: 36px; height: 36px; border-radius: 50%; background: #16244a; border: 2px solid var(--gold); overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; }
-.face img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-.face.oppo { width: 30px; height: 30px; margin-left: -12px; border-color: #c9c3b6; font-size: 10px; }
+.faces { display: flex; flex: none; align-items: center; }
+.face { position: relative; width: 36px; height: 36px; flex: none; border-radius: 50%; background: #16244a; border: 2.5px solid #c9c3b6; box-sizing: border-box; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 700; }
+.face img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+.faces .face + .face { margin-left: -10px; }
+.faces .face:nth-child(1) { z-index: 3; } .faces .face:nth-child(2) { z-index: 2; } .faces .face:nth-child(3) { z-index: 1; }
+.face.ind { border-color: var(--gold); }
+.face.dem { border-color: #8fb0ea; }
+.face.gop { border-color: #e39a90; }
+.face.oth { border-color: #9aa7bd; }
 .race .nm { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .race .sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .race .num { text-align: right; font-variant-numeric: tabular-nums; min-width: 60px; }
@@ -46,7 +51,6 @@ main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 60px; }
 .row { display: grid; grid-template-columns: minmax(120px, 170px) 1fr 52px 80px; gap: 8px; align-items: center; font-size: 13.5px; }
 .row .cand { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .row .cand .face { width: 30px; height: 30px; font-size: 10px; }
-.row .cand .face.oppo { margin: 0; }
 .row .cand span.n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row .bar { height: 16px; background: #eee; border-radius: 3px; overflow: hidden; } .row .bar i { display: block; height: 100%; transition: width .6s; }
 .row.ind .bar i { background: var(--gold); } .row.gop .bar i { background: var(--gop); } .row.dem .bar i { background: var(--dem); } .row.oth .bar i { background: var(--oth); }

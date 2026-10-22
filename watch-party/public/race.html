@@ -20,7 +20,7 @@
       <div class="note" id="mapnote"></div>
     </div>
     <div>
-      <table class="ct" id="counties"><thead><tr><th data-k="name">County</th><th class="r" data-k="in">In</th><th class="r" data-k="ind">Independent</th><th class="r" data-k="lead">Leader</th><th class="r" data-k="total">Votes</th></tr></thead><tbody></tbody></table>
+      <table class="ct" id="counties"><thead><tr><th data-k="name">Area</th><th class="r" data-k="in">In</th><th class="r" data-k="ind">Independent</th><th class="r" data-k="lead">Leader</th><th class="r" data-k="total">Votes</th></tr></thead><tbody></tbody></table>
       <div class="note" id="ctnote"></div>
     </div>
   </div>
@@ -70,6 +70,10 @@
   async function renderMap() {
     const { feats, path } = await ensureGeo();
     const byFips = new Map((counties ?? []).map((u) => [u.fips, u]));
+    const unitsAreCounties = !counties || counties.length === 0 || counties.some((u) => feats.some((d) => String(d.id) === u.fips));
+    document.querySelector(".countymap").hidden = !unitsAreCounties;
+    document.getElementById("legend").hidden = !unitsAreCounties;
+    if (!unitsAreCounties) { $("mapnote").textContent = `AP reports this state by ${counties[0]?.name?.replace(/\s*\d+$/, "") || "sub-state unit"}, not by county; the table below lists those units. No district map in this build.`; return; }
     const svg = d3.select("#map");
     const sel = svg.selectAll("path.c").data(feats, (d) => d.id);
     sel.enter().append("path").attr("class", "c").attr("d", path).attr("stroke", "#071222").attr("stroke-width", 0.5)
