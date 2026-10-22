@@ -3,13 +3,48 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "crons": [
-    { "path": "/api/poll", "schedule": "0 0 * * *" }
+    {
+      "path": "/api/poll",
+      "schedule": "0 0 * * *"
+    }
   ],
   "rewrites": [
-    { "source": "/race/:label", "destination": "/race" },
-    { "source": "/data/:path*", "destination": "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com/:path*" }
+    {
+      "source": "/race/:label",
+      "destination": "/race"
+    },
+    {
+      "source": "/data/:path*",
+      "destination": "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com/:path*"
+    }
   ],
   "headers": [
-    { "source": "/data/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=30, s-maxage=60, stale-while-revalidate=300" }] }
+    {
+      "source": "/data/status.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=10, s-maxage=20, stale-while-revalidate=40"
+        }
+      ]
+    },
+    {
+      "source": "/data/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=30, s-maxage=60, stale-while-revalidate=120"
+        }
+      ]
+    },
+    {
+      "source": "/geo/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, s-maxage=604800, immutable"
+        }
+      ]
+    }
   ]
 }

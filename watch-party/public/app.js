@@ -44,8 +44,8 @@ export function fmtTime(iso) {
 /** Header status: dot colour by age of the last successful poll, "data as of", countdown. */
 export function renderStatus(el, status, nextAt) {
   const age = status?.lastApSuccess ? (Date.now() - Date.parse(status.lastApSuccess)) / 1000 : Infinity;
-  const cls = !status ? "off" : age < 120 ? "" : age < 600 ? "warn" : "bad";
-  const label = !status ? "waiting for first data" : age < 120 ? "AP live" : age < 600 ? `AP data ${Math.round(age / 60)} min old` : "AP feed stale";
+  const cls = !status ? "off" : age < 180 ? "" : age < 600 ? "warn" : "bad";
+  const label = !status ? "waiting for first data" : age < 180 ? "AP live" : age < 600 ? `AP data ${Math.round(age / 60)} min old` : "AP feed stale";
   const left = Math.max(0, Math.round((nextAt - Date.now()) / 1000));
   el.innerHTML = `<span class="dot ${cls}"></span><span>${label}<span class="long">${status?.lastApSuccess ? ` · data as of ${fmtTime(status.apTimestamp ?? status.lastApSuccess)}` : ""}</span> · ${left}s</span>`;
 }
