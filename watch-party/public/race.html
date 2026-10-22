@@ -57,7 +57,12 @@
     const us = await (await fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json")).json();
     const pre = FIPS[state];
     const feats = topojson.feature(us, us.objects.counties).features.filter((d) => String(d.id).startsWith(pre));
-    const path = d3.geoPath(d3.geoMercator().fitSize([400, 260], { type: "FeatureCollection", features: feats }));
+    // Conic projection rotated onto the state's own centroid: keeps Alaska (which crosses the
+    // antimeridian) and every other state centred and filling the frame.
+    const fc = { type: "FeatureCollection", features: feats };
+    const [lon, lat] = d3.geoCentroid(fc);
+    const proj = d3.geoConicEqualArea().rotate([-lon, 0]).center([0, lat]).parallels([lat - 6, lat + 6]).fitSize([400, 260], fc);
+    const path = d3.geoPath(proj);
     geo = { feats, path };
     return geo;
   }

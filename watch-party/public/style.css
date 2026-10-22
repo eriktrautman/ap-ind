@@ -16,7 +16,10 @@ main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 60px; }
 .chip { font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--sand); border-radius: 14px; background: #fff; color: var(--ink); cursor: pointer; }
 .chip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
 .filters select, .filters input { font: inherit; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--sand); border-radius: 6px; background: #fff; }
-.race { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--sand); }
+.race { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; padding: 9px 8px; margin: 0 -8px; border-bottom: 1px solid var(--sand); border-radius: 6px; transition: background .12s; }
+.race:hover { background: #fff; box-shadow: inset 3px 0 0 var(--gold); }
+.race:hover .nm { color: var(--navy); text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 3px; }
+.race .who { cursor: pointer; }
 .race .star { color: #c9c3b6; font-size: 20px; text-align: center; cursor: pointer; user-select: none; } .race .star.on { color: var(--gold); }
 .race .who { display: flex; align-items: center; gap: 8px; min-width: 0; text-decoration: none; color: inherit; }
 .race .who > .txt { min-width: 0; display: block; flex: 1; }
