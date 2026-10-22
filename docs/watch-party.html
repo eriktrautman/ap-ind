@@ -199,6 +199,17 @@
     <tr><td>Studio broadcast server</td><td>No</td><td>Keep the public site off the machine that feeds air.</td></tr>
   </tbody>
 </table>
+<h3>Failure modes and mitigations</h3>
+<table>
+  <thead><tr><th>How hosted sites fail under load</th><th>Does it apply here</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr><td>A function on every request: cold starts, concurrency limits, database connections exhausted</td><td>No. Viewers read static files from the CDN; the only function is the poller, run by cron once a minute.</td><td>Keep it that way: no API routes on the viewer path.</td></tr>
+    <tr><td>Spend cap pauses the project mid-spike</td><td>Yes, if a cap is set.</td><td>Raise or remove the cap before the night; alert on spend instead.</td></tr>
+    <tr><td>Platform outage</td><td>Possible on any host.</td><td>The poller also writes the files to a second store on another provider (Cloudflare R2); the page falls back to it automatically. Static site mirrored to Cloudflare Pages with DNS failover.</td></tr>
+    <tr><td>Slow or failing origin behind the CDN</td><td>Possible.</td><td>Cache headers: 60 s max-age with stale-while-revalidate, so the CDN serves the last good file instead of an error.</td></tr>
+  </tbody>
+</table>
+<p>Capacity: roughly two requests and 60 KB per viewer per minute. Ten thousand concurrent viewers for eight hours is about 10 million requests and 300 GB, inside a Pro plan; a hundred thousand is a few hundred dollars. A load test at ten times the expected audience is part of the rehearsal week.</p>
 <div class="rec">Recommendation: Vercel. The product is public, read-heavy and cacheable, and its cadence fits a scheduled function. Keep the broadcast server private and long-running; give the Watch Party its own AP polling on its own credentials-scoped deployment, so a traffic spike or a bug on the public site cannot touch what is on air.</div>
 
 <h2>6. Build estimate</h2>
@@ -209,6 +220,7 @@
     <tr><td>Race list page with filters, sort, stars</td><td>candidate index, photos.json</td><td>1 day</td></tr>
     <tr><td>Race page: summary, bars, county map (d3 + Census counties), county table with hover linking</td><td>B5, B6, B8 graphics code</td><td>1.5 days</td></tr>
     <tr><td>Status, about page, test-mode banner, mobile polish</td><td>feed.js freshness logic</td><td>0.5 day</td></tr>
+    <tr><td>Second-origin mirror (R2) with client fallback, cache headers, load test at 10× expected audience</td><td>poller</td><td>0.5 day</td></tr>
     <tr><td>Rehearsal against AP test data and replay</td><td>stored raw responses</td><td>0.5 day</td></tr>
   </tbody>
 </table>
