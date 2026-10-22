@@ -90,8 +90,10 @@
   .mock.key { background: repeating-conic-gradient(#8c8c8c 0 25%, #a9a9a9 0 50%) 0 0 / 14px 14px; }
   /* TV title-safe: nothing readable inside the outer 10% on any side (SMPTE ST 2046-1 safe title is 90%). */
   .mock .safe { position: absolute; inset: 9% 10%; }
-  .mock::after { content: ""; position: absolute; inset: 9% 10%; border: 1px dashed rgba(255,255,255,.12); pointer-events: none; }
-  .mock.key::after { display: none; }
+  /* Title-safe guide, shown only when the toggle in the nav is on. */
+  body.show-safe .mock::after { content: ""; position: absolute; inset: 9% 10%; border: 1px dashed rgba(255,255,255,.3); pointer-events: none; }
+  body.show-safe .mock.key::after { display: none; }
+  nav.toc label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: var(--muted); font-size: 12px; }
   .mock .title { font-family: var(--serif); font-size: 1.8em; line-height: 1.1; }
   .mock .sub { color: #9aa7bd; font-size: 0.95em; }
   .mock.light .sub { color: var(--muted); }
@@ -174,13 +176,13 @@
     <a href="#movement">C. The independent movement</a>
     <a href="#updates">D. Election updates</a>
     <a href="#states">E. Status language</a>
-    <span class="legend"><span class="tag live">live</span> AP data, updates on air <span class="tag pre">prepared</span> built before the night <span class="tag both">both</span></span>
+    <span class="legend"><span class="tag live">live</span> AP data, updates on air <span class="tag pre">prepared</span> built before the night <span class="tag both">both</span> <label><input type="checkbox" id="safe-toggle"> title-safe guide</label></span>
   </div>
 </nav>
 
 <main>
 
-<div class="note">All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the featured candidate is the first thing the eye lands on.<br><br><b>This is television.</b> Every graphic keeps its content inside the title-safe area (the dashed box on each sketch: 10% in from each side, 9% top and bottom), uses one headline number per idea, and sets nothing smaller than 28px at 1080p. Where a sketch is dense, the full-size version shows fewer items at the same minimum size.</div>
+<div class="note">All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the featured candidate is the first thing the eye lands on.<br><br><b>This is television.</b> Every graphic keeps its content inside the title-safe area (10% in from each side, 9% top and bottom; the "title-safe guide" toggle in the nav draws it on each sketch), uses one headline number per idea, and sets nothing smaller than 28px at 1080p. Where a sketch is dense, the full-size version shows fewer items at the same minimum size.</div>
 
 <div class="note" id="audit">
   <b>Data audit.</b> Every card below carries a data line. <span style="background:#f1f5ee;color:#1c4d2c;padding:1px 6px;border-radius:3px">AP</span> straight from the feed · <span style="background:#eef2f9;color:#1f3a6e;padding:1px 6px;border-radius:3px">AP-derived</span> computed from AP fields only · <span style="background:#fdf3e3;color:#6b4a0b;padding:1px 6px;border-radius:3px">mixed</span> AP plus a dataset supplied by the project · <span style="background:#e08a1e;color:#1a1200;padding:1px 6px;border-radius:3px;font-weight:700">outside data</span> the chart cannot be made from the feed; a dataset that must be built and verified (card outlined orange).<br><br>
@@ -1137,6 +1139,8 @@
     "D10": "A partial national sum is skewed by which states have closed and by uncontested seats; compare to 2024 only at similar completeness.",
     "D11": "\"Too close to call\" here is a house threshold (under 3 points, over 25% in), not AP's judgement.",
   };
+
+  document.getElementById("safe-toggle").addEventListener("change", (e) => document.body.classList.toggle("show-safe", e.target.checked));
 
   // Working-page embeds: load the real graphic in demo mode and scale 1920x1080 to the card width.
   for (const box of document.querySelectorAll(".embed[data-src]")) {
