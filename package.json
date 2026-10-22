@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "AP Elections API middleware for an election-night broadcast focused on independent candidates",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "node --watch --env-file=.env src/server.ts",
     "start": "node --env-file=.env src/server.ts",
@@ -19,6 +21,8 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/ws": "^8.18.1",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
     "typescript": "^5.8.3"
   }
 }

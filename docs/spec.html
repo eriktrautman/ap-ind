@@ -254,6 +254,9 @@
     </ul>
     <p>Section F of the <a href="graphics-data-options.html#reports">graphics data options</a> shows these as graphics; each card there lists its endpoints under "Data notes".</p>
 
+    <h3>Map geometry by reporting unit</h3>
+    <p>AP reports 43 states by county, the six New England states by town or city, and Alaska by State House District. One TopoJSON file per state (<code>scripts/build-geo.mjs</code>, served at <code>/geo/&lt;ST&gt;.json</code> by both apps) matches each state's unit type: counties from the Census county file keyed by FIPS, towns from Census county subdivisions keyed by name, Alaska districts from Census state-legislative boundaries keyed by name. County-level graphics (B4, B6, B8, B10 and the Watch Party race pages) read these files, so every state gets a map that corresponds to the units AP actually reports.</p>
+
     <h3>What AP does not supply</h3>
     <p>Candidate photos and biographies, polling, historical membership of Congress, and AP VoteCast (a separate product). The <code>config/candidates.json</code> index covers the featured races: bios compiled from public sources and keyed by AP <code>candidateID</code>, with photos in <code>public/photos/&lt;id&gt;.jpg</code> restricted to public-domain or Creative Commons images, each visually verified against a second source before inclusion. Campaign-owned photos are referenced by URL and flagged as needing permission; they are not in the repository. The <a href="graphics-data-options.html">graphics data options</a> page audits every proposed graphic by data source.</p>
 

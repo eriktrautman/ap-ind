@@ -20,6 +20,12 @@ await app.register(fastifyStatic, {
   root: fileURLToPath(new URL("../public", import.meta.url)),
   prefix: "/",
 });
+// Per-state unit geometry matching AP's reporting units (built by scripts/build-geo.mjs; shared with the Watch Party)
+await app.register(fastifyStatic, {
+  root: fileURLToPath(new URL("../watch-party/public/geo", import.meta.url)),
+  prefix: "/geo/",
+  decorateReply: false,
+});
 // Spec and look book: same files Vercel serves publicly
 await app.register(fastifyStatic, {
   root: fileURLToPath(new URL("../docs", import.meta.url)),

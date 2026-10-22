@@ -52,40 +52,42 @@
     return entries[0][1] > 0 ? entries[0][0] : null;
   }
 
+  // Per-state geometry built to match AP's reporting units (counties; towns in New England;
+  // State House Districts in Alaska). See scripts/build-geo.mjs.
+  const normName = (n) => String(n ?? "").toLowerCase().replace(/\s+(county|parish|borough|census area|municipality|city and borough|town|city|plantation)$/i, "").replace(/[^a-z0-9]/g, "");
   async function ensureGeo() {
     if (geo) return geo;
-    const us = await (await fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json")).json();
-    const pre = FIPS[state];
-    const feats = topojson.feature(us, us.objects.counties).features.filter((d) => String(d.id).startsWith(pre));
-    // Conic projection rotated onto the state's own centroid: keeps Alaska (which crosses the
-    // antimeridian) and every other state centred and filling the frame.
+    const topo = await (await fetch(`/geo/${state}.json`)).json();
+    const obj = topo.objects[Object.keys(topo.objects)[0]];
+    const feats = topojson.feature(topo, obj).features;
     const fc = { type: "FeatureCollection", features: feats };
     const [lon, lat] = d3.geoCentroid(fc);
     const proj = d3.geoConicEqualArea().rotate([-lon, 0]).center([0, lat]).parallels([lat - 6, lat + 6]).fitSize([400, 260], fc);
-    const path = d3.geoPath(proj);
-    geo = { feats, path };
+    const kind = feats[0]?.properties?.kind ?? "county";
+    geo = { feats, path: d3.geoPath(proj), kind };
     return geo;
   }
+  /** Key that joins an AP unit to a geometry feature: FIPS for counties, name otherwise. */
+  function unitKey(u, kind) { return kind === "county" ? String(u.fips) : normName(u.name); }
+  function featKey(d, kind) { return kind === "county" ? String(d.id) : normName(d.properties.name); }
 
   async function renderMap() {
-    const { feats, path } = await ensureGeo();
-    const byFips = new Map((counties ?? []).map((u) => [u.fips, u]));
-    const unitsAreCounties = !counties || counties.length === 0 || counties.some((u) => feats.some((d) => String(d.id) === u.fips));
-    document.querySelector(".countymap").hidden = !unitsAreCounties;
-    document.getElementById("legend").hidden = !unitsAreCounties;
-    if (!unitsAreCounties) { $("mapnote").textContent = `AP reports this state by ${counties[0]?.name?.replace(/\s*\d+$/, "") || "sub-state unit"}, not by county; the table below lists those units. No district map in this build.`; return; }
+    const { feats, path, kind } = await ensureGeo();
+    const byFips = new Map((counties ?? []).map((u) => [unitKey(u, kind), u]));
+    const matched = (counties ?? []).filter((u) => feats.some((d) => featKey(d, kind) === unitKey(u, kind))).length;
+    if (counties?.length && matched === 0) { $("mapnote").textContent = "Map units could not be matched to AP's reporting units for this state."; }
     const svg = d3.select("#map");
     const sel = svg.selectAll("path.c").data(feats, (d) => d.id);
     sel.enter().append("path").attr("class", "c").attr("d", path).attr("stroke", "#071222").attr("stroke-width", 0.5)
       .on("mousemove", (e, d) => showTip(e, d)).on("mouseleave", () => { $("tip").style.display = "none"; setHl(null); })
-      .on("click", (e, d) => { const u = byFips.get(String(d.id)); if (u) document.querySelector(`tr[data-fips="${u.fips}"]`)?.scrollIntoView({ block: "nearest" }); })
+      .on("click", (e, d) => { const u = byFips.get(featKey(d, kind)); if (u) document.querySelector(`tr[data-fips="${unitKey(u, kind)}"]`)?.scrollIntoView({ block: "nearest" }); })
       .merge(sel)
-      .attr("fill", (d) => { const u = byFips.get(String(d.id)); const l = u && leaderIn(u); return l ? color(l) : "#3a4f7a"; })
-      .attr("fill-opacity", (d) => { const u = byFips.get(String(d.id)); if (!u || !leaderIn(u)) return 1; const inPct = (u.eevp || u.precinctsPct) / 100; return 0.35 + Math.min(1, inPct) * 0.65; })
-      .attr("stroke", (d) => (hl && String(d.id) === hl ? "#fff" : "#071222")).attr("stroke-width", (d) => (hl && String(d.id) === hl ? 2 : 0.5));
+      .attr("fill", (d) => { const u = byFips.get(featKey(d, kind)); const l = u && leaderIn(u); return l ? color(l) : "#3a4f7a"; })
+      .attr("fill-opacity", (d) => { const u = byFips.get(featKey(d, kind)); if (!u || !leaderIn(u)) return 1; const inPct = (u.eevp || u.precinctsPct) / 100; return 0.35 + Math.min(1, inPct) * 0.65; })
+      .attr("stroke", (d) => (hl && featKey(d, kind) === hl ? "#fff" : "#071222")).attr("stroke-width", (d) => (hl && featKey(d, kind) === hl ? 2 : 0.5));
     function showTip(e, d) {
-      const u = byFips.get(String(d.id)); const box = $("tip");
-      setHl(String(d.id));
+      const u = byFips.get(featKey(d, kind)); const box = $("tip");
+      setHl(featKey(d, kind));
       if (!u) { box.textContent = `${d.properties.name}: no results`; }
       else {
         const top = race.candidates.map((c) => [c, u.votes[c.id] ?? 0]).sort((a, b) => b[1] - a[1]).slice(0, 3);
@@ -96,10 +98,11 @@
     }
   }
 
-  function setHl(fips) {
-    hl = fips;
-    for (const tr of document.querySelectorAll("#counties tbody tr")) tr.classList.toggle("hl", tr.dataset.fips === fips);
-    d3.select("#map").selectAll("path.c").attr("stroke", (d) => (hl && String(d.id) === hl ? "#fff" : "#071222")).attr("stroke-width", (d) => (hl && String(d.id) === hl ? 2 : 0.5));
+  function setHl(key) {
+    hl = key;
+    for (const tr of document.querySelectorAll("#counties tbody tr")) tr.classList.toggle("hl", tr.dataset.fips === key);
+    const kind = geo?.kind ?? "county";
+    d3.select("#map").selectAll("path.c").attr("stroke", (d) => (hl && featKey(d, kind) === hl ? "#fff" : "#071222")).attr("stroke-width", (d) => (hl && featKey(d, kind) === hl ? 2 : 0.5));
   }
 
   function render() {
@@ -117,13 +120,13 @@
     if (ind && out && mg !== null) { const best = race.candidates.filter((c) => c.id !== ind.id).sort((a, b) => b.votes - a.votes)[0]; const deficit = (best?.votes ?? 0) - ind.votes; need = Math.min(100, Math.max(0, ((out / 2 + deficit / 2) / out) * 100)); }
     $("kpis").innerHTML = `<div class="kpi"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind?.last ?? "independent")} margin, points</span></div><div class="kpi"><b>${out === null ? "—" : "~" + fmt(Math.round(out / 1000) * 1000)}</b><span>votes still out (AP estimate)</span></div><div class="kpi"><b>${need === null || race.called ? "—" : need.toFixed(1) + "%"}</b><span>of remaining ${esc(ind?.last ?? "")} needs</span></div>`;
     $("legend").innerHTML = race.candidates.slice(0, 4).map((c) => `<span><i style="background:${color(c)}"></i>${esc(c.last)} leads</span>`).join("") + `<span><i style="background:#3a4f7a"></i>no results</span><span>opacity = share counted</span>`;
-    $("mapnote").textContent = counties ? `${counties.filter((u) => Object.values(u.votes).some((v) => v > 0)).length} of ${counties.length} counties reporting · county data as of ${stateGen ? new Date(stateGen).toLocaleTimeString("en-US") : "—"} (refreshes every 5 min)` : "County data not yet available for this state.";
+    $("mapnote").textContent = counties ? `${counties.filter((u) => Object.values(u.votes).some((v) => v > 0)).length} of ${counties.length} ${geo?.kind === "town" ? "towns" : geo?.kind === "house-district" ? "districts" : "counties"} reporting · county data as of ${stateGen ? new Date(stateGen).toLocaleTimeString("en-US") : "—"} (refreshes every 5 min)` : "County data not yet available for this state.";
     renderMap().catch((e) => { $("mapnote").textContent = `Map unavailable (${e.message})`; });
     // county table
     const rows = (counties ?? []).map((u) => { const tot = Object.values(u.votes).reduce((s, v) => s + v, 0); const l = leaderIn(u); return { u, tot, ind: ind ? (u.votes[ind.id] ?? 0) : 0, indPct: tot && ind ? ((u.votes[ind.id] ?? 0) / tot) * 100 : 0, lead: l, leadPct: l && tot ? ((u.votes[l.id] ?? 0) / tot) * 100 : 0, inPct: u.eevp || u.precinctsPct }; });
     const kf = { name: (r) => r.u.name, in: (r) => r.inPct, ind: (r) => r.indPct, lead: (r) => r.leadPct, total: (r) => r.tot }[sortKey];
     rows.sort((a, b) => { const x = kf(a), y = kf(b); return (typeof x === "string" ? x.localeCompare(y) : x - y) * sortDir; });
-    $("counties").querySelector("tbody").innerHTML = rows.length ? rows.map((r) => `<tr data-fips="${esc(r.u.fips)}" class="${hl === r.u.fips ? "hl" : ""}"><td>${esc(r.u.name)}</td><td class="r">${Math.round(r.inPct)}%</td><td class="r">${r.tot ? `<b>${pct(r.indPct)}</b> ${fmt(r.ind)}` : "—"}</td><td class="r">${r.lead ? `${esc(r.lead.last)} ${pct(r.leadPct)}` : "—"}</td><td class="r">${fmt(r.tot)}</td></tr>`).join("") : `<tr><td colspan="5" class="r" style="text-align:center;color:var(--muted)">no county data yet</td></tr>`;
+    $("counties").querySelector("tbody").innerHTML = rows.length ? rows.map((r) => `<tr data-fips="${esc(unitKey(r.u, geo?.kind ?? "county"))}" class="${hl === unitKey(r.u, geo?.kind ?? "county") ? "hl" : ""}"><td>${esc(r.u.name)}</td><td class="r">${Math.round(r.inPct)}%</td><td class="r">${r.tot ? `<b>${pct(r.indPct)}</b> ${fmt(r.ind)}` : "—"}</td><td class="r">${r.lead ? `${esc(r.lead.last)} ${pct(r.leadPct)}` : "—"}</td><td class="r">${fmt(r.tot)}</td></tr>`).join("") : `<tr><td colspan="5" class="r" style="text-align:center;color:var(--muted)">no county data yet</td></tr>`;
     $("ctnote").textContent = rows.length ? "Click a column to sort. Hover or tap a county on the map to highlight its row." : "";
     $("asof").innerHTML = `<span>AP last updated this race ${race.lastUpdated ? new Date(race.lastUpdated).toLocaleTimeString("en-US") : "—"}</span><span>Snapshot ${status?.generated ? new Date(status.generated).toLocaleTimeString("en-US") : "—"} · auto-refresh every minute</span>`;
   }
