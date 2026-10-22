@@ -5,6 +5,7 @@ import type { Race } from "./model.ts";
 import type { ElectionEvent } from "./events.ts";
 import { candidateShort } from "./events.ts";
 import type { Store } from "./store.ts";
+import candidateIndex from "../config/candidates.json" with { type: "json" };
 
 export interface TickerItem {
   key: string;
@@ -29,8 +30,15 @@ export function raceTickerText(r: Race): string {
   return `${r.label} · ${cands} · ${status}`;
 }
 
-/** Default pins when a producer has chosen nothing: Senate races where a featured candidate has a real share. */
+/**
+ * Default pins when a producer has chosen nothing: the featured races from the candidate
+ * index (in its order), so the ticker lists them even before any votes are in. Falls back
+ * to Senate races where a featured candidate has a real share.
+ */
 export function defaultPins(races: Race[]): string[] {
+  const byId = new Set(races.map((r) => r.id));
+  const featured = candidateIndex.races.filter((r) => r.featured && byId.has(r.raceId)).map((r) => r.raceId);
+  if (featured.length) return featured;
   return races
     .filter((r) => r.office === "S" && r.candidates.some((c) => c.featured && c.pct >= 5))
     .sort((a, b) => a.state.localeCompare(b.state))
