@@ -46,6 +46,15 @@ main { max-width: 1100px; margin: 0 auto; padding: 14px 16px 60px; }
 .p { display: inline-block; min-width: 1.6em; text-align: center; font-weight: 700; border-radius: 3px; padding: 0 4px; font-size: 10px; color: #fff; background: var(--oth); }
 .p.dem { background: var(--dem); } .p.gop { background: var(--gop); } .p.ind { background: var(--gold); color: #1a1600; }
 .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+.pinned { margin: 0 0 14px; padding: 6px 12px 4px; background: #fff; border: 1px solid var(--gold); border-radius: 8px; }
+.pinned h2 { font-family: var(--serif); font-weight: 400; font-size: 17px; color: var(--navy); margin: 4px 0 2px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pinned h2::before { content: "★"; color: var(--gold); font-size: 15px; }
+.pinned h2 span { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+.pinned .race:last-child { border-bottom: 0; }
+.pinned.empty-state { border-style: dashed; background: transparent; text-align: center; padding: 18px 16px 16px; }
+.pinned.empty-state h2 { justify-content: center; }
+.pinned.empty-state p { margin: 4px auto 0; max-width: 46ch; font-size: 13.5px; color: var(--muted); }
+.pinned.empty-state .starhint { color: var(--gold); font-size: 17px; font-weight: 400; vertical-align: -1px; }
 .asof { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--sand); flex-wrap: wrap; }
 
 /* race page */

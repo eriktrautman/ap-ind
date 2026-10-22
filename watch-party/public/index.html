@@ -23,6 +23,7 @@
     <select id="sort"><option value="closest">Closest first</option><option value="margin">Independent leading first</option><option value="in">Most counted first</option><option value="label">By state</option></select>
     <input id="q" placeholder="Search name" size="14">
   </div>
+  <section class="pinned" id="pinned" hidden></section>
   <div id="list"><div class="empty">Loading races…</div></div>
   <div class="asof" id="asof"></div>
 </main>
@@ -41,6 +42,19 @@
     render();
   }
 
+  function rowHtml(r) {
+      const ind = r.candidates.find((c) => c.independent) ?? r.candidates[0];
+      if (!ind) return "";
+      const others = r.candidates.filter((c) => c.id !== ind.id).slice(0, 2);
+      const mg = indMargin(r);
+      const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}${winMark(c)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
+      return `<div class="race">
+        <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
+        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${winMark(ind)}${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})${winMark(c)}`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
+        <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
+      </div>`;
+  }
+
   function render() {
     renderStatus($("status"), status, nextAt);
     if (!index) { $("list").innerHTML = `<div class="empty">No data yet. The poller has not written its first snapshot.</div>`; return; }
@@ -48,14 +62,12 @@
     if (sel.options.length === 1) for (const st of [...new Set(index.races.map((r) => r.state))].sort()) sel.insertAdjacentHTML("beforeend", `<option>${st}</option>`);
     const q = $("q").value.trim().toLowerCase(), st = sel.value, sort = $("sort").value;
     let rows = index.races.filter((r) =>
-      (filter === "all") || (filter === "ind" && r.hasIndependent) || (filter === "starred" && starred.has(r.label)) || (filter === "S" && r.office === "S") || (filter === "H" && r.office === "H") ||
+      (filter === "all") || (filter === "ind" && r.hasIndependent) || (filter === "starred") || (filter === "S" && r.office === "S") || (filter === "H" && r.office === "H") ||
       (filter === "counting" && !r.called && r.totalVotes > 0) || (filter === "called" && r.called) || (filter === "featured" && r.featured));
     if (st) rows = rows.filter((r) => r.state === st);
     if (q) rows = rows.filter((r) => r.candidates.some((c) => c.name.toLowerCase().includes(q)) || r.label.toLowerCase().includes(q));
     const m = (r) => indMargin(r);
     rows.sort((a, b) => {
-      const sa = starred.has(a.label), sb = starred.has(b.label);
-      if (sa !== sb) return sa ? -1 : 1;
       if (sort === "label") return a.label.localeCompare(b.label, undefined, { numeric: true });
       if (sort === "in") return (b.eevp || b.precinctsPct) - (a.eevp || a.precinctsPct);
       const ma = m(a), mb = m(b);
@@ -63,18 +75,18 @@
       if (ma === null) return 1; if (mb === null) return -1;
       return sort === "margin" ? mb - ma : Math.abs(ma) - Math.abs(mb);
     });
-    $("list").innerHTML = rows.length ? rows.map((r) => {
-      const ind = r.candidates.find((c) => c.independent) ?? r.candidates[0];
-      if (!ind) return "";
-      const others = r.candidates.filter((c) => c.id !== ind.id).slice(0, 2);
-      const mg = m(r);
-      const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}${winMark(c)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
-      return `<div class="race">
-        <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
-        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${winMark(ind)}${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})${winMark(c)}`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
-        <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
-      </div>`;
-    }).join("") : `<div class="empty">No races match.</div>`;
+    const pinnedRows = index.races.filter((r) => starred.has(r.label)).sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+    const pin = $("pinned");
+    pin.hidden = false;
+    pin.classList.toggle("empty-state", !pinnedRows.length);
+    pin.innerHTML = pinnedRows.length
+      ? `<h2>Your races <span>${pinnedRows.length} pinned · tap ★ to remove · saved on this device</span></h2>` + pinnedRows.map(rowHtml).join("")
+      : `<h2>Your races</h2><p>Pick the races you want to follow. Tap <b class="starhint">☆</b> beside any race below and it is pinned here, at the top, for the night. Saved on this device only.</p>`;
+    if (filter === "starred") { $("list").innerHTML = ""; }
+    else {
+      rows = rows.filter((r) => !starred.has(r.label));
+      $("list").innerHTML = rows.length ? rows.map(rowHtml).join("") : `<div class="empty">No races match.</div>`;
+    }
     $("asof").innerHTML = `<span>${rows.length} of ${index.races.length} races · ${index.races.filter((r) => r.hasIndependent).length} with an independent · ${index.races.filter((r) => r.called).length} called</span><span>Snapshot ${new Date(index.generated).toLocaleTimeString("en-US")} · AP feed time ${new Date(index.apTimestamp).toLocaleTimeString("en-US")}</span>`;
   }
 
@@ -83,7 +95,7 @@
     for (const c of $("filters").querySelectorAll(".chip")) c.classList.toggle("on", c === chip);
     filter = chip.dataset.f; render();
   });
-  $("list").addEventListener("click", (e) => { const s = e.target.closest(".star"); if (!s) return; starred = stars.toggle(s.dataset.id); render(); });
+  for (const id of ["pinned", "list"]) $(id).addEventListener("click", (e) => { const s = e.target.closest(".star"); if (!s) return; starred = stars.toggle(s.dataset.id); render(); });
   for (const id of ["state", "sort", "q"]) $(id).addEventListener("input", render);
   setInterval(() => renderStatus($("status"), status, nextAt), 1000);
   setInterval(load, REFRESH_MS);
