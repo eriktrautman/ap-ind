@@ -26,7 +26,7 @@ export function raceTickerText(r: Race): string {
   const top = r.candidates.slice(0, 3);
   if (r.totalVotes === 0) return `${r.label} · polls ${r.precinctsPct > 0 ? "closed" : "open"} · no results yet`;
   const cands = top.map((c) => `${candidateShort(c)} ${c.pct}%`).join(" · ");
-  const status = r.called ? `AP CALL: ${candidateShort(r.candidates.find((c) => c.winner) ?? r.candidates[0])}` : `${Math.round(r.eevp || r.precinctsPct)}% in`;
+  const status = r.called ? `AP CALL ✓ ${candidateShort(r.candidates.find((c) => c.winner) ?? r.candidates[0])}` : `${Math.round(r.eevp || r.precinctsPct)}% in`;
   return `${r.label} · ${cands} · ${status}`;
 }
 

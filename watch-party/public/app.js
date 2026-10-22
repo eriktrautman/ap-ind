@@ -8,6 +8,7 @@ export const pct = (n) => `${Number(n ?? 0).toFixed(1)}%`;
 export const partyClass = (p) => (p === "Dem" ? "dem" : p === "GOP" ? "gop" : "oth");
 export const candClass = (c) => (c.independent ? "ind" : partyClass(c.party));
 export const tag = (c) => (c.party === "Dem" ? "D" : c.party === "GOP" ? "R" : c.independent ? "I" : c.party);
+export const winMark = (c) => (c.winner ? '<span class="win" title="AP has called this race">✓</span>' : "");
 export const initials = (name) => name.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
 export function face(c, cls = "") {

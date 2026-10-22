@@ -28,7 +28,7 @@
 </main>
 <footer>Results are unofficial and come from the Associated Press. "% in" is AP's estimate of the expected vote counted, not precincts. "AP CALL" is AP's projection. Stars are saved on this device.</footer>
 <script type="module">
-  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass } from "/app.js";
+  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass, winMark } from "/app.js";
   const $ = (id) => document.getElementById(id);
   let index = null, status = null, filter = "all", nextAt = Date.now() + REFRESH_MS;
   let starred = stars.get();
@@ -68,10 +68,10 @@
       if (!ind) return "";
       const others = r.candidates.filter((c) => c.id !== ind.id).slice(0, 2);
       const mg = m(r);
-      const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
+      const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}${winMark(c)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
       return `<div class="race">
         <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
-        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
+        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${winMark(ind)}${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})${winMark(c)}`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
         <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
       </div>`;
     }).join("") : `<div class="empty">No races match.</div>`;

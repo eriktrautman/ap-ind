@@ -109,7 +109,7 @@
       <td>${esc(c.residence)}</td><td>${esc(c.occupation)}</td><td>${esc(c.priorOffices)}</td><td>${esc(c.military)}</td><td>${esc(c.education)}</td>
       <td class="small">${esc(c.notes)}</td>
       <td class="small">${links}</td>
-      <td class="num">${l ? `${l.pct.toFixed(1)}%<div class="small">${fmt(l.votes)}</div>` : '<span class="small">not in feed</span>'}</td>
+      <td class="num">${l ? `${l.pct.toFixed(1)}%${l.winner ? ' <span class="ok" title="AP has called this race">✓</span>' : ""}<div class="small">${fmt(l.votes)}</div>` : '<span class="small">not in feed</span>'}</td>
       <td>${photoCell}</td>
     </tr>`);
   }

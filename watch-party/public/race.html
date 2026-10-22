@@ -30,7 +30,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, testBanner, REFRESH_MS, tag, candClass, FIPS } from "/app.js";
+  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, testBanner, REFRESH_MS, tag, candClass, FIPS, winMark } from "/app.js";
   const $ = (id) => document.getElementById(id);
   const label = decodeURIComponent(location.pathname.split("/race/")[1] ?? "") || new URLSearchParams(location.search).get("r") || "";
   const state = label.slice(0, 2);
@@ -112,7 +112,7 @@
     $("title").textContent = `${race.stateName} · ${race.office === "S" ? "U.S. Senate" : race.label.endsWith("AL") ? "U.S. House, at large" : "U.S. House, " + race.seat}`;
     $("subtitle").innerHTML = `${statusPill(race)} ${race.totalVotes ? `${fmt(race.totalVotes)} votes counted` : ""}${race.pollClose ? ` · polls close ${new Date(race.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : ""}${race.rankedChoice ? " · ranked choice: first-choice totals only" : ""}`;
     const max = Math.max(1, ...race.candidates.map((c) => c.pct));
-    $("bars").innerHTML = race.candidates.map((c) => `<div class="row ${candClass(c)}"><div class="cand">${face(c)}<span class="n"><span class="p ${c.independent ? "ind" : candClass(c)}">${esc(tag(c))}</span> ${esc(c.name)}${c.incumbent ? ' <small style="color:var(--muted)">inc.</small>' : ""}${c.winner ? " ✓" : ""}</span></div><div class="bar"><i style="width:${(c.pct / max) * 100}%"></i></div><span class="pc">${pct(c.pct)}</span><span class="vt">${fmt(c.votes)}</span></div>`).join("");
+    $("bars").innerHTML = race.candidates.map((c) => `<div class="row ${candClass(c)}"><div class="cand">${face(c)}<span class="n"><span class="p ${c.independent ? "ind" : candClass(c)}">${esc(tag(c))}</span> ${esc(c.name)}${c.incumbent ? ' <small style="color:var(--muted)">inc.</small>' : ""}${winMark(c)}</span></div><div class="bar"><i style="width:${(c.pct / max) * 100}%"></i></div><span class="pc">${pct(c.pct)}</span><span class="vt">${fmt(c.votes)}</span></div>`).join("");
     const mg = indMargin(race);
     const expected = race.eevp ? race.totalVotes / (race.eevp / 100) : null;
     const out = expected ? Math.max(0, expected - race.totalVotes) : null;
