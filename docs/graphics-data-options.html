@@ -152,6 +152,14 @@
   table.t th { color: #9aa7bd; font-weight: 400; font-size: 0.85em; }
   table.t td.r, table.t th.r { text-align: right; font-variant-numeric: tabular-nums; }
   .note { background: #fff; border: 1px solid var(--sand); border-left: 3px solid var(--gold); padding: 10px 14px; margin: 0 0 24px; font-size: 14px; max-width: 90ch; }
+  .note-title { font-family: var(--serif); font-size: 17px; color: var(--navy); margin: 0 0 6px; }
+  details.note summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; margin: 0; }
+  details.note summary::-webkit-details-marker { display: none; }
+  details.note summary::before { content: "▸"; font-size: 13px; color: var(--muted); transition: transform .15s; }
+  details.note[open] summary::before { transform: rotate(90deg); }
+  details.note summary::after { content: "show"; margin-left: auto; font-family: var(--sans); font-size: 12px; color: var(--muted); }
+  details.note[open] summary::after { content: "hide"; }
+  details.note .note-body { margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -182,10 +190,11 @@
 
 <main>
 
-<div class="note">All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the featured candidate is the first thing the eye lands on.<br><br><b>This is television.</b> Every graphic keeps its content inside the title-safe area (10% in from each side, 9% top and bottom; the "title-safe guide" toggle in the nav draws it on each sketch), uses one headline number per idea, and sets nothing smaller than 28px at 1080p. Where a sketch is dense, the full-size version shows fewer items at the same minimum size.</div>
+<div class="note"><div class="note-title">Disclaimer</div>All numbers shown are placeholders (test data or September polling). Photos are placeholders. Gold marks the independent in every graphic; party colours are deliberately muted so the featured candidate is the first thing the eye lands on.<br><br><b>This is television.</b> Every graphic keeps its content inside the title-safe area (10% in from each side, 9% top and bottom; the "title-safe guide" toggle in the nav draws it on each sketch), uses one headline number per idea, and sets nothing smaller than 28px at 1080p. Where a sketch is dense, the full-size version shows fewer items at the same minimum size.</div>
 
-<div class="note" id="audit">
-  <b>Data audit.</b> Every card below carries a data line. <span style="background:#f1f5ee;color:#1c4d2c;padding:1px 6px;border-radius:3px">AP</span> straight from the feed · <span style="background:#eef2f9;color:#1f3a6e;padding:1px 6px;border-radius:3px">AP-derived</span> computed from AP fields only · <span style="background:#fdf3e3;color:#6b4a0b;padding:1px 6px;border-radius:3px">mixed</span> AP plus a dataset supplied by the project · <span style="background:#e08a1e;color:#1a1200;padding:1px 6px;border-radius:3px;font-weight:700">outside data</span> the chart cannot be made from the feed; a dataset that must be built and verified (card outlined orange).<br><br>
+<details class="note" id="audit">
+  <summary class="note-title">Data Audit</summary>
+  <div class="note-body">Every card below carries a data line. <span style="background:#f1f5ee;color:#1c4d2c;padding:1px 6px;border-radius:3px">AP</span> straight from the feed · <span style="background:#eef2f9;color:#1f3a6e;padding:1px 6px;border-radius:3px">AP-derived</span> computed from AP fields only · <span style="background:#fdf3e3;color:#6b4a0b;padding:1px 6px;border-radius:3px">mixed</span> AP plus a dataset supplied by the project · <span style="background:#e08a1e;color:#1a1200;padding:1px 6px;border-radius:3px;font-weight:700">outside data</span> the chart cannot be made from the feed; a dataset that must be built and verified (card outlined orange).<br><br>
   What the AP feed provides (verified Oct 21): per-candidate votes at state and county level; precincts reporting and AP's expected-vote estimate (<code>eevp</code>) per unit; race calls, winner and call time; seat flips; incumbency and party; ranked-choice rounds; poll closing times; and <b>past elections (2020, 2022, 2024) at the same detail</b>, which covers every "vs last time" comparison.<br><br>
   <b>Outside datasets to build and confirm:</b>
   <ol style="margin:6px 0 0;padding-left:20px">
@@ -198,7 +207,8 @@
     <li>AP VoteCast, a separate AP product not covered by the key (B12)</li>
     <li>Editorial context lines written by producers during the night (B4 targets, D6)</li>
   </ol>
-</div>
+  </div>
+</details>
 
 <!-- ============================================================ A -->
 <section class="group" id="persistent">
