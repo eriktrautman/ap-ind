@@ -84,8 +84,8 @@
   <header>
     <h1>Election Night Pipeline Spec</h1>
     <div class="meta">
-      <span>v0.4</span>
-      <span>2026-10-21</span>
+      <span>v0.5</span>
+      <span>2026-10-22</span>
       <span>Air date: 2026-11-03 (confirmed)</span>
       <span>Feed: AP Elections API</span>
     </div>
@@ -99,7 +99,7 @@
       <li><strong>Full-screen graphics</strong>: race results, balance of power, an independents board, state views. Also delivered to the Carbonite.</li>
       <li><strong>Studio wall</strong>: a browser on the in-studio screen showing whatever the producer selects; the anchor talks to it.</li>
       <li><strong>Control panel</strong>: status, ticker curation, wall/graphic selection. Web-served, access-restricted.</li>
-      <li><strong>Race browser</strong> (tier 2): all races and their numbers, separately deployable.</li>
+      <li><strong>Watch Party</strong> (the race browser, tier 2): every race and its numbers, public, separately deployed. Built; see section 3.</li>
     </ul>
     <p>Confirmed: election day is 3 Nov 2026; an AP Elections API key is held, and its entitlements cover all Senate and House races at state and county level (verified Oct 21, section 4). Still to confirm: the studio has a wired internet connection and a machine that can be placed on its LAN.</p>
     <p>This document describes the architecture and plan and is updated as decisions are made. The <a href="#questions">open questions</a> in section 9 list the current unknowns.</p>
@@ -122,7 +122,7 @@
         <tr><td>R9</td><td>Resilience: last-good data continues to serve through an AP or internet outage with a visible staleness indicator; deployable on the studio LAN and in the cloud; restart-safe.</td><td><span class="pill p0">P0</span></td></tr>
         <tr><td>R10</td><td>Rehearsal: run the whole chain against AP test data and against recorded data replayed at speed, before election night.</td><td><span class="pill p0">P0</span></td></tr>
         <tr><td>R11</td><td>County-level results and county map for selected races.</td><td><span class="pill">P1</span></td></tr>
-        <tr><td>R12</td><td>Race browser: every race, filterable by state/office/party, separately deployable.</td><td><span class="pill p2">P2</span></td></tr>
+        <tr><td>R12</td><td>Watch Party (race browser): every race, filterable by kind/state/status, separately deployed. Done.</td><td><span class="pill p2">P2</span></td></tr>
       </tbody>
     </table>
     </div>
@@ -186,8 +186,8 @@
         <text x="785" y="238" text-anchor="middle" class="sub">browser, 16:9</text>
 
         <rect x="720" y="290" width="130" height="50" rx="3" class="box"/>
-        <text x="785" y="311" text-anchor="middle" class="lbl b">Race browser</text>
-        <text x="785" y="328" text-anchor="middle" class="sub">tier 2, separate deploy</text>
+        <text x="785" y="311" text-anchor="middle" class="lbl b">Watch Party</text>
+        <text x="785" y="328" text-anchor="middle" class="sub">public, Vercel, own poller</text>
 
         <!-- edges -->
         <path d="M160 162 H218" class="edge hl"/>
@@ -199,7 +199,6 @@
         <path d="M650 160 L718 135" class="edge hl"/>
         <path d="M850 135 H878" class="edge hl"/>
         <path d="M650 170 L718 222" class="edge"/>
-        <path d="M650 180 L718 312" class="edge"/>
 
         <text x="330" y="222" class="sub">replay feeds poller instead of AP</text>
         <text x="660" y="100" class="sub">WebSocket + REST</text>
@@ -218,7 +217,71 @@
 
     <h3>Why not containers or serverless</h3>
     <p>Containers were considered and rejected. The system is one process and one file with no native modules; a container adds an image build, a volume for SQLite and one more layer to debug on the night, without benefit.</p>
-    <p>Serverless was also rejected. The team's usual host is Vercel, whose serverless model does not run long-lived processes, and the middleware core (a poller on a 20 s cadence, a WebSocket server, a growing SQLite file) is one. Vercel hosts what fits: the race browser (tier 2, read-only, public) and these docs. A Vercel-native variant of the middleware is possible (Vercel Cron triggers each poll at a 1-minute minimum, state in a hosted DB such as Neon or Turso, graphics poll REST every 10–15 s instead of a socket). It is slower, adds two vendors to the critical path and is a second architecture to maintain. It is held in reserve as the cloud fallback if rehearsal shows the studio machine cannot be trusted.</p>
+    <p>Serverless was also rejected. The team's usual host is Vercel, whose serverless model does not run long-lived processes, and the middleware core (a poller on a 20 s cadence, a WebSocket server, a growing SQLite file) is one. Vercel hosts what fits: the Watch Party (public, read-only) and these docs. A Vercel-native variant of the middleware is possible (Vercel Cron triggers each poll at a 1-minute minimum, state in a hosted DB such as Neon or Turso, graphics poll REST every 10–15 s instead of a socket). It is slower, adds two vendors to the critical path and is a second architecture to maintain. It is held in reserve as the cloud fallback if rehearsal shows the studio machine cannot be trusted.</p>
+
+    <h3 id="watch-party">The Watch Party: live updates without a server</h3>
+    <p>The Watch Party (<a href="https://ind-watch-party.vercel.app">ind-watch-party.vercel.app</a>, design in <a href="watch-party.html">its own document</a>) shows the same AP data to the public and updates every minute, and it does run on Vercel. There is no contradiction with the paragraph above: it is live in a different way. The broadcast middleware <em>pushes</em>; the Watch Party is <em>polled</em>, and the two halves of the word "live" are split between a tiny writer and many readers that never meet.</p>
+    <figure>
+      <div class="diagram">
+      <svg viewBox="0 0 960 300" width="960" height="300" role="img" aria-label="Watch Party architecture: a poller process fetches AP once a minute and writes JSON files to Vercel Blob; Vercel's CDN serves those files and the static pages; each browser re-fetches the files every minute.">
+        <rect x="20" y="110" width="140" height="64" rx="3" class="box"/>
+        <text x="90" y="136" text-anchor="middle" class="lbl b">AP Elections API</text>
+        <text x="90" y="154" text-anchor="middle" class="sub">full fetch, no cursor</text>
+
+        <rect x="200" y="60" width="200" height="180" rx="4" class="group"/>
+        <text x="212" y="80" class="sub">WRITER — one process, anywhere</text>
+        <rect x="220" y="110" width="160" height="64" rx="3" class="box hl"/>
+        <text x="300" y="136" text-anchor="middle" class="lbl b">Poller</text>
+        <text x="300" y="154" text-anchor="middle" class="sub">every 60 s; 10 s of work</text>
+        <text x="300" y="215" text-anchor="middle" class="sub">laptop today; Vercel Cron on Pro;</text>
+        <text x="300" y="229" text-anchor="middle" class="sub">or the studio middleware itself</text>
+
+        <rect x="440" y="60" width="300" height="180" rx="4" class="group"/>
+        <text x="452" y="80" class="sub">VERCEL — nothing runs here</text>
+        <rect x="460" y="110" width="120" height="64" rx="3" class="box hl"/>
+        <text x="520" y="136" text-anchor="middle" class="lbl b">Blob store</text>
+        <text x="520" y="154" text-anchor="middle" class="sub">index.json, state/XX.json, status.json</text>
+        <rect x="600" y="110" width="120" height="64" rx="3" class="box"/>
+        <text x="660" y="136" text-anchor="middle" class="lbl b">CDN</text>
+        <text x="660" y="154" text-anchor="middle" class="sub">static pages + /data rewrite, 60 s cache</text>
+
+        <rect x="790" y="40" width="150" height="50" rx="3" class="box"/>
+        <text x="865" y="61" text-anchor="middle" class="lbl b">Browser</text>
+        <text x="865" y="78" text-anchor="middle" class="sub">fetch every 60 s, re-render</text>
+        <rect x="790" y="117" width="150" height="50" rx="3" class="box"/>
+        <text x="865" y="138" text-anchor="middle" class="lbl b">Browser</text>
+        <text x="865" y="155" text-anchor="middle" class="sub">fetch every 60 s, re-render</text>
+        <rect x="790" y="194" width="150" height="50" rx="3" class="box"/>
+        <text x="865" y="215" text-anchor="middle" class="lbl b">Browser ×N</text>
+        <text x="865" y="232" text-anchor="middle" class="sub">no sockets, no sessions</text>
+
+        <path d="M160 142 H218" class="edge hl"/>
+        <path d="M380 142 H458" class="edge hl"/>
+        <text x="419" y="132" text-anchor="middle" class="sub">PUT</text>
+        <path d="M580 142 H598" class="edge"/>
+        <path d="M720 135 L788 65" class="edge"/>
+        <path d="M720 142 H788" class="edge"/>
+        <path d="M720 149 L788 219" class="edge"/>
+        <text x="760" y="275" text-anchor="middle" class="sub">GET, served from cache; one Blob read per file per minute regardless of audience size</text>
+      </svg>
+      </div>
+      <figcaption>The poller is the only component that talks to AP or holds the key. Vercel stores and serves files; it never executes election logic.</figcaption>
+    </figure>
+    <p>How it stays live: the poller fetches the whole national feed once a minute (full body, no delta cursor, so AP corrections are picked up automatically), normalises it, and overwrites a handful of JSON files in Vercel Blob: <code>index.json</code> (every race, top candidates), <code>state/&lt;ST&gt;.json</code> (county units, each state refreshed every five minutes in rotation), and <code>status.json</code> (poller health). The pages are static HTML. Each browser re-fetches those files on a 60-second timer and re-renders in place, with a visible "data as of" clock and a freshness dot driven by <code>status.json</code>. Because every reader asks for the same few files, the CDN answers almost all requests from cache and the cost of an audience of 100 is the same as an audience of 100,000.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th></th><th>Broadcast middleware</th><th>Watch Party</th></tr></thead>
+      <tbody>
+        <tr><td>Who updates whom</td><td>Server pushes a diff over WebSocket the moment a poll changes something</td><td>Browser pulls static files on a timer; nothing is pushed</td></tr>
+        <tr><td>Latency from AP</td><td>Up to 20 s (poll interval) plus milliseconds</td><td>Up to 60 s (poll) + 60 s (CDN cache) + 60 s (browser timer): about two minutes worst case, one typical</td></tr>
+        <tr><td>Long-lived process</td><td>Yes: poller, SQLite, socket server in one Node process under pm2</td><td>Only the poller, and it can live anywhere; the site has none</td></tr>
+        <tr><td>State</td><td>SQLite: every raw response, snapshots, events, producer state</td><td>A few JSON files, each overwritten in full; no history beyond what the poller's host keeps</td></tr>
+        <tr><td>Control</td><td>Producer API changes the ticker, pins, manual items; graphics react instantly</td><td>None; the site is read-only and identical for everyone</td></tr>
+        <tr><td>Audience</td><td>A dozen known clients on a LAN; each socket is cheap and known</td><td>Unbounded, anonymous; sockets would mean a server per N connections</td></tr>
+        <tr><td>Runs on Vercel?</td><td>No: a socket server and a 20 s poller need a process that stays up</td><td>Yes: the pages and files are static; the poller is scheduled or external</td></tr>
+      </tbody>
+    </table></div>
+    <p>So the earlier statement stands: the ticker cannot run on Vercel because it needs sub-second push, producer control and a 20-second cadence, and that needs a process. The Watch Party does not need any of those, so it was designed around what Vercel does well. The same pull pattern is the documented cloud fallback for graphics (poll REST every 10 to 15 seconds); it is held in reserve rather than used because a two-minute lag that is fine for a phone at a watch party is not fine for a lower third on air.</p>
+    <p>Where the Watch Party poller runs is the one open operational item. It is a 60-second loop on a laptop today, which is fine for rehearsal and wrong for the night. Options, in order of preference: a Vercel Cron job on the Pro plan (Hobby allows one run a day); the studio middleware itself, which already has the data in memory and would write the files as a side effect of its own poll; or a VPS running the same script under pm2. In all three cases the only secrets are the AP key and a Blob write token, held by the poller and never by the site.</p>
   </section>
 
   <section>
@@ -362,7 +425,7 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
           <li>Control panel: username/password login with session cookie, CSRF protection, request rate limiting, audit log of producer actions.</li>
           <li>Default posture: not reachable from the public internet. Studio access over LAN; remote producers over Tailscale (or Cloudflare Access). If public exposure is required, Caddy enforces TLS, auth and rate limits at the edge.</li>
           <li>Graphics and wall pages are read-only; when served remotely they require a signed token in the URL so they cannot be enumerated.</li>
-          <li>Race browser (tier 2) can be public; it is read-only, cached, and hosted on Vercel alongside these docs.</li>
+          <li>The Watch Party is public by design: static files on a CDN, no server to attack, no key in the browser (section 3).</li>
         </ul>
       </div>
     </div>
@@ -378,7 +441,7 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
         <tr><td>Oct 22–29</td><td>Build</td><td>Periodic full refresh in the poller; per-state county polling for the featured states; control panel with login; the chosen graphics from the data-options page (national status maps, featured-races board, balance of power, county maps, votes-still-out); wall page; replay mode; pm2 deployment to the studio machine and a mirror host. Carbonite path (option A or B) proven in the studio with real hardware.</td></tr>
         <tr><td>Oct 30–Nov 2</td><td>Rehearse</td><td>Full dress rehearsal on replayed data at 4× speed with the production team; run against AP's scheduled test (dates to confirm); runbook and failure drills (kill AP, kill studio server, kill internet).</td></tr>
         <tr><td>Nov 3</td><td>Air</td><td>Engineer on site; cloud mirror warm; watchdog on.</td></tr>
-        <tr><td>After</td><td>Tier 2</td><td>Race browser, county map, if time allows before or value remains after.</td></tr>
+        <tr><td>Done</td><td>Tier 2</td><td>Watch Party with county maps, live at ind-watch-party.vercel.app.</td></tr>
       </tbody>
     </table>
     </div>
