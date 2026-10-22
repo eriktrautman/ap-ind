@@ -240,10 +240,12 @@
         <text x="452" y="80" class="sub">VERCEL — nothing runs here</text>
         <rect x="460" y="110" width="120" height="64" rx="3" class="box hl"/>
         <text x="520" y="136" text-anchor="middle" class="lbl b">Blob store</text>
-        <text x="520" y="154" text-anchor="middle" class="sub">index.json, state/XX.json, status.json</text>
+        <text x="520" y="151" text-anchor="middle" class="sub">index, state/XX,</text>
+        <text x="520" y="165" text-anchor="middle" class="sub">status (.json)</text>
         <rect x="600" y="110" width="120" height="64" rx="3" class="box"/>
         <text x="660" y="136" text-anchor="middle" class="lbl b">CDN</text>
-        <text x="660" y="154" text-anchor="middle" class="sub">static pages + /data rewrite, 60 s cache</text>
+        <text x="660" y="151" text-anchor="middle" class="sub">static pages, /data</text>
+        <text x="660" y="165" text-anchor="middle" class="sub">rewrite, 60 s cache</text>
 
         <rect x="790" y="40" width="150" height="50" rx="3" class="box"/>
         <text x="865" y="61" text-anchor="middle" class="lbl b">Browser</text>
@@ -262,7 +264,7 @@
         <path d="M720 135 L788 65" class="edge"/>
         <path d="M720 142 H788" class="edge"/>
         <path d="M720 149 L788 219" class="edge"/>
-        <text x="760" y="275" text-anchor="middle" class="sub">GET, served from cache; one Blob read per file per minute regardless of audience size</text>
+        <text x="690" y="275" text-anchor="middle" class="sub">GET from cache: one Blob read per file per minute, whatever the audience size</text>
       </svg>
       </div>
       <figcaption>The poller is the only component that talks to AP or holds the key. Vercel stores and serves files; it never executes election logic.</figcaption>
