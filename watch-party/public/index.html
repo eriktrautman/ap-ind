@@ -71,7 +71,7 @@
       const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
       return `<div class="race">
         <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
-        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span style="min-width:0"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
+        <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
         <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
       </div>`;
     }).join("") : `<div class="empty">No races match.</div>`;
