@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch Party Design</title>
+<style>
+  :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --dem: #3b6fd6; --gop: #c0392b; --ok: #2e9e5b; --warn: #e08a1e; --bad: #b11e2d; --serif: Georgia, "Iowan Old Style", serif; --sans: Arial, Helvetica, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+  header.top { background: var(--navy); color: #fff; padding: 36px 24px 28px; }
+  header.top .in, main { max-width: 1100px; margin: 0 auto; }
+  header.top h1 { font-family: var(--serif); font-weight: 400; font-size: 32px; margin: 0 0 6px; }
+  header.top p { margin: 0; color: #c7cfdf; max-width: 80ch; }
+  header.top .meta { margin-top: 12px; font-size: 13px; color: #9aa7bd; display: flex; gap: 18px; flex-wrap: wrap; }
+  main { padding: 28px 24px 80px; }
+  h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; color: var(--navy); margin: 36px 0 8px; }
+  h3 { font-size: 15px; margin: 18px 0 6px; }
+  p, li { max-width: 80ch; }
+  ul { padding-left: 20px; }
+  code { font-family: Menlo, monospace; font-size: 13px; background: #f3f1ea; padding: 1px 5px; border-radius: 3px; }
+  pre { background: #fff; border: 1px solid var(--sand); border-radius: 6px; padding: 12px 14px; font-family: Menlo, monospace; font-size: 12.5px; line-height: 1.5; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; background: #fff; border: 1px solid var(--sand); border-radius: 6px; }
+  th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--sand); }
+  th { font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .rec { border-left: 3px solid var(--gold); background: #fff; border-top: 1px solid var(--sand); border-right: 1px solid var(--sand); border-bottom: 1px solid var(--sand); padding: 10px 14px; margin: 10px 0 18px; max-width: 90ch; }
+
+  /* wireframes */
+  .wires { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; margin: 14px 0 8px; }
+  @media (max-width: 860px) { .wires { grid-template-columns: 1fr; } }
+  .frame { background: #fff; border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .frame .topbar { background: var(--navy-deep); color: #fff; padding: 10px 14px; display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .frame .topbar b { font-family: var(--serif); color: var(--gold); font-size: 16px; font-weight: 400; }
+  .status { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: #c7cfdf; font-size: 12px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; }
+  .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+  .frame .body { padding: 12px 14px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chip { font-size: 12px; padding: 3px 9px; border: 1px solid var(--sand); border-radius: 14px; background: #fbfaf7; color: var(--ink); }
+  .chip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .race { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--sand); }
+  .race .star { color: #c9c3b6; font-size: 18px; text-align: center; } .race .star.on { color: var(--gold); }
+  .race .who { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .race .ph { width: 34px; height: 34px; border-radius: 50%; background: #16244a; flex: none; border: 2px solid var(--gold); }
+  .race .ph.oppo { border-color: #c9c3b6; width: 28px; height: 28px; margin-left: -12px; }
+  .race .nm { font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .race .sub { font-size: 12px; color: var(--muted); }
+  .race .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .race .num b { font-size: 16px; }
+  .pill { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: .03em; }
+  .pill.counting { background: #e8edf6; color: #1f3a6e; } .pill.open { background: #eee; color: #555; } .pill.call { background: var(--gold); color: #1a1600; }
+  .p { display: inline-block; min-width: 1.6em; text-align: center; font-weight: 700; border-radius: 3px; padding: 0 4px; font-size: 10px; color: #fff; background: #3a4f7a; }
+  .p.dem { background: var(--dem); } .p.gop { background: var(--gop); } .p.ind { background: var(--gold); color: #1a1600; }
+  .bars { display: grid; gap: 7px; margin: 8px 0; }
+  .row { display: grid; grid-template-columns: 110px 1fr 46px 70px; gap: 8px; align-items: center; font-size: 13px; }
+  .row .bar { height: 14px; background: #eee; border-radius: 3px; overflow: hidden; } .row .bar i { display: block; height: 100%; }
+  .row.ind .bar i { background: var(--gold); } .row.gop .bar i { background: var(--gop); } .row.dem .bar i { background: var(--dem); } .row.oth .bar i { background: #3a4f7a; }
+  .row .pc { text-align: right; font-weight: 700; } .row .vt { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+  .kpi { background: #fbfaf7; border: 1px solid var(--sand); border-radius: 6px; padding: 8px 10px; }
+  .kpi b { display: block; font-size: 20px; font-family: var(--serif); font-weight: 400; color: var(--navy); }
+  .kpi span { font-size: 11.5px; color: var(--muted); }
+  .countymap { background: var(--navy-deep); border-radius: 6px; padding: 8px; }
+  .countymap svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; gap: 12px; font-size: 11.5px; color: var(--muted); margin: 6px 0; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+  table.ct { font-size: 12.5px; border-radius: 0; border: 0; }
+  table.ct td.r, table.ct th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  table.ct tr.hl td { background: #fff7dc; }
+  .asof { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--sand); }
+  .phone { width: 360px; margin: 0 auto; border: 10px solid #1a1a1a; border-radius: 30px; overflow: hidden; background: #fff; }
+  .phone .frame { border: 0; border-radius: 0; box-shadow: none; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  svg.diagram { display: block; width: 100%; height: auto; background: #fff; border: 1px solid var(--sand); border-radius: 6px; }
+  .box { fill: #fbfaf7; stroke: #c9c3b6; }
+  .box.hl { stroke: var(--gold); stroke-width: 1.5; }
+  .lbl { font-size: 12.5px; fill: var(--ink); } .lbl.b { font-weight: 700; } .sub { font-size: 11px; fill: var(--muted); }
+  .edge { stroke: #6b7280; stroke-width: 1.2; fill: none; marker-end: url(#arr); }
+</style>
+</head>
+<body>
+<script src="nav.js"></script>
+<header class="top"><div class="in">
+  <h1>Watch Party</h1>
+  <p>A public site where every independent candidate, and anyone following them, can track their own race on election night: all 204 races with an independent or third-party candidate on the ballot, not just the seven on the broadcast.</p>
+  <div class="meta"><span>Design v0.1 · Oct 22 2026</span><span>Separate deployment from the broadcast app</span><span>Data: AP Elections API, one-minute cadence</span></div>
+</div></header>
+<main>
+
+<h2>1. What it is</h2>
+<ul>
+  <li><b>Race list.</b> Every race with an independent (204: 27 Senate, 177 House; 756 candidates), one row per race with the independent first: photos, vote counts, shares, expected vote in, status. Filter by state, office, status; sort by margin, share, or how much is in. Star races to pin them to the top (kept on the device).</li>
+  <li><b>Race page.</b> One URL per race (<code>/race/NE-SEN</code>) with a small dashboard: the race summary, head-to-head bars for every candidate, a county map that fills in as counties report, with hover or tap to inspect, and the same counties as a sortable table beneath.</li>
+  <li><b>Live.</b> The page refreshes itself every minute without a reload, and always shows "data as of", AP feed status, and how much of the expected vote is counted.</li>
+  <li><b>Phone first.</b> Most viewers will be at a watch party holding a phone; the desktop layout is the phone layout with the county map alongside.</li>
+</ul>
+
+<h2>2. Wireframes</h2>
+<div class="wires">
+  <figure style="margin:0">
+    <div class="frame">
+      <div class="topbar"><b>Watch Party</b> <span>Election night 2026</span><span class="status"><span class="dot"></span> AP live · data as of 9:41:12 pm ET · next refresh 0:38</span></div>
+      <div class="body">
+        <div class="filters"><span class="chip on">All 204</span><span class="chip">★ Starred (3)</span><span class="chip">Senate</span><span class="chip">House</span><span class="chip">Counting</span><span class="chip">Called</span><span class="chip">State ▾</span><span class="chip">Sort: closest ▾</span></div>
+        <div class="race"><div class="star on">★</div><div class="who"><div class="ph"></div><div class="ph oppo"></div><div><div class="nm">NE-SEN · Osborn (I) vs Ricketts (R)</div><div class="sub"><span class="pill counting">38% IN</span> Osborn 46.0% · Ricketts 48.0% · 686,556 votes</div></div></div><div class="num"><b>−2.0</b><div class="sub">margin</div></div></div>
+        <div class="race"><div class="star on">★</div><div class="who"><div class="ph"></div><div class="ph oppo"></div><div><div class="nm">ID-1 · Zabel (I) vs Fulcher (R) vs Peterson (D)</div><div class="sub"><span class="pill call">AP CALL</span> Zabel 44.1% · Fulcher 40.9% · Peterson 13.2%</div></div></div><div class="num"><b>+3.2</b><div class="sub">margin</div></div></div>
+        <div class="race"><div class="star on">★</div><div class="who"><div class="ph"></div><div class="ph oppo"></div><div><div class="nm">AK-AL · Hill (I) vs Begich (R)</div><div class="sub"><span class="pill open">POLLS OPEN</span> closes 12:00 am ET</div></div></div><div class="num"><b>—</b><div class="sub">margin</div></div></div>
+        <div class="race"><div class="star">☆</div><div class="who"><div class="ph"></div><div class="ph oppo"></div><div><div class="nm">MT-SEN · Bodnar (I) vs Alme (R) vs Bankhead (D)</div><div class="sub"><span class="pill counting">61% IN</span> Alme 50.0% · Bodnar 34.4% · Bankhead 15.4%</div></div></div><div class="num"><b>−15.6</b><div class="sub">margin</div></div></div>
+        <div class="race"><div class="star">☆</div><div class="who"><div class="ph"></div><div class="ph oppo"></div><div><div class="nm">TX-21 · Villarreal (I) vs Roy (R) vs …</div><div class="sub"><span class="pill counting">12% IN</span> Roy 61.2% · Villarreal 9.8%</div></div></div><div class="num"><b>−51.4</b><div class="sub">margin</div></div></div>
+        <div class="race"><div class="star">☆</div><div class="who"><div class="ph"></div><div class="ph oppo"></div><div><div class="nm">ME-SEN · Oswald (I, write-in) vs Jackson (D) vs Collins (R)</div><div class="sub"><span class="pill call">AP CALL</span> Jackson 47.0% · Collins 35.0% · Oswald 6.0%</div></div></div><div class="num"><b>−41.0</b><div class="sub">margin</div></div></div>
+        <div class="asof"><span>Showing 6 of 204 · scroll for more</span><span>Source: AP · unofficial results</span></div>
+      </div>
+    </div>
+    <figcaption>Race list. The independent is always the first photo and the margin is theirs (positive = leading). Starred races stay at the top; the star is stored on the device, no account needed.</figcaption>
+  </figure>
+
+  <figure style="margin:0">
+    <div class="phone"><div class="frame">
+      <div class="topbar"><span>‹ All races</span><span class="status"><span class="dot"></span> as of 9:41 pm</span></div>
+      <div class="body">
+        <div style="font-family:var(--serif);font-size:20px;color:var(--navy)">Nebraska · U.S. Senate</div>
+        <div style="font-size:12px;color:var(--muted)"><span class="pill counting">38% OF EXPECTED VOTE IN</span> · polls closed 9:00 pm ET</div>
+        <div class="bars">
+          <div class="row gop"><span><span class="p gop">R</span> Ricketts</span><div class="bar"><i style="width:100%"></i></div><span class="pc">48.0</span><span class="vt">329,507</span></div>
+          <div class="row ind"><span><span class="p ind">I</span> Osborn</span><div class="bar"><i style="width:96%"></i></div><span class="pc">46.0</span><span class="vt">315,518</span></div>
+          <div class="row oth"><span><span class="p">AFi</span> Conboy</span><div class="bar"><i style="width:6%"></i></div><span class="pc">2.7</span><span class="vt">18,775</span></div>
+          <div class="row oth"><span><span class="p">NWk</span> Richards</span><div class="bar"><i style="width:4%"></i></div><span class="pc">2.1</span><span class="vt">14,692</span></div>
+        </div>
+        <div class="kpis"><div class="kpi"><b>−13,989</b><span>Osborn margin</span></div><div class="kpi"><b>~1.12M</b><span>votes still out</span></div><div class="kpi"><b>50.6%</b><span>of rest Osborn needs</span></div></div>
+        <div class="countymap"><svg id="wp-map" viewBox="0 0 400 240"></svg></div>
+        <div class="legend"><span><i style="background:var(--gold)"></i>Osborn leads</span><span><i style="background:var(--gop)"></i>Ricketts leads</span><span><i style="background:#3a4f7a"></i>no results</span><span>opacity = share reporting</span></div>
+        <table class="ct"><tr><th>County</th><th class="r">In</th><th class="r">Osborn</th><th class="r">Ricketts</th></tr>
+          <tr class="hl"><td>Douglas <span class="sub">(hover)</span></td><td class="r">52%</td><td class="r"><b>58.1%</b> 118,204</td><td class="r">39.7% 80,771</td></tr>
+          <tr><td>Lancaster</td><td class="r">41%</td><td class="r"><b>55.0%</b> 52,420</td><td class="r">42.9% 40,888</td></tr>
+          <tr><td>Sarpy</td><td class="r">36%</td><td class="r">49.8% 26,011</td><td class="r"><b>47.1%</b> 24,601</td></tr>
+          <tr><td>Hall</td><td class="r">70%</td><td class="r">41.2% 9,108</td><td class="r"><b>56.5%</b> 12,490</td></tr>
+          <tr><td colspan="4" class="sub" style="text-align:center">89 more · sort by name, % in, margin</td></tr></table>
+        <div class="asof"><span>Updated 9:41:12 pm</span><span>auto-refresh · AP unofficial</span></div>
+      </div>
+    </div></div>
+    <figcaption>Race page on a phone. Summary, every candidate, three numbers, the county map, then the county table. Hovering or tapping a county highlights its row; tapping a row highlights the county.</figcaption>
+  </figure>
+</div>
+
+<h2>3. Data flow</h2>
+<svg class="diagram" viewBox="0 0 900 250" role="img" aria-label="AP API polled every minute by a scheduled job that writes JSON files to storage; the static site reads them through a CDN.">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6b7280"/></marker></defs>
+  <rect x="20" y="90" width="150" height="64" rx="4" class="box"/><text x="95" y="117" text-anchor="middle" class="lbl b">AP Elections API</text><text x="95" y="135" text-anchor="middle" class="sub">state feed + county per state</text>
+  <rect x="230" y="90" width="170" height="64" rx="4" class="box hl"/><text x="315" y="117" text-anchor="middle" class="lbl b">Poller (scheduled)</text><text x="315" y="135" text-anchor="middle" class="sub">every 60 s · normalize · diff</text>
+  <rect x="460" y="90" width="170" height="64" rx="4" class="box hl"/><text x="545" y="117" text-anchor="middle" class="lbl b">JSON files in storage</text><text x="545" y="135" text-anchor="middle" class="sub">index.json · race/NE-SEN.json · status.json</text>
+  <rect x="690" y="40" width="190" height="56" rx="4" class="box"/><text x="785" y="63" text-anchor="middle" class="lbl b">Static site (CDN)</text><text x="785" y="80" text-anchor="middle" class="sub">list, race pages, county maps</text>
+  <rect x="690" y="150" width="190" height="56" rx="4" class="box"/><text x="785" y="173" text-anchor="middle" class="lbl b">Viewers' browsers</text><text x="785" y="190" text-anchor="middle" class="sub">fetch JSON every 60 s · stars on device</text>
+  <path d="M170 122 H228" class="edge"/><path d="M400 122 H458" class="edge"/><path d="M630 110 L688 72" class="edge"/><path d="M630 134 L688 172" class="edge"/>
+  <text x="315" y="232" text-anchor="middle" class="sub">shares ap.ts and model.ts with the broadcast server</text>
+  <text x="545" y="232" text-anchor="middle" class="sub">~205 small files, rewritten each minute, cached ≤ 60 s</text>
+</svg>
+<p style="margin-top:10px">The viewer never talks to the poller. The poller writes one small JSON file per race plus an index and a status file; the site and the viewers read those files through a CDN. Ten viewers or ten thousand cost the same. If the poller stops, the files simply stop changing and every page shows a stale "data as of" with an amber indicator.</p>
+
+<h3>Polling budget</h3>
+<table>
+  <thead><tr><th>Request</th><th>Cadence</th><th>Per hour</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>National state-level feed (all races, delta cursor)</td><td>every 60 s</td><td>60</td><td>Race totals, calls, expected vote for all 204 races</td></tr>
+    <tr><td>County-level feed per state (level=ru), 45 states with an independent race</td><td>each state every 5 min, staggered 9 per minute</td><td>540</td><td>County map and table; county totals move slower than state totals</td></tr>
+    <tr><td>Full (non-delta) refresh of the national feed</td><td>every 10 min</td><td>6</td><td>Catches AP corrections the delta cursor cannot see</td></tr>
+    <tr><td>Reports: Trend, PollHours, Candidates</td><td>hourly / at start</td><td>~3</td><td>Holdovers, closing times, roster</td></tr>
+  </tbody>
+</table>
+<p>About 600 requests per hour, separate from the broadcast server's own polling. The AP contract's allowed rate is still the open question for the account rep; if it is tight, county polling drops to every 10 minutes.</p>
+
+<h2>4. Pages and API</h2>
+<table>
+  <thead><tr><th>Path</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><code>/</code></td><td>Race list from <code>index.json</code>: one row per race with candidates (id, name, party, photo, votes, pct, winner), eevp, call status, closing time, last update. Filters, sort and stars are client-side.</td></tr>
+    <tr><td><code>/race/NE-SEN</code></td><td>Race page from <code>race/NE-SEN.json</code>: race summary, candidates, county units (fips, name, votes per candidate, precinctsPct, eevp), poll close, 2024 result for the same seat.</td></tr>
+    <tr><td><code>status.json</code></td><td>Poller state: last successful AP fetch, AP error count, last write time, results type (test or live), races counted/called, which states' county data is fresh.</td></tr>
+    <tr><td><code>/about</code></td><td>What the numbers mean (expected vote, AP calls, unofficial results), sources, the key notes from the broadcast graphics page.</td></tr>
+  </tbody>
+</table>
+
+<h3>Candidate photos</h3>
+<p>From the same photo index as the broadcast (<code>config/photos.json</code>): official portraits for incumbents, Ballotpedia-sourced photos for others, hand-verified for the featured races. Photos flagged low-confidence are shown as initials until a human clears them; the review page is <code>/photos.html</code> on the broadcast server.</p>
+
+<h3>Status indicators</h3>
+<ul>
+  <li><b>Feed dot</b> in the header: green when the last successful AP fetch is under 2 minutes old, amber under 10, red beyond, with the time of the last good fetch beside it.</li>
+  <li><b>"Data as of"</b> on every page: AP's own timestamp for the newest reporting unit in that race, which is what the viewer cares about; plus "next refresh in" counting down.</li>
+  <li><b>Per-county freshness</b>: the county table shows AP's <code>lastUpdated</code> for each unit on hover, so a viewer can tell "no results" from "not updated since 8:15".</li>
+  <li><b>Test mode banner</b> whenever the feed is AP test data, so a rehearsal can never be mistaken for the night.</li>
+</ul>
+
+<h2>5. Hosting</h2>
+<table>
+  <thead><tr><th>Option</th><th>Fit</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Vercel</b>: Cron-triggered serverless poller writing to Vercel Blob; static site reads the files</td><td>Good</td><td>No long-running process needed here: no WebSocket, one-minute cadence, and the CDN carries the viewers. Cron minimum is one minute on the Pro plan. Shares <code>ap.ts</code> and <code>model.ts</code> with the broadcast server. The team already deploys here.</td></tr>
+    <tr><td><b>Railway / Render</b>: the existing server in watch-party mode (<code>POLL=60s</code>, county polling on)</td><td>Good</td><td>One codebase, nothing new to write for the poller; the server writes the same JSON files and serves them. Needs a small persistent host and a CDN in front for a big audience.</td></tr>
+    <tr><td>Studio broadcast server</td><td>No</td><td>Keep the public site off the machine that feeds air.</td></tr>
+  </tbody>
+</table>
+<div class="rec">Recommendation: Vercel. The product is public, read-heavy and cacheable, and its cadence fits a scheduled function. Keep the broadcast server private and long-running; give the Watch Party its own AP polling on its own credentials-scoped deployment, so a traffic spike or a bug on the public site cannot touch what is on air.</div>
+
+<h2>6. Build estimate</h2>
+<table>
+  <thead><tr><th>Piece</th><th>Reuses</th><th>Effort</th></tr></thead>
+  <tbody>
+    <tr><td>Poller function: national delta + per-state county + full refresh; writes index, race and status JSON</td><td>ap.ts, model.ts, events.ts</td><td>1 day</td></tr>
+    <tr><td>Race list page with filters, sort, stars</td><td>candidate index, photos.json</td><td>1 day</td></tr>
+    <tr><td>Race page: summary, bars, county map (d3 + Census counties), county table with hover linking</td><td>B5, B6, B8 graphics code</td><td>1.5 days</td></tr>
+    <tr><td>Status, about page, test-mode banner, mobile polish</td><td>feed.js freshness logic</td><td>0.5 day</td></tr>
+    <tr><td>Rehearsal against AP test data and replay</td><td>stored raw responses</td><td>0.5 day</td></tr>
+  </tbody>
+</table>
+<p>About a week alongside the broadcast build. The county map and the votes-still-out arithmetic are already written for the broadcast graphics; the new work is the poller-to-files layer and the list page.</p>
+
+<h2>7. Open questions</h2>
+<ol>
+  <li>Domain and branding: whose site is this (United Independents, the broadcast, neutral)? It changes the header, the about page, and whether candidates will share it.</li>
+  <li>Which races: every race with any non-major candidate (204, includes Libertarian and Green nominees polling under 2%), or a curated list? The feed makes both trivial; the list page gets long at 204.</li>
+  <li>AP rate limit for a second poller (account rep).</li>
+  <li>Photos for the ~500 non-featured candidates: ship with initials where confidence is low, or hold for a human pass first?</li>
+  <li>Should candidates be able to claim a race page (a link to their own site, a statement)? Adds accounts and moderation; probably not for this cycle.</li>
+</ol>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+  // Nebraska county map for the wireframe, same code path as the broadcast B6 card.
+  (async () => {
+    try {
+      const us = await (await fetch("https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/counties-10m.json")).json();
+      const ne = topojson.feature(us, us.objects.counties).features.filter((d) => String(d.id).startsWith("31"));
+      const path = d3.geoPath(d3.geoConicConformal().parallels([40, 43]).rotate([100, 0]).fitSize([400, 240], { type: "FeatureCollection", features: ne }));
+      const METRO = { "31055": 0.58, "31109": 0.55, "31153": 0.50 };
+      const hash = (id) => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 1000; return h / 1000; };
+      const share = (d) => METRO[d.id] ?? 0.26 + hash(d.id) * 0.18;
+      const rep = (d) => METRO[d.id] ? 0.45 : 0.2 + hash(d.id + "r") * 0.8;
+      const svg = d3.select("#wp-map");
+      svg.append("g").selectAll("path").data(ne).join("path").attr("d", path)
+        .attr("fill", (d) => rep(d) < 0.25 ? "#3a4f7a" : share(d) >= 0.5 ? "#d4af37" : "#c0392b")
+        .attr("fill-opacity", (d) => rep(d) < 0.25 ? 1 : 0.35 + rep(d) * 0.65)
+        .attr("stroke", "#071222").attr("stroke-width", 0.5)
+        .append("title").text((d) => `${d.properties.name} County · ${Math.round(rep(d) * 100)}% in`);
+      const hl = ne.find((d) => d.id === "31055");
+      svg.append("path").attr("d", path(hl)).attr("fill", "none").attr("stroke", "#fff").attr("stroke-width", 2);
+    } catch (e) { document.getElementById("wp-map").outerHTML = '<div style="color:#9aa7bd;font-size:12px;padding:20px;text-align:center">county map (loads from Census geometry)</div>'; }
+  })();
+</script>
+</body>
+</html>
