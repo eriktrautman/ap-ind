@@ -7,10 +7,11 @@
 //   status.json      poller health and freshness; written on every run, including failures
 //   settings.json    studio overrides read at the start of each run (test/live, pause)
 //   history.json     margin per featured race per run, 24 hours, for the margin tracker
+//   trend.json       AP balance-of-power trend reports for Senate and House
 //
 // Runs as a Vercel function (api/poll.js) or from scripts/run-local.mjs; same code either way.
 
-import { fetchRaces, normalizeRace, normalizeCounties, cfg, setOverrides } from "./ap.js";
+import { fetchRaces, fetchTrend, normalizeTrend, normalizeRace, normalizeCounties, cfg, setOverrides } from "./ap.js";
 import { writeJson, readJson, defaultSettings } from "./store.js";
 
 const CANDIDATE_INDEX = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/config/candidates.json";
@@ -167,6 +168,17 @@ export async function pollOnce({ run = Date.now(), log = console.log, fresh = fa
     } catch (e) {
       status.errors.push(`${st} counties: ${diagnose(e).text}`);
     }
+  }
+
+  // 3. AP Trend reports (balance of power) for Senate and House: trend.json
+  try {
+    const trend = { generated: started.toISOString(), resultsType, senate: null, house: null };
+    for (const [k, code] of [["senate", "s"], ["house", "h"]]) {
+      try { trend[k] = normalizeTrend(await fetchTrend(code)); } catch (e) { status.errors.push(`trend ${k}: ${diagnose(e).text}`); }
+    }
+    if (trend.senate || trend.house) writes.push(writeJson("trend.json", trend));
+  } catch (e) {
+    status.errors.push(`trend: ${diagnose(e).text}`);
   }
 
   const results = await Promise.allSettled(writes);

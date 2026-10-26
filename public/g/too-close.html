@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Too Close to Call</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D11: uncalled races under 3 points with over 25% in, featured races first. ?limit=8 ?office=S|H|all */
+  .body { min-height: 0; overflow: hidden; }
+  table { font-size: 32px; } th { font-size: 24px; } td { padding: 12px 10px; }
+  td.lab { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+  tr.featured td.lab { color: var(--gold); }
+  .pos { color: var(--ok); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Too close to call</div><div class="title">Tightest uncalled races</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body"><table><thead><tr><th>Race</th><th>Leader</th><th class="r">Margin</th><th class="r">Votes</th><th class="r">In</th><th>Runner-up</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · house rule: under 3 points with more than 25% of the expected vote in, not called · featured races first, then by margin</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, raceState, partyKey, PARTY_COLOR, fmt } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const LIMIT = Number(q.get("limit") ?? 8), OFFICE = q.get("office") ?? "all";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let races = null, featured = new Set(FEATURED_RACES.map((r) => r.id));
+  const tag = (c) => `<span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}" style="font-size:20px;min-width:34px">${{ dem: "D", gop: "R", ind: "I", oth: "I" }[partyKey(c)]}</span>`;
+
+  function render() {
+    if (!races) return;
+    const rows = [];
+    for (const r of races.values()) {
+      if (r.kind !== "federal" || (OFFICE !== "all" && r.office !== OFFICE)) continue;
+      const st = raceState(r);
+      const inPct = r.eevp || r.precinctsPct || 0;
+      if (st.status !== "leading" || Math.abs(st.margin) >= 3 || inPct <= 25) continue;
+      const cands = [...r.candidates].sort((a, b) => b.votes - a.votes);
+      rows.push({ r, st, inPct, leader: cands[0], second: cands[1], votes: cands[0].votes - (cands[1]?.votes ?? 0) });
+    }
+    rows.sort((a, b) => (featured.has(b.r.id) - featured.has(a.r.id)) || Math.abs(a.st.margin) - Math.abs(b.st.margin));
+    $("reporting").innerHTML = `<b>${rows.length}</b> races within 3 points`;
+    $("rows").innerHTML = rows.slice(0, LIMIT).map(({ r, st, inPct, leader, second, votes }) => `<tr class="${featured.has(r.id) ? "featured" : ""}"><td class="lab">${esc(r.label)}</td><td>${tag(leader)}${esc(leader.last)}</td><td class="r b" style="color:${PARTY_COLOR[partyKey(leader)]}">+${st.margin.toFixed(1)}</td><td class="r">${fmt(votes)}</td><td class="r m">${Math.round(inPct)}%</td><td>${second ? tag(second) + esc(second.last) : ""}</td></tr>`).join("") || `<tr><td colspan="6" class="m">No uncalled race is within 3 points with more than a quarter of the vote in.</td></tr>`;
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
+  connectFeed({
+    onSnapshot: (s) => { races = s.races; render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

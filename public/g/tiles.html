@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Status Tile Map</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D7: tile map of every Senate race by called or leading party. ?office=S (default) | G */
+  .body { display: grid; grid-template-columns: 1fr 460px; gap: 40px; align-items: center; min-height: 0; overflow: hidden; }
+  .map { min-height: 0; height: 100%; }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .side .h { font-size: 44px; font-weight: 700; margin-bottom: 18px; }
+  .legend { display: grid; gap: 12px; font-size: 26px; color: var(--muted); }
+  .legend i { display: inline-block; width: 30px; height: 24px; border-radius: 4px; vertical-align: -4px; margin-right: 12px; }
+  .side .n { margin-top: 24px; font-size: 24px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Status map</div><div class="title" id="title">Senate races</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="map"><svg id="map" viewBox="0 0 900 600"></svg></div>
+    <div class="side"><div class="h">Where it stands</div><div class="legend" id="legend"></div><div class="n" id="n"></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · solid = called · faded = leading · grey = counting or polls open · faint = no race · gold outline = featured race</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { drawTileMap } from "./usmap.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const OFFICE = q.get("office") ?? "S";
+  const $ = (id) => document.getElementById(id);
+  const svg = d3.select("#map");
+  const fade = (hex) => { const n = parseInt(hex.slice(1), 16); const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255; return `rgb(${Math.round(r * .45 + 11 * .55)},${Math.round(g * .45 + 18 * .55)},${Math.round(b * .45 + 32 * .55)})`; };
+  let races = null, featured = new Set(FEATURED_RACES.map((r) => r.id));
+
+  function render() {
+    if (!races) return;
+    const list = [...races.values()].filter((r) => r.office === OFFICE);
+    const byState = new Map();
+    for (const r of list) { const st = raceState(r); const prev = byState.get(r.state); if (!prev || (st.status === "called" && prev.status !== "called")) byState.set(r.state, { ...st, race: r }); }
+    const fill = (st) => { const s = byState.get(st); if (!s) return "#131c2e"; if (s.status === "called") return PARTY_COLOR[s.party]; if (s.status === "leading") return fade(PARTY_COLOR[s.party]); return "#2a3a5c"; };
+    const stroke = (st) => list.some((r) => r.state === st && featured.has(r.id)) ? { color: "#facc15", width: 4 } : null;
+    const sub = (st) => { const s = byState.get(st); if (!s || !s.cand) return null; return `${s.cand.last.slice(0, 9)}`; };
+    const dims = drawTileMap(svg, { size: 68, gap: 6, x0: 6, y0: 6, fill, stroke, sub });
+    svg.attr("viewBox", `0 0 ${dims.width + 12} ${dims.height + 12}`);
+    const called = list.filter((r) => raceState(r).status === "called").length, leading = list.filter((r) => raceState(r).status === "leading").length;
+    $("title").textContent = OFFICE === "G" ? "Governor races" : "Senate races";
+    $("reporting").innerHTML = `<b>${called}</b> called · <b>${leading}</b> leading · <b>${list.length - called - leading}</b> not yet`;
+    $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.dem}"></i>Dem called <i style="background:${fade(PARTY_COLOR.dem)};margin-left:14px"></i>leading</span><span><i style="background:${PARTY_COLOR.gop}"></i>GOP called <i style="background:${fade(PARTY_COLOR.gop)};margin-left:14px"></i>leading</span><span><i style="background:${PARTY_COLOR.ind}"></i>Ind called <i style="background:${fade(PARTY_COLOR.ind)};margin-left:14px"></i>leading</span><span><i style="background:#2a3a5c"></i>counting / polls open</span><span><i style="background:#131c2e"></i>no race this year</span>`;
+    $("n").textContent = `${list.length} races · leader's name on each tile`;
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
+  connectFeed({
+    onSnapshot: (s) => { races = s.races; render(); },
+    onUpdate: (s, msg) => { if (msg.changed.length) { races = s.races; render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>House Map</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D2: each state by the party holding most of its called House seats; solid when every seat is called,
+     hatched while seats remain; called-of-total tally on the bigger states. */
+  .body { display: grid; grid-template-columns: 1fr 380px; gap: 40px; min-height: 0; overflow: hidden; }
+  .map { min-height: 0; }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .side { display: grid; align-content: space-between; }
+  .blk .k { font-size: 22px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 18px; }
+  .blk .v { display: flex; justify-content: space-between; font-size: 44px; font-weight: 700; margin-top: 2px; }
+  .legend { display: grid; gap: 6px; font-size: 20px; color: var(--muted); }
+  .legend i { display: inline-block; width: 26px; height: 20px; border-radius: 3px; vertical-align: -3px; margin-right: 10px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">State of the House races</div><div class="title">House <small id="meta">435 seats · 218 for control</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="map"><svg id="map" viewBox="0 0 975 610"></svg></div>
+    <div class="side">
+      <div>
+        <div class="blk"><div class="k">Called</div><div class="v" id="called"></div></div>
+        <div class="blk"><div class="k">Leading</div><div class="v" id="leading"></div></div>
+        <div class="blk"><div class="k">Not yet</div><div class="v" id="notyet"></div></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · colour = party with most called seats · solid = all called · hatched = seats open · numbers = called of total</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { drawStateMap, hatchDefs } from "./usmap.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const svg = d3.select("#map");
+  hatchDefs(svg, PARTY_COLOR);
+  let races = null;
+
+  function render() {
+    if (!races) return;
+    const list = [...races.values()].filter((r) => r.office === "H");
+    const byState = new Map();
+    for (const r of list) {
+      const s = byState.get(r.state) ?? { total: 0, called: 0, dem: 0, gop: 0, ind: 0, oth: 0, ldem: 0, lgop: 0, lind: 0 };
+      s.total++;
+      const st = raceState(r);
+      if (st.status === "called") { s.called++; s[st.party]++; } else if (st.status === "leading") s["l" + (st.party === "oth" ? "ind" : st.party)]++;
+      byState.set(r.state, s);
+    }
+    const tot = { dem: 0, gop: 0, ind: 0 }, lead = { dem: 0, gop: 0, ind: 0 }; let notyet = 0;
+    for (const r of list) { const st = raceState(r); const k = st.party === "oth" ? "ind" : st.party; if (st.status === "called") tot[k]++; else if (st.status === "leading") lead[k]++; else notyet++; }
+    const top = (s) => { const e = [["dem", s.dem], ["gop", s.gop], ["ind", s.ind + s.oth]].sort((a, b) => b[1] - a[1]); return e[0][1] > 0 && e[0][1] > e[1][1] ? e[0][0] : null; };
+    const fill = (st) => { const s = byState.get(st); if (!s) return "#131c2e"; const p = top(s); if (!p) return "#2a3a5c"; return s.called === s.total ? PARTY_COLOR[p] : `url(#hatch-${p})`; };
+    const labels = (st) => { const s = byState.get(st); return s && s.total >= 4 ? `${s.called}/${s.total}` : null; };
+    drawStateMap(svg, { fill, labels });
+    $("reporting").innerHTML = `<b>${tot.dem + tot.gop + tot.ind}</b> of ${list.length} called`;
+    const row = (c) => `<b style="color:${PARTY_COLOR.dem}">D ${c.dem}</b><b style="color:${PARTY_COLOR.ind}">I ${c.ind}</b><b style="color:${PARTY_COLOR.gop}">R ${c.gop}</b>`;
+    $("called").innerHTML = row(tot); $("leading").innerHTML = row(lead);
+    $("notyet").innerHTML = `<b>${notyet}</b><span class="note" style="align-self:center">counting or polls open</span>`;
+    $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.dem}"></i>Dem most seats</span><span><i style="background:${PARTY_COLOR.gop}"></i>GOP most seats</span><span><i style="background:${PARTY_COLOR.ind}"></i>Independent most seats</span><span><i style="background:repeating-linear-gradient(45deg,#2a3a5c 0 4px,#9aa7bd 4px 7px)"></i>seats still open</span><span><i style="background:#2a3a5c"></i>nothing called yet</span>`;
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  connectFeed({
+    onSnapshot: (s) => { races = s.races; render(); },
+    onUpdate: (s, msg) => { if (msg.changed.length) { races = s.races; render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

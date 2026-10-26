@@ -162,6 +162,14 @@ export function connectFeed(handlers) {
     try { const h = await getJSON(`/data/history.json?t=${bucket(BLOB_INDEX_MS)}`); return h.races?.[raceId] ?? null; } catch { return null; }
   };
 
+  /** Balance-of-power trend from the poller: { senate: {parties}, house: {parties} } or null. */
+  state.trend = async () => {
+    if (state.mode !== "blob") return null;
+    try { return await getJSON(`/data/trend.json?t=${bucket(BLOB_INDEX_MS)}`); } catch { return null; }
+  };
+  /** 2024 national totals and prior contests: config/baseline-federal.json. */
+  state.baselineFederal = async () => { try { return await (await fetch("./baseline-federal.json")).json(); } catch { return null; } };
+
   // ---------- pick a mode ----------
   if (params.get("demo")) {
     state.mode = "demo";
@@ -233,3 +241,26 @@ export async function loadGeo(st, [w, h] = [900, 560]) {
   const proj = d3.geoConicEqualArea().rotate([-lon, 0]).center([0, lat]).parallels([lat - 6, lat + 6]).fitSize([w, h], fc);
   return { feats, kind: feats[0]?.properties?.kind ?? "county", path: d3.geoPath(proj) };
 }
+
+/** dem | gop | ind | oth for a candidate; curated independents are always ind. */
+export function partyKey(c) {
+  if (!c) return "oth";
+  if (c.featured || c.independent || isFeaturedCand(c.id)) return "ind";
+  if (c.party === "Dem") return "dem";
+  if (c.party === "GOP") return "gop";
+  return "oth";
+}
+
+/** Where a race stands: { status: called | leading | open | closed, party, cand, margin }.
+ *  leading = votes counted, no call; open = no votes and polls not closed; closed = polls closed, nothing counted. */
+export function raceState(r) {
+  const cands = [...(r.candidates ?? [])].sort((a, b) => b.votes - a.votes);
+  const winner = cands.find((c) => c.winner);
+  if (r.called && winner) return { status: "called", party: partyKey(winner), cand: winner, margin: (winner.pct ?? 0) - (cands.find((c) => c.id !== winner.id)?.pct ?? 0) };
+  if (r.totalVotes > 0 && cands[0]) return { status: "leading", party: partyKey(cands[0]), cand: cands[0], margin: (cands[0].pct ?? 0) - (cands[1]?.pct ?? 0) };
+  const closed = r.pollClose ? Date.parse(r.pollClose) <= Date.now() : (r.precinctsPct ?? 0) > 0;
+  return { status: closed ? "closed" : "open", party: null, cand: null, margin: null };
+}
+
+export const PARTY_COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#facc15", oth: "#a855f7" };
+export const PARTY_NAME = { dem: "Dem", gop: "GOP", ind: "Ind", oth: "Other" };

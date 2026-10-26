@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Race Zoom-in</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D6: one race, a house status headline, and the producer's context line (contextLines[raceId] in the state). ?id=<raceID> */
+  .body { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; min-height: 0; }
+  .card { background: #0f1d3d; border-radius: 10px; padding: 36px 40px; border-left: 10px solid var(--gold); }
+  .card .k { font-size: 24px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .rows { display: grid; gap: 16px; margin-top: 20px; }
+  .row { display: grid; grid-template-columns: 300px 1fr 130px; align-items: center; gap: 18px; font-size: 36px; }
+  .row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .bar { height: 40px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; } .row .bar i { display: block; height: 100%; }
+  .row .pc { text-align: right; font-weight: 700; }
+  .row.ind .nm { color: #fde68a; }
+  .meta { margin-top: 20px; display: flex; gap: 16px; align-items: center; font-size: 26px; color: var(--muted); }
+  .pill { display: inline-block; font-size: 22px; font-weight: 700; padding: 4px 14px; border-radius: 4px; letter-spacing: .04em; }
+  .pill.call { background: var(--gold); color: #1a1600; } .pill.counting { background: #2a3a5c; color: #fff; } .pill.open { background: #16213a; color: var(--muted); border: 1px solid var(--rule); }
+  .status .k { font-size: 24px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .status .h { font-size: 60px; font-weight: 700; line-height: 1.1; margin: 8px 0 18px; }
+  .status .ctx { font-size: 34px; line-height: 1.35; }
+  .status .ctx.none { color: var(--muted); font-style: italic; font-size: 28px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Zoom-in</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="card"><div class="k" id="k"></div><div class="rows" id="rows"></div><div class="meta" id="meta"></div></div>
+    <div class="status"><div class="k">Status</div><div class="h" id="h"></div><div class="ctx" id="ctx"></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · status by house rule: called · too close (under 3 points, over 25% in) · counting · polls open</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, partyKey, officeText, PARTY_COLOR, raceState, fmt } from "./feed.js";
+  import { watchState } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const raceId = q.get("id");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let race = null, context = "";
+
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const st = raceState(race);
+    const cands = [...race.candidates].sort((a, b) => b.votes - a.votes).slice(0, 3);
+    const max = Math.max(1, ...cands.map((c) => c.pct));
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("k").textContent = `${race.label} · ${race.stateName} · ${officeText(race)}`;
+    $("rows").innerHTML = cands.map((c) => `<div class="row ${partyKey(c)}"><div class="nm"><span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}">${{ dem: "D", gop: "R", ind: "I", oth: "I" }[partyKey(c)]}</span>${esc(c.last)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${c.pct / max * 100}%;background:${PARTY_COLOR[partyKey(c)]}"></i></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) : "—"}</div></div>`).join("");
+    const pill = st.status === "called" ? `<span class="pill call">AP CALL</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(race.eevp || race.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">POLLS CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
+    $("meta").innerHTML = `${pill}<span>${st.margin !== null ? `${esc(st.cand.last)} ${st.margin >= 0 ? "+" : ""}${st.margin.toFixed(1)} · ${fmt(race.totalVotes)} votes` : ""}</span>`;
+    const inPct = race.eevp || race.precinctsPct || 0;
+    const head = st.status === "called" ? `AP calls it for ${st.cand.last}${race.flipped ? " · a flip" : ""}` : st.status === "leading" ? (Math.abs(st.margin) < 3 && inPct > 25 ? "Too close to call" : inPct < 25 ? "Early returns" : `${st.cand.last} leads`) : st.status === "closed" ? "Polls closed, counting to begin" : "Polls open";
+    $("h").textContent = head;
+    $("ctx").className = `ctx ${context ? "" : "none"}`;
+    $("ctx").textContent = context || "No context line set. Type one in the control room under Race Detail.";
+    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { context = s.contextLines?.[raceId] ?? ""; render(); } });
+  connectFeed({
+    onSnapshot: (s) => { race = s.races.get(raceId); render(); },
+    onUpdate: (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

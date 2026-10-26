@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>National Independent Vote</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C6: votes for candidates outside the two major parties across every federal race, against 2024. ?office=S|H|all */
+  .body { display: grid; grid-template-columns: 1fr 560px; gap: 60px; align-items: center; min-height: 0; }
+  .big { font-size: 150px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  .sub { font-size: 32px; color: var(--muted); margin-top: 10px; }
+  .cmp { font-size: 40px; margin-top: 34px; } .cmp b { color: var(--gold); font-size: 56px; } .cmp .m { color: var(--muted); font-size: 32px; }
+  .ring text { font-family: var(--font); font-weight: 700; fill: #fff; }
+  .legend { font-size: 24px; color: var(--muted); margin-top: 12px; display: flex; gap: 24px; }
+  .legend i { display: inline-block; width: 20px; height: 20px; border-radius: 3px; vertical-align: -2px; margin-right: 8px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Independent vote tonight</div><div class="title" id="title">All federal races</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div><div class="big" id="big">—</div><div class="sub" id="sub">votes for independent and third-party candidates so far</div><div class="cmp" id="cmp"></div></div>
+    <div><svg class="ring" id="ring" viewBox="0 0 400 400"></svg><div class="legend"><span><i style="background:var(--gold)"></i>tonight</span><span><i style="background:#3a4f7a"></i>2024 share</span></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · every candidate who is not a Democrat or Republican, summed across the races in the feed · 2024 from the same AP data</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, fmt } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const office = q.get("office") ?? "all";
+  const $ = (id) => document.getElementById(id);
+  const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n);
+  let races = null, base = null;
+
+  function render() {
+    if (!races) return;
+    const list = [...races.values()].filter((r) => r.kind === "federal" && (office === "all" || r.office === office));
+    let ind = 0, total = 0, reporting = 0, withInd = 0;
+    for (const r of list) {
+      if (r.totalVotes > 0) reporting++;
+      if (r.hasIndependent) withInd++;
+      for (const c of r.candidates) { total += c.votes; if (c.party !== "Dem" && c.party !== "GOP") ind += c.votes; }
+    }
+    const share = total ? ind / total * 100 : null;
+    const nat = base?.national?.["2024"];
+    const b24 = nat ? (office === "all" ? { other: nat.S.other + nat.H.other, total: nat.S.total + nat.H.total } : nat[office]) : null;
+    const share24 = b24 ? b24.other / b24.total * 100 : null;
+    $("title").textContent = office === "S" ? "U.S. Senate" : office === "H" ? "U.S. House" : "All federal races";
+    $("reporting").innerHTML = `<b>${reporting}</b> of ${list.length} races reporting`;
+    $("big").textContent = total ? compact(ind) : "—";
+    $("sub").textContent = `votes for independent and third-party candidates so far · ${withInd} of ${list.length} races have one on the ballot`;
+    $("cmp").innerHTML = share === null ? "" : `<b>${share.toFixed(1)}%</b> of all votes counted ${share24 !== null ? `<span class="m">· 2024: ${share24.toFixed(1)}%</span>` : ""}`;
+    const svg = d3.select("#ring"); svg.selectAll("*").remove();
+    const arc = (v, r, color, w) => svg.append("path").attr("transform", "translate(200,200)").attr("fill", color).attr("d", d3.arc()({ innerRadius: r - w, outerRadius: r, startAngle: 0, endAngle: Math.min(1, v / 20) * 2 * Math.PI }));
+    svg.append("circle").attr("cx", 200).attr("cy", 200).attr("r", 150).attr("fill", "none").attr("stroke", "#1b2a4a").attr("stroke-width", 44);
+    if (share24 !== null) arc(share24, 172, "#3a4f7a", 44);
+    if (share !== null) arc(share, 172, "#facc15", 44);
+    svg.append("text").attr("x", 200).attr("y", 215).attr("text-anchor", "middle").attr("font-size", 64).text(share === null ? "—" : `${share.toFixed(1)}%`);
+    svg.append("text").attr("x", 200).attr("y", 260).attr("text-anchor", "middle").attr("font-size", 22).attr("fill", "#9aa7bd").attr("font-weight", 400).text("ring = share of 20%");
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>National House Vote</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D10: votes summed across every House race, independent share as its own segment, against 2024. */
+  .body { display: grid; grid-template-rows: auto auto 1fr; gap: 30px; min-height: 0; align-content: start; }
+  .seg { display: flex; height: 120px; border-radius: 8px; overflow: hidden; background: #16244a; }
+  .seg i { display: block; height: 100%; transition: width 900ms cubic-bezier(.2,.8,.2,1); }
+  .pcts { display: flex; justify-content: space-between; font-size: 60px; font-weight: 700; margin-top: 10px; }
+  .pcts .i { text-align: center; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; }
+  .stat { background: rgba(0,0,0,.25); border-radius: 8px; padding: 24px 30px; }
+  .stat .big { font-size: 64px; font-weight: 700; line-height: 1; }
+  .stat .lab { font-size: 26px; color: var(--muted); margin-top: 10px; }
+  .cmp { font-size: 30px; color: var(--muted); } .cmp b { color: #fff; }
+  .cmp .seg { height: 40px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">National popular vote</div><div class="title">U.S. House <small>all districts</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div><div class="seg" id="seg"></div><div class="pcts" id="pcts"></div></div>
+    <div class="stats" id="stats"></div>
+    <div class="cmp" id="cmp"></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, sum of every House race in the feed · independent = every candidate who is not a Democrat or Republican · 2024 from the same AP data</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, fmt, PARTY_COLOR } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n);
+  let races = null, base = null;
+
+  function render() {
+    if (!races) return;
+    const list = [...races.values()].filter((r) => r.office === "H");
+    let dem = 0, gop = 0, ind = 0, reporting = 0, eevpSum = 0;
+    for (const r of list) { if (r.totalVotes > 0) reporting++; eevpSum += r.eevp || r.precinctsPct || 0; for (const c of r.candidates) { if (c.party === "Dem") dem += c.votes; else if (c.party === "GOP") gop += c.votes; else ind += c.votes; } }
+    const total = dem + gop + ind;
+    const p = (v) => total ? v / total * 100 : 0;
+    $("reporting").innerHTML = `<b>${reporting}</b> of ${list.length} districts reporting · <b>${list.length ? Math.round(eevpSum / list.length) : 0}%</b> of expected vote in`;
+    $("seg").innerHTML = `<i style="width:${p(dem)}%;background:${PARTY_COLOR.dem}"></i><i style="width:${p(ind)}%;background:${PARTY_COLOR.ind}"></i><i style="width:${p(gop)}%;background:${PARTY_COLOR.gop}"></i>`;
+    $("pcts").innerHTML = `<span style="color:${PARTY_COLOR.dem}">${p(dem).toFixed(1)}%</span><span class="i" style="color:${PARTY_COLOR.ind}">${p(ind).toFixed(1)}%</span><span style="color:${PARTY_COLOR.gop}">${p(gop).toFixed(1)}%</span>`;
+    $("stats").innerHTML = `<div class="stat"><div class="big" style="color:${PARTY_COLOR.dem}">${compact(dem)}</div><div class="lab">Democratic votes</div></div><div class="stat"><div class="big" style="color:${PARTY_COLOR.ind}">${compact(ind)}</div><div class="lab">Independent and third-party votes</div></div><div class="stat"><div class="big" style="color:${PARTY_COLOR.gop}">${compact(gop)}</div><div class="lab">Republican votes</div></div>`;
+    const b = base?.national?.["2024"]?.H;
+    $("cmp").innerHTML = b ? `2024, final: <b>D ${b.demPct.toFixed(1)}%</b> · <b style="color:${PARTY_COLOR.ind}">I ${b.otherPct.toFixed(1)}%</b> · <b>R ${b.gopPct.toFixed(1)}%</b> of ${compact(b.total)} votes<div class="seg"><i style="width:${b.demPct}%;background:${PARTY_COLOR.dem};opacity:.6"></i><i style="width:${b.otherPct}%;background:${PARTY_COLOR.ind};opacity:.6"></i><i style="width:${b.gopPct}%;background:${PARTY_COLOR.gop};opacity:.6"></i></div>` : "";
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

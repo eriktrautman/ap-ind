@@ -146,3 +146,23 @@ export function normalizeCounties(r) {
       votes: Object.fromEntries(u.candidates.filter((c) => !PLACEHOLDER.has(c.last)).map((c) => [c.candidateID, c.voteCount ?? 0])),
     }));
 }
+
+/** AP Trend report (balance of power) for an office: s = Senate, h = House, g = Governor. */
+export async function fetchTrend(officeCode) {
+  const { electionDate, resultsType } = cfg();
+  const id = `Trend-${officeCode}-${electionDate.replace(/-/g, "")}-US-${resultsType === "t" ? "Test" : "Live"}`;
+  return fetchAp(`/reports/${id}`, {});
+}
+
+/** Trend report → { office, timestamp, parties: { Dem: {won, leading, holdovers, winningTrend, current, net}, GOP, caucusDem, caucusGop, other } }. */
+export function normalizeTrend(d) {
+  const t = d.trendtable ?? {};
+  const key = { "Dem": "Dem", "GOP": "GOP", "Others caucus with Dem": "caucusDem", "Others caucus with GOP": "caucusGop", "Others": "other" };
+  const num = (arr, name) => Number((arr ?? []).find((x) => x.name === name)?.value ?? 0);
+  const parties = {};
+  for (const p of t.party ?? []) {
+    const k = key[p.title] ?? p.title;
+    parties[k] = { won: num(p.trend, "Won"), leading: num(p.trend, "Leading"), holdovers: num(p.trend, "Holdovers"), winningTrend: num(p.trend, "Winning Trend"), current: num(p.trend, "Current"), insufficient: num(p.trend, "InsufficientVote"), net: num(p.NetChange?.trend, "Winners"), netLeaders: num(p.NetChange?.trend, "Leaders") };
+  }
+  return { office: t.office ?? null, code: t.OfficeTypeCode ?? null, timestamp: t.timestamp ?? null, parties };
+}

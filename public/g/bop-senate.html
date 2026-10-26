@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Balance of Power, Senate</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D3: seat bar from AP's Trend report: holdovers + won (solid), leading (faded), undecided (grey);
+     independents who caucus with a party shown as their own gold block. ?office=S (default) | H */
+  .body { display: grid; grid-template-rows: auto auto auto 1fr; gap: 22px; min-height: 0; }
+  .seg { display: flex; height: 120px; border-radius: 8px; overflow: hidden; background: #16244a; position: relative; }
+  .seg i { display: block; height: 100%; transition: width 900ms cubic-bezier(.2,.8,.2,1); }
+  .seg .mid { position: absolute; left: 50%; top: -14px; bottom: -14px; width: 4px; background: #fff; }
+  .tot { display: flex; justify-content: space-between; font-size: 56px; font-weight: 700; }
+  .tot small { font-size: 26px; font-weight: 400; color: var(--muted); margin-left: 10px; }
+  .tot .i { text-align: center; }
+  .ctl { font-size: 30px; color: var(--muted); text-align: center; } .ctl b { color: #fff; }
+  table { font-size: 28px; width: 80%; margin: 0 auto; } th, td { padding: 8px 10px; }
+  td.p { font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Balance of power</div><div class="title" id="title">Senate <small id="meta">100 seats · 51 for control</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="tot" id="tot"></div>
+    <div class="seg" id="seg"></div>
+    <div class="ctl" id="ctl"></div>
+    <div><table><thead><tr><th></th><th class="r">Won tonight</th><th class="r">Leading</th><th class="r">Holdovers</th><th class="r">Trend</th><th class="r">Before tonight</th><th class="r">Net</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP balance-of-power report · solid = won or holdover · faded = leading · grey = undecided · independents in gold</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, PARTY_COLOR } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const OFFICE = (q.get("office") ?? (location.pathname.includes("house") ? "H" : "S")).toUpperCase();
+  const SEATS = OFFICE === "H" ? 435 : 100, CONTROL = OFFICE === "H" ? 218 : 51;
+  const $ = (id) => document.getElementById(id);
+  let trend = null;
+
+  function render() {
+    const t = OFFICE === "H" ? trend?.house : trend?.senate;
+    $("title").innerHTML = `${OFFICE === "H" ? "House" : "Senate"} <small>${SEATS} seats · ${CONTROL} for control</small>`;
+    if (!t) { $("ctl").innerHTML = `<span class="note">Waiting for AP's balance-of-power report.</span>`; return; }
+    const P = t.parties;
+    const g = (k) => P[k] ?? { won: 0, leading: 0, holdovers: 0, winningTrend: 0, current: 0, net: 0 };
+    const dem = g("Dem"), gop = g("GOP"), cd = g("caucusDem"), cg = g("caucusGop"), oth = g("other");
+    const solidD = dem.won + dem.holdovers, solidR = gop.won + gop.holdovers, solidI = cd.won + cd.holdovers + cg.won + cg.holdovers + oth.won + oth.holdovers;
+    const leadD = dem.leading, leadR = gop.leading, leadI = cd.leading + cg.leading + oth.leading;
+    const und = Math.max(0, SEATS - solidD - solidR - solidI - leadD - leadR - leadI);
+    const w = (n) => `${n / SEATS * 100}%`;
+    $("seg").innerHTML = `<i style="width:${w(solidD)};background:${PARTY_COLOR.dem}"></i><i style="width:${w(leadD)};background:${PARTY_COLOR.dem};opacity:.45"></i><i style="width:${w(solidI)};background:${PARTY_COLOR.ind}"></i><i style="width:${w(leadI)};background:${PARTY_COLOR.ind};opacity:.45"></i><i style="width:${w(und)};background:#3a4f7a"></i><i style="width:${w(leadR)};background:${PARTY_COLOR.gop};opacity:.45"></i><i style="width:${w(solidR)};background:${PARTY_COLOR.gop}"></i><span class="mid"></span>`;
+    $("tot").innerHTML = `<span style="color:${PARTY_COLOR.dem}">${solidD}<small>${leadD ? `+${leadD} leading` : ""}</small></span><span class="i" style="color:${PARTY_COLOR.ind}">${solidI}<small>${leadI ? `+${leadI} leading` : "independent"}</small></span><span style="color:${PARTY_COLOR.gop}"><small style="margin:0 10px 0 0">${leadR ? `+${leadR} leading` : ""}</small>${solidR}</span>`;
+    const dTrend = dem.winningTrend + cd.winningTrend, rTrend = gop.winningTrend + cg.winningTrend;
+    $("ctl").innerHTML = dTrend >= CONTROL ? `<b>Democrats and allies</b> at ${dTrend} with leaders, ${CONTROL} needed` : rTrend >= CONTROL ? `<b>Republicans and allies</b> at ${rTrend} with leaders, ${CONTROL} needed` : `<b>${und}</b> seats undecided · ${CONTROL} needed for control`;
+    const row = (name, p, color) => `<tr><td class="p" style="color:${color}">${name}</td><td class="r">${p.won}</td><td class="r">${p.leading}</td><td class="r">${p.holdovers}</td><td class="r b">${p.winningTrend}</td><td class="r m">${p.current}</td><td class="r ${p.net > 0 ? "ahead" : p.net < 0 ? "behind" : ""}">${p.net > 0 ? "+" : ""}${p.net}</td></tr>`;
+    $("rows").innerHTML = row("Democrats", dem, PARTY_COLOR.dem) + (cd.current || cd.won || cd.leading ? row("Independents with Dem", cd, PARTY_COLOR.ind) : "") + (cg.current || cg.won || cg.leading ? row("Independents with GOP", cg, PARTY_COLOR.ind) : "") + (oth.current || oth.won || oth.leading ? row("Other", oth, PARTY_COLOR.ind) : "") + row("Republicans", gop, PARTY_COLOR.gop);
+    $("reporting").innerHTML = `<b>${dem.won + gop.won + cd.won + cg.won + oth.won}</b> called tonight`;
+    $("updated").textContent = t.timestamp ? `AP report ${new Date(t.timestamp).toLocaleTimeString("en-US")}` : "";
+  }
+  const feed = connectFeed({
+    onSnapshot: async () => { trend = await feed.trend(); render(); },
+    onUpdate: async (s, msg) => { if (msg.changed.length) { trend = await feed.trend(); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

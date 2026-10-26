@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Balance of Power, House</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D4: House seat bar from AP's Trend report plus a flips row from the results feed. */
+  .body { display: grid; grid-template-rows: auto auto auto 1fr; gap: 22px; min-height: 0; }
+  .seg { display: flex; height: 120px; border-radius: 8px; overflow: hidden; background: #16244a; position: relative; }
+  .seg i { display: block; height: 100%; transition: width 900ms cubic-bezier(.2,.8,.2,1); }
+  .seg .mid { position: absolute; left: 50%; top: -14px; bottom: -14px; width: 4px; background: #fff; }
+  .tot { display: flex; justify-content: space-between; font-size: 56px; font-weight: 700; }
+  .tot small { font-size: 26px; font-weight: 400; color: var(--muted); margin-left: 10px; }
+  .tot .i { text-align: center; }
+  .ctl { font-size: 30px; color: var(--muted); text-align: center; } .ctl b { color: #fff; }
+  .flips { display: flex; gap: 18px; flex-wrap: wrap; align-content: start; }
+  .chip { background: rgba(0,0,0,.25); border-radius: 8px; padding: 14px 22px; font-size: 28px; } .chip b { font-size: 36px; }
+  .chip .lab { font-family: ui-monospace, Menlo, monospace; margin-left: 10px; color: var(--muted); font-size: 24px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Balance of power</div><div class="title">House <small>435 seats · 218 for control</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="tot" id="tot"></div>
+    <div class="seg" id="seg"></div>
+    <div class="ctl" id="ctl"></div>
+    <div class="flips" id="flips"></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP balance-of-power report and results feed · solid = won · faded = leading · grey = undecided · flips are seats called for a party other than the one holding them</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const SEATS = 435, CONTROL = 218;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let trend = null, races = null;
+
+  function render() {
+    const t = trend?.house;
+    const P = t?.parties ?? {};
+    const g = (k) => P[k] ?? { won: 0, leading: 0, holdovers: 0, winningTrend: 0, current: 0, net: 0 };
+    const dem = g("Dem"), gop = g("GOP"), ind = ["caucusDem", "caucusGop", "other"].map(g).reduce((a, p) => ({ won: a.won + p.won, leading: a.leading + p.leading, winningTrend: a.winningTrend + p.winningTrend, net: a.net + p.net }), { won: 0, leading: 0, winningTrend: 0, net: 0 });
+    const und = Math.max(0, SEATS - dem.won - gop.won - ind.won - dem.leading - gop.leading - ind.leading);
+    const w = (n) => `${n / SEATS * 100}%`;
+    $("seg").innerHTML = `<i style="width:${w(dem.won)};background:${PARTY_COLOR.dem}"></i><i style="width:${w(dem.leading)};background:${PARTY_COLOR.dem};opacity:.45"></i><i style="width:${w(ind.won)};background:${PARTY_COLOR.ind}"></i><i style="width:${w(ind.leading)};background:${PARTY_COLOR.ind};opacity:.45"></i><i style="width:${w(und)};background:#3a4f7a"></i><i style="width:${w(gop.leading)};background:${PARTY_COLOR.gop};opacity:.45"></i><i style="width:${w(gop.won)};background:${PARTY_COLOR.gop}"></i><span class="mid"></span>`;
+    $("tot").innerHTML = `<span style="color:${PARTY_COLOR.dem}">${dem.won}<small>${dem.leading ? `+${dem.leading} leading` : ""}</small></span><span class="i" style="color:${PARTY_COLOR.ind}">${ind.won}<small>${ind.leading ? `+${ind.leading} leading` : "independent"}</small></span><span style="color:${PARTY_COLOR.gop}"><small style="margin:0 10px 0 0">${gop.leading ? `+${gop.leading} leading` : ""}</small>${gop.won}</span>`;
+    $("ctl").innerHTML = !t ? `<span class="note">Waiting for AP's balance-of-power report.</span>` : dem.winningTrend >= CONTROL ? `<b>Democrats</b> at ${dem.winningTrend} with leaders, ${CONTROL} needed` : gop.winningTrend >= CONTROL ? `<b>Republicans</b> at ${gop.winningTrend} with leaders, ${CONTROL} needed` : `<b>${und}</b> seats undecided · ${CONTROL} needed for control`;
+    // Flips from the results feed: called races whose winner's party differs from the party holding the seat.
+    const flips = { dem: [], gop: [], ind: [] };
+    for (const r of races?.values() ?? []) {
+      if (r.office !== "H" || !r.called) continue;
+      const st = raceState(r); if (st.status !== "called") continue;
+      const held = r.currentParty === "Dem" ? "dem" : r.currentParty === "GOP" ? "gop" : r.currentParty ? "ind" : null;
+      const won = st.party === "oth" ? "ind" : st.party;
+      if (held && won !== held) flips[won].push(r.label);
+    }
+    $("flips").innerHTML = `<div class="chip" style="color:${PARTY_COLOR.dem}"><b>D ${flips.dem.length ? "+" + flips.dem.length : "0"}</b> flips</div><div class="chip" style="color:${PARTY_COLOR.gop}"><b>R ${flips.gop.length ? "+" + flips.gop.length : "0"}</b> flips</div><div class="chip" style="color:${PARTY_COLOR.ind}"><b>I ${flips.ind.length ? "+" + flips.ind.length : "0"}</b> flips${flips.ind.map((l) => `<span class="lab">${esc(l)}</span>`).join("")}</div>`;
+    $("reporting").innerHTML = `<b>${dem.won + gop.won + ind.won}</b> of ${SEATS} called`;
+    $("updated").textContent = t?.timestamp ? `AP report ${new Date(t.timestamp).toLocaleTimeString("en-US")}` : "";
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { races = s.races; trend = await feed.trend(); render(); },
+    onUpdate: async (s, msg) => { if (msg.changed.length) { races = s.races; trend = await feed.trend(); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>
