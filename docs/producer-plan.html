@@ -159,9 +159,9 @@
 const META = {
   minPerPoint: 5,          // assumed pace until three stories are done
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
-  phase: "E0 Foundations",
-  note: "building S01 and S02",
-  updated: "2026-10-26T23:16:49Z",
+  phase: "E1 Control room shell",
+  note: "building S10 shell, status bar, safeguards",
+  updated: "2026-10-26T23:26:56Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -174,11 +174,11 @@ const EPICS = {
 };
 // status: todo | doing | done | blocked. doneAt: ISO time, drives the burndown.
 const STORIES = [
-  { id: "S01", epic: "E0", pts: 5, status: "doing", title: "Blob polling path in the graphics feed: feed.js reads /data/index.json, /data/state/XX.json and status.json when there is no WebSocket server, so race.html and swing.html run on Vercel with real data", note: "Collision: public/g/feed.js, race.html, swing.html. WebSocket path untouched." },
-  { id: "S02", epic: "E0", pts: 5, status: "doing", title: "Control state module: one schema (ticker races, call highlight, manual items, idle text, featured races, featured charts, movement charts, context lines), shipped defaults, Global from Blob, Local from localStorage, resolve by ?src= or the saved selector", note: "New file studio/public/control.js; shared by the panel and every graphic." },
-  { id: "S03", epic: "E0", pts: 3, status: "todo", title: "Producer API accepts the new fields with validation and limits; pinnedRaceIds stays as the ticker list so /ticker and /studio keep working unchanged", note: "Collision: studio/api/producer.js, additive only.", deps: "S02" },
-  { id: "S04", epic: "E0", pts: 3, status: "todo", title: "Ticker and existing graphics honour the source parameter: ?src=local|default|global picks which state feeds the page; the on-air ticker stays on Global by default", deps: "S02" },
-  { id: "S05", epic: "E0", pts: 2, status: "todo", title: "Deployment wiring: the rebuilt /studio in the build, no-store header kept, link from the homepage and the shared nav", note: "Collision: docs/index.html, docs/nav.js. studio/vercel.json already serves /studio with no-store." },
+  { id: "S01", epic: "E0", pts: 5, status: "done", title: "Blob polling path in the graphics feed: feed.js reads /data/index.json, /data/state/XX.json and status.json when there is no WebSocket server, so race.html and swing.html run on Vercel with real data", note: "Collision: public/g/feed.js, race.html, swing.html. WebSocket path untouched.", doneAt: "2026-10-26T23:26:56Z" },
+  { id: "S02", epic: "E0", pts: 5, status: "done", title: "Control state module: one schema (ticker races, call highlight, manual items, idle text, featured races, featured charts, movement charts, context lines), shipped defaults, Global from Blob, Local from localStorage, resolve by ?src= or the saved selector", note: "studio/lib/control.js is the canonical file; public/g/control.js is a symlink to it so the local server and the build both serve it at /g/control.js.", doneAt: "2026-10-26T23:26:56Z" },
+  { id: "S03", epic: "E0", pts: 3, status: "done", title: "Producer API accepts the new fields with validation and limits; pinnedRaceIds stays as the ticker list so /ticker and /studio keep working unchanged", note: "Collision: studio/api/producer.js, additive only.", deps: "S02", doneAt: "2026-10-26T23:26:56Z" },
+  { id: "S04", epic: "E0", pts: 3, status: "done", title: "Ticker and existing graphics honour the source parameter: ?src=local|default|global picks which state feeds the page; the on-air ticker stays on Global by default", deps: "S02", doneAt: "2026-10-26T23:26:56Z" },
+  { id: "S05", epic: "E0", pts: 2, status: "done", title: "Deployment wiring: the rebuilt /studio in the build, no-store header kept, link from the homepage and the shared nav", note: "Collision: docs/index.html, docs/nav.js. studio/vercel.json already serves /studio with no-store.", doneAt: "2026-10-26T23:26:56Z" },
   { id: "S10", epic: "E1", pts: 5, status: "todo", title: "/studio rebuilt as the control room: sign-in kept, sticky status bar, four sections with in-page navigation, source selector (Default / Global / Local) with a banner on every section saying which source is feeding it", note: "Replaces studio/public/studio/index.html, studio.js, studio.css in place. The current panel's poller controls and ticker editor are carried over, not duplicated.", deps: "S02" },
   { id: "S11", epic: "E1", pts: 3, status: "todo", title: "Status bar facts: last AP refresh, AP data as of, last publish and when it reached air, results type, poller health with the plain-English diagnosis and fix for every known failure (no key, AP rejected key, rate limit, AP down, timeout, Blob write, network); poller controls (poll now, pause, test/live)", deps: "S10" },
   { id: "S12", epic: "E1", pts: 3, status: "todo", title: "Global publish safeguard: in-page dialog listing every added, removed and reordered item per category, the last publish time by anyone, and a warning when someone else published since you loaded", deps: "S10" },
@@ -186,7 +186,7 @@ const STORIES = [
   { id: "S14", epic: "E1", pts: 5, status: "todo", title: "Graphic card: the real page scaled into a 16:9 thumbnail with real data, open-in-new-tab at 1920x1080 with a background choice, a freshness bubble showing when its data was last written, and a race label band that cannot be mistaken for another race", deps: "S10" },
   { id: "S15", epic: "E1", pts: 3, status: "todo", title: "Thumbnail budget: a fixed cap on live iframes (about 12), featured sections filled first, cards load only when scrolled into view and unload when scrolled away; catalog cards are static data cards (label, candidates, numbers from index.json) until the producer asks for a live preview", note: "Answers question 7: a hundred catalog graphics must not open a hundred pages.", deps: "S14" },
   { id: "S20", epic: "E2", pts: 3, status: "todo", title: "Ticker Races: pick and order races (at least one) under Default, Global or Local; the example ticker re-crawls as the list changes", deps: "S13" },
-  { id: "S21", epic: "E2", pts: 2, status: "todo", title: "AP Call highlight on/off: a flag in the state, honoured by the on-air ticker, the queue builder and the preview", note: "Collision: studio/public/ticker.html, ticker-queue.js.", deps: "S03" },
+  { id: "S21", epic: "E2", pts: 2, status: "done", title: "AP Call highlight on/off: a flag in the state, honoured by the on-air ticker, the queue builder and the preview", note: "Collision: studio/public/ticker.html, ticker-queue.js.", deps: "S03", doneAt: "2026-10-26T23:26:56Z" },
   { id: "S22", epic: "E2", pts: 1, status: "todo", title: "Manual items and idle text carried into the Ticker section unchanged", deps: "S20" },
   { id: "S30", epic: "E3", pts: 3, status: "todo", title: "Featured Races: the seven curated races by default; add and remove under Default, Global or Local; every race shown with state, office, label and the independent's name", deps: "S13" },
   { id: "S31", epic: "E3", pts: 2, status: "todo", title: "Featured Charts: one set for all featured races, defaulting to every per-race chart built from AP data (B5, B6, B7, B8, B9, B10, B13); add and remove per source", deps: "S30" },
@@ -231,6 +231,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-26T23:26:56Z", what: "Foundations landed (commit 3baccab): Blob feed path with race.html and swing.html rendering real data on the deployment, control state module at studio/lib/control.js (served at /g/control.js), producer API with the new fields, ticker on watchState with the AP Call flag, homepage and nav links. Verified on a Vercel preview deployment and in headless Chrome against a local dist server. Observation: the production poller last ran at 21:28Z; the every-minute cron does not appear to be firing." },
   { t: "2026-10-26T21:45:00Z", what: "Plan v1 written: 41 stories, 111 core points, 13 optional. Waiting on the key questions." },
   { t: "2026-10-26T23:16:49Z", what: "Build started. Foundations first: S01 Blob polling path in feed.js and S02 control state module." },
   { t: "2026-10-26T22:05:00Z", what: "All eight questions answered. Control room moves to /studio in place; B7, B9, B10 become core; stories S15 (thumbnail budget), S39 (2024 baseline from AP), S43a (polling dataset) added. 44 stories, 133 points. Waiting for begin." },
