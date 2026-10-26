@@ -28,11 +28,11 @@ export const FEATURED_RACES = [
 /** Every graphic the control room knows. kind: race (needs ?id=) or movement. built: a page exists. */
 export const CHARTS = [
   { id: "B5",  kind: "race", name: "Live race result",              page: "/g/race.html",      built: true },
-  { id: "B6",  kind: "race", name: "Live county map",               page: "/g/county.html",    built: false },
-  { id: "B7",  kind: "race", name: "Margin tracker",                page: "/g/margin.html",    built: false },
-  { id: "B8",  kind: "race", name: "Votes still out",               page: "/g/outstanding.html", built: false },
-  { id: "B9",  kind: "race", name: "Ranked-choice rounds",          page: "/g/rcv.html",       built: false, only: (r) => !!r?.rankedChoice },
-  { id: "B10", kind: "race", name: "Then vs now",                   page: "/g/then-now.html",  built: false },
+  { id: "B6",  kind: "race", name: "Live county map",               page: "/g/county.html",    built: true },
+  { id: "B7",  kind: "race", name: "Margin tracker",                page: "/g/margin.html",    built: true },
+  { id: "B8",  kind: "race", name: "Votes still out",               page: "/g/outstanding.html", built: true },
+  { id: "B9",  kind: "race", name: "Ranked-choice rounds",          page: "/g/rcv.html",       built: true, only: (r) => !!r?.rankedChoice },
+  { id: "B10", kind: "race", name: "Then vs now",                   page: "/g/then-now.html",  built: true },
   { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: false },
   { id: "C6",  kind: "movement", name: "National independent vote", page: "/g/ind-vote.html",  built: false },

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Margin Tracker</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* B7: the lead in points through the night, one point per poller run. ?id=<raceID> required.
+     Data: history.json written by the poller (featured races only). */
+  .body { display: grid; grid-template-rows: auto 1fr; gap: 16px; min-height: 0; }
+  .now { display: flex; align-items: baseline; gap: 28px; font-size: 34px; }
+  .now b { font-size: 64px; font-weight: 700; }
+  .now .lead { font-weight: 600; }
+  .chart { position: relative; min-height: 0; }
+  .chart svg { width: 100%; height: 100%; display: block; }
+  .axis text { fill: var(--muted); font-size: 22px; font-family: var(--font); }
+  .axis line, .axis path { stroke: var(--rule); }
+  .even { stroke: var(--muted); stroke-dasharray: 8 8; stroke-width: 1.5; }
+  .line { fill: none; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+  .area { opacity: .18; }
+  .lbl { font-size: 24px; fill: var(--muted); }
+  .endlbl { font-size: 30px; font-weight: 700; }
+  .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Margin through the night</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="now" id="now"></div>
+    <div class="chart"><svg id="chart" viewBox="0 0 1584 560" preserveAspectRatio="none"></svg><div class="empty" id="empty" hidden></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · lead in percentage points between the top two, recorded every AP update</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness, partyClass, officeText } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  const raceId = q.get("id"), bg = q.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7" };
+  const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
+  let race = null, points = null;
+
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
+    const [a, b] = cands;
+    const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent) ?? b ?? a;
+    const rival = cands.find((c) => c.id !== ind.id) ?? a;
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    const margin = race.totalVotes ? a.pct - (b?.pct ?? 0) : null;
+    $("now").innerHTML = margin === null ? `<span class="note">No votes counted yet.</span>`
+      : `<b style="color:${colorFor(a)}">${esc(a.last)} +${margin.toFixed(1)}</b><span class="lead">leads ${esc(b?.last ?? "")}</span><span class="note">${esc(a.last)} ${Number(a.pct).toFixed(1)}% · ${esc(b?.last ?? "")} ${Number(b?.pct ?? 0).toFixed(1)}%</span>`;
+
+    // Series: the featured candidate's margin over their rival, positive = ahead. The history
+    // stores the leader and the top-two gap each run; convert to the featured candidate's view.
+    const svg = d3.select("#chart");
+    svg.selectAll("*").remove();
+    const series = (points ?? []).map(([t, leaderId, gap, eevp]) => ({ t: t * 1000, m: leaderId === ind.id ? gap : -gap, eevp }));
+    if (race.totalVotes) series.push({ t: Math.max(Date.now(), series.length ? series[series.length - 1].t : 0), m: (ind.pct ?? 0) - (rival.pct ?? 0), eevp: Math.round(race.eevp || race.precinctsPct) });
+    $("empty").hidden = series.length >= 2;
+    if (series.length < 2) { $("empty").textContent = series.length ? "One reading so far; the line draws as results come in." : "No readings yet."; return; }
+    const W = 1584, H = 560, m = { l: 150, r: 170, t: 30, b: 50 };
+    const x = d3.scaleTime().domain(d3.extent(series, (d) => d.t)).range([m.l, W - m.r]);
+    const ext = Math.max(5, Math.ceil(d3.max(series, (d) => Math.abs(d.m)) / 5) * 5);
+    const y = d3.scaleLinear().domain([-ext, ext]).range([H - m.b, m.t]);
+    const color = colorFor(ind), rc = colorFor(rival);
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(6).tickFormat(d3.timeFormat("%-I:%M %p")).tickSize(0)).select(".domain").remove();
+    svg.append("g").attr("class", "axis").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).tickValues([-ext, -ext / 2, 0, ext / 2, ext]).tickFormat((v) => v === 0 ? "even" : `${v > 0 ? ind.last : rival.last} +${Math.abs(v)}`).tickSize(-(W - m.l - m.r))).call((g) => { g.select(".domain").remove(); g.selectAll("line").attr("stroke", "#2a3a5c"); });
+    svg.append("line").attr("class", "even").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(0)).attr("y2", y(0));
+    const area = d3.area().x((d) => x(d.t)).y0(y(0)).y1((d) => y(d.m)).curve(d3.curveMonotoneX);
+    const line = d3.line().x((d) => x(d.t)).y((d) => y(d.m)).curve(d3.curveMonotoneX);
+    const grad = svg.append("defs").append("linearGradient").attr("id", "g").attr("x1", 0).attr("x2", 0).attr("y1", y(ext)).attr("y2", y(-ext)).attr("gradientUnits", "userSpaceOnUse");
+    grad.append("stop").attr("offset", "0").attr("stop-color", color); grad.append("stop").attr("offset", "0.5").attr("stop-color", color); grad.append("stop").attr("offset", "0.5").attr("stop-color", rc); grad.append("stop").attr("offset", "1").attr("stop-color", rc);
+    svg.append("path").datum(series).attr("class", "area").attr("fill", "url(#g)").attr("d", area);
+    svg.append("path").datum(series).attr("class", "line").attr("stroke", "url(#g)").attr("d", line);
+    const last = series[series.length - 1];
+    svg.append("circle").attr("cx", x(last.t)).attr("cy", y(last.m)).attr("r", 10).attr("fill", last.m >= 0 ? color : rc);
+    svg.append("text").attr("class", "endlbl").attr("x", x(last.t) + 18).attr("y", y(last.m) + 10).attr("fill", last.m >= 0 ? color : rc).text(`${last.m >= 0 ? "+" : ""}${last.m.toFixed(1)}`);
+    // expected-vote milestones
+    const marks = [25, 50, 75, 90];
+    for (const k of marks) { const p = series.find((d) => d.eevp >= k); if (p && p !== last) svg.append("text").attr("class", "lbl").attr("x", x(p.t)).attr("y", y(p.m) - 16).attr("text-anchor", "middle").text(`${k}% in`); }
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { race = s.races.get(raceId); points = await feed.history(raceId); render(); },
+    onUpdate: async (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); points = await feed.history(raceId); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

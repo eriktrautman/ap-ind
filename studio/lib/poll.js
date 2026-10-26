@@ -6,6 +6,7 @@
 //   state/<ST>.json  that state's races with county units (rewritten when the state's slot runs)
 //   status.json      poller health and freshness; written on every run, including failures
 //   settings.json    studio overrides read at the start of each run (test/live, pause)
+//   history.json     margin per featured race per run, 24 hours, for the margin tracker
 //
 // Runs as a Vercel function (api/poll.js) or from scripts/run-local.mjs; same code either way.
 
@@ -125,6 +126,29 @@ export async function pollOnce({ run = Date.now(), log = console.log, fresh = fa
     races: races.map((r) => ({ ...r, candidates: r.candidates.slice(0, 6) })),
   };
   const writes = [writeJson("index.json", index)];
+
+  // Margin history for the featured races: one point per run, kept for 24 hours, read by the
+  // margin tracker (B7). points: [epoch seconds, leader id, margin in points, eevp, total votes]
+  try {
+    const hist = (await readJson("history.json")) ?? { races: {} };
+    const cutoff = Date.now() / 1000 - 24 * 3600;
+    const t = Math.round(started.getTime() / 1000);
+    for (const r of races.filter((x) => x.featured)) {
+      const arr = (hist.races[r.id] ?? []).filter((p) => p[0] >= cutoff);
+      const [a, b] = r.candidates;
+      if (r.totalVotes > 0 && a) {
+        const point = [t, a.id, +(a.pct - (b?.pct ?? 0)).toFixed(2), Math.round(r.eevp || r.precinctsPct || 0), r.totalVotes];
+        const last = arr[arr.length - 1];
+        if (!last || last[1] !== point[1] || last[2] !== point[2] || last[4] !== point[4]) arr.push(point);
+      }
+      hist.races[r.id] = arr;
+    }
+    for (const id of Object.keys(hist.races)) if (!races.some((x) => x.id === id && x.featured)) delete hist.races[id];
+    hist.generated = started.toISOString();
+    writes.push(writeJson("history.json", hist));
+  } catch (e) {
+    status.errors.push(`history: ${diagnose(e).text}`);
+  }
 
   // 2. counties for this run's slot of states
   const states = [...new Set(races.map((r) => r.state))].sort();

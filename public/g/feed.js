@@ -9,6 +9,8 @@
 import { FEATURED_RACES } from "./control.js";
 
 const FEATURED_CANDS = new Set(FEATURED_RACES.map((r) => r.cand));
+/** True for the curated independents, whatever party label AP gives them (NP, Ind, ...). */
+export const isFeaturedCand = (id) => FEATURED_CANDS.has(String(id));
 const BLOB_INDEX_MS = 15_000;
 const BLOB_STATUS_MS = 30_000;
 const BLOB_COUNTY_MS = 60_000;
@@ -154,6 +156,12 @@ export function connectFeed(handlers) {
     } catch { return null; }
   };
 
+  /** Margin history points for a featured race from the poller: [[epochSec, leaderId, gapPts, eevp, totalVotes], ...] or null. */
+  state.history = async (raceId) => {
+    if (state.mode !== "blob") return null;
+    try { const h = await getJSON(`/data/history.json?t=${bucket(BLOB_INDEX_MS)}`); return h.races?.[raceId] ?? null; } catch { return null; }
+  };
+
   // ---------- pick a mode ----------
   if (params.get("demo")) {
     state.mode = "demo";
@@ -201,4 +209,27 @@ export function partyClass(party) {
 
 export function fmt(n) {
   return n.toLocaleString("en-US");
+}
+
+/** "U.S. Senate" / "U.S. House, District 6" / "Governor" for a race record. */
+export function officeText(race) {
+  if (!race) return "";
+  if (race.office === "S") return "U.S. Senate";
+  if (race.office === "H") return /AL$/.test(race.label ?? "") ? "U.S. House, at large" : `U.S. House, ${race.seat ?? ""}`;
+  return race.title ?? race.officeName ?? "";
+}
+
+/** AP unit name → key that matches the geometry files for non-county units. */
+export const normName = (n) => String(n ?? "").toLowerCase().replace(/\s+(county|parish|borough|census area|municipality|city and borough|town|city|plantation)$/i, "").replace(/[^a-z0-9]/g, "");
+
+/** Per-state geometry from /geo/<ST>.json (counties; towns in New England; house districts in Alaska),
+ *  fitted to [w, h]. Needs d3 and topojson globals. */
+export async function loadGeo(st, [w, h] = [900, 560]) {
+  const topo = await (await fetch(`/geo/${st}.json`)).json();
+  const obj = topo.objects[Object.keys(topo.objects)[0]];
+  const feats = topojson.feature(topo, obj).features;
+  const fc = { type: "FeatureCollection", features: feats };
+  const [lon, lat] = d3.geoCentroid(fc);
+  const proj = d3.geoConicEqualArea().rotate([-lon, 0]).center([0, lat]).parallels([lat - 6, lat + 6]).fitSize([w, h], fc);
+  return { feats, kind: feats[0]?.properties?.kind ?? "county", path: d3.geoPath(proj) };
 }

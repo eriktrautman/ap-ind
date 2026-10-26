@@ -23,6 +23,8 @@ createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   try {
     if (url.pathname.startsWith("/data/")) {
+      // DEV_DATA=<dir>: a file there with the same relative path overrides the Blob copy (for testing).
+      if (process.env.DEV_DATA) { const o = await file(join(process.env.DEV_DATA, url.pathname.slice(6))); if (o) { res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await readFile(o)); return; } }
       const r = await fetch(`${BLOB}${url.pathname.slice(5)}`, { cache: "no-store" });
       res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json", "cache-control": "no-store" });
       res.end(Buffer.from(await r.arrayBuffer()));

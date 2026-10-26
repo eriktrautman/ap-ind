@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Votes Still Out</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* B8: what share of the remaining vote each of the top two needs. ?id=<raceID> required.
+     ?who=<candidateID> picks the candidate the headline is about (default: the featured independent). */
+  .body { display: grid; grid-template-rows: auto auto auto 1fr; gap: 22px; min-height: 0; overflow: hidden; }
+  .headline { font-size: 44px; font-weight: 700; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .headline b { color: var(--gold); }
+  .seg { display: flex; height: 54px; border-radius: 6px; overflow: hidden; background: #16244a; }
+  .seg i { display: block; height: 100%; transition: width 900ms cubic-bezier(.2,.8,.2,1); }
+  .seg i.rest { background: repeating-linear-gradient(45deg, #16244a 0 10px, #2a3a5c 10px 20px); flex: 1; }
+  .segl { display: flex; justify-content: space-between; font-size: 28px; color: var(--muted); margin-top: 8px; }
+  .segl b { color: var(--fg); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .stat { background: rgba(0,0,0,.25); border-radius: 8px; padding: 14px 26px; display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+  .stat .big { font-size: 72px; font-weight: 700; line-height: 1; white-space: nowrap; }
+  .stat .lab { font-size: 26px; color: var(--muted); line-height: 1.25; } .stat .lab b { color: var(--fg); }
+  .stat.won .big { color: var(--ok); }
+  table { width: 72%; font-size: 26px; } td, th { padding: 6px 8px; }
+  .keynote { font-size: 22px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Votes still out</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="headline" id="headline"></div>
+    <div><div class="seg" id="seg"></div><div class="segl" id="segl"></div></div>
+    <div class="stats" id="stats"></div>
+    <div><table><thead><tr><th>Where the votes are</th><th class="r">In</th><th class="r">Est. still out</th><th class="r" id="th-cand">Counted so far</th></tr></thead><tbody id="rows"></tbody></table><div class="keynote" id="keynote"></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Remaining = AP expected vote minus votes counted, by county · "needs" assumes the rest splits between the top two</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, partyClass, fmt, officeText } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  const raceId = q.get("id"), who = q.get("who"), bg = q.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7" };
+  const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
+  let race = null, counties = null;
+
+  // Expected total for a unit from AP's eevp: counted / (eevp/100). Units with nothing in yet are unknown.
+  const expected = (counted, eevp) => eevp > 0 ? counted / (eevp / 100) : null;
+
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
+    const cand = (who && race.candidates.find((c) => c.id === who)) ?? race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent) ?? cands[0];
+    const rival = cands.find((c) => c.id !== cand.id) ?? cand;
+    const leader = cands[0];
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("th-cand").textContent = `${cand.last} so far`;
+
+    const counted = race.totalVotes;
+    const total = expected(counted, race.eevp);
+    const remaining = total ? Math.max(0, Math.round(total - counted)) : null;
+    if (!counted) { $("headline").innerHTML = `<span class="note">No votes counted yet.</span>`; $("seg").innerHTML = ""; $("segl").innerHTML = ""; $("stats").innerHTML = ""; $("rows").innerHTML = ""; return; }
+
+    // Shares of the full expected vote for the bar
+    const denom = total ?? counted;
+    const others = counted - cand.votes - (rival.id !== cand.id ? rival.votes : 0);
+    $("seg").innerHTML = `<i style="width:${leader.votes / denom * 100}%;background:${colorFor(leader)}"></i>` +
+      (leader.id === cand.id ? `<i style="width:${rival.votes / denom * 100}%;background:${colorFor(rival)}"></i>` : `<i style="width:${cand.votes / denom * 100}%;background:${colorFor(cand)}"></i>`) +
+      `<i style="width:${others / denom * 100}%;background:#3a4f7a"></i><i class="rest"></i>`;
+    $("segl").innerHTML = `<span><b style="color:${colorFor(leader)}">${esc(leader.last)} ${fmt(leader.votes)}</b> · <b style="color:${colorFor(leader.id === cand.id ? rival : cand)}">${esc((leader.id === cand.id ? rival : cand).last)} ${fmt((leader.id === cand.id ? rival : cand).votes)}</b> <span>counted · ${Math.round(race.eevp || race.precinctsPct)}%</span></span>` +
+      `<span>${remaining === null ? "AP has no expected-vote estimate yet" : `<b>~${fmt(remaining)} still to count</b> · ${Math.round(100 - (race.eevp || 0))}%`}</span>`;
+
+    if (race.called) {
+      const w = race.candidates.find((c) => c.winner) ?? leader;
+      $("headline").innerHTML = `AP has called it for <b style="color:${colorFor(w)}">${esc(w.name)}</b>`;
+    } else if (remaining === null || remaining < 1) {
+      $("headline").innerHTML = `${esc(leader.last)} leads by <b>${fmt(leader.votes - (cands[1]?.votes ?? 0))}</b> with the expected vote in`;
+    } else {
+      const deficit = leader.votes - cand.votes;
+      const need = (deficit + remaining / 2) / remaining * 100;
+      const holdNeed = ((cands[1]?.votes ?? 0) - leader.votes + remaining / 2) / remaining * 100;
+      $("headline").innerHTML = cand.id === leader.id
+        ? (holdNeed <= 0 ? `${esc(cand.last)} leads by <b>${fmt(leader.votes - (cands[1]?.votes ?? 0))}</b>, more than the <b>${fmt(remaining)}</b> still to count` : `${esc(cand.last)} leads by <b>${fmt(leader.votes - (cands[1]?.votes ?? 0))}</b> and needs <b>${holdNeed.toFixed(1)}%</b> of what's left to hold it`)
+        : need > 100 ? `${esc(cand.last)} would need more than every remaining vote` : `${esc(cand.last)} needs <b>${need.toFixed(1)}%</b> of what's left`;
+    }
+    const pair = cand.id === leader.id ? [cand, rival] : [cand, leader];
+    // Each candidate against their best rival: share of the remaining vote that would put them level,
+    // assuming the rest splits between the two of them.
+    $("stats").innerHTML = pair.map((c) => {
+      if (remaining === null || remaining < 1) return `<div class="stat"><span class="big" style="color:${colorFor(c)}">${Number(c.pct).toFixed(1)}%</span><span class="lab"><b>${esc(c.last)}</b> of the vote counted</span></div>`;
+      const best = cands.find((x) => x.id !== c.id);
+      const d = (best?.votes ?? 0) - c.votes;
+      const need = (d + remaining / 2) / remaining * 100;
+      const txt = need > 100 ? ">100%" : need <= 0 ? "0%" : `${need.toFixed(1)}%`;
+      const lab = need <= 0 ? `<b>${esc(c.last)}</b> leads by ${fmt(-d)}, more than is left to count` : `of remaining votes <b>${esc(c.last)}</b> needs${d > 0 ? ` · trailing by ${fmt(d)}` : d < 0 ? ` · leading by ${fmt(-d)}` : " · tied"}`;
+      return `<div class="stat ${need <= 0 ? "won" : ""}"><span class="big" style="color:${colorFor(c)}">${txt}</span><span class="lab">${lab}</span></div>`;
+    }).join("");
+
+    if (!counties) { $("rows").innerHTML = ""; $("keynote").textContent = "Waiting for county results."; return; }
+    const rows = counties.map((u) => {
+      const tot = Object.values(u.votes).reduce((s, v) => s + v, 0);
+      const exp = expected(tot, u.eevp);
+      return { u, tot, inPct: u.eevp || u.precinctsPct, out: exp === null ? null : Math.max(0, Math.round(exp - tot)), share: tot ? (u.votes[cand.id] ?? 0) / tot * 100 : null };
+    });
+    const known = rows.filter((r) => r.out !== null).sort((a, b) => b.out - a.out);
+    const top = known.slice(0, 3);
+    const rest = known.slice(3);
+    const unknown = rows.filter((r) => r.out === null);
+    const restOut = rest.reduce((s, r) => s + r.out, 0), restTot = rest.reduce((s, r) => s + r.tot, 0), restCand = rest.reduce((s, r) => s + (r.u.votes[cand.id] ?? 0), 0);
+    const restIn = rest.length ? rest.reduce((s, r) => s + r.tot, 0) / rest.reduce((s, r) => s + (r.out + r.tot), 0) * 100 : 0;
+    $("rows").innerHTML = top.map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b">${fmt(r.out)}</td><td class="r" style="color:${colorFor(cand)}">${r.share === null ? "—" : r.share.toFixed(0) + "%"}</td></tr>`).join("") +
+      (rest.length ? `<tr><td>Other ${rest.length} ${rest.length === 1 ? "area" : "areas"}</td><td class="r m">${Math.round(restIn)}%</td><td class="r b">${fmt(restOut)}</td><td class="r" style="color:${colorFor(cand)}">${restTot ? (restCand / restTot * 100).toFixed(0) + "%" : "—"}</td></tr>` : "");
+    $("keynote").textContent = unknown.length ? `${unknown.length} ${unknown.length === 1 ? "area has" : "areas have"} nothing counted yet and no estimate.` : "";
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { race = s.races.get(raceId); if (race) counties = await feed.counties(raceId); render(); },
+    onUpdate: async (s, msg) => {
+      if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); }
+      if (msg.type === "counties" && race) { counties = await feed.counties(raceId); render(); }
+    },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

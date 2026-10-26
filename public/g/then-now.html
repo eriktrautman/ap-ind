@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Then vs Now</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* B10: tonight beside the last result for the same seat, compared county by county.
+     ?id=<raceID> required. ?who=ind (default) | main picks whose lane the headline follows. */
+  .body { display: grid; grid-template-rows: auto auto 1fr; gap: 20px; min-height: 0; overflow: hidden; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
+  .colh { font-size: 24px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; border-bottom: 2px solid var(--rule); padding-bottom: 8px; }
+  .rows { display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 300px 1fr 120px; align-items: center; gap: 18px; font-size: 30px; }
+  .row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .bar { height: 30px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; } .row .bar i { display: block; height: 100%; border-radius: 4px; }
+  .row .pc { text-align: right; font-weight: 700; }
+  .row.lane .nm { color: #fde68a; }
+  .headline { font-size: 40px; font-weight: 700; line-height: 1.2; }
+  .headline b { color: var(--gold); } .headline small { display: block; font-size: 24px; font-weight: 400; color: var(--muted); margin-top: 4px; }
+  table { font-size: 25px; } th, td { padding: 5px 8px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Then vs now</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="cols">
+      <div><div class="colh" id="h-then">Last time</div><div class="rows" id="then"></div></div>
+      <div><div class="colh" id="h-now">Tonight</div><div class="rows" id="now"></div></div>
+    </div>
+    <div class="headline" id="headline"></div>
+    <div><table><thead><tr><th>County</th><th class="r">In</th><th class="r" id="th-then">Then</th><th class="r" id="th-now">Now</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and the last contest for this seat · same-county comparison over counties with 10%+ of the expected vote in</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, partyClass, fmt, officeText, normName, isFeaturedCand } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  const raceId = q.get("id"), who = q.get("who") ?? "ind", bg = q.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7" };
+  const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
+  const MIN_IN = 10;
+  let race = null, counties = null, prior = null;
+
+  async function loadPrior() {
+    try { const d = await (await fetch("./baseline-federal.json")).json(); prior = d.races?.[raceId] ?? null; } catch { prior = null; }
+  }
+  /** The prior candidate the chosen candidate is compared with: the same person if they ran, else the same party lane, else the main challenger. */
+  function laneFor(cand) {
+    const pc = prior.candidates;
+    return pc.find((c) => c.id === cand.id)
+      ?? (cand.party === "GOP" || cand.party === "Dem" ? pc.find((c) => c.party === cand.party) : null)
+      ?? pc.find((c) => c.independent) ?? pc.find((c) => c.party !== pc[0].party) ?? pc[1] ?? pc[0];
+  }
+  const isInd = (c) => c.featured || c.independent || isFeaturedCand(c.id);
+  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm"><span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${isInd(c) ? "I" : c.party === "Dem" ? "D" : c.party === "GOP" ? "R" : esc(c.party)}</span>${esc(c.last)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
+
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    const nowC = [...race.candidates].sort((a, b) => b.votes - a.votes);
+    const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent);
+    const main = nowC.find((c) => c.id !== ind?.id) ?? nowC[0];
+    const cand = who === "main" ? main : (ind ?? nowC[0]);
+    const maxNow = Math.max(1, ...nowC.map((c) => c.pct));
+    $("h-now").textContent = `Tonight · ${race.totalVotes ? Math.round(race.eevp || race.precinctsPct) + "% in" : "no results yet"}`;
+    if (!prior) {
+      $("h-then").textContent = "Last time";
+      $("then").innerHTML = `<div class="note">No prior result on file for this seat.</div>`;
+      $("now").innerHTML = nowC.slice(0, 4).map((c) => rowHtml(c, maxNow, c.id === cand.id)).join("");
+      $("headline").innerHTML = ""; $("rows").innerHTML = ""; return;
+    }
+    const lane = laneFor(cand);
+    const year = prior.date.slice(0, 4);
+    const maxThen = Math.max(1, ...prior.candidates.map((c) => c.pct));
+    $("h-then").textContent = `${year} · ${prior.office === "S" ? "Senate" : "House"}${/special/i.test(prior.raceType ?? "") ? " special" : ""}`;
+    $("then").innerHTML = prior.candidates.slice(0, 3).map((c) => rowHtml(c, maxThen, c.id === lane.id)).join("");
+    $("now").innerHTML = nowC.slice(0, 3).map((c) => rowHtml(c, maxNow, c.id === cand.id)).join("");
+    $("th-then").textContent = `${lane.last} ${year}`; $("th-now").textContent = `${cand.last} 2026`;
+    if (!counties) { $("headline").innerHTML = `<small>Waiting for county results.</small>`; $("rows").innerHTML = ""; return; }
+    const byFips = prior.units;
+    const rows = []; let nowV = 0, nowT = 0, thenV = 0, thenT = 0;
+    for (const u of counties) {
+      const tot = Object.values(u.votes).reduce((s, v) => s + v, 0);
+      const inPct = u.eevp || u.precinctsPct;
+      const b = byFips[u.fips] ?? Object.values(byFips).find((x) => normName(x.name) === normName(u.name));
+      if (!b || !b.total) continue;
+      const share = tot ? (u.votes[cand.id] ?? 0) / tot * 100 : null;
+      const base = (b.votes[lane.id] ?? 0) / b.total * 100;
+      const ok = tot > 0 && inPct >= MIN_IN;
+      if (ok) { nowV += u.votes[cand.id] ?? 0; nowT += tot; thenV += b.votes[lane.id] ?? 0; thenT += b.total; }
+      rows.push({ u, b, inPct, share, base, diff: ok && share !== null ? share - base : null, ok });
+    }
+    const agg = nowT && thenT ? (nowV / nowT * 100) - (thenV / thenT * 100) : null;
+    const n = rows.filter((r) => r.ok).length;
+    const same = lane.id === cand.id;
+    $("headline").innerHTML = agg === null ? `<small>No counties with enough of the vote in yet.</small>`
+      : `${esc(cand.last)} running <b class="${agg >= 0 ? "ahead" : "behind"}">${agg >= 0 ? "+" : ""}${agg.toFixed(1)}</b> ${agg >= 0 ? "ahead of" : "behind"} ${same ? `${esc(cand.last)}'s own ${year} pace` : `${esc(lane.last)}'s ${year} pace`} in the ${n} counted ${n === 1 ? "county" : "counties"}<small>${same ? "Same candidate, same counties, " : `Compared with ${esc(lane.name)} (${esc(lane.party)}), the ${year} ${lane.winner ? "winner" : "runner-up"} for this seat; `}counties with under ${MIN_IN}% in are left out.</small>`;
+    rows.sort((a, b) => b.b.total - a.b.total);
+    $("rows").innerHTML = rows.slice(0, 5).map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r">${r.base.toFixed(1)}%</td><td class="r b">${r.share === null ? "—" : r.share.toFixed(1) + "%"}</td><td class="r b ${r.diff === null ? "" : r.diff >= 0 ? "ahead" : "behind"}">${r.diff === null ? "—" : (r.diff >= 0 ? "+" : "") + r.diff.toFixed(1)}</td></tr>`).join("");
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { race = s.races.get(raceId); await loadPrior(); if (race) counties = await feed.counties(raceId); render(); },
+    onUpdate: async (s, msg) => {
+      if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); }
+      if (msg.type === "counties" && race) { counties = await feed.counties(raceId); render(); }
+    },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

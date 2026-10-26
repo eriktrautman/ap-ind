@@ -159,9 +159,9 @@
 const META = {
   minPerPoint: 5,          // assumed pace until three stories are done
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
-  phase: "E3 Per-race graphics",
-  note: "building B6, B8, B9, the 2024 baseline, B10, B7",
-  updated: "2026-10-26T23:36:01Z",
+  phase: "E4 Movement graphics",
+  note: "building C1, C6, D1, D2, D5, D6, D7, D11, then the trend and polling data",
+  updated: "2026-10-26T23:48:18Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -192,12 +192,12 @@ const STORIES = [
   { id: "S31", epic: "E3", pts: 2, status: "done", title: "Featured Charts: one set for all featured races, defaulting to every per-race chart built from AP data (B5, B6, B7, B8, B9, B10, B13); add and remove per source", deps: "S30", doneAt: "2026-10-26T23:36:01Z" },
   { id: "S32", epic: "E3", pts: 3, status: "done", title: "Race Detail grid: one row per featured race, one card per featured chart, race band on every card, open links carrying race id and source", deps: "S14, S31", doneAt: "2026-10-26T23:36:01Z" },
   { id: "S35", epic: "E3", pts: 2, status: "done", title: "B5 race result and B13 versus-2024 running on Blob data in the deployment, baseline from the static 2024 file, counties from state files", deps: "S01", doneAt: "2026-10-26T23:36:01Z" },
-  { id: "S33", epic: "E3", pts: 5, status: "todo", title: "B6 live county map graphic, 1920x1080: leader by county with opacity by share reporting, legend, title-safe, ported from the Watch Party map", deps: "S01" },
-  { id: "S34", epic: "E3", pts: 3, status: "todo", title: "B8 votes still out graphic: expected vote remaining by county from AP's eevp, what the independent needs of it, with the key note on screen", deps: "S01" },
-  { id: "S36", epic: "E3", pts: 3, status: "todo", title: "B9 ranked-choice rounds graphic (poller keeps the round data AP sends)", note: "Collision: studio/lib/ap.js, additive. AK-AL is ranked choice.", deps: "S01" },
-  { id: "S39", epic: "E3", pts: 3, status: "todo", title: "2024 federal baseline from the AP API, fetched once by a script and committed as config JSON: national Senate and House totals by party (C6, D10) and county results for the featured states (B10)", note: "Answers question 8: no SQLite in the deployment. Same pattern as config/baseline-2024-pres.json. AP allows 10 requests a minute; the script paces itself." },
-  { id: "S37", epic: "E3", pts: 5, status: "todo", title: "B10 then-versus-now by county, tonight against the 2024 result for the same seat", deps: "S39, S01" },
-  { id: "S38", epic: "E3", pts: 5, status: "todo", title: "B7 margin tracker over the night: the poller appends each race's margin to a per-race history file in Blob; the graphic draws the line", note: "Collision: studio/lib/poll.js, additive.", deps: "S01" },
+  { id: "S33", epic: "E3", pts: 5, status: "done", title: "B6 live county map graphic, 1920x1080: leader by county with opacity by share reporting, legend, title-safe, ported from the Watch Party map", deps: "S01", doneAt: "2026-10-26T23:48:18Z" },
+  { id: "S34", epic: "E3", pts: 3, status: "done", title: "B8 votes still out graphic: expected vote remaining by county from AP's eevp, what the independent needs of it, with the key note on screen", deps: "S01", doneAt: "2026-10-26T23:48:18Z" },
+  { id: "S36", epic: "E3", pts: 3, status: "done", title: "B9 ranked-choice rounds graphic (poller keeps the round data AP sends)", note: "Collision: studio/lib/ap.js, additive. AK-AL is ranked choice.", deps: "S01", doneAt: "2026-10-26T23:48:18Z" },
+  { id: "S39", epic: "E3", pts: 3, status: "done", title: "2024 federal baseline from the AP API, fetched once by a script and committed as config JSON: national Senate and House totals by party (C6, D10) and county results for the featured states (B10)", note: "Answers question 8: no SQLite in the deployment. Same pattern as config/baseline-2024-pres.json. AP allows 10 requests a minute; the script paces itself.", doneAt: "2026-10-26T23:48:18Z" },
+  { id: "S37", epic: "E3", pts: 5, status: "done", title: "B10 then-versus-now by county, tonight against the 2024 result for the same seat", deps: "S39, S01", doneAt: "2026-10-26T23:48:18Z" },
+  { id: "S38", epic: "E3", pts: 5, status: "done", title: "B7 margin tracker over the night: the poller appends each race's margin to a per-race history file in Blob; the graphic draws the line", note: "Collision: studio/lib/poll.js, additive.", deps: "S01", doneAt: "2026-10-26T23:48:18Z" },
   { id: "S40", epic: "E4", pts: 2, status: "todo", title: "Movement Charts: library of the C and D graphics with the default set selected (C1, C6, C7, D1, D2, D3, D4, D5, D6, D7, D10, D11); add and remove per source", deps: "S14" },
   { id: "S41", epic: "E4", pts: 3, status: "todo", title: "C1 featured races board: every featured independent with share, margin, expected vote in and call status", deps: "S04" },
   { id: "S42", epic: "E4", pts: 3, status: "todo", title: "C6 national independent vote: sum of non-major votes across every race against the 2024 share", deps: "S04, S39" },
@@ -231,6 +231,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-26T23:48:18Z", what: "Per-race graphics landed: B6 county map, B8 votes still out, B9 ranked-choice rounds (first choices now; rounds when AP carries them), B10 then vs now on a new AP-fetched baseline (config/baseline-federal.json: 2024 national Senate/House totals and the last contest for each featured seat), B7 margin tracker fed by a new poller history file. Rendered and checked in headless Chrome." },
   { t: "2026-10-26T23:36:01Z", what: "Control room landed (commit): /studio rebuilt with the status bar, state selector, safeguard dialogs, ticker, race detail, movement and catalog sections, graphic cards with the thumbnail budget. Flows checked in headless Chrome with no console errors. Next: the per-race graphics that are still placeholders." },
   { t: "2026-10-26T23:26:56Z", what: "Foundations landed (commit 3baccab): Blob feed path with race.html and swing.html rendering real data on the deployment, control state module at studio/lib/control.js (served at /g/control.js), producer API with the new fields, ticker on watchState with the AP Call flag, homepage and nav links. Verified on a Vercel preview deployment and in headless Chrome against a local dist server. Observation: the production poller last ran at 21:28Z; the every-minute cron does not appear to be firing." },
   { t: "2026-10-26T21:45:00Z", what: "Plan v1 written: 41 stories, 111 core points, 13 optional. Waiting on the key questions." },
