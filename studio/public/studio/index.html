@@ -3,16 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studio · IND Election Night</title>
+<title>Control room · IND Election Night</title>
 <link rel="stylesheet" href="/studio/studio.css">
 </head>
 <body>
-<div class="topbar"><b>IND Election Night</b><span class="subbrand">Studio</span><span class="tag">Ticker producer and poller controls</span><span class="status" id="status"><span class="dot off"></span><span>loading</span></span><button class="link" id="logout" hidden>Sign out</button></div>
-<div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
+<header class="top">
+  <div class="brandrow">
+    <b>IND Election Night</b><span class="subbrand">Control room</span>
+    <nav class="sections" id="sectionnav">
+      <a href="#ticker">Ticker</a><a href="#detail">Race Detail</a><a href="#movement">Movement Overview</a><a href="#catalog">Full Catalog</a>
+    </nav>
+    <div class="srcsel" id="srcsel" title="Which state feeds this page's previews and which one your edits go to">
+      <span class="lbl">State</span>
+      <button data-src="default">Default</button><button data-src="global">Global</button><button data-src="local">Local</button>
+    </div>
+    <button class="link" id="logout" hidden>Sign out</button>
+  </div>
+  <div class="statusbar" id="statusbar">
+    <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
+  </div>
+  <div class="srcnote" id="srcnote"></div>
+  <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
+  <div class="problem top" id="problem" hidden></div>
+</header>
 
 <div class="login" id="login" hidden>
   <form id="loginform">
-    <h1>Studio sign-in</h1>
+    <h1>Control room sign-in</h1>
     <p>Shared studio password. Ask the engineer on duty if you don't have it.</p>
     <input type="password" id="password" placeholder="Password" autocomplete="current-password" autofocus>
     <button type="submit">Sign in</button>
@@ -21,34 +38,32 @@
 </div>
 
 <main id="app" hidden>
-  <section class="card" id="poller">
-    <div class="cardhead">
-      <h2>AP poller</h2>
-      <div class="actions">
-        <button id="pollnow">Poll now</button>
-        <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">Poll now + reset caches</button>
-        <button id="pause">Pause polling</button>
-        <span class="seg" id="rtype"><span class="lbl">Results</span><button data-rt="t">Test</button><button data-rt="l">Live</button></span>
-      </div>
+
+  <details class="card poller" id="poller">
+    <summary><h2>AP poller</h2><span class="muted small" id="pollersummary"></span></summary>
+    <div class="actions">
+      <button id="pollnow">Poll now</button>
+      <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">Poll now + reset caches</button>
+      <button id="pause">Pause polling</button>
+      <span class="seg" id="rtype"><span class="lbl">Results</span><button data-rt="t">Test</button><button data-rt="l">Live</button></span>
+      <span class="note" id="pollmsg"></span>
     </div>
     <div class="facts" id="facts"></div>
-    <div class="problem" id="problem" hidden></div>
-    <div class="note" id="pollmsg"></div>
-  </section>
+  </details>
 
-  <section class="card">
-    <div class="cardhead">
-      <h2>Ticker</h2>
-      <div class="actions">
-        <span class="note" id="pubstate"></span>
-        <button class="primary" id="publish" disabled>Publish to ticker</button>
-        <button id="discard" hidden>Discard changes</button>
-      </div>
+  <div class="toolbar">
+    <div class="srcactions" id="srcactions"></div>
+    <label class="bgpick">Open graphics on <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>
+    <span class="muted small" id="thumbbudget"></span>
+  </div>
+
+  <section class="card" id="ticker">
+    <div class="cardhead"><h2>Ticker</h2><span class="srcbadge"></span>
+      <div class="actions"><label class="toggle"><input type="checkbox" id="callhl"> AP Call yellow highlight</label></div>
     </div>
-    <div class="otherop" id="otherop" hidden></div>
     <div class="cols">
       <div class="col">
-        <h3>Races <span class="muted" id="count"></span></h3>
+        <h3>Races in the feed <span class="muted" id="count"></span></h3>
         <div class="filters">
           <input id="q" placeholder="Search state, office, candidate" size="26">
           <select id="state"><option value="">All states</option></select>
@@ -62,21 +77,68 @@
         <div class="list" id="available"><div class="empty">Loading races…</div></div>
       </div>
       <div class="col">
-        <h3>On the ticker <span class="muted" id="pincount"></span></h3>
+        <h3>Ticker races <span class="muted" id="pincount"></span></h3>
         <div class="list pins" id="pins"></div>
+        <p class="muted small">At least one race stays on the ticker. Removing the last one puts the default list back.</p>
         <h3>Manual items</h3>
         <form class="addmanual" id="addmanual"><input id="manualtext" placeholder="Text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add</button></form>
         <div class="list" id="manual"></div>
-        <h3>When nothing is pinned</h3>
-        <input id="idletext" placeholder="Idle crawl text (default: Election night coverage · results as they come in from AP)" maxlength="240">
-        <p class="muted small">With no pins, the ticker shows the featured races automatically. With no featured races either, it crawls this text. It never goes blank.</p>
+        <h3>Idle text</h3>
+        <input id="idletext" placeholder="Shown only if nothing at all is on the ticker" maxlength="240">
       </div>
     </div>
-    <h3>Preview <span class="muted" id="previewnote"></span></h3>
-    <div class="preview"><div class="frame"><iframe id="preview" src="/ticker?preview=1&bg=black" title="Ticker preview"></iframe></div></div>
-    <p class="muted small">Preview shows your unpublished draft. The on-air page is <code id="tickerurl"></code>, open it in its own tab or as the switcher's browser input. It picks up a publish within about 30 seconds (Blob propagation, not the page).</p>
+    <h3>Example ticker <span class="muted" id="previewnote"></span></h3>
+    <div class="preview"><div class="frame"><iframe id="preview" title="Ticker preview"></iframe></div></div>
+    <p class="muted small">The on-air page is <code id="tickerurl"></code> (add <code>?bg=green</code> for the key). It always uses Global and re-reads it every 5 seconds.</p>
+  </section>
+
+  <section class="card" id="detail">
+    <div class="cardhead"><h2>Race Detail</h2><span class="srcbadge"></span></div>
+    <div class="cols">
+      <div class="col">
+        <h3>Featured races <span class="muted" id="featcount"></span></h3>
+        <div class="list pins" id="featured"></div>
+        <div class="filters addfeat"><input id="featq" placeholder="Add a race: search label, state, candidate" size="34"><div class="suggest" id="featsuggest" hidden></div></div>
+      </div>
+      <div class="col">
+        <h3>Featured charts <span class="muted small">(the same set for every featured race)</span></h3>
+        <div class="chartpick" id="racecharts"></div>
+      </div>
+    </div>
+    <div class="racegrid" id="racegrid"></div>
+  </section>
+
+  <section class="card" id="movement">
+    <div class="cardhead"><h2>Movement Overview</h2><span class="srcbadge"></span></div>
+    <h3>Movement charts</h3>
+    <div class="chartpick" id="movecharts"></div>
+    <div class="cardgrid" id="movegrid"></div>
+  </section>
+
+  <section class="card" id="catalog">
+    <div class="cardhead"><h2>Full Catalog</h2><span class="srcbadge"></span><span class="muted small">Every race in the AP feed. Expand a race for all of its graphics.</span></div>
+    <div class="filters">
+      <input id="cq" placeholder="Search label, state, office, candidate" size="30">
+      <select id="cstate"><option value="">All states</option></select>
+      <select id="coffice"><option value="">All offices</option><option value="S">Senate</option><option value="H">House</option><option value="G">Governor</option><option value="statewide">Other statewide</option><option value="I">Ballot measures</option><option value="M">Mayor</option></select>
+      <span class="chip" data-cf="ind">Independent on ballot</span>
+      <span class="chip" data-cf="featured">Featured</span>
+      <span class="chip" data-cf="called">AP called</span>
+      <span class="chip" data-cf="counting">Counting</span>
+      <span class="muted small" id="ccount"></span>
+    </div>
+    <div class="catalog" id="catalogList"></div>
   </section>
 </main>
+
+<dialog id="dlg">
+  <form method="dialog" class="dlgform">
+    <h2 id="dlgtitle"></h2>
+    <div id="dlgbody"></div>
+    <div class="dlgactions"><button value="cancel" type="submit">Cancel</button><button value="ok" type="submit" class="primary" id="dlgok">Confirm</button></div>
+  </form>
+</dialog>
+
 <script type="module" src="/studio/studio.js"></script>
 </body>
 </html>

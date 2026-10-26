@@ -29,6 +29,8 @@ createServer(async (req, res) => {
       return;
     }
     if (url.pathname.startsWith("/api/")) {
+      // DEV_AUTHED=1 renders the control room without a password (writes are still refused).
+      if (url.pathname === "/api/login" && req.method === "GET" && process.env.DEV_AUTHED) { res.writeHead(200, { "content-type": "application/json" }); res.end(JSON.stringify({ authed: true, configured: true })); return; }
       if (req.method !== "GET") { res.writeHead(405, { "content-type": "application/json" }); res.end(JSON.stringify({ error: "dev server is read-only; publish from the deployment" })); return; }
       const r = await fetch(`${LIVE}${url.pathname}${url.search}`, { cache: "no-store" });
       res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json", "cache-control": "no-store" });
