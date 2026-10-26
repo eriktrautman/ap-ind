@@ -46,7 +46,7 @@ The broadcast ticker and its producer panel run on the Watch Party's Vercel proj
 | `/studio` | Producer panel (shared password, `STUDIO_PASSWORD` env var). Poller status and controls; pick and order the races on the ticker, add manual items, preview, publish. |
 | `/ticker` | On-air ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Open it in its own tab or as the switcher's browser input; it is never changed from the panel, only its content is. |
 
-The ticker polls producer state every 5 s and results every 15 s. With nothing pinned it shows the featured races; with none of those it crawls the idle text. Fetch failures keep the last good crawl on screen. A `TEST DATA` badge appears whenever the poller is on AP test data.
+The ticker polls producer state every 5 s and results every 15 s; a publish reaches air within about 30 s (Blob propagation). With nothing pinned it shows the featured races; with none of those it crawls the idle text. Fetch failures keep the last good crawl on screen. A `TEST DATA` badge appears whenever the poller is on AP test data.
 
 Poller controls in the panel: **Poll now**, **Poll now + reset caches**, **Pause/Resume polling**, and the **Test/Live** results switch. These write `settings.json` in Blob, which the poller reads at the start of every run, so none of them need a redeploy. `status.json` is written on every run, including failures, with a plain-English diagnosis and what to do.
 
