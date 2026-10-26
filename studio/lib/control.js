@@ -36,7 +36,7 @@ export const CHARTS = [
   { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: true },
   { id: "C6",  kind: "movement", name: "National independent vote", page: "/g/ind-vote.html",  built: true },
-  { id: "C7",  kind: "movement", name: "Poll vs result",            page: "/g/polls.html",     built: false },
+  { id: "C7",  kind: "movement", name: "Poll vs result",            page: "/g/polls.html",     built: true },
   { id: "D1",  kind: "movement", name: "State of the Senate races, map", page: "/g/senate-map.html", built: true },
   { id: "D2",  kind: "movement", name: "State of the House races, map",  page: "/g/house-map.html",  built: true },
   { id: "D3",  kind: "movement", name: "Balance of power, Senate",  page: "/g/bop-senate.html", built: true },
