@@ -3,13 +3,18 @@
 
 const BASE = "https://api.ap.org/v3";
 
+// Runtime overrides (from settings.json in Blob) win over the environment, so the studio
+// can switch test/live without a redeploy.
+let overrides = {};
+export function setOverrides(o) { overrides = o ?? {}; }
+
 export function cfg() {
   const key = process.env.AP_API_KEY;
   if (!key) throw new Error("AP_API_KEY is not set");
   return {
     key,
     electionDate: process.env.AP_ELECTION_DATE ?? "2026-11-03",
-    resultsType: process.env.AP_RESULTS_TYPE ?? "t",
+    resultsType: overrides.resultsType ?? process.env.AP_RESULTS_TYPE ?? "t",
   };
 }
 
@@ -19,7 +24,11 @@ export async function fetchAp(path, params) {
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   u.searchParams.set("format", "json");
   const res = await fetch(u, { headers: { "x-api-key": key, "Accept-Encoding": "gzip", Accept: "application/json" }, signal: AbortSignal.timeout(25_000) });
-  if (!res.ok) throw new Error(`AP ${res.status} for ${path}`);
+  if (!res.ok) {
+    const e = new Error(`AP ${res.status} for ${path}`);
+    e.apStatus = res.status;
+    throw e;
+  }
   return res.json();
 }
 

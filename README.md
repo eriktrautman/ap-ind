@@ -37,6 +37,30 @@ Any graphic accepts `?demo=1` to run on an embedded sample snapshot without the 
 
 Producer controls (no auth yet; bind to localhost or put behind a password): `PUT /api/producer` `{pinnedRaceIds, manualItems, eventWindowMinutes}` · `POST /api/producer/manual` `{text}` · `POST /api/poll`
 
+## Studio and on-air ticker (Vercel)
+
+The broadcast ticker and its producer panel run on the Watch Party's Vercel project, with no server of our own: the poller writes JSON to Vercel Blob once a minute (Vercel Cron), the pages poll those files.
+
+| Path on ind-watch-party.vercel.app | Purpose |
+|---|---|
+| `/studio` | Producer panel (shared password, `STUDIO_PASSWORD` env var). Poller status and controls; pick and order the races on the ticker, add manual items, preview, publish. |
+| `/ticker` | On-air ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Open it in its own tab or as the switcher's browser input; it is never changed from the panel, only its content is. |
+
+The ticker polls producer state every 5 s and results every 15 s. With nothing pinned it shows the featured races; with none of those it crawls the idle text. Fetch failures keep the last good crawl on screen. A `TEST DATA` badge appears whenever the poller is on AP test data.
+
+Poller controls in the panel: **Poll now**, **Poll now + reset caches**, **Pause/Resume polling**, and the **Test/Live** results switch. These write `settings.json` in Blob, which the poller reads at the start of every run, so none of them need a redeploy. `status.json` is written on every run, including failures, with a plain-English diagnosis and what to do.
+
+Functions: `GET/POST /api/login`, `GET/PUT /api/producer`, `GET/PUT /api/settings`, `GET|POST /api/poll` (cron bearer or studio cookie). Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `STUDIO_PASSWORD`.
+
+Local fallback (same Blob store, same pages):
+
+```sh
+cd watch-party
+cp ../.env .env            # add BLOB_READ_WRITE_TOKEN (vercel env pull) and STUDIO_PASSWORD
+vercel dev --listen 3100   # studio at http://localhost:3100/studio, ticker at /ticker
+npm run poll               # poll AP every 60 s from this machine if the Vercel cron is not running
+```
+
 ## Data
 
 - `config/candidates.json`: curated bios for the featured races, keyed by AP `candidateID`.
@@ -44,6 +68,44 @@ Producer controls (no auth yet; bind to localhost or put behind a password): `PU
 - `config/featured.json`: candidate ids to feature regardless of party code. Any non-Democrat, non-Republican candidate is featured by default.
 - `config/baseline-2024-pres.json`: 2024 presidential result by voting area for the featured states, from AP.
 - `watch-party/public/geo/<ST>.json`: map geometry per state, matching AP's reporting units (counties; towns in New England; House districts in Alaska). Built by `scripts/build-geo.mjs`.
+
+## Historical results (analytics)
+
+`scripts/fetch-history.mjs` downloads AP's final results for a past election date into `data/ap-history.sqlite` (gitignored), one row per candidate per reporting unit, for SQL analytics:
+
+```sh
+node --env-file=.env scripts/fetch-history.mjs 2024-11-05                 # federal races (P, S, H), state + county level
+node --env-file=.env scripts/fetch-history.mjs 2022-11-08 2020-11-03      # several dates in one run
+node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --offices G,S   # other offices
+node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --dry-run       # show the planned requests
+```
+
+It is kind to the key: AP's quota is 10 requests per minute (`x-electionsapi-q-minute-*` headers), the script sends one request every 7 s and pauses when the bucket is nearly empty, and every response is cached in `raw_responses`, so re-running a date costs no requests (`--refresh` re-downloads, `--reparse` rebuilds the tables from the cache). One election date is 52 requests (one state-level call plus one county-level call per state), about six minutes.
+
+Tables, all keyed by `(election_date, state_postal, race_id)` because AP race ids are unique only within a state (the presidential race is id `0` in every state):
+
+| Table / view | One row per |
+|---|---|
+| `races` | race: office, seat, district, type, call status, uncontested, ranked choice, flipped seat |
+| `reporting_units` | race × unit: national (`ru_level` 0), state (1), county or New England town (2), with FIPS, precincts, total votes |
+| `results` | race × unit × candidate: votes, percentage of the unit, AP winner flag, RCV rounds |
+| `candidates` | candidate per election: names, party, `pol_id` (stable across elections) |
+| `ap_elections` | election date AP exposes to this key, with live/test/certified flags |
+| `v_race_results` | state- or district-wide result per candidate, with names |
+| `v_county_results` | county/town result per candidate, with names |
+| `v_race_summary` | race: leader, runner-up, margin in votes and points |
+
+```sql
+-- Non-major-party candidates who cleared 5% in a federal race
+SELECT election_date, state_postal, office_id, seat_name, last, party, vote_pct
+FROM v_race_results WHERE party NOT IN ('Dem','GOP') AND vote_pct >= 5 ORDER BY vote_pct DESC;
+
+-- County swing for a state between two elections
+SELECT a.fips, a.ru_name, a.vote_pct AS gop_2020, b.vote_pct AS gop_2024, b.vote_pct - a.vote_pct AS swing
+FROM v_county_results a JOIN v_county_results b USING (state_postal, fips, party)
+WHERE a.election_date='2020-11-03' AND b.election_date='2024-11-05' AND a.race_id='0' AND b.race_id='0'  -- statewide presidential
+  AND a.state_postal='NE' AND party='GOP' ORDER BY swing;
+```
 
 ## Photos
 

@@ -38,8 +38,9 @@ export function indMargin(r) {
 }
 
 export async function getJSON(path) {
-  // status.json drives the freshness indicator, so it bypasses the CDN cache with a 30-second key.
-  const bust = path === "status.json" ? `?t=${Math.floor(Date.now() / 30_000)}` : "";
+  // Blob's CDN can serve a stale copy of an overwritten file for hours, so every read carries
+  // a time-bucketed key: status every 15 s (it drives the freshness dot), data every 30 s.
+  const bust = `?t=${Math.floor(Date.now() / (path === "status.json" ? 15_000 : 30_000))}`;
   const res = await fetch(`${DATA}/${path}${bust}`, { cache: "no-cache" });
   if (!res.ok) throw new Error(`${path}: ${res.status}`);
   return res.json();

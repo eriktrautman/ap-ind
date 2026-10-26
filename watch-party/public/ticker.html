@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ticker</title>
+<style>
+  /* 1920x1080 lower third. Transparent by default; ?bg=green|black for keying. */
+  :root {
+    --band: #0e1420; --band-edge: #1c2b47; --fg: #f4f6fa; --muted: #9aa7bd;
+    --ind: #a855f7; --call: #facc15;
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; font-family: var(--font); }
+  body.bg-green { background: #00ff00; }
+  body.bg-black { background: #000; }
+  .ticker {
+    position: absolute; left: 0; right: 0; bottom: 60px; height: 72px; display: flex; align-items: stretch;
+    background: linear-gradient(90deg, var(--band), var(--band-edge));
+    color: var(--fg); font-size: 34px; line-height: 72px; font-variant-numeric: tabular-nums;
+  }
+  .brand { flex: none; padding: 0 28px; background: var(--ind); color: #fff; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; font-size: 22px; display: flex; align-items: center; gap: 14px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #22c55e; }
+  .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
+  .crawl { flex: 1; position: relative; overflow: hidden; }
+  .track { position: absolute; top: 0; left: 0; white-space: nowrap; will-change: transform; }
+  .item { display: inline-block; padding: 0 48px; }
+  .item + .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin-right: 48px; vertical-align: middle; }
+  .item.emphasis { color: var(--call); font-weight: 700; }
+  .item.manual { color: #fff; font-weight: 600; }
+  .item.idle { color: var(--muted); }
+  .test { position: absolute; right: 0; top: 0; height: 72px; padding: 0 18px; background: #f59e0b; color: #1a1200; font-size: 16px; font-weight: 700; letter-spacing: .06em; }
+</style>
+</head>
+<body>
+<div class="ticker">
+  <div class="brand"><span class="dot" id="dot"></span>Independents</div>
+  <div class="crawl"><div class="track" id="track"></div><div class="test" id="test" hidden>TEST DATA</div></div>
+</div>
+<script type="module">
+  import { buildQueue } from "/ticker-queue.js";
+
+  const params = new URLSearchParams(location.search);
+  const bg = params.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
+  const PX_PER_SEC = Number(params.get("speed") ?? 170);
+  const INDEX_MS = 15_000, PRODUCER_MS = 5_000, STATUS_MS = 30_000;
+
+  const track = document.getElementById("track");
+  const dot = document.getElementById("dot");
+  const crawlWidth = () => track.parentElement.clientWidth;
+
+  // Two copies of the queue are rendered back to back; when the first scrolls out we
+  // swap in the latest queue so updates land at a loop boundary, never mid-crawl.
+  let queue = [];
+  let pending = null;
+  let x = 32;
+  let lastT = performance.now();
+
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  function render(items) {
+    track.innerHTML = items.map((it) => `<span class="item ${it.kind} ${it.emphasis ? "emphasis" : ""}">${esc(it.text)}</span>`).join("");
+  }
+  function frame(t) {
+    const dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
+    x -= PX_PER_SEC * dt;
+    if (x < -track.offsetWidth) {
+      if (pending) { queue = pending; pending = null; render(queue); }
+      x = crawlWidth();
+    }
+    track.style.transform = `translateX(${x}px)`;
+    requestAnimationFrame(frame);
+  }
+  function setQueue(items) {
+    const same = queue.length === items.length && queue.every((q, i) => q.key === items[i].key && q.text === items[i].text);
+    if (same) { pending = null; return; }
+    if (!queue.length) { queue = items; render(queue); }
+    else pending = items;
+  }
+
+  // Data. Every fetch is best-effort: on failure the last good copy stays on air.
+  let races = [];
+  let producer = null;
+  let status = null;
+  let lastGood = 0;
+
+  function rebuild() {
+    const q = buildQueue(races, producer);
+    setQueue(q.items);
+    window.parent?.postMessage({ type: "ticker-queue", source: q.source, missing: q.missing, count: q.items.length }, "*");
+  }
+  async function getJSON(url) {
+    const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`${url}: ${res.status}`);
+    return res.json();
+  }
+  async function loadIndex() {
+    try {
+      const d = await getJSON(`/data/index.json?t=${Math.floor(Date.now() / INDEX_MS)}`);
+      if (Array.isArray(d.races)) { races = d.races; lastGood = Date.now(); rebuild(); }
+      document.getElementById("test").hidden = d.resultsType !== "t";
+    } catch {}
+  }
+  async function loadProducer() {
+    if (preview) return;
+    try { producer = await getJSON("/api/producer"); rebuild(); } catch {}
+  }
+  async function loadStatus() {
+    try { status = await getJSON(`/data/status.json?t=${Math.floor(Date.now() / STATUS_MS)}`); } catch {}
+    const age = status?.lastApSuccess ? (Date.now() - Date.parse(status.lastApSuccess)) / 1000 : Infinity;
+    dot.className = `dot ${age < 180 ? "" : age < 600 ? "stale" : "dead"}`;
+  }
+
+  if (preview) {
+    window.addEventListener("message", (e) => {
+      if (e.data?.type === "producer") { producer = e.data.state; rebuild(); }
+    });
+  }
+
+  rebuild();                      // idle crawl is on screen before any data arrives
+  loadIndex(); loadProducer(); loadStatus();
+  setInterval(loadIndex, INDEX_MS);
+  setInterval(loadProducer, PRODUCER_MS);
+  setInterval(loadStatus, STATUS_MS);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
