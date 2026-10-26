@@ -23,7 +23,14 @@
 <main>
 <h1>ap-ind</h1>
 <div>AP Elections API middleware for election night. Demo build.</div>
-<div class="status"><span class="dot"></span>Docs site · no live data. The server that polls AP and serves the graphics and candidate index runs on the studio machine (or locally with <code>npm run dev</code>). This site holds the documents only.</div>
+<div class="status" id="status"><span class="dot"></span>Docs site · the AP poller, the on-air ticker and the producer control room run on this deployment.</div>
+
+<h2>Broadcast</h2>
+<ul>
+  <li><a href="/studio">Producer control room</a> — status bar, ticker, race detail, movement overview, full catalog; Default / Global / Local state (password)</li>
+  <li><a href="/ticker?bg=black">On-air ticker</a> — 1920×1080, Global state; add <code>?bg=green</code> for the key</li>
+  <li><a href="producer-plan.html">Control room build plan</a> — stories, burndown and projected finish</li>
+</ul>
 
 <h2>Design</h2>
 <ul>
@@ -37,10 +44,9 @@
   <li>Candidate index — bios, verified photos and live numbers for the featured races</li>
 </ul>
 
-<h2>Graphics (1920×1080) <span class="tag">server only</span></h2>
-<ul class="local">
-  <li>Ticker (transparent, green key or black)</li>
-  <li>Race result, one page per race by AP race id</li>
+<h2>Graphics (1920×1080)</h2>
+<ul>
+  <li><a href="/g/race?id=28594&bg=black">Race result</a>, one page per race by AP race id · <a href="/g/swing?id=28594&bg=black">Versus 2024 by county</a> · more as the control room build lands</li>
 </ul>
 
 <h2>API <span class="tag">server only</span></h2>

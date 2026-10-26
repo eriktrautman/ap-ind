@@ -12,7 +12,7 @@
     ["Watch Party design", docs + "watch-party.html"],
   ];
   if (local) links.push(["Candidate index", "/candidates.html"], ["Photos", "/photos.html"], ["Ticker", "/g/ticker.html?bg=black"], ["Race chart", "/g/race.html?id=28594&bg=black"]);
-  else links.push(["GitHub", "https://github.com/eriktrautman/ap-ind"]);
+  else links.push(["Control room", "/studio"], ["Build plan", "/producer-plan.html"], ["GitHub", "https://github.com/eriktrautman/ap-ind"]);
 
   const here = location.pathname.replace(/\/$/, "/index.html");
   const style = document.createElement("style");
@@ -30,6 +30,6 @@
   nav.className = "apnav";
   nav.innerHTML = `<a class="brand" href="/">ap-ind</a>` +
     links.map(([label, href]) => `<a href="${href}" class="${href.split("?")[0] === here ? "here" : ""}">${label}</a>`).join("") +
-    `<span class="env">${local ? "local · live data" : "docs site"}</span>`;
+    `<span class="env">${local ? "local · live data" : "ap-ind.vercel.app"}</span>`;
   document.body.insertBefore(nav, document.body.firstChild);
 })();

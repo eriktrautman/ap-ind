@@ -38,11 +38,14 @@
 </div>
 <script type="module">
   import { buildQueue } from "/ticker-queue.js";
+  import { watchState } from "/g/control.js";
 
   const params = new URLSearchParams(location.search);
   const bg = params.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
   const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
+  // Producer state source: ?src=default|global|local, else the selector saved by /studio in this
+  // browser, else Global. Air runs /ticker with no parameter, so it is always on Global.
   const PX_PER_SEC = Number(params.get("speed") ?? 170);
   const INDEX_MS = 15_000, PRODUCER_MS = 5_000, STATUS_MS = 30_000;
 
@@ -101,26 +104,22 @@
       document.getElementById("test").hidden = d.resultsType !== "t";
     } catch {}
   }
-  async function loadProducer() {
-    if (preview) return;
-    try { producer = await getJSON("/api/producer"); rebuild(); } catch {}
-  }
+  const control = watchState({
+    intervalMs: PRODUCER_MS, preview,
+    onState: (state, info) => {
+      producer = state; rebuild();
+      window.parent?.postMessage({ type: "ticker-source", source: info.source, requested: info.requested, error: info.error }, "*");
+    },
+  });
   async function loadStatus() {
     try { status = await getJSON(`/data/status.json?t=${Math.floor(Date.now() / STATUS_MS)}`); } catch {}
     const age = status?.lastApSuccess ? (Date.now() - Date.parse(status.lastApSuccess)) / 1000 : Infinity;
     dot.className = `dot ${age < 180 ? "" : age < 600 ? "stale" : "dead"}`;
   }
 
-  if (preview) {
-    window.addEventListener("message", (e) => {
-      if (e.data?.type === "producer") { producer = e.data.state; rebuild(); }
-    });
-  }
-
   rebuild();                      // idle crawl is on screen before any data arrives
-  loadIndex(); loadProducer(); loadStatus();
+  loadIndex(); loadStatus();
   setInterval(loadIndex, INDEX_MS);
-  setInterval(loadProducer, PRODUCER_MS);
   setInterval(loadStatus, STATUS_MS);
   requestAnimationFrame(frame);
 </script>

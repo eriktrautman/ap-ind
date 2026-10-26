@@ -58,10 +58,7 @@
   async function loadStatic() {
     if (!race) return;
     const st = race.state;
-    // demo mode (docs site, no server): static copies of the baseline and geometry
-    baseline ??= demo
-      ? await (await fetch(`./baseline-2024-pres.json`)).json().then((d) => d.states[st] ?? null).catch(() => null)
-      : await (await fetch(`/api/baseline/pres2024/${st}`)).json().catch(() => null);
+    baseline ??= await feed.baseline2024(st);
     if (!geo) {
       const topo = await (await fetch(`/geo/${st}.json`)).json();
       const obj = topo.objects[Object.keys(topo.objects)[0]];
@@ -71,10 +68,7 @@
       geo = { feats, kind: feats[0]?.properties?.kind ?? "county", path: d3.geoPath(d3.geoConicEqualArea().rotate([-lon, 0]).center([0, lat]).parallels([lat - 6, lat + 6]).fitSize([900, 560], fc)) };
     }
   }
-  async function loadCounties() {
-    if (demo) { const { SAMPLE_COUNTIES } = await import("./sample-counties.js"); counties = SAMPLE_COUNTIES[raceId] ?? null; return; }
-    try { const d = await (await fetch(`/api/races/${raceId}/counties`)).json(); counties = d.units ?? null; } catch { counties = null; }
-  }
+  async function loadCounties() { counties = await feed.counties(raceId); }
 
   function pick() {
     const ind = race.candidates.find((c) => c.featured);
@@ -142,7 +136,7 @@
     onUpdate: async (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } if (msg.type === "counties") { await loadCounties(); render(); } },
     onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
   });
-  if (!demo) setInterval(async () => { await loadCounties(); render(); }, 60_000);
+  // county refreshes arrive as "counties" messages from the feed in every mode
 </script>
 </body>
 </html>

@@ -36,7 +36,7 @@ export function defaultPins(races) {
 
 /**
  * @param {Array} races   from index.json
- * @param {Object} producer {pinnedRaceIds, manualItems, idleText}
+ * @param {Object} producer {pinnedRaceIds, manualItems, idleText, callHighlight}
  * @returns {{items: Array<{key,kind,text,emphasis}>, source: "pins"|"default"|"idle", missing: string[]}}
  */
 export function buildQueue(races, producer) {
@@ -50,7 +50,7 @@ export function buildQueue(races, producer) {
   const raceItems = ids
     .map((id) => byId.get(id))
     .filter(Boolean)
-    .map((r) => ({ key: `race:${r.id}`, kind: "race", text: raceText(r), emphasis: !!r.called }));
+    .map((r) => ({ key: `race:${r.id}`, kind: "race", text: raceText(r), emphasis: !!r.called && p.callHighlight !== false }));
 
   const manualItems = (Array.isArray(p.manualItems) ? p.manualItems : [])
     .filter((m) => m && m.text)

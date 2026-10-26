@@ -1,0 +1,229 @@
+// Producer control state shared by the control room (/studio), the on-air ticker and every
+// graphic. One schema, three sources:
+//   default  the shipped values in this file
+//   global   producer.json in Vercel Blob, read through /api/producer (what air uses)
+//   local    this browser's localStorage; never written to Blob
+// A page picks its source with ?src=default|global|local, else the selector the control room
+// saved in this browser, else global. A local source with nothing saved falls back to global.
+//
+// Usage in a graphic:
+//   import { watchState } from "./control.js";
+//   watchState({ onState: (state, info) => render(state) });   // info: {source, requested, updatedAt}
+
+export const SOURCES = ["default", "global", "local"];
+const LS_LOCAL = "studio.local";
+const LS_SOURCE = "studio.source";
+
+/** Curated races: the seven independents the broadcast follows (cand = the independent's AP id). Order is the default ticker order. */
+export const FEATURED_RACES = [
+  { id: "28594", label: "NE-SEN", state: "NE", title: "U.S. Senate", who: "Dan Osborn", cand: "168007" },
+  { id: "27607", label: "MT-SEN", state: "MT", title: "U.S. Senate", who: "Seth Bodnar", cand: "177955" },
+  { id: "13252", label: "ID-SEN", state: "ID", title: "U.S. Senate", who: "Todd Achilles", cand: "162421" },
+  { id: "42003", label: "SD-SEN", state: "SD", title: "U.S. Senate", who: "Brian Bengs", cand: "70405" },
+  { id: "5696",  label: "CA-6",   state: "CA", title: "U.S. House, District 6", who: "Kevin Kiley", cand: "69756" },
+  { id: "2015",  label: "AK-AL",  state: "AK", title: "U.S. House, at large", who: "Bill Hill", cand: "177719" },
+  { id: "13253", label: "ID-1",   state: "ID", title: "U.S. House, District 1", who: "Sarah Zabel", cand: "178015" },
+];
+
+/** Every graphic the control room knows. kind: race (needs ?id=) or movement. built: a page exists. */
+export const CHARTS = [
+  { id: "B5",  kind: "race", name: "Live race result",              page: "/g/race.html",      built: true },
+  { id: "B6",  kind: "race", name: "Live county map",               page: "/g/county.html",    built: false },
+  { id: "B7",  kind: "race", name: "Margin tracker",                page: "/g/margin.html",    built: false },
+  { id: "B8",  kind: "race", name: "Votes still out",               page: "/g/outstanding.html", built: false },
+  { id: "B9",  kind: "race", name: "Ranked-choice rounds",          page: "/g/rcv.html",       built: false, only: (r) => !!r?.rankedChoice },
+  { id: "B10", kind: "race", name: "Then vs now",                   page: "/g/then-now.html",  built: false },
+  { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
+  { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: false },
+  { id: "C6",  kind: "movement", name: "National independent vote", page: "/g/ind-vote.html",  built: false },
+  { id: "C7",  kind: "movement", name: "Poll vs result",            page: "/g/polls.html",     built: false },
+  { id: "D1",  kind: "movement", name: "State of the Senate races, map", page: "/g/senate-map.html", built: false },
+  { id: "D2",  kind: "movement", name: "State of the House races, map",  page: "/g/house-map.html",  built: false },
+  { id: "D3",  kind: "movement", name: "Balance of power, Senate",  page: "/g/bop-senate.html", built: false },
+  { id: "D4",  kind: "movement", name: "Balance of power, House",   page: "/g/bop-house.html",  built: false },
+  { id: "D5",  kind: "movement", name: "Key races grid",            page: "/g/key-races.html",  built: false },
+  { id: "D6",  kind: "movement", name: "Race zoom-in",              page: "/g/zoom.html",       built: false },
+  { id: "D7",  kind: "movement", name: "Status map",                page: "/g/tiles.html",      built: false },
+  { id: "D10", kind: "movement", name: "National popular vote",     page: "/g/house-pv.html",   built: false },
+  { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: false },
+];
+export const chartById = (id) => CHARTS.find((c) => c.id === id) ?? null;
+
+/** The shipped state. pinnedRaceIds is the ticker list (the name the on-air ticker has always read). */
+export const DEFAULTS = Object.freeze({
+  pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
+  callHighlight: true,
+  manualItems: [],
+  idleText: "",
+  featuredRaceIds: FEATURED_RACES.map((r) => r.id),
+  featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
+  movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11"],
+  keyRaceIds: [],            // D5; empty means "the ticker races"
+  contextLines: {},          // D6: raceId -> one line the producer typed
+  updatedAt: null,
+});
+
+const LIMITS = { pins: 60, featured: 40, manual: 20, text: 240, key: 8, context: 120 };
+const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
+const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
+const chartIds = (arr, kind) => {
+  const known = new Set(CHARTS.filter((c) => c.kind === kind).map((c) => c.id));
+  return [...new Set((Array.isArray(arr) ? arr : []).filter((id) => known.has(id)))];
+};
+
+/**
+ * Coerce anything (a Blob file, a localStorage blob, a request body) into a complete, valid
+ * state. Fields that are missing or invalid take the shipped default; an empty ticker list
+ * means the default list, because the ticker must always have at least one race.
+ * Pure and dependency-free so the API and the browser share it.
+ */
+export function normalize(raw) {
+  const r = raw && typeof raw === "object" ? raw : {};
+  const pins = uniqIds(r.pinnedRaceIds, LIMITS.pins);
+  const manual = (Array.isArray(r.manualItems) ? r.manualItems : [])
+    .filter((m) => m && typeof m.text === "string" && m.text.trim())
+    .map((m) => ({ id: String(m.id ?? Date.now()).slice(0, 40), text: m.text.trim().slice(0, LIMITS.text), createdAt: m.createdAt ?? new Date().toISOString() }))
+    .slice(0, LIMITS.manual);
+  const context = {};
+  if (r.contextLines && typeof r.contextLines === "object") {
+    for (const [k, v] of Object.entries(r.contextLines)) if (idOk(k) && typeof v === "string" && v.trim()) context[k] = v.trim().slice(0, LIMITS.context);
+  }
+  return {
+    pinnedRaceIds: pins.length ? pins : [...DEFAULTS.pinnedRaceIds],
+    callHighlight: typeof r.callHighlight === "boolean" ? r.callHighlight : DEFAULTS.callHighlight,
+    manualItems: manual,
+    idleText: typeof r.idleText === "string" ? r.idleText.trim().slice(0, LIMITS.text) : "",
+    featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
+    featuredCharts: Array.isArray(r.featuredCharts) ? chartIds(r.featuredCharts, "race") : [...DEFAULTS.featuredCharts],
+    movementCharts: Array.isArray(r.movementCharts) ? chartIds(r.movementCharts, "movement") : [...DEFAULTS.movementCharts],
+    keyRaceIds: uniqIds(r.keyRaceIds, LIMITS.key),
+    contextLines: context,
+    updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null,
+  };
+}
+
+/** True when two states would put the same thing on air. */
+export function sameState(a, b) {
+  const A = normalize(a), B = normalize(b);
+  delete A.updatedAt; delete B.updatedAt;
+  return JSON.stringify(A) === JSON.stringify(B);
+}
+
+/** Plain-English list of what changes going from `from` to `to`, per field. Empty when nothing does. */
+export function diffState(from, to) {
+  const A = normalize(from), B = normalize(to);
+  const out = [];
+  const list = (field, label) => {
+    const a = A[field], b = B[field];
+    const added = b.filter((x) => !a.includes(x)), removed = a.filter((x) => !b.includes(x));
+    const reordered = !added.length && !removed.length && a.join() !== b.join();
+    if (added.length) out.push({ field, text: `${label}: added ${added.join(", ")}` });
+    if (removed.length) out.push({ field, text: `${label}: removed ${removed.join(", ")}` });
+    if (reordered) out.push({ field, text: `${label}: reordered` });
+  };
+  list("pinnedRaceIds", "Ticker races");
+  list("featuredRaceIds", "Featured races");
+  list("featuredCharts", "Featured charts");
+  list("movementCharts", "Movement charts");
+  list("keyRaceIds", "Key races");
+  if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
+  if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
+  const am = A.manualItems.map((m) => m.text), bm = B.manualItems.map((m) => m.text);
+  for (const t of bm.filter((t) => !am.includes(t))) out.push({ field: "manualItems", text: `Manual item added: "${t}"` });
+  for (const t of am.filter((t) => !bm.includes(t))) out.push({ field: "manualItems", text: `Manual item removed: "${t}"` });
+  for (const k of new Set([...Object.keys(A.contextLines), ...Object.keys(B.contextLines)])) {
+    if (A.contextLines[k] !== B.contextLines[k]) out.push({ field: "contextLines", text: `Context line for race ${k}: "${B.contextLines[k] ?? "(removed)"}"` });
+  }
+  return out;
+}
+
+// ---------- browser-side storage (safe when storage is blocked) ----------
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+export function readLocal() { try { const raw = ls.get(LS_LOCAL); return raw ? normalize(JSON.parse(raw)) : null; } catch { return null; } }
+export function saveLocal(state) { const s = normalize({ ...state, updatedAt: new Date().toISOString() }); ls.set(LS_LOCAL, JSON.stringify(s)); return s; }
+export function clearLocal() { ls.del(LS_LOCAL); }
+export function getSavedSource() { const s = ls.get(LS_SOURCE); return SOURCES.includes(s) ? s : "global"; }
+export function setSavedSource(src) { if (SOURCES.includes(src)) ls.set(LS_SOURCE, src); }
+
+/** Which source this page should use: the URL wins, then the saved selector, then global. */
+export function requestedSource(search = location.search) {
+  const q = new URLSearchParams(search).get("src");
+  return SOURCES.includes(q) ? q : getSavedSource();
+}
+
+export async function loadGlobal() {
+  const res = await fetch("/api/producer", { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`producer: ${res.status}`);
+  return normalize(await res.json());
+}
+
+/**
+ * Resolve the state for a source once. Returns {state, source, requested, error}: `source` is
+ * what actually fed the state (local with nothing saved falls back to global; global
+ * unreachable falls back to the last copy given, else default).
+ */
+export async function loadState(requested = requestedSource(), { lastGlobal = null } = {}) {
+  if (requested === "default") return { state: normalize(DEFAULTS), source: "default", requested, error: null };
+  if (requested === "local") {
+    const local = readLocal();
+    if (local) return { state: local, source: "local", requested, error: null };
+  }
+  try {
+    return { state: await loadGlobal(), source: "global", requested, error: null };
+  } catch (e) {
+    if (lastGlobal) return { state: lastGlobal, source: "global", requested, error: e.message };
+    return { state: normalize(DEFAULTS), source: "default", requested, error: e.message };
+  }
+}
+
+/**
+ * Keep a page's state current. Global is re-read every `intervalMs`; local changes made in
+ * another tab of this browser arrive through the storage event; the control room can push a
+ * draft with postMessage {type:"producer", state} (preview mode), which overrides everything.
+ * onState(state, info) fires on every change; info = {source, requested, error, preview}.
+ */
+export function watchState({ source = requestedSource(), intervalMs = 10_000, onState, preview = new URLSearchParams(location.search).get("preview") === "1" } = {}) {
+  let requested = source;
+  let lastGlobal = null;
+  let current = null;
+  let pushed = null;
+  let timer = null;
+  const emit = (state, info) => {
+    const key = JSON.stringify(state);
+    if (current === key) return;
+    current = key;
+    onState?.(state, info);
+  };
+  async function tick() {
+    if (pushed) return;
+    const r = await loadState(requested, { lastGlobal });
+    if (r.source === "global" && !r.error) lastGlobal = r.state;
+    emit(r.state, { source: r.source, requested, error: r.error, preview: false });
+  }
+  const onStorage = (e) => { if (e.key === LS_LOCAL || e.key === LS_SOURCE) tick(); };
+  const onMessage = (e) => {
+    if (e.data?.type === "producer" && e.data.state) { pushed = normalize(e.data.state); emit(pushed, { source: "preview", requested, error: null, preview: true }); }
+    if (e.data?.type === "producer-source" && SOURCES.includes(e.data.source)) { pushed = null; requested = e.data.source; tick(); }
+  };
+  window.addEventListener("storage", onStorage);
+  if (preview) window.addEventListener("message", onMessage);
+  tick();
+  timer = setInterval(tick, intervalMs);
+  return {
+    get state() { return current ? JSON.parse(current) : null; },
+    setSource(src) { if (SOURCES.includes(src)) { requested = src; tick(); } },
+    refresh: tick,
+    stop() { clearInterval(timer); window.removeEventListener("storage", onStorage); window.removeEventListener("message", onMessage); },
+  };
+}
+
+/** Append the page's source to a graphic URL so it opens on the same state. */
+export function withSource(url, source) {
+  const u = new URL(url, location.href);
+  if (SOURCES.includes(source)) u.searchParams.set("src", source);
+  return u.pathname + u.search;
+}

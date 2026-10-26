@@ -1,31 +1,21 @@
-// Producer state (what the ticker crawls). GET is public and uncached so the on-air ticker
-// sees a publish within one poll of the page (5 s). PUT needs the studio cookie.
+// Producer state: the Global source (what air uses). GET is public and uncached so the on-air
+// ticker and every graphic see a publish within one poll. PUT needs the studio cookie.
+//
+// The body may carry any subset of the fields in lib/control.js; fields it leaves out keep
+// their stored value, so an older panel that sends only the ticker fields cannot wipe the
+// featured races or chart lists. Every field is validated and capped by normalize().
 import { requireStudio, readBody } from "../lib/auth.js";
 import { readJson, writeJson, defaultProducer } from "../lib/store.js";
+import { normalize, DEFAULTS } from "../lib/control.js";
 
-const MAX_PINS = 60;
-const MAX_MANUAL = 20;
-const MAX_TEXT = 240;
-
-function clean(body) {
-  const pins = Array.isArray(body.pinnedRaceIds) ? body.pinnedRaceIds : [];
-  const manual = Array.isArray(body.manualItems) ? body.manualItems : [];
-  return {
-    pinnedRaceIds: [...new Set(pins.filter((s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s)))].slice(0, MAX_PINS),
-    manualItems: manual
-      .filter((m) => m && typeof m.text === "string" && m.text.trim())
-      .map((m) => ({ id: String(m.id ?? Date.now()).slice(0, 40), text: m.text.trim().slice(0, MAX_TEXT), createdAt: m.createdAt ?? new Date().toISOString() }))
-      .slice(0, MAX_MANUAL),
-    idleText: typeof body.idleText === "string" ? body.idleText.trim().slice(0, MAX_TEXT) : "",
-    updatedAt: new Date().toISOString(),
-  };
-}
+const FIELDS = Object.keys(DEFAULTS).filter((k) => k !== "updatedAt");
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method === "GET") {
     try {
-      res.status(200).json((await readJson("producer.json")) ?? defaultProducer);
+      const stored = await readJson("producer.json");
+      res.status(200).json(stored ? normalize(stored) : defaultProducer);
     } catch (e) {
       res.status(502).json({ error: e.message });
     }
@@ -34,7 +24,11 @@ export default async function handler(req, res) {
   if (req.method === "PUT") {
     if (!requireStudio(req, res)) return;
     try {
-      const state = clean(readBody(req));
+      const body = readBody(req);
+      const prev = normalize((await readJson("producer.json")) ?? DEFAULTS);
+      const merged = { ...prev };
+      for (const k of FIELDS) if (k in body) merged[k] = body[k];
+      const state = normalize({ ...merged, updatedAt: new Date().toISOString() });
       await writeJson("producer.json", state);
       res.status(200).json(state);
     } catch (e) {

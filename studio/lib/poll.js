@@ -110,6 +110,7 @@ export async function pollOnce({ run = Date.now(), log = console.log, fresh = fa
       // Low-confidence photos are withheld until a person has checked them.
       c.photo = m?.cdn && m.confidence !== "low" ? m.cdn : null;
       c.partyLabel = k?.partyLabel ?? null;
+      c.featured = !!k?.featured;
     }
   }
   status.apTimestamp = nat.timestamp;

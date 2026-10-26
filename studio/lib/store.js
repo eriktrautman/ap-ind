@@ -1,6 +1,7 @@
 // JSON files in Vercel Blob. The poller writes; pages read through the /data rewrite;
 // functions read here with a cache-busting query so they always see the latest write.
 import { put } from "@vercel/blob";
+import { DEFAULTS, normalize } from "./control.js";
 
 export const BLOB_BASE = "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com";
 
@@ -22,4 +23,4 @@ export async function readJson(path) {
 }
 
 export const defaultSettings = { resultsType: null, pollEnabled: true };
-export const defaultProducer = { pinnedRaceIds: [], manualItems: [], idleText: "", updatedAt: null };
+export const defaultProducer = normalize(DEFAULTS);
