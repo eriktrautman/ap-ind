@@ -1,0 +1,19 @@
+{
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "crons": [{ "path": "/api/poll", "schedule": "* * * * *" }],
+  "rewrites": [
+    { "source": "/data/:path*", "destination": "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com/:path*" }
+  ],
+  "redirects": [
+    { "source": "/lookbook", "destination": "/graphics-data-options", "permanent": true },
+    { "source": "/lookbook.html", "destination": "/graphics-data-options", "permanent": true }
+  ],
+  "headers": [
+    { "source": "/data/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=10, s-maxage=15, stale-while-revalidate=30" }] },
+    { "source": "/studio/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store" }] },
+    { "source": "/(ticker|ticker-queue)(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
+  ]
+}

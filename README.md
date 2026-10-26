@@ -2,7 +2,7 @@
 
 Middleware between the AP Elections API and broadcast graphics for an election-night program about independent candidates: a live ticker, full-screen result graphics, a candidate index, and a control API.
 
-Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) (also published at https://ap-ind.vercel.app).
+Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) (also published at https://ap-ind.vercel.app by the `studio/` deployment).
 
 ## Run
 
@@ -37,11 +37,11 @@ Any graphic accepts `?demo=1` to run on an embedded sample snapshot without the 
 
 Producer controls (no auth yet; bind to localhost or put behind a password): `PUT /api/producer` `{pinnedRaceIds, manualItems, eventWindowMinutes}` · `POST /api/producer/manual` `{text}` · `POST /api/poll`
 
-## Studio and on-air ticker (Vercel)
+## Studio and on-air ticker (ap-ind on Vercel)
 
-The broadcast ticker and its producer panel run on the Watch Party's Vercel project, with no server of our own: the poller writes JSON to Vercel Blob once a minute (Vercel Cron), the pages poll those files.
+The broadcast ticker and its producer panel live in `studio/`, deployed as the ap-ind Vercel project (ap-ind.vercel.app, which also serves these docs), with no server of our own: the poller writes JSON to Vercel Blob once a minute (Vercel Cron), the pages poll those files.
 
-| Path on ind-watch-party.vercel.app | Purpose |
+| Path on ap-ind.vercel.app | Purpose |
 |---|---|
 | `/studio` | Producer panel (shared password, `STUDIO_PASSWORD` env var). Poller status and controls; pick and order the races on the ticker, add manual items, preview, publish. |
 | `/ticker` | On-air ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Open it in its own tab or as the switcher's browser input; it is never changed from the panel, only its content is. |
@@ -50,14 +50,16 @@ The ticker polls producer state every 5 s and results every 15 s; a publish reac
 
 Poller controls in the panel: **Poll now**, **Poll now + reset caches**, **Pause/Resume polling**, and the **Test/Live** results switch. These write `settings.json` in Blob, which the poller reads at the start of every run, so none of them need a redeploy. `status.json` is written on every run, including failures, with a plain-English diagnosis and what to do.
 
+The Watch Party project (`watch-party/`, ind-watch-party.vercel.app) is now a pure reader of the same Blob files: static pages, no functions, no secrets.
+
 Functions: `GET/POST /api/login`, `GET/PUT /api/producer`, `GET/PUT /api/settings`, `GET|POST /api/poll` (cron bearer or studio cookie). Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `STUDIO_PASSWORD`.
 
 Local fallback (same Blob store, same pages):
 
 ```sh
-cd watch-party
-cp ../.env .env            # add BLOB_READ_WRITE_TOKEN (vercel env pull) and STUDIO_PASSWORD
-vercel dev --listen 3100   # studio at http://localhost:3100/studio, ticker at /ticker
+cd studio
+# .env needs AP_API_KEY, BLOB_READ_WRITE_TOKEN and STUDIO_PASSWORD
+npm run build && vercel dev --listen 3100   # studio at http://localhost:3100/studio, ticker at /ticker, docs at /
 npm run poll               # poll AP every 60 s from this machine if the Vercel cron is not running
 ```
 
@@ -78,6 +80,9 @@ node --env-file=.env scripts/fetch-history.mjs 2024-11-05                 # fede
 node --env-file=.env scripts/fetch-history.mjs 2022-11-08 2020-11-03      # several dates in one run
 node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --offices G,S   # other offices
 node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --dry-run       # show the planned requests
+node --env-file=.env scripts/fetch-history.mjs --all --states auto        # every date AP lists (back to 2012): generals,
+                                                                          # primaries, specials, runoffs; county level only
+                                                                          # for states that had a federal race that day
 ```
 
 It is kind to the key: AP's quota is 10 requests per minute (`x-electionsapi-q-minute-*` headers), the script sends one request every 7 s and pauses when the bucket is nearly empty, and every response is cached in `raw_responses`, so re-running a date costs no requests (`--refresh` re-downloads, `--reparse` rebuilds the tables from the cache). One election date is 52 requests (one state-level call plus one county-level call per state), about six minutes.

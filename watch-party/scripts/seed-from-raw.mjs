@@ -5,7 +5,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { gunzipSync } from "node:zlib";
 import { put } from "@vercel/blob";
-import { normalizeRace } from "../lib/ap.js";
+import { normalizeRace } from "../../studio/lib/ap.js";
 
 const db = new DatabaseSync(new URL("../../data/ap-ind.sqlite", import.meta.url).pathname);
 const id = Number(process.argv[2] ?? 1);

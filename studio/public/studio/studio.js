@@ -1,6 +1,11 @@
 // Studio: poller status and controls, ticker producer with live preview.
-import { esc, kindBadge, fmtTime, testBanner } from "/app.js";
 import { buildQueue } from "/ticker-queue.js";
+
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const BADGE = { S: "SENATE", H: "HOUSE", USD: "DELEGATE", G: "GOVERNOR", L: "LT GOV", A: "ATTY GEN", SS: "SEC STATE", RR: "RR COMM", I: "MEASURE", M: "MAYOR" };
+const kindBadge = (r) => `<span class="kind k-${esc(r.kind ?? "federal")}" title="${esc(r.officeName ?? "")}">${esc(BADGE[r.office] ?? r.office)}</span>`;
+const fmtTime = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit", timeZoneName: "short" }) : "—";
+const testBanner = (status) => { const el = document.getElementById("testbanner"); if (el) el.hidden = status?.resultsType !== "t"; };
 
 const $ = (id) => document.getElementById(id);
 const api = async (url, opts = {}) => {

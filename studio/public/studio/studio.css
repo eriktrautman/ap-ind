@@ -1,5 +1,30 @@
+/* Base (shared look with the Watch Party, kept local so this app has no cross-project assets). */
+:root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --ok: #2e9e5b; --warn: #e08a1e; --bad: #b11e2d; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { color-scheme: light; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+a { color: var(--navy); }
+.topbar { background: var(--navy-deep); color: #fff; padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-size: 13px; position: sticky; top: 0; z-index: 5; }
+.topbar b { font-family: var(--serif); color: var(--gold); font-size: 17px; font-weight: 400; }
+.topbar .subbrand { font-family: var(--serif); color: #fff; font-size: 15px; padding-left: 10px; margin-left: -4px; border-left: 1px solid #3a4f7a; }
+.topbar .tag { color: #c7cfdf; }
+.status { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: #c7cfdf; font-size: 12px; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; }
+.dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
+.testbanner { background: var(--warn); color: #1a1200; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; letter-spacing: .04em; }
+main { max-width: 1240px; margin: 0 auto; padding: 14px 16px 60px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; align-items: center; }
+.chip { font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--sand); border-radius: 14px; background: #fff; color: var(--ink); cursor: pointer; }
+.chip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.filters select, .filters input { font: inherit; font-size: 12.5px; padding: 3px 6px; border: 1px solid var(--sand); border-radius: 6px; background: #fff; }
+.kind { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 1px 5px; border-radius: 3px; background: #ebe6db; color: #5b5648; vertical-align: 1px; margin-right: 4px; }
+.kind.k-governor { background: #e4e9f5; color: #1f3a6e; } .kind.k-statewide { background: #eef0f4; color: #3a4f7a; } .kind.k-measure { background: #e9e4f3; color: #4b3b78; } .kind.k-local { background: #e4f1ea; color: #1c6b3c; }
+.pill { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: .03em; vertical-align: 1px; }
+.pill.call { background: var(--gold); color: #1a1600; }
+
+/* Studio */
 .topbar .link { margin-left: 10px; background: none; border: 1px solid #3a4f7a; color: #c7cfdf; font-size: 12px; padding: 3px 8px; border-radius: 5px; cursor: pointer; }
-main { max-width: 1240px; }
 .login { max-width: 360px; margin: 80px auto; background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 22px 24px; }
 .login h1 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0 0 6px; color: var(--navy); }
 .login p { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
@@ -56,4 +81,3 @@ h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: v
 .preview .frame { position: relative; width: 100%; aspect-ratio: 1920 / 1080; max-height: 180px; overflow: hidden; }
 .preview iframe { position: absolute; left: 0; bottom: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 100%; pointer-events: none; }
 code { font-size: 12px; background: var(--cream); padding: 1px 5px; border-radius: 4px; }
-.filters { margin: 0 0 8px; }

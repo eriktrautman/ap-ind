@@ -1,5 +1,5 @@
-// Run the poller from any machine (until the Vercel project is on a plan with per-minute cron).
-// Needs AP_API_KEY and BLOB_READ_WRITE_TOKEN in the environment (node --env-file=.env).
+// Run the poller from any machine (if the Vercel cron is not running).
+// Needs AP_API_KEY and BLOB_READ_WRITE_TOKEN in the environment (node --env-file=.env scripts/poll-local.mjs).
 //   npm run poll         every 60 s
 //   npm run poll:once    single cycle
 import { pollOnce } from "../lib/poll.js";

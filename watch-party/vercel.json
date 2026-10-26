@@ -2,12 +2,6 @@
   "framework": null,
   "outputDirectory": "public",
   "cleanUrls": true,
-  "crons": [
-    {
-      "path": "/api/poll",
-      "schedule": "* * * * *"
-    }
-  ],
   "rewrites": [
     {
       "source": "/race/:label",
@@ -45,24 +39,7 @@
           "value": "public, max-age=10, s-maxage=20, stale-while-revalidate=40"
         }
       ]
-    },
-    {
-      "source": "/studio/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/(ticker|ticker-queue)(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
     }
-  ]
+  ],
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ."
 }
