@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Producer Control Room Plan</title>
+<style>
+  /* Same tokens as the other docs pages: navy, gold, cream, Georgia + Arial. */
+  :root {
+    --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --gold-ink: #8a6a12; --gold-soft: #f3e9c8;
+    --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280;
+    --ok: #2e7d4f; --warn: #b96a12; --bad: #b11e2d; --blocked: #7a4a9a;
+    --actual: #2a78d6; --ideal: #52514e; --projected: #b8911f;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: Arial, Helvetica, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+  a { color: var(--navy); }
+  header.top { background: var(--navy); color: #fff; padding: 36px 24px 28px; }
+  header.top .in { max-width: 1100px; margin: 0 auto; }
+  header.top h1 { font-family: var(--serif); font-size: 34px; margin: 0 0 6px; font-weight: 400; }
+  header.top p { margin: 0; color: #c7cfdf; max-width: 80ch; }
+  header.top .meta { margin-top: 14px; font-size: 13px; color: #9aa7bd; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 80px; display: grid; gap: 36px; }
+  section { display: grid; gap: 14px; }
+  section > h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; margin: 0; color: var(--navy); }
+  section > p.lede { margin: 0; color: var(--muted); max-width: 80ch; }
+  h3 { font-family: var(--serif); font-weight: 400; font-size: 17px; color: var(--navy); margin: 0; }
+  p { margin: 0; }
+  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .tile { background: #fff; border: 1px solid var(--sand); border-radius: 6px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+  .tile .k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .tile .v { font-size: 24px; font-family: var(--serif); color: var(--navy); font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12px; color: var(--muted); }
+  .tile.hero { border-color: var(--gold); background: var(--gold-soft); }
+  .chart { background: #fff; border: 1px solid var(--sand); border-radius: 6px; padding: 12px 12px 6px; position: relative; }
+  .chart svg { width: 100%; height: auto; display: block; font-family: var(--sans); }
+  .chart .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); padding: 6px 4px 2px; }
+  .legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+  .legend i.dash { border-top-style: dashed; } .legend i.dot { border-top-style: dotted; }
+  .tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--sand); border-radius: 4px; padding: 6px 9px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.12); white-space: nowrap; display: none; }
+  .note { background: #fff; border: 1px solid var(--sand); border-left: 3px solid var(--gold); padding: 10px 14px; font-size: 14px; max-width: 90ch; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .card { background: #fff; border: 1px solid var(--sand); border-radius: 6px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+  .card p, .card li { font-size: 14px; }
+  ul, ol { margin: 0; padding-left: 20px; } li { margin: 3px 0; }
+  .tablewrap { overflow-x: auto; background: #fff; border: 1px solid var(--sand); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--sand); vertical-align: top; }
+  th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.id { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  tr.epic td { background: var(--cream); font-family: var(--serif); color: var(--navy); font-size: 15px; }
+  tr.epic td .pts { font-family: var(--sans); font-size: 12.5px; color: var(--muted); margin-left: 8px; }
+  tr.done td:not(.id) { color: var(--muted); }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 10px; border: 1px solid transparent; white-space: nowrap; }
+  .pill.todo { color: var(--muted); border-color: var(--sand); }
+  .pill.doing { color: #1a1600; background: var(--gold); }
+  .pill.done { color: #fff; background: var(--ok); }
+  .pill.blocked { color: #fff; background: var(--blocked); }
+  .pill.opt { color: var(--muted); border-color: var(--sand); }
+  .dep { font-size: 12px; color: var(--muted); }
+  .q { display: grid; gap: 10px; }
+  .q .card { border-left: 3px solid var(--gold); }
+  .q .card b { color: var(--navy); }
+  .q .card .a { font-size: 13.5px; color: var(--gold-ink); }
+  .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .flow .card { border-top: 3px solid var(--navy); }
+  .flow .card.sel { border-top-color: var(--gold); }
+  .flow .card .k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  code { font-family: var(--mono); font-size: 12.5px; background: #f3f1ea; padding: 1px 5px; border-radius: 3px; }
+  .log { font-size: 13px; }
+  .log td.t { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  @media (prefers-reduced-motion: no-preference) { .pill.doing { animation: pulse 2.4s ease-in-out infinite; } }
+  @keyframes pulse { 50% { opacity: .65; } }
+</style>
+</head>
+<body>
+<script src="nav.js"></script>
+
+<header class="top">
+  <div class="in">
+    <h1>Producer Control Room Plan</h1>
+    <p>The producer control room at <code>/studio</code> on ap-ind.vercel.app, rebuilt in place: default, global and local state for the ticker, featured races, featured charts and movement charts, with live thumbnails of every graphic. This page is the build tracker; the story list and progress log at the bottom of the file are updated as work lands.</p>
+    <div class="meta"><span>Plan v1 · Oct 26 2026</span><span id="updated"></span></div>
+  </div>
+</header>
+
+<main>
+
+<section aria-label="Progress">
+  <div class="strip">
+    <div class="tile hero"><div class="k">Estimated completion</div><div class="v" id="eta">—</div><div class="s" id="etasub"></div></div>
+    <div class="tile"><div class="k">Points done</div><div class="v" id="done">—</div><div class="s" id="donesub"></div></div>
+    <div class="tile"><div class="k">Points remaining</div><div class="v" id="remaining">—</div><div class="s" id="remsub"></div></div>
+    <div class="tile"><div class="k">Pace</div><div class="v" id="pace">—</div><div class="s" id="pacesub"></div></div>
+    <div class="tile"><div class="k">Status</div><div class="v" id="phase" style="font-size:18px">—</div><div class="s" id="phasesub"></div></div>
+  </div>
+  <div class="chart">
+    <svg id="burn" viewBox="0 0 760 300" role="img" aria-label="Burndown: story points remaining over elapsed hours"></svg>
+    <div class="tip" id="tip"></div>
+    <div class="legend"><span><i class="dash" style="border-color:var(--ideal)"></i>planned at the assumed pace</span><span><i style="border-color:var(--actual)"></i>actual points remaining</span><span><i class="dot" style="border-color:var(--projected)"></i>projection at measured pace</span></div>
+  </div>
+  <p class="note">Pace is assumed at 5 minutes of build time per story point until three stories are done; after that the measured pace drives the projection. Stories marked optional are excluded from the estimate unless accepted.</p>
+</section>
+
+<section>
+  <h2>What exists today</h2>
+  <div class="grid2">
+    <div class="card"><h3>Working broadcast pages</h3><p>Three. The on-air ticker (Blob-fed, deployed). The race result (B5) and the versus-2024 map (B13), which only run against the local WebSocket server; on Vercel they work in sample-data mode only.</p></div>
+    <div class="card"><h3>The C and D charts</h3><p>C1–C9 and D1–D11 exist as 16:9 sketches on the <a href="graphics-data-options.html">Graphics Data Options</a> page, with hand-typed sample numbers. None is a page that can be put on air. The Movement Overview defaults name twelve of them, so twelve new graphics are in this plan.</p></div>
+    <div class="card"><h3>Producer state</h3><p>One Blob file, <code>producer.json</code>: pinned race ids, manual items, idle text. Written by <code>/studio</code> with the shared password, read by the ticker every 5 s. No notion of defaults versus local edits yet.</p></div>
+    <div class="card"><h3>Data in Blob</h3><p>Every race with top candidates once a minute, county units per state every five minutes, poller status with plain-English diagnoses. Missing for the defaults: the AP Trend reports (D3, D4), a polling dataset (C7), 2024 shares (C6, D10), ranked-choice rounds (B9), per-race history (B7).</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>State model</h2>
+  <p class="lede">One schema, three sources. The producer picks which source feeds their copy of the app; the choice is shown on every section and carried on every graphic link as <code>?src=</code>.</p>
+  <div class="flow">
+    <div class="card"><div class="k">Default</div><h3>Shipped with the code</h3><p>Featured races from the curated candidate index (7), featured charts B5 · B6 · B7 · B8 · B9 · B10 · B13, movement charts C1 · C6 · C7 · D1–D7 · D10 · D11, ticker = featured races, AP-call highlight on. Read-only.</p></div>
+    <div class="card"><div class="k">Global</div><h3>Shared, in Blob</h3><p>What the on-air ticker and anyone else on Global uses. Written only through the safeguard dialog, which shows exactly what changes and warns if another operator published since you loaded.</p></div>
+    <div class="card"><div class="k">Local</div><h3>This browser only</h3><p>Kept in the browser, never written to Blob. Starts as a copy of Global or Default. "Use global" and "Restore defaults" replace it after a warning that names what will be lost.</p></div>
+    <div class="card sel"><div class="k">Selector</div><h3>Which one you are on</h3><p>A three-way switch in the status bar plus a banner on each section. Graphics opened from the page carry the choice; the on-air ticker stays on Global unless its URL says otherwise.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Stories</h2>
+  <p class="lede">Fibonacci points. Order within an epic is build order. "After" names the story that must land first. Collision notes mark files the other sessions own.</p>
+  <div class="tablewrap"><table id="stories"><thead><tr><th>ID</th><th>Story</th><th class="n">Pts</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section>
+  <h2>Key questions before the build starts</h2>
+  <div class="q" id="questions"></div>
+</section>
+
+<section>
+  <h2>Collision points with the other sessions</h2>
+  <div class="grid2">
+    <div class="card"><h3>Files edited that others own</h3><ul><li><code>studio/public/studio/</code>: the panel is rebuilt in place (index.html, studio.js, studio.css). Anyone else editing these should stop first.</li><li><code>studio/api/producer.js</code>: additive fields only, old fields untouched.</li><li><code>studio/public/ticker.html</code> and <code>ticker-queue.js</code>: the call-highlight flag and the source parameter.</li><li><code>studio/lib/poll.js</code>, <code>studio/lib/ap.js</code>: Trend reports, margin history, ranked-choice rounds, all additive.</li><li><code>public/g/feed.js</code>, <code>race.html</code>, <code>swing.html</code>: a Blob polling path beside the WebSocket path.</li><li><code>docs/index.html</code>, <code>docs/nav.js</code>: one link each.</li><li><code>studio/package.json</code>: the build copy.</li></ul></div>
+    <div class="card"><h3>Everything else is new</h3><ul><li><code>studio/public/control.js</code>: schema, defaults, source resolution.</li><li><code>public/g/</code>: one file per new graphic, plus a shared national map module.</li><li><code>config/baseline-2024-federal.json</code> and <code>config/polls.json</code> with the scripts that build them.</li><li>Staged by name, never <code>git add -A</code>. One commit per story or small group.</li></ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>Progress log</h2>
+  <div class="tablewrap"><table class="log" id="log"><thead><tr><th>When</th><th>What</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+</main>
+
+<script>
+// ===================== PLAN DATA: edit this block as work lands =====================
+const META = {
+  minPerPoint: 5,          // assumed pace until three stories are done
+  startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
+  phase: "E0 Foundations",
+  note: "building S01 and S02",
+  updated: "2026-10-26T23:16:49Z",
+};
+const EPICS = {
+  E0: "Foundations: state model and data plumbing",
+  E1: "Control room shell, status bar, safeguards",
+  E2: "Ticker section",
+  E3: "Race Detail section and per-race graphics",
+  E4: "Movement Overview and the C/D graphics",
+  E5: "Full Catalog",
+  E6: "Hardening, docs, handover",
+};
+// status: todo | doing | done | blocked. doneAt: ISO time, drives the burndown.
+const STORIES = [
+  { id: "S01", epic: "E0", pts: 5, status: "doing", title: "Blob polling path in the graphics feed: feed.js reads /data/index.json, /data/state/XX.json and status.json when there is no WebSocket server, so race.html and swing.html run on Vercel with real data", note: "Collision: public/g/feed.js, race.html, swing.html. WebSocket path untouched." },
+  { id: "S02", epic: "E0", pts: 5, status: "doing", title: "Control state module: one schema (ticker races, call highlight, manual items, idle text, featured races, featured charts, movement charts, context lines), shipped defaults, Global from Blob, Local from localStorage, resolve by ?src= or the saved selector", note: "New file studio/public/control.js; shared by the panel and every graphic." },
+  { id: "S03", epic: "E0", pts: 3, status: "todo", title: "Producer API accepts the new fields with validation and limits; pinnedRaceIds stays as the ticker list so /ticker and /studio keep working unchanged", note: "Collision: studio/api/producer.js, additive only.", deps: "S02" },
+  { id: "S04", epic: "E0", pts: 3, status: "todo", title: "Ticker and existing graphics honour the source parameter: ?src=local|default|global picks which state feeds the page; the on-air ticker stays on Global by default", deps: "S02" },
+  { id: "S05", epic: "E0", pts: 2, status: "todo", title: "Deployment wiring: the rebuilt /studio in the build, no-store header kept, link from the homepage and the shared nav", note: "Collision: docs/index.html, docs/nav.js. studio/vercel.json already serves /studio with no-store." },
+  { id: "S10", epic: "E1", pts: 5, status: "todo", title: "/studio rebuilt as the control room: sign-in kept, sticky status bar, four sections with in-page navigation, source selector (Default / Global / Local) with a banner on every section saying which source is feeding it", note: "Replaces studio/public/studio/index.html, studio.js, studio.css in place. The current panel's poller controls and ticker editor are carried over, not duplicated.", deps: "S02" },
+  { id: "S11", epic: "E1", pts: 3, status: "todo", title: "Status bar facts: last AP refresh, AP data as of, last publish and when it reached air, results type, poller health with the plain-English diagnosis and fix for every known failure (no key, AP rejected key, rate limit, AP down, timeout, Blob write, network); poller controls (poll now, pause, test/live)", deps: "S10" },
+  { id: "S12", epic: "E1", pts: 3, status: "todo", title: "Global publish safeguard: in-page dialog listing every added, removed and reordered item per category, the last publish time by anyone, and a warning when someone else published since you loaded", deps: "S10" },
+  { id: "S13", epic: "E1", pts: 3, status: "todo", title: "Local editing: changes save to this browser only, unsaved-versus-published indicators, Restore defaults and Use global with a warning that names what local changes will be lost", deps: "S10" },
+  { id: "S14", epic: "E1", pts: 5, status: "todo", title: "Graphic card: the real page scaled into a 16:9 thumbnail with real data, open-in-new-tab at 1920x1080 with a background choice, a freshness bubble showing when its data was last written, and a race label band that cannot be mistaken for another race", deps: "S10" },
+  { id: "S15", epic: "E1", pts: 3, status: "todo", title: "Thumbnail budget: a fixed cap on live iframes (about 12), featured sections filled first, cards load only when scrolled into view and unload when scrolled away; catalog cards are static data cards (label, candidates, numbers from index.json) until the producer asks for a live preview", note: "Answers question 7: a hundred catalog graphics must not open a hundred pages.", deps: "S14" },
+  { id: "S20", epic: "E2", pts: 3, status: "todo", title: "Ticker Races: pick and order races (at least one) under Default, Global or Local; the example ticker re-crawls as the list changes", deps: "S13" },
+  { id: "S21", epic: "E2", pts: 2, status: "todo", title: "AP Call highlight on/off: a flag in the state, honoured by the on-air ticker, the queue builder and the preview", note: "Collision: studio/public/ticker.html, ticker-queue.js.", deps: "S03" },
+  { id: "S22", epic: "E2", pts: 1, status: "todo", title: "Manual items and idle text carried into the Ticker section unchanged", deps: "S20" },
+  { id: "S30", epic: "E3", pts: 3, status: "todo", title: "Featured Races: the seven curated races by default; add and remove under Default, Global or Local; every race shown with state, office, label and the independent's name", deps: "S13" },
+  { id: "S31", epic: "E3", pts: 2, status: "todo", title: "Featured Charts: one set for all featured races, defaulting to every per-race chart built from AP data (B5, B6, B7, B8, B9, B10, B13); add and remove per source", deps: "S30" },
+  { id: "S32", epic: "E3", pts: 3, status: "todo", title: "Race Detail grid: one row per featured race, one card per featured chart, race band on every card, open links carrying race id and source", deps: "S14, S31" },
+  { id: "S35", epic: "E3", pts: 2, status: "todo", title: "B5 race result and B13 versus-2024 running on Blob data in the deployment, baseline from the static 2024 file, counties from state files", deps: "S01" },
+  { id: "S33", epic: "E3", pts: 5, status: "todo", title: "B6 live county map graphic, 1920x1080: leader by county with opacity by share reporting, legend, title-safe, ported from the Watch Party map", deps: "S01" },
+  { id: "S34", epic: "E3", pts: 3, status: "todo", title: "B8 votes still out graphic: expected vote remaining by county from AP's eevp, what the independent needs of it, with the key note on screen", deps: "S01" },
+  { id: "S36", epic: "E3", pts: 3, status: "todo", title: "B9 ranked-choice rounds graphic (poller keeps the round data AP sends)", note: "Collision: studio/lib/ap.js, additive. AK-AL is ranked choice.", deps: "S01" },
+  { id: "S39", epic: "E3", pts: 3, status: "todo", title: "2024 federal baseline from the AP API, fetched once by a script and committed as config JSON: national Senate and House totals by party (C6, D10) and county results for the featured states (B10)", note: "Answers question 8: no SQLite in the deployment. Same pattern as config/baseline-2024-pres.json. AP allows 10 requests a minute; the script paces itself." },
+  { id: "S37", epic: "E3", pts: 5, status: "todo", title: "B10 then-versus-now by county, tonight against the 2024 result for the same seat", deps: "S39, S01" },
+  { id: "S38", epic: "E3", pts: 5, status: "todo", title: "B7 margin tracker over the night: the poller appends each race's margin to a per-race history file in Blob; the graphic draws the line", note: "Collision: studio/lib/poll.js, additive.", deps: "S01" },
+  { id: "S40", epic: "E4", pts: 2, status: "todo", title: "Movement Charts: library of the C and D graphics with the default set selected (C1, C6, C7, D1, D2, D3, D4, D5, D6, D7, D10, D11); add and remove per source", deps: "S14" },
+  { id: "S41", epic: "E4", pts: 3, status: "todo", title: "C1 featured races board: every featured independent with share, margin, expected vote in and call status", deps: "S04" },
+  { id: "S42", epic: "E4", pts: 3, status: "todo", title: "C6 national independent vote: sum of non-major votes across every race against the 2024 share", deps: "S04, S39" },
+  { id: "S43a", epic: "E4", pts: 3, status: "todo", title: "Polling dataset for the seven featured races compiled from public sources into config/polls.json: pollster, sponsor, dates, sample, numbers per candidate, with a source link on every row and campaign-sponsored polls flagged", note: "Answers question 3. Gallup publishes party identification, not race polls; its independent-identification figure goes into the dataset for the C3 stat. Gaps are reported, not invented." },
+  { id: "S43", epic: "E4", pts: 3, status: "todo", title: "C7 poll versus result for the featured races, reading the polls config; a race with no poll shows the result column alone", deps: "S04, S43a" },
+  { id: "S44", epic: "E4", pts: 5, status: "todo", title: "D1 Senate status map: called, leading (hatched), counting, polls open, featured outline; shared national map module", deps: "S04" },
+  { id: "S45", epic: "E4", pts: 3, status: "todo", title: "D2 House status map: majority of called seats per state, called-of-total tallies", deps: "S44" },
+  { id: "S46", epic: "E4", pts: 3, status: "todo", title: "Poller fetches the AP Trend reports (Senate, House) each run and writes trend.json", note: "Collision: studio/lib/poll.js, additive." },
+  { id: "S47", epic: "E4", pts: 3, status: "todo", title: "D3 balance of power, Senate: won, leading, holdovers by party with independents in their own rows", deps: "S46" },
+  { id: "S48", epic: "E4", pts: 2, status: "todo", title: "D4 balance of power, House: won, leading, net change", deps: "S47" },
+  { id: "S49", epic: "E4", pts: 3, status: "todo", title: "D5 key races grid: eight races chosen by the producer, defaulting to the ticker races", deps: "S04" },
+  { id: "S50", epic: "E4", pts: 3, status: "todo", title: "D6 race zoom-in with the house status headline and a producer-typed context line kept in the state", deps: "S04" },
+  { id: "S51", epic: "E4", pts: 2, status: "todo", title: "D7 Senate status tile map", deps: "S44" },
+  { id: "S52", epic: "E4", pts: 2, status: "todo", title: "D10 national House popular vote by party against 2024", deps: "S04, S39" },
+  { id: "S53", epic: "E4", pts: 2, status: "todo", title: "D11 too close to call: races under 3 points with over 25% in, house rule stated on screen", deps: "S04" },
+  { id: "S60", epic: "E5", pts: 3, status: "todo", title: "Full Catalog list: every race in the feed with search and filters (state, office, independent on ballot, called, featured)", deps: "S14" },
+  { id: "S61", epic: "E5", pts: 3, status: "todo", title: "Per-race expansion: every per-race graphic as a card with the same open and freshness controls; set or remove Featured Race and Featured Chart from here under any source", deps: "S60, S31" },
+  { id: "S70", epic: "E6", pts: 2, status: "todo", title: "Operator conflicts and refresh: another operator's publish shown with its time, state re-read on an interval, Blob propagation delay stated beside the publish button", deps: "S12" },
+  { id: "S71", epic: "E6", pts: 2, status: "todo", title: "Preview deployment check of every section and graphic with real data, publish-to-air latency measured, README and spec updated", deps: "S61" },
+  { id: "S72", epic: "E6", pts: 1, status: "todo", title: "Old panel code removed from studio/public/studio once every control it offered exists in the control room; README studio section rewritten", deps: "S71" },
+];
+// Answers are filled in as they arrive.
+const QUESTIONS = [
+  { q: "Build the twelve movement graphics as part of this?", d: "They are sketches today. Building them is about a third of the points. The alternative is to ship the control room first with a \"not built yet\" card for each, then build charts in a priority order you give me.", a: "Yes. All twelve are in scope (epic E4)." },
+  { q: "Default Featured Charts for Race Detail.", d: "The brief named the movement defaults but no race-detail defaults. Reading taken: the default Featured Charts are every per-race chart that can be built from AP data, B5, B6, B7, B8, B9, B10 and B13. B1 to B4, B11 and B12 need editorial or outside data and are not built.", a: "Use the charts as briefed. B7, B9 and B10 move from optional to core." },
+  { q: "C7 poll vs result needs a polling dataset that does not exist.", d: "Either you supply polls for the featured races (pollster, dates, numbers) as a config file, or C7 ships showing results only with an empty poll column until the data arrives.", a: "Compile it from public sources as best as possible (story S43a) and report any race with no usable poll. Gallup covers party identification, not these races; its figure feeds the C3 stat." },
+  { q: "What happens to /studio?", d: "Proposed: it stays untouched until you accept /producer, then becomes a redirect. The poller controls move into the new status bar either way.", a: "The control room is /studio itself, rebuilt in place. There is no /producer." },
+  { q: "Local means this browser.", d: "A graphic opened with the Local source reads the same browser's saved state. The same link on another machine falls back to Global. Acceptable?", a: "Acceptable. Global is what everything uses unless Default or Local is selected." },
+  { q: "How strong should the global safeguard be?", d: "Proposed: a dialog listing every change (added, removed, reordered) and the time of the last publish by anyone, with a single confirm. Typing a word to confirm is available if you want more friction.", a: "Change list plus one confirm. Revisit after trying it." },
+  { q: "Thumbnails are live, scaled pages.", d: "Each card runs the real graphic in a small iframe with real data, loaded only while visible. A section can hold 30 or more. Static image snapshots would need a renderer the deployment does not have.", a: "Yes, with a performance budget: the catalog can reach a hundred graphics, featured ones matter most (story S15)." },
+  { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
+];
+const LOG = [
+  { t: "2026-10-26T21:45:00Z", what: "Plan v1 written: 41 stories, 111 core points, 13 optional. Waiting on the key questions." },
+  { t: "2026-10-26T23:16:49Z", what: "Build started. Foundations first: S01 Blob polling path in feed.js and S02 control state module." },
+  { t: "2026-10-26T22:05:00Z", what: "All eight questions answered. Control room moves to /studio in place; B7, B9, B10 become core; stories S15 (thumbnail budget), S39 (2024 baseline from AP), S43a (polling dataset) added. 44 stories, 133 points. Waiting for begin." },
+];
+// ===================== end of plan data =====================
+
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmtDur = (min) => { if (!isFinite(min)) return "—"; const h = Math.floor(min / 60), m = Math.round(min % 60); return h ? `${h} h ${m} min` : `${m} min`; };
+  const fmtTime = (ms) => new Date(ms).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit" });
+
+  function compute() {
+    const inScope = STORIES.filter((s) => !s.optional || s.accepted);
+    const total = inScope.reduce((a, s) => a + s.pts, 0);
+    const doneList = inScope.filter((s) => s.status === "done");
+    const done = doneList.reduce((a, s) => a + s.pts, 0);
+    const remaining = total - done;
+    const start = META.startedAt ? Date.parse(META.startedAt) : null;
+    const elapsedMin = start ? (Date.now() - start) / 60000 : 0;
+    const measured = start && doneList.length >= 3 && done > 0 ? elapsedMin / done : null;
+    const rate = measured ?? META.minPerPoint;
+    return { total, done, remaining, start, elapsedMin, measured, rate, etaMs: Date.now() + remaining * rate * 60000, doneList, inScope };
+  }
+
+  function renderStrip(c) {
+    const started = !!c.start;
+    $("eta").textContent = c.remaining === 0 ? "Done" : started ? fmtTime(c.etaMs) : fmtDur(c.remaining * c.rate);
+    $("etasub").textContent = c.remaining === 0 ? `finished ${c.doneList.length} stories` : started ? `${fmtDur(c.remaining * c.rate)} of build time left` : "of build time, once the build starts";
+    $("done").textContent = `${c.done} / ${c.total}`;
+    $("donesub").textContent = `${c.doneList.length} of ${c.inScope.length} stories`;
+    $("remaining").textContent = String(c.remaining);
+    $("remsub").textContent = `${c.inScope.filter((s) => s.status === "doing").length} in progress · ${c.inScope.filter((s) => s.status === "blocked").length} blocked`;
+    $("pace").textContent = `${c.rate.toFixed(1)} min/pt`;
+    $("pacesub").textContent = c.measured ? `measured over ${fmtDur(c.elapsedMin)}` : "assumed until 3 stories are done";
+    $("phase").textContent = META.phase;
+    $("phasesub").textContent = META.note ?? (started ? `started ${fmtTime(c.start)}` : "");
+    $("updated").textContent = `Page updated ${new Date(META.updated).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`;
+  }
+
+  function renderBurn(c) {
+    const svg = $("burn");
+    const W = 760, H = 300, L = 46, R = 16, T = 14, B = 36, pw = W - L - R, ph = H - T - B;
+    const planEndH = (c.total * META.minPerPoint) / 60;
+    const nowH = c.start ? c.elapsedMin / 60 : 0;
+    const etaH = c.start ? (c.etaMs - c.start) / 3600000 : planEndH;
+    const xmax = Math.max(planEndH, etaH, nowH, 1) * 1.05;
+    const x = (h) => L + (h / xmax) * pw, y = (p) => T + (1 - p / c.total) * ph;
+    let g = `<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>`;
+    for (const f of [0, .25, .5, .75, 1]) { const p = Math.round(f * c.total); g += `<line x1="${L}" x2="${W - R}" y1="${y(p)}" y2="${y(p)}" stroke="#e7e1d6"/><text x="${L - 8}" y="${y(p) + 4}" text-anchor="end" font-size="11" fill="#6b7280">${p}</text>`; }
+    const step = xmax > 12 ? 2 : 1;
+    for (let h = 0; h <= xmax; h += step) g += `<text x="${x(h)}" y="${H - 14}" text-anchor="middle" font-size="11" fill="#6b7280">${h}h</text>`;
+    g += `<text x="${L + pw / 2}" y="${H - 1}" text-anchor="middle" font-size="11" fill="#6b7280">hours of build time since start</text>`;
+    g += `<text transform="translate(12 ${T + ph / 2}) rotate(-90)" text-anchor="middle" font-size="11" fill="#6b7280">points remaining</text>`;
+    g += `<line x1="${x(0)}" y1="${y(c.total)}" x2="${x(planEndH)}" y2="${y(0)}" stroke="#52514e" stroke-width="2" stroke-dasharray="6 5"/>`;
+    const pts = [{ h: 0, p: c.total }];
+    if (c.start) {
+      const events = c.doneList.filter((s) => s.doneAt).map((s) => ({ t: Date.parse(s.doneAt), s })).sort((a, b) => a.t - b.t);
+      let rem = c.total;
+      for (const e of events) { rem -= e.s.pts; pts.push({ h: (e.t - c.start) / 3600000, p: rem }); }
+      pts.push({ h: nowH, p: c.remaining });
+      const d = pts.map((q, i) => `${i ? "L" : "M"}${x(q.h).toFixed(1)} ${y(q.p).toFixed(1)}`).join(" ");
+      g += `<path d="${d} L${x(nowH).toFixed(1)} ${y(0)} L${x(0)} ${y(0)} Z" fill="#2a78d6" fill-opacity=".08"/>`;
+      g += `<path d="${d}" stroke="#2a78d6" stroke-width="2" fill="none" stroke-linejoin="round"/>`;
+      if (c.remaining > 0) g += `<line x1="${x(nowH)}" y1="${y(c.remaining)}" x2="${x(etaH)}" y2="${y(0)}" stroke="#b8911f" stroke-width="2" stroke-dasharray="2 5"/>`;
+      g += `<circle cx="${x(nowH)}" cy="${y(c.remaining)}" r="5" fill="#2a78d6" stroke="#fff" stroke-width="2"/>`;
+      g += `<text x="${Math.min(x(nowH) + 8, W - R - 40)}" y="${y(c.remaining) - 8}" font-size="11" fill="#1f2937">${c.remaining} left</text>`;
+    } else {
+      g += `<text x="${x(planEndH)}" y="${y(0) - 8}" text-anchor="end" font-size="11" fill="#6b7280">planned finish ≈ ${fmtDur(planEndH * 60)}</text>`;
+    }
+    g += `<rect id="hit" x="${L}" y="${T}" width="${pw}" height="${ph}" fill="transparent"/>`;
+    svg.innerHTML = g;
+    const tip = $("tip"), hit = svg.querySelector("#hit");
+    hit.addEventListener("mousemove", (e) => {
+      const r = svg.getBoundingClientRect(); const h = ((((e.clientX - r.left) / r.width) * W) - L) / pw * xmax;
+      const planned = Math.max(0, c.total * (1 - h / planEndH));
+      let actual = null; if (c.start && h <= nowH) { actual = c.total; for (const q of pts) if (q.h <= h) actual = q.p; }
+      tip.innerHTML = `<b>${h.toFixed(1)} h</b><br>planned: ${planned.toFixed(0)} left${actual !== null ? `<br>actual: ${actual} left` : ""}`;
+      tip.style.display = "block"; tip.style.left = `${Math.min(e.clientX - r.left + 12, r.width - 150)}px`; tip.style.top = `${e.clientY - r.top - 10}px`;
+    });
+    hit.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  }
+
+  function renderStories() {
+    const byEpic = new Map();
+    for (const s of STORIES) { if (!byEpic.has(s.epic)) byEpic.set(s.epic, []); byEpic.get(s.epic).push(s); }
+    let html = "";
+    for (const [epic, list] of byEpic) {
+      const pts = list.filter((s) => !s.optional || s.accepted).reduce((a, s) => a + s.pts, 0);
+      const done = list.filter((s) => s.status === "done").reduce((a, s) => a + s.pts, 0);
+      html += `<tr class="epic"><td colspan="4">${epic} · ${esc(EPICS[epic])}<span class="pts">${done} / ${pts} pts</span></td></tr>`;
+      for (const s of list) html += `<tr class="${s.status}"><td class="id">${s.id}</td><td><div>${esc(s.title)}${s.optional ? ` <span class="pill opt">${s.accepted ? "accepted" : "optional"}</span>` : ""}</div>${s.note ? `<div class="dep">${esc(s.note)}</div>` : ""}${s.deps ? `<div class="dep">after ${esc(s.deps)}</div>` : ""}</td><td class="n">${s.pts}</td><td><span class="pill ${s.status}">${s.status === "doing" ? "in progress" : s.status}</span></td></tr>`;
+    }
+    $("stories").querySelector("tbody").innerHTML = html;
+  }
+
+  function renderQuestions() {
+    $("questions").innerHTML = QUESTIONS.map((q, i) => `<div class="card"><b>${i + 1}. ${esc(q.q)}</b><p>${esc(q.d)}</p>${q.a ? `<p class="a">Answer: ${esc(q.a)}</p>` : `<p class="a">Open.</p>`}</div>`).join("");
+  }
+  function renderLog() {
+    $("log").querySelector("tbody").innerHTML = [...LOG].reverse().map((l) => `<tr><td class="t">${new Date(l.t).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</td><td>${esc(l.what)}</td></tr>`).join("");
+  }
+
+  function render() { const c = compute(); renderStrip(c); renderBurn(c); }
+  renderStories(); renderQuestions(); renderLog(); render();
+  setInterval(render, 60000);
+})();
+</script>
+</body>
+</html>
