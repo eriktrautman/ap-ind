@@ -84,7 +84,7 @@ let prod = null;              // production state as last read (normalized), or 
 let prodSeenAt = null;        // updatedAt of the production copy this page last pulled or pushed
 let prodError = null;         // why production is unreadable right now, or null
 let draft = normalize(DEFAULTS);   // the working copy: always Local (this browser), seeded from production on first use
-let view = "local";           // what the thumbnails and the example ticker show: the working copy, or production
+const view = "local";         // thumbnails and the example ticker always show the settings on this page
 const cards = createCardManager({ maxLive: 12, getBg: () => $("bg").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (budget ${12})` : live ? `${live} live previews` : ""; });
 
@@ -128,6 +128,11 @@ const canPull = () => runtime ? !!runtime.production?.canPull : !prodError;
 // The shared version is always named by its web address, never by a word like "production": on the
 // website that is this site; on a laptop it is the website it points at, or the laptop itself (GLOBAL=self).
 const prodHost = () => runtime ? (runtime.production?.where === "self" ? `${location.host} (this laptop)` : runtime.production?.origin?.replace(/^https?:\/\//, "") ?? "the website") : location.host;
+// Wording: on the website itself the pushed settings are "live"; from a laptop they are "the settings at <host>".
+// What is edited here is "the settings on this page" (saved in this browser), never "your settings".
+const onSite = () => !runtime;
+const LIVE = () => (onSite() ? "the live settings" : `the settings at ${prodHost()}`);
+const SETTINGS = "the settings on this page (ticker races and order, manual items, idle text, featured races and charts, overview charts)";
 
 /** Every edit comes through here: the working copy saves to this browser at once. */
 function commit() {
@@ -138,29 +143,29 @@ function commit() {
 
 function renderStrip() {
   $("prodstrip").hidden = false;
-  $("previewprod").textContent = `the settings at ${prodHost()}`;
   const d = dirty();
   const changes = prod ? diffState(prod, draft) : [];
   const host = prodHost();
   const st = $("ps-state");
   st.className = d ? "dirty" : "same";
-  st.textContent = !prod ? "Your settings" : d ? `Your settings · ${changes.length} change${changes.length === 1 ? "" : "s"} not pushed` : "Your settings · same as the site";
+  st.textContent = !prod ? "Not pushed" : d ? `${changes.length} change${changes.length === 1 ? "" : "s"} on this page not pushed` : `Same as ${onSite() ? "live" : host}`;
   $("ps-sub").textContent = "";
-  $("ps-work").title = `${readLocal()?.updatedAt ? `Saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}Nothing at ${host} changes until you push.${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
+  $("ps-work").title = `${readLocal()?.updatedAt ? `The settings on this page were saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}${onSite() ? "Nothing goes live until you push." : `Nothing at ${host} changes until you push.`}${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
   const p = $("ps-prod");
   const r = runtime?.production;
   const sent = prod?.updatedAt ? `pushed ${ago(prod.updatedAt)}` : "nothing pushed yet";
   const since = otherOperator() ? " · changed since you last pulled" : "";
   let cls = "", text, tip;
-  if (runtime && r && !r.reachable) { cls = "bad"; text = `${host} · not answering`; tip = `${host} is not responding, so you can neither pull its settings nor push yours. ${r.reason ?? ""}`; }
-  else if (prodError) { cls = "bad"; text = `${host} · can't read`; tip = `The settings at ${host} could not be read: ${prodError}`; }
-  else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · pull only · ${sent}`; tip = `This laptop has no password for ${host}, so you can pull its settings but not push yours. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been pushed there yet, so it shows the defaults."}`; }
-  else { text = `${host} · ${sent}${since}`; tip = `${host} is the site everyone uses: its ticker and graphics show whatever settings were last pushed there.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so it shows the defaults."}${since ? " Someone pushed settings after you last pulled." : ""}`; }
+  if (runtime && r && !r.reachable) { cls = "bad"; text = `${host} · not answering`; tip = `${host} is not responding, so you can neither pull its settings nor push. ${r.reason ?? ""}`; }
+  else if (prodError) { cls = "bad"; text = `${onSite() ? "Live settings" : host} · can't read`; tip = `${onSite() ? "The live settings" : `The settings at ${host}`} could not be read: ${prodError}`; }
+  else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · pull only · ${sent}`; tip = `This laptop has no password for ${host}, so you can pull its settings but not push. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been pushed there yet, so it shows the defaults."}`; }
+  else if (onSite()) { text = `Live on this site · ${sent}${since}`; tip = `The live settings are what this site's ticker and graphics show: whatever was last pushed, by anyone.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so the defaults are live."}${since ? " Someone pushed after you last pulled." : ""}`; }
+  else { text = `${host} · ${sent}${since}`; tip = `${host} is the site everyone uses: its ticker and graphics show whatever was last pushed there, by anyone.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so it shows the defaults."}${since ? " Someone pushed after you last pulled." : ""}`; }
   p.className = cls; p.textContent = text; $("ps-prodsub").textContent = ""; $("ps-prod").title = tip;
   $("push").disabled = !canPush() || !d;
-  $("push").title = !canPush() ? (r?.reason ?? "pushing is not possible from here") : !d ? `Your settings are already the same as ${host}` : `Push your settings to ${host} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  $("push").title = !canPush() ? (r?.reason ?? "pushing is not possible from here") : !d ? `Nothing to push: this page already matches ${onSite() ? "live" : host}` : `${onSite() ? "Push the settings on this page live" : `Push the settings on this page to ${host}`} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !prod;
-  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pulling is not possible right now") : `Replace your settings with the ones at ${host}`;
+  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pulling is not possible right now") : `Replace the settings on this page with ${LIVE()}`;
 }
 
 async function pushToProduction() {
@@ -169,14 +174,15 @@ async function pushToProduction() {
   try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; } catch (e) { prodError = e.message; }
   const changes = diffState(latest ?? DEFAULTS, draft);
   const someoneElse = latest && latest.updatedAt !== prodSeenAt;
+  const host = prodHost();
   const ok = await ask({
-    title: `Push your settings to ${prodHost()}?`,
-    body: `<p><b>All</b> of your settings here (ticker races and order, manual items, idle text, featured races and charts, overview charts) replace the settings at <b>${esc(prodHost())}</b>, including anything someone else set there. The ticker and every graphic there change to yours: the ticker within 5 seconds, the graphics within 10.</p>
+    title: onSite() ? "Push live?" : `Push to ${host}?`,
+    body: `<p><b>All</b> of ${SETTINGS} replace <b>${esc(LIVE())}</b>, including anything someone else set. The ${onSite() ? "live" : ""} ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`} change to match: the ticker within 5 seconds, the graphics within 10.</p>
       ${changeList(changes)}
-      <p class="small muted">Last push to ${esc(prodHost())}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else pushed settings to ${esc(prodHost())} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now throws theirs away. Press Cancel and Pull if you want to see their settings first.</div>` : ""}
-      ${!changes.length ? `<div class="warnline">Your settings are already the same as ${esc(prodHost())}.</div>` : ""}`,
-    ok: `Push to ${prodHost()}`, danger: true,
+      <p class="small muted">Last push${onSite() ? "" : ` to ${esc(host)}`}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
+      ${someoneElse ? `<div class="warnline bad">Someone else pushed${onSite() ? "" : ` to ${esc(host)}`} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now throws their settings away. Press Cancel and Pull if you want to see them first.</div>` : ""}
+      ${!changes.length ? `<div class="warnline">This page already matches ${onSite() ? "live" : esc(host)}.</div>` : ""}`,
+    ok: onSite() ? "Push live" : `Push to ${host}`, danger: true,
   });
   if (!ok) return;
   try {
@@ -185,18 +191,19 @@ async function pushToProduction() {
     draft = saveLocal(structuredClone(saved));
     renderAll(); cards.broadcast(draft);
   } catch (e) {
-    await ask({ title: "Push failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed at ${esc(prodHost())}. Your settings are still saved here.</p>`, ok: "OK" });
+    await ask({ title: "Push failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed ${onSite() ? "live" : `at ${esc(host)}`}. The settings on this page are still saved here.</p>`, ok: "OK" });
   }
 }
 async function pullFromProduction() {
   let latest;
+  const host = prodHost();
   try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; }
-  catch (e) { prodError = e.message; renderStrip(); await ask({ title: `Can't read ${prodHost()}`, body: `<div class="warnline bad">${esc(e.message)}</div><p>Your settings are unchanged.</p>`, ok: "OK" }); return; }
+  catch (e) { prodError = e.message; renderStrip(); await ask({ title: onSite() ? "Can't read the live settings" : `Can't read ${host}`, body: `<div class="warnline bad">${esc(e.message)}</div><p>The settings on this page are unchanged.</p>`, ok: "OK" }); return; }
   const changes = diffState(draft, latest);
   const ok = await ask({
-    title: `Pull the settings from ${prodHost()}? Yours are replaced.`,
-    body: `<p><b>All</b> of your settings here (ticker races and order, manual items, idle text, featured races and charts, overview charts) are replaced by the ones at <b>${esc(prodHost())}</b> (last pushed ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so it is the defaults"}). Nothing at ${esc(prodHost())} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your settings are already the same as ${esc(prodHost())}.</div>` : ""}`,
-    ok: `Pull from ${prodHost()}`, danger: changes.length > 0,
+    title: onSite() ? "Pull the live settings onto this page?" : `Pull from ${host} onto this page?`,
+    body: `<p><b>All</b> of ${SETTINGS} are replaced by <b>${esc(LIVE())}</b> (last pushed ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing ${onSite() ? "live" : `at ${esc(host)}`} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page already matches ${onSite() ? "live" : esc(host)}.</div>` : ""}`,
+    ok: onSite() ? "Pull the live settings" : `Pull from ${host}`, danger: changes.length > 0,
   });
   if (!ok) return;
   prodSeenAt = latest.updatedAt;
@@ -205,7 +212,7 @@ async function pullFromProduction() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Reset your settings to the defaults?", body: `<p>Your settings are replaced by the defaults the app came with. Nothing at ${esc(prodHost())} changes until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your settings are already the defaults.</div>` : ""}`, ok: "Reset to defaults", danger: changes.length > 0 });
+  const ok = await ask({ title: "Reset this page to the defaults?", body: `<p><b>All</b> of ${SETTINGS} are replaced by the defaults the app came with. Nothing ${onSite() ? "goes live" : `at ${esc(prodHost())} changes`} until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Reset to defaults", danger: changes.length > 0 });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   renderAll(); cards.broadcast(draft);
@@ -213,14 +220,6 @@ async function restoreDefaults() {
 $("push").addEventListener("click", pushToProduction);
 $("pull").addEventListener("click", pullFromProduction);
 $("defaults").addEventListener("click", restoreDefaults);
-$("previewsel").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
-  view = b.dataset.view;
-  $("previewsel").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
-  frame.contentWindow?.postMessage({ type: "producer-source", source: view }, "*");
-  if (view === "local") sendPreview(); else renderTickerOpen();
-  cards.refreshSource();
-  if (view === "local") cards.broadcast(draft);
-}));
 
 // ---------- status bar + poller ----------
 function renderStatus() {
@@ -238,7 +237,7 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-air", `<span class="k">A push reaches ${esc(prodHost())} in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
+    st("st-air", `<span class="k">A push ${onSite() ? "goes live in" : `reaches ${esc(prodHost())} in`}</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
@@ -318,7 +317,7 @@ function raceBand(r, { featured, position = null }) {
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
-  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only your settings. Nothing at ${esc(prodHost())} changes until you push.</p>`, ok: title.replace(/\?$/, "") });
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only this page. Nothing ${onSite() ? "goes live" : `at ${esc(prodHost())} changes`} until you push.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
 }
 function toggleFeatured(id) {
@@ -391,12 +390,16 @@ function sendPreview() {
 }
 frame.addEventListener("load", sendPreview);
 window.addEventListener("resize", scalePreview);
-$("tickerurl").textContent = `${location.host}/ticker`; $("tickerurl").href = "/ticker?bg=black";
+function renderTickerNote() {
+  $("tickernote").innerHTML = onSite()
+    ? `This is a preview. The live ticker is <a href="/ticker?bg=black" target="_blank" rel="noopener">${esc(location.host)}/ticker</a> (add <code>?bg=green</code> for the key); to change it, Push with the buttons above. It re-reads the live settings every 5 seconds.`
+    : `This is a local preview. The ticker everyone uses is <a href="${esc(runtime?.production?.origin ?? "")}/ticker?bg=black" target="_blank" rel="noopener">${esc(prodHost())}/ticker</a> (add <code>?bg=green</code> for the key); to change that one, Push with the buttons above. It re-reads what was last pushed every 5 seconds.`;
+}
 /** The ticker opens like any chart: at full size, showing whatever the previews show. */
 function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}`; }
 function renderTickerOpen() {
+  renderTickerNote();
   $("tickeropen").href = tickerOpenUrl();
-  $("previewwhich").textContent = view === "local" ? "Showing your settings" : `Showing the settings at ${prodHost()}`;
 }
 $("previewframe").addEventListener("click", () => window.open(tickerOpenUrl(), "_blank", "noopener"));
 $("bg").addEventListener("change", renderTickerOpen);
