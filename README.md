@@ -20,6 +20,7 @@ Open `studio/.env` in a text editor and fill in two lines:
 ```
 AP_API_KEY=the key you were sent
 STUDIO_PASSWORD=anything you like   # the control room's sign-in password on your machine
+STUDIO_TEST_PASSWORD=test1234       # optional: the rehearsal password, flagged in the control room
 ```
 
 Leave `STORE_DIR=./data` as it is. Then:
@@ -36,6 +37,7 @@ What you will be sent, and what it is for:
 |---|---|---|
 | `AP_API_KEY` | **Yes** | Reads results from the AP Elections API. Without it nothing polls. AP allows ten requests a minute per key, and a local run uses about two, so several laptops can share one key. |
 | `STUDIO_PASSWORD` | You choose it yourself | Password for `/studio` on your machine only. Not a shared secret. |
+| `STUDIO_TEST_PASSWORD` | Optional | A second, easy password for rehearsals (`test1234` until the night). Signing in with it shows a purple TEST LOGIN banner. |
 | `BLOB_READ_WRITE_TOKEN` | No | Only if your laptop should write into the production data store (standing in for the Vercel cron). Then also delete the `STORE_DIR` line. Ask before using it: pause, test/live and every push would then change production. |
 | `CRON_SECRET` | No | Vercel only; lets the cron call the poll function. Unused locally. |
 
@@ -157,7 +159,8 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 
 - **The ticker and every graphic are public links.** `/ticker` and the pages under `/g/` are fixed URLs, the same for everyone, and they only display. Anyone who has a link sees exactly what the switcher sees. No sign-in produces these links and opening one changes nothing.
 - **They show whatever was last pushed.** Each page reads the shared settings from the public, read-only `GET /api/producer` every few seconds. There is no other input.
-- **Only a push changes them.** A push is a `PUT /api/producer`, accepted only with the signed cookie you get by signing in to `/studio` with `STUDIO_PASSWORD`. A push from a laptop goes through the laptop's own sign-in and then signs in to the deployment with `GLOBAL_PASSWORD`, which is that same password. One shared password gates every change; change it in the Vercel project and every open control room is signed out at once.
+- **Two passwords, one of them temporary.** `/studio` accepts `STUDIO_PASSWORD` (the real one) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234` until election night). The cookie remembers which one signed in, so the control room shows a purple **TEST LOGIN** banner next to the TEST DATA banner for test sign-ins. **Before the night:** remove `STUDIO_TEST_PASSWORD` from the Vercel project (`vercel env rm STUDIO_TEST_PASSWORD production` in `studio/`) and redeploy; every browser that signed in with it is signed out at once, because its cookie was keyed to that password. Sign out on the page clears only that one browser. Laptops that push with `GLOBAL_PASSWORD=test1234` lose push at the same moment and need the real password.
+- **Only a push changes them.** A push is a `PUT /api/producer`, accepted only with the signed cookie you get by signing in to `/studio` with one of those passwords. A push from a laptop goes through the laptop's own sign-in and then signs in to the deployment with `GLOBAL_PASSWORD`, which is that same password. One shared password gates every change; change it in the Vercel project and every open control room is signed out at once.
 - **Per-browser knobs affect one screen only.** `?src=local` on a graphic reads that browser's own saved settings, and a few pages take display text from the URL (the lower third's `?name=&title=`, the quote card's `?quote=&who=`). They change what that one window shows and nothing else, and the text is rendered as text, never as markup. The operational rule that matters: the switcher operator opens graphics only from the control room's **Show** buttons, never from a link someone else sends.
 - **What is not there.** Sign-in guessing is slowed by a fixed delay but not rate-limited or locked out, so use a long random password (a Vercel Firewall rate-limit rule on `/api/login` closes this properly). The shared password means no per-person revocation and no record of who pushed beyond the time of the last push.
 

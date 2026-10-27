@@ -1,48 +1,63 @@
-// Studio login: one shared password (STUDIO_PASSWORD) and a signed, expiring cookie.
-// No sessions to store: the cookie is "<expiry>.<hmac>" and verifies statelessly.
+// Studio login: a shared password and a signed, expiring cookie. Two passwords are accepted,
+// each from its own env var, and the cookie records which one signed in:
+//   STUDIO_PASSWORD        the real one, for the night
+//   STUDIO_TEST_PASSWORD   an easy one for rehearsals; the control room flags it, and removing the
+//                          variable (then redeploying) signs every test session out at once
+// No sessions to store: the cookie is "<expiry>.<kind>.<hmac>" and verifies statelessly, keyed by
+// the password it was issued for, so changing a password signs out everyone who used it.
 import { createHmac, timingSafeEqual, createHash } from "node:crypto";
 
 const COOKIE = "studio";
 const TTL_MS = 12 * 60 * 60 * 1000;
+export const KINDS = { prod: "STUDIO_PASSWORD", test: "STUDIO_TEST_PASSWORD" };
 
-function secret() {
-  const pw = process.env.STUDIO_PASSWORD;
-  if (!pw) throw new Error("STUDIO_PASSWORD is not set");
-  return createHash("sha256").update(`studio-cookie:${pw}`).digest();
+const password = (kind) => process.env[KINDS[kind]] ?? "";
+export const configured = () => Object.keys(KINDS).filter((k) => password(k).length > 0);
+
+function secret(kind) {
+  const pw = password(kind);
+  if (!pw) throw new Error(`${KINDS[kind]} is not set`);
+  return createHash("sha256").update(`studio-cookie:${kind}:${pw}`).digest();
 }
 
-function sig(exp) {
-  return createHmac("sha256", secret()).update(String(exp)).digest("base64url");
+function sig(kind, exp) {
+  return createHmac("sha256", secret(kind)).update(`${kind}.${exp}`).digest("base64url");
 }
 
+const same = (a, b) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
+
+/** Which configured password `given` matches: "prod", "test", or null. */
 export function checkPassword(given) {
-  const pw = process.env.STUDIO_PASSWORD ?? "";
-  const a = Buffer.from(String(given ?? ""));
-  const b = Buffer.from(pw);
-  return pw.length > 0 && a.length === b.length && timingSafeEqual(a, b);
+  const g = String(given ?? "");
+  for (const kind of configured()) if (same(g, password(kind))) return kind;
+  return null;
 }
 
-export function issueCookie(req) {
+export function issueCookie(req, kind) {
   const exp = Date.now() + TTL_MS;
   const secure = (req.headers["x-forwarded-proto"] ?? "").includes("https") ? "; Secure" : "";
-  return `${COOKIE}=${exp}.${sig(exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(TTL_MS / 1000)}${secure}`;
+  return `${COOKIE}=${exp}.${kind}.${sig(kind, exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(TTL_MS / 1000)}${secure}`;
 }
 
 export function clearCookie() {
   return `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
-export function isAuthed(req) {
+/** The kind of password this request signed in with ("prod" | "test"), or false. */
+export function authKind(req) {
   try {
     const raw = (req.headers.cookie ?? "").split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
     if (!raw) return false;
-    const [exp, s] = raw.slice(COOKIE.length + 1).split(".");
-    if (!exp || !s || Number(exp) < Date.now()) return false;
-    const a = Buffer.from(s), b = Buffer.from(sig(Number(exp)));
-    return a.length === b.length && timingSafeEqual(a, b);
+    const [exp, kind, s] = raw.slice(COOKIE.length + 1).split(".");
+    if (!exp || !s || !(kind in KINDS) || Number(exp) < Date.now()) return false;
+    return same(s, sig(kind, Number(exp))) ? kind : false;
   } catch {
     return false;
   }
+}
+
+export function isAuthed(req) {
+  return authKind(req) !== false;
 }
 
 /** Vercel Cron sends Authorization: Bearer CRON_SECRET; ?secret= is for curl. */

@@ -2,7 +2,7 @@
 :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --ok: #2e9e5b; --warn: #e08a1e; --bad: #b11e2d; --local: #6d28d9; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: ui-monospace, Menlo, monospace; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { color-scheme: light; scroll-padding-top: 120px; }
+html { color-scheme: light; scroll-padding-top: var(--top-h, 120px); } /* --top-h is set by studio.js to the sticky header height */
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
 a { color: var(--navy); }
 code { font-size: 12px; background: var(--cream); padding: 1px 5px; border-radius: 4px; }
@@ -37,6 +37,7 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .howbox code { font-family: var(--mono); font-size: 12px; }
 .howbox a { color: inherit; text-decoration: underline; }
 .testbanner { background: var(--warn); color: #1a1200; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; letter-spacing: .04em; }
+.testbanner.testlogin { background: var(--local); color: #fff; }
 .problem { background: #fdf0f1; border: 1px solid #f0c3c7; border-left: 4px solid var(--bad); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 14px; color: var(--ink); }
 .problem.warn { background: #fdf6ea; border-color: #f1d9a8; border-left-color: var(--warn); }
 .problem.top { margin: 0; border-radius: 0; border-width: 0 0 1px 4px; }
@@ -69,6 +70,9 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 /* ---- layout ---- */
 main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .card { background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 14px 18px 18px; margin: 14px 0; }
+/* Nav-level sections: a wide gap and a navy top edge so they read as separate chapters when scrolling. */
+main > section.card { margin: 40px 0; border-top: 5px solid var(--navy); border-radius: 6px 6px 10px 10px; scroll-margin-top: 12px; }
+main > section.card + section.card::before { content: ""; display: block; height: 0; }
 .cardhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .cardhead h2, .poller summary h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--navy); margin: 0; }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

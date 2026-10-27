@@ -70,12 +70,18 @@ $("loginform").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("loginerr").textContent = "";
   try {
-    await api("/api/login", { method: "POST", body: JSON.stringify({ password: $("password").value }) });
+    const me = await api("/api/login", { method: "POST", body: JSON.stringify({ password: $("password").value }) });
+    loginKind = me.kind ?? "prod";
     $("password").value = "";
     showApp(); boot();
   } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; }
 });
-$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); showLogin(); });
+$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; showLogin(); });
+// The sticky header's height changes with the push/pull strip and the banners; anchor jumps from the
+// section nav must clear it, so its measured height drives scroll-padding-top on <html>.
+new ResizeObserver(() => document.documentElement.style.setProperty("--top-h", `${document.querySelector("header.top").offsetHeight + 8}px`)).observe(document.querySelector("header.top"));
+// Which password signed in: "prod" or "test". A test sign-in is flagged in the banner row.
+let loginKind = null;
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
@@ -248,6 +254,7 @@ function renderStatus() {
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     st("st-air", `<span class="k">A push ${onSite() ? "goes live in" : `reaches ${esc(prodHost())} in`}</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
+  $("loginbanner").hidden = loginKind !== "test";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
   $("pause").textContent = paused ? "Resume polling" : "Pause polling";
@@ -660,5 +667,6 @@ async function boot() {
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
+  loginKind = me.authed ? (me.kind ?? "prod") : null;
   if (me.authed) { showApp(); boot(); } else showLogin();
 })();
