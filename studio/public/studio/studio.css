@@ -106,13 +106,16 @@ main > section.card + section.card::before { content: ""; display: block; height
 .chip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
 .filters select, .filters input { font-size: 12.5px; padding: 3px 6px; }
 .kind { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 1px 5px; border-radius: 3px; background: #ebe6db; color: #5b5648; vertical-align: 1px; margin-right: 4px; }
+/* Senate and House read differently at a glance: Senate cool blue, House the warm sand. */
+.kind.o-S { background: #dbe5f6; color: #1b3f7a; } .kind.o-H { background: #ece4d2; color: #5a4a2a; }
 .kind.k-governor { background: #e4e9f5; color: #1f3a6e; } .kind.k-statewide { background: #eef0f4; color: #3a4f7a; } .kind.k-measure { background: #e9e4f3; color: #4b3b78; } .kind.k-local { background: #e4f1ea; color: #1c6b3c; }
 .pill { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: .03em; vertical-align: 1px; }
 .pill.call { background: var(--gold); color: #1a1600; }
 .sic { display: inline-block; margin-left: 6px; vertical-align: -1px; } .sic.feat { color: #c9a227; } .sic.tick { color: var(--navy); }
 .list { border: 1px solid var(--sand); border-radius: 8px; max-height: 420px; overflow: auto; }
 .list.pins { max-height: none; overflow: visible; }
-.row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--sand); font-size: 13.5px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--sand); font-size: 13.5px; }
+.row > * { min-width: 0; }
 .row:last-child { border-bottom: 0; }
 .row .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lab { font-family: var(--mono); font-size: 12px; background: var(--cream); padding: 1px 5px; border-radius: 4px; margin-right: 6px; }
@@ -254,4 +257,15 @@ dialog::backdrop { background: #071222aa; }
   .toolbar { margin-top: 8px; }
   main > section.card { margin: 22px 0; padding: 10px 12px 14px; }
   .cardhead h2 { font-size: 19px; }
+  /* Nothing may push past the right edge: two-column layouts stack, list rows put their buttons on a second line. */
+  .cols { grid-template-columns: 1fr; gap: 14px; }
+  .catalog .crow > .row { grid-template-columns: minmax(0, 1fr); }
+  .catalog .crow > .row .btns { justify-content: flex-end; flex-wrap: wrap; }
+  .catalog .nums { margin-right: auto; }
+  .row .btns button { padding: 3px 7px; }
+  .raceband { gap: 8px; padding: 7px 10px; } .raceband .lab { font-size: 15px; } .raceband .ttl { font-size: 14px; }
+  .filters { gap: 5px; }
+  .racegrid, .chartsgrid, .persistgrid { grid-template-columns: 1fr; }
+  .toolbar { font-size: 12.5px; }
+  body { overflow-x: hidden; }
 }
