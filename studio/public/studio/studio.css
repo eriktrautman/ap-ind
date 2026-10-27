@@ -40,12 +40,13 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .problem ul { margin: 6px 0 0; padding-left: 18px; }
 
 /* ---- production line: working copy · push / pull / defaults · production ---- */
-.prodstrip { display: flex; align-items: center; justify-content: flex-end; gap: 14px; flex-wrap: nowrap; padding: 4px 16px; background: #fff; border-bottom: 2px solid var(--gold); font-size: 12.5px; }
+.prodstrip { display: grid; gap: 2px; padding: 4px 16px 5px; background: #fff; border-bottom: 2px solid var(--gold); font-size: 12.5px; }
+.prodstrip .ps-line { display: flex; align-items: center; justify-content: flex-end; gap: 14px; flex-wrap: nowrap; }
 .prodstrip .ps-work, .prodstrip .ps-prod { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: help; }
 .prodstrip b { font-weight: 600; }
 .prodstrip .ps-sub { color: var(--muted); margin-left: 8px; }
 .prodstrip .ps-work b.dirty { color: var(--warn); } .prodstrip .ps-work b.same { color: var(--ok); }
-.prodstrip .ps-prod { text-align: right; } .prodstrip .ps-prod b.bad { color: var(--bad); } .prodstrip .ps-prod b.warn { color: var(--warn); }
+.prodstrip .ps-prod { text-align: right; font-size: 12px; } .prodstrip .ps-prod b.bad { color: var(--bad); } .prodstrip .ps-prod b.warn { color: var(--warn); }
 .prodstrip .ps-actions { display: flex; gap: 6px; }
 .prodstrip button { font-size: 12px; padding: 2px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; line-height: 1.4; }
 .prodstrip button svg { flex: none; }
