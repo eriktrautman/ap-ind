@@ -34,7 +34,9 @@ function ask({ title, body, ok = "Confirm", danger = false }) {
   dlg.showModal();
   return new Promise((resolve) => dlg.addEventListener("close", () => resolve(dlg.returnValue === "ok"), { once: true }));
 }
-const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>${esc(c.text)}</li>`).join("")}</ul>` : `<p class="muted">No differences.</p>`;
+// {id} markers from diffState become race labels (NE-SEN) once the index is loaded.
+const withLabels = (text) => text.replace(/\{(\d+)\}/g, (_, id) => index?.byId?.get(id)?.label ?? `race ${id}`);
+const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>${esc(withLabels(c.text))}</li>`).join("")}</ul>` : `<p class="muted">No differences.</p>`;
 
 // ---------- auth ----------
 function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; }

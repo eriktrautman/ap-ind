@@ -112,26 +112,29 @@ export function sameState(a, b) {
 export function diffState(from, to) {
   const A = normalize(from), B = normalize(to);
   const out = [];
-  const list = (field, label) => {
+  // Race ids are wrapped in {id} so the control room can print labels instead of AP numbers.
+  const list = (field, label, isRace) => {
     const a = A[field], b = B[field];
+    const wrap = (x) => (isRace ? `{${x}}` : x);
     const added = b.filter((x) => !a.includes(x)), removed = a.filter((x) => !b.includes(x));
     const reordered = !added.length && !removed.length && a.join() !== b.join();
-    if (added.length) out.push({ field, text: `${label}: added ${added.join(", ")}` });
-    if (removed.length) out.push({ field, text: `${label}: removed ${removed.join(", ")}` });
-    if (reordered) out.push({ field, text: `${label}: reordered` });
+    if (added.length) out.push({ field, text: `${label}: added ${added.map(wrap).join(", ")}` });
+    if (removed.length) out.push({ field, text: `${label}: removed ${removed.map(wrap).join(", ")}` });
+    if (reordered) out.push({ field, text: `${label}: order changes to ${b.map(wrap).join(", ")} (was ${a.map(wrap).join(", ")})` });
+    else if ((added.length || removed.length) && a.join() !== b.join()) out.push({ field, text: `${label}: order is now ${b.map(wrap).join(", ")}` });
   };
-  list("pinnedRaceIds", "Ticker races");
-  list("featuredRaceIds", "Featured races");
-  list("featuredCharts", "Featured charts");
-  list("movementCharts", "Movement charts");
-  list("keyRaceIds", "Key races");
+  list("pinnedRaceIds", "Ticker races", true);
+  list("featuredRaceIds", "Featured races", true);
+  list("featuredCharts", "Featured charts", false);
+  list("movementCharts", "Movement charts", false);
+  list("keyRaceIds", "Key races", true);
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
   const am = A.manualItems.map((m) => m.text), bm = B.manualItems.map((m) => m.text);
   for (const t of bm.filter((t) => !am.includes(t))) out.push({ field: "manualItems", text: `Manual item added: "${t}"` });
   for (const t of am.filter((t) => !bm.includes(t))) out.push({ field: "manualItems", text: `Manual item removed: "${t}"` });
   for (const k of new Set([...Object.keys(A.contextLines), ...Object.keys(B.contextLines)])) {
-    if (A.contextLines[k] !== B.contextLines[k]) out.push({ field: "contextLines", text: `Context line for race ${k}: "${B.contextLines[k] ?? "(removed)"}"` });
+    if (A.contextLines[k] !== B.contextLines[k]) out.push({ field: "contextLines", text: `Context line for {${k}}: "${B.contextLines[k] ?? "(removed)"}"` });
   }
   return out;
 }
