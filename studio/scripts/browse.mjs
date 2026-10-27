@@ -58,7 +58,8 @@ for (const expr of evals) {
   else console.log(JSON.stringify(r.result?.result?.value ?? null));
 }
 if (opts.shot) {
-  const clip = opts.clip ? (([cw, ch]) => ({ x: 0, y: 0, width: cw, height: ch, scale: 1 }))(opts.clip.split("x").map(Number)) : undefined;
+  // --clip WxH[+Y]: a region of the page starting Y px down (page coordinates), default the top.
+  const clip = opts.clip ? (([wh, y]) => { const [cw, ch] = wh.split("x").map(Number); return { x: 0, y: Number(y ?? 0), width: cw, height: ch, scale: 1 }; })(opts.clip.split("+")) : undefined;
   const r = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: !clip, clip });
   writeFileSync(opts.shot, Buffer.from(r.result.data, "base64"));
   console.log(`screenshot: ${opts.shot}`);
