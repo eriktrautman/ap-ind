@@ -155,6 +155,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .gcard .thumb .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #9aa7bd; font-size: 12.5px; text-align: center; padding: 12px; }
 .gcard .thumb .ph button { font-size: 12px; padding: 3px 10px; }
 .gcard .thumb .ph.unbuilt { color: #d4af37; }
+.gcard.retired { opacity: .55; filter: grayscale(1); } .gcard .thumb .ph.retired { color: #9aa7bd; }
 .gcard .thumb .ph .num { font-size: 22px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .gcard .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
 .gcard .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: var(--navy); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; }

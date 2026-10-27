@@ -42,7 +42,7 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
   }
 
   function reconcile() {
-    const wanting = [...cards].filter((c) => c.chart.built && !c.static && c.visible).sort((a, b) => a.priority - b.priority || a.seq - b.seq);
+    const wanting = [...cards].filter((c) => c.chart.built && !c.chart.retired && !c.static && c.visible).sort((a, b) => a.priority - b.priority || a.seq - b.seq);
     const live = new Set(wanting.slice(0, maxLive));
     for (const c of cards) {
       if (live.has(c)) mount(c); else unmount(c, wanting.includes(c) ? "paused" : null);
@@ -65,6 +65,7 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
   }
   function unmount(c, reason) {
     if (c.frame) { c.frame.remove(); c.frame = null; }
+    if (c.chart.retired) { placeholder(c, `<span>Retired</span><span class="small">${esc(c.chart.name)}${c.chart.retiredNote ? " · " + esc(c.chart.retiredNote) : ""}</span><span class="small">The id ${esc(c.chart.id)} stays reserved.</span>`, "retired"); return; }
     if (!c.chart.built) { placeholder(c, `<span>Not built yet</span><span class="small">${esc(c.chart.name)}</span>`, "unbuilt"); return; }
     if (c.static) { placeholder(c, staticHtml(c) + `<button class="loadbtn">Preview</button>`); return; }
     if (reason === "paused") { placeholder(c, `<span>Preview paused (${maxLive} live thumbnails at once)</span><button class="loadbtn">Load this one</button>`); return; }
@@ -119,7 +120,8 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
       title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a") };
     el._card = c; c.thumb._card = c;
     c.link.href = pageUrl(c, true);
-    if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
+    if (chart.retired) { el.classList.add("retired"); c.link.removeAttribute("href"); c.link.textContent = "retired"; c.link.classList.add("muted"); }
+    else if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
     else { c.thumb.classList.add("clickable"); c.thumb.title = "Open this graphic at 1920×1080 in a new tab"; }
     el.addEventListener("click", (e) => {
       if (e.target.closest(".kebab")) { const m = el.querySelector(".menu"); m.hidden = !m.hidden; return; }

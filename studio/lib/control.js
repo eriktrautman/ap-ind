@@ -25,7 +25,16 @@ export const FEATURED_RACES = [
   { id: "13253", label: "ID-1",   state: "ID", title: "U.S. House, District 1", who: "Sarah Zabel", cand: "178015" },
 ];
 
-/** Every graphic the control room knows. kind: race (needs ?id=) or movement. built: a page exists. */
+/**
+ * Every graphic the control room knows. kind: race (needs ?id=) or movement. built: a page exists.
+ *
+ * CHART IDS ARE FIXED (from 27 October 2026). The lookbook ids (B5, C1, D7, ...) have been shared and are
+ * used in rundowns and by other people, so an id never changes meaning and is never reused:
+ *   - to retire a chart, keep its entry and set retired: true (optionally retiredNote); the control room
+ *     greys it out with a placeholder and refuses to add it, and existing selections drop it cleanly;
+ *   - a new chart gets a NEW id at the end of its series (B14, C10, D12, ...), never a freed one;
+ *   - renaming a chart's page is fine; renaming its id is not.
+ */
 export const CHARTS = [
   { id: "B5",  kind: "race", name: "Live race result",              page: "/g/race.html",      built: true },
   { id: "B6",  kind: "race", name: "Live county map",               page: "/g/county.html",    built: true },
@@ -66,7 +75,7 @@ const LIMITS = { pins: 60, featured: 40, manual: 20, text: 240, key: 8, context:
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
 const chartIds = (arr, kind) => {
-  const known = new Set(CHARTS.filter((c) => c.kind === kind).map((c) => c.id));
+  const known = new Set(CHARTS.filter((c) => c.kind === kind && !c.retired).map((c) => c.id));
   return [...new Set((Array.isArray(arr) ? arr : []).filter((id) => known.has(id)))];
 };
 

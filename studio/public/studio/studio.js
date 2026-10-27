@@ -367,7 +367,7 @@ function renderDetail() {
       <div class="btns"><button class="up" ${i === 0 ? "disabled" : ""}>▲</button><button class="down" ${i === draft.featuredRaceIds.length - 1 ? "disabled" : ""}>▼</button><button class="rm">✕</button></div></div>`;
   }).join("") : `<div class="empty">No featured races. Add one below or from the catalog.</div>`;
   const raceCharts = CHARTS.filter((c) => c.kind === "race");
-  $("racecharts").innerHTML = raceCharts.map((c) => `<label class="${draft.featuredCharts.includes(c.id) ? "on" : ""} ${c.built ? "" : "unbuilt"}"><input type="checkbox" data-chart="${c.id}" ${draft.featuredCharts.includes(c.id) ? "checked" : ""}><span class="cid">${c.id}</span>${esc(c.name)}${c.built ? "" : ' <span class="soon">not built yet</span>'}</label>`).join("");
+  $("racecharts").innerHTML = raceCharts.filter((c) => !c.retired).map((c) => `<label class="${draft.featuredCharts.includes(c.id) ? "on" : ""} ${c.built ? "" : "unbuilt"}"><input type="checkbox" data-chart="${c.id}" ${draft.featuredCharts.includes(c.id) ? "checked" : ""}><span class="cid">${c.id}</span>${esc(c.name)}${c.built ? "" : ' <span class="soon">not built yet</span>'}</label>`).join("");
   const grid = $("racegrid");
   grid.innerHTML = "";
   draft.featuredRaceIds.forEach((id, i) => {
@@ -499,7 +499,8 @@ function renderChartCatalog() {
       const key = kind === "race" ? "featuredCharts" : "movementCharts";
       const on = draft[key].includes(chart.id);
       const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 9, isStatic: true });
-      el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : "Shown in the Movement Overview"}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
+      if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
+      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : "Shown in the Movement Overview"}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
       grid.appendChild(el);
     }
   }
