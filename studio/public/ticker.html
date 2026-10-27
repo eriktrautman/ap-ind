@@ -45,6 +45,10 @@
   const params = new URLSearchParams(location.search);
   const bg = params.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
+  if (params.get("fit") === "1") {   // Preview from the control room: scale the 1920x1080 page to the window
+    const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.background = getComputedStyle(document.body).backgroundColor; };
+    window.addEventListener("resize", fit); fit();
+  }
   const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
   // Producer state source: ?src=default|global|local, else the selector saved by /studio in this
   // browser, else Global. The deployed /ticker has no parameter, so it always reads production.

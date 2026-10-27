@@ -396,7 +396,7 @@ function renderTickerNote() {
     : `This is a local preview. The ticker everyone uses is <a href="${esc(runtime?.production?.origin ?? "")}/ticker?bg=black" target="_blank" rel="noopener">${esc(prodHost())}/ticker</a> (add <code>?bg=green</code> for the key); to change that one, Push with the buttons above. It re-reads what was last pushed every 5 seconds.`;
 }
 /** The ticker opens like any chart: at full size, showing whatever the previews show. */
-function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}`; }
+function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}&fit=1${bg ? `&bg=${bg}` : ""}`; }
 function renderTickerOpen() {
   renderTickerNote();
   $("tickeropen").href = tickerOpenUrl();
