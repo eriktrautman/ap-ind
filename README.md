@@ -37,30 +37,36 @@ Any graphic accepts `?demo=1` to run on an embedded sample snapshot without the 
 
 Producer controls (no auth yet; bind to localhost or put behind a password): `PUT /api/producer` `{pinnedRaceIds, manualItems, eventWindowMinutes}` · `POST /api/producer/manual` `{text}` · `POST /api/poll`
 
-## Studio and on-air ticker (ap-ind on Vercel)
+## Control room, graphics and on-air ticker (ap-ind on Vercel)
 
-The broadcast ticker and its producer panel live in `studio/`, deployed as the ap-ind Vercel project (ap-ind.vercel.app, which also serves these docs), with no server of our own: the poller writes JSON to Vercel Blob once a minute (Vercel Cron), the pages poll those files.
+The broadcast pages live in `studio/` (panel, ticker, poller functions) and `public/g/` (graphics), deployed together as the ap-ind Vercel project (ap-ind.vercel.app, which also serves these docs). No server of our own: the poller writes JSON to Vercel Blob (`/api/poll`, Vercel Cron once a minute on a Pro plan; Hobby runs it once a day, so press **Poll now** or run `npm run poll` during rehearsal), the pages poll those files.
 
 | Path on ap-ind.vercel.app | Purpose |
 |---|---|
-| `/studio` | Producer panel (shared password, `STUDIO_PASSWORD` env var). Poller status and controls; pick and order the races on the ticker, add manual items, preview, publish. |
-| `/ticker` | On-air ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Open it in its own tab or as the switcher's browser input; it is never changed from the panel, only its content is. |
+| `/studio` | Producer control room (shared password, `STUDIO_PASSWORD`). Status bar, Default / Global / Local state selector, four sections: Ticker, Race Detail, Movement Overview, Full Catalog. |
+| `/ticker` | On-air ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Always reads the Global state. |
+| `/g/<page>?id=<raceID>` | One graphic per URL at 1920×1080: `race` (B5), `county` (B6), `margin` (B7), `outstanding` (B8), `rcv` (B9), `then-now` (B10), `swing` (B13); movement: `board` (C1), `ind-vote` (C6), `polls` (C7), `senate-map` (D1), `house-map` (D2), `bop-senate` (D3), `bop-house` (D4), `key-races` (D5), `zoom` (D6), `tiles` (D7), `house-pv` (D10), `too-close` (D11). `?bg=` as above; `?src=default|global|local` picks the producer state. |
+| `/producer-plan` | Build plan and burndown for the control room. |
 
-The ticker polls producer state every 5 s and results every 15 s; a publish reaches air within about 30 s (Blob propagation). With nothing pinned it shows the featured races; with none of those it crawls the idle text. Fetch failures keep the last good crawl on screen. A `TEST DATA` badge appears whenever the poller is on AP test data.
+**State model.** One schema (`studio/lib/control.js`, served at `/g/control.js`): ticker races, AP Call highlight, manual items, idle text, featured races, featured charts, movement charts, key races, context lines. Three sources: **Default** is shipped in code and read-only; **Global** is `producer.json` in Blob, what air uses, written only through the publish dialog (lists every change, the last publish by anyone, and warns if someone else published since you loaded); **Local** is this browser's localStorage, saved as you edit, never on air unless you publish it to Global. A graphic opened without `?src=` uses Global. The ticker re-reads Global every 5 s and graphics every 10 s, so a publish is on air within that.
 
-Poller controls in the panel: **Poll now**, **Poll now + reset caches**, **Pause/Resume polling**, and the **Test/Live** results switch. These write `settings.json` in Blob, which the poller reads at the start of every run, so none of them need a redeploy. `status.json` is written on every run, including failures, with a plain-English diagnosis and what to do.
+**Graphics data.** `public/g/feed.js` probes for the local WebSocket server and otherwise polls the Blob files (`index.json` every 15 s, `status.json` every 30 s, `state/<ST>.json` on demand, `history.json` for the margin tracker, `trend.json` for the balance-of-power pages). Static data committed to the repo: `config/baseline-2024-pres.json` (B13), `config/baseline-federal.json` (B10, C6, D10; 2024 national totals and the last contest for each featured seat, from `scripts/fetch-baseline-federal.mjs`), `config/polls.json` (C7; every row carries a source link).
 
-The Watch Party project (`watch-party/`, ind-watch-party.vercel.app) is now a pure reader of the same Blob files: static pages, no functions, no secrets.
+**Thumbnails.** Every card in the control room runs the real page in a scaled iframe. At most 12 are live at once, featured sections first; cards load when scrolled into view and unload when scrolled away; Full Catalog cards show numbers until you press Preview. **Open 1920×1080** opens the graphic in a new tab with the chosen background and the current state source.
 
-Functions: `GET/POST /api/login`, `GET/PUT /api/producer`, `GET/PUT /api/settings`, `GET|POST /api/poll` (cron bearer or studio cookie). Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `STUDIO_PASSWORD`.
+Poller controls (AP poller card): **Poll now**, **Poll now + reset caches**, **Pause/Resume polling**, **Test/Live**. These write `settings.json`, read at the start of every run, so none need a redeploy. `status.json` is written on every run, including failures, with a plain-English diagnosis shown in the status bar.
 
-Local fallback (same Blob store, same pages):
+The Watch Party project (`watch-party/`, ind-watch-party.vercel.app) is a pure reader of the same Blob files.
+
+Functions: `GET/POST/DELETE /api/login`, `GET/PUT /api/producer` (partial bodies merge over the stored state; every field validated), `GET/PUT /api/settings`, `GET|POST /api/poll`. Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `STUDIO_PASSWORD`.
+
+Local preview of the deployment (reads the live Blob data, refuses writes):
 
 ```sh
 cd studio
-# .env needs AP_API_KEY, BLOB_READ_WRITE_TOKEN and STUDIO_PASSWORD
-npm run build && vercel dev --listen 3100   # studio at http://localhost:3100/studio, ticker at /ticker, docs at /
-npm run poll               # poll AP every 60 s from this machine if the Vercel cron is not running
+npm run build && DEV_AUTHED=1 node scripts/dev.mjs 4174   # control room at http://localhost:4174/studio, graphics under /g/
+node scripts/browse.mjs "http://localhost:4174/g/county.html?id=28594&feed=blob&bg=black" --shot out.png   # headless render check
+npm run poll                                                # poll AP every 60 s from this machine if the cron is not running
 ```
 
 ## Data

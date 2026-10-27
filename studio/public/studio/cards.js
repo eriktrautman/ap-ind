@@ -122,7 +122,7 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
     if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
     el.addEventListener("click", (e) => {
       if (!e.target.closest(".loadbtn")) return;
-      c.static = false; c.priority = 0; schedule();
+      c.static = false; c.priority = 0; c.visible = true; schedule();
     });
     cards.add(c);
     unmount(c, null);
