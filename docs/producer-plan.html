@@ -160,8 +160,8 @@ const META = {
   minPerPoint: 5,          // assumed pace until three stories are done
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; one runtime; awaiting push",
-  note: "S81 (candidate index pages) open",
-  updated: "2026-10-27T00:58:04Z",
+  note: "all stories done except S81 (candidate index pages)",
+  updated: "2026-10-27T01:13:16Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -219,6 +219,7 @@ const STORIES = [
   { id: "S71", epic: "E6", pts: 2, status: "done", title: "Preview deployment check of every section and graphic with real data, publish-to-air latency measured, README and spec updated", deps: "S61", doneAt: "2026-10-27T00:03:08Z" },
   { id: "S80", epic: "E6", pts: 5, status: "done", title: "One app, run anywhere: studio/scripts/serve.mjs serves the built site, mounts the four API functions and runs the poller loop in one Node process (npm start); the store is Vercel Blob or local files (STORE_DIR); the old Fastify/WebSocket server (src/, port 3000) and the read-only dev proxy are removed", note: "Added 2026-10-27 at the user's request: no second app to keep in sync, no Vercel account needed to run locally.", doneAt: "2026-10-27T00:50:11Z" },
   { id: "S81", epic: "E6", pts: 3, status: "todo", title: "Candidate index and photo pages (public/candidates.html, photos.html) ported to the static data files; they still expect the retired server's /api/candidates and /api/photos", note: "Follow-up found while retiring the server. Not on air; the control room does not use them." },
+  { id: "S82", epic: "E6", pts: 3, status: "done", title: "Laptop and air: the control room says which it is; Pull from air copies the deployment's configuration (read-only) into the laptop's Local or Global draft with a change list; a fresh local store seeds itself from air on first start; README failover drill", note: "Added 2026-10-27. Decision: the laptop is a standby and rehearsal machine, never a second writer of the on-air state.", doneAt: "2026-10-27T01:13:16Z" },
   { id: "S72", epic: "E6", pts: 1, status: "done", title: "Old panel code removed from studio/public/studio once every control it offered exists in the control room; README studio section rewritten", deps: "S71", doneAt: "2026-10-27T00:03:08Z" },
 ];
 // Answers are filled in as they arrive.
@@ -233,6 +234,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T01:13:16Z", what: "Laptop and air: the laptop is a standby, never a second writer of the on-air state. The control room's status bar says which room it is; Pull from air copies the deployment's configuration and test/live setting read-only into the laptop's Local or Global draft with a change list; a fresh local store seeds itself from air at first start. Verified on a test instance: seeded from air, pulled with the dialog, air unchanged. Fixed a crash when a store has no index file yet." },
   { t: "2026-10-27T00:58:04Z", what: "Cleanup after the refactor: feed.js is Blob-only (the WebSocket/snapshot probe and ?feed= are gone), unused imports and exports dropped, the server-era ticker page, old homepage and config/featured.json removed, the lookbook's ticker embed points at the real ticker, root lockfile rebuilt without the server dependencies, spec carries a status note on the architecture as built. Verified by rendering the ticker, race, county, board and balance-of-power pages against npm start with a local store." },
   { t: "2026-10-27T00:52:02Z", what: "README: step-by-step laptop setup for a teammate (clone, npm install, .env with the AP key and a self-chosen password, npm start) and a table of every key, which ones are needed locally and what each does." },
   { t: "2026-10-27T00:50:11Z", what: "Old server retired: src/ and the Fastify/WebSocket process on port 3000 are gone; npm start in studio/ runs the same code as the deployment in one Node process, with Vercel Blob or a local STORE_DIR as the store. Verified: a full poll cycle wrote index, status, state, history and trend files to a local folder and the control room, ticker and graphics served from it. Follow-up S81: the candidate index and photo pages still expect the old server." },

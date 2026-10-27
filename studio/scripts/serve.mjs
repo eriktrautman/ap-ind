@@ -12,8 +12,9 @@
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { join, extname } from "node:path";
-import { isLocalStore, localPath, BLOB_BASE } from "../lib/store.js";
+import { isLocalStore, localPath, readJson, writeJson, BLOB_BASE } from "../lib/store.js";
 import { pollOnce } from "../lib/poll.js";
+import { normalize } from "../lib/control.js";
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
@@ -21,6 +22,8 @@ const PORT = Number(opt("--port", process.env.PORT ?? 3000));
 const NO_POLL = args.includes("--no-poll");
 const POLL_MS = Number(process.env.POLL_SECONDS ?? 60) * 1000;
 const DIST = new URL("../dist/", import.meta.url).pathname;
+// The deployment this laptop can copy configuration from (read-only): /api/upstream/producer|settings.
+const UPSTREAM = process.env.UPSTREAM_ORIGIN ?? "https://ap-ind.vercel.app";
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
 
 const handlers = {};
@@ -46,6 +49,22 @@ function shim(req, res, body) {
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   try {
+    if (url.pathname.startsWith("/api/upstream/")) {
+      // Read-only window onto the deployment, so the control room can pull what is on air.
+      const name = url.pathname.slice(14).replace(/\/$/, "");
+      if (req.method !== "GET" || !["producer", "settings"].includes(name)) { res.writeHead(404, { "content-type": "application/json" }); res.end(JSON.stringify({ error: "not found" })); return; }
+      try {
+        const r = await fetch(`${UPSTREAM}/api/${name}`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+        res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" });
+        res.end(JSON.stringify({ origin: UPSTREAM, ...(await r.json()) }));
+      } catch (e) { res.writeHead(502, { "content-type": "application/json" }); res.end(JSON.stringify({ error: `air unreachable: ${e.message}`, origin: UPSTREAM })); }
+      return;
+    }
+    if (url.pathname === "/api/runtime") {
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ local: true, store: isLocalStore() ? "files" : "blob", upstream: UPSTREAM, polling: !NO_POLL }));
+      return;
+    }
     if (url.pathname.startsWith("/api/")) {
       const h = handlers[url.pathname.slice(5).replace(/\/$/, "")];
       if (!h) { res.writeHead(404, { "content-type": "application/json" }); res.end(JSON.stringify({ error: "not found" })); return; }
@@ -73,7 +92,15 @@ createServer(async (req, res) => {
   } catch (e) {
     res.writeHead(500, { "content-type": "text/plain" }); res.end(String(e.message));
   }
-}).listen(PORT, () => {
+}).listen(PORT, async () => {
+  // A local store that has never held a producer state starts from what is on air, so a fresh
+  // standby carries the on-air ticker and featured races without anyone copying them by hand.
+  if (isLocalStore() && !(await readJson("producer.json").catch(() => null))) {
+    try {
+      const r = await fetch(`${UPSTREAM}/api/producer`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+      if (r.ok) { await writeJson("producer.json", normalize(await r.json())); console.log(`seeded producer.json from ${UPSTREAM} (first run)`); }
+    } catch (e) { console.log(`could not seed from ${UPSTREAM}: ${e.message}; starting from the defaults`); }
+  }
   console.log(`ap-ind: http://localhost:${PORT}  control room /studio · ticker /ticker · graphics /g/ · store: ${isLocalStore() ? `local files (${localPath("")})` : "Vercel Blob (shared with the deployment)"}`);
   if (NO_POLL) { console.log("poller: off (--no-poll); data comes from whatever last wrote the store"); return; }
   const tick = async () => { try { await pollOnce({ log: console.log }); } catch (e) { console.error(`[poll] failed: ${e.message}`); } };

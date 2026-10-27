@@ -41,6 +41,15 @@ What you will be sent, and what it is for:
 
 `AP_RESULTS_TYPE=t` in `.env` means AP's simulated test election; change it to `l` for live results on election night (the control room's Test/Live switch does the same without a restart). The key must never be committed or put in a URL; `.env` is gitignored.
 
+**Laptop and air.** A laptop's control room is its own island: its Global is a file on that machine, and nothing it publishes reaches air. The status bar says which room you are in (**this laptop** or **air**). What is worth carrying across is the hand-made configuration: ticker races and order, featured races, chart selections, manual items, idle text, key races, context lines, and the test/live setting. Two things cover that:
+
+- On first start with an empty local store, the laptop copies the on-air configuration from the deployment automatically, so a fresh standby begins where air is.
+- **Pull from air…** in the control room's actions bar does the same on demand: a read-only copy of the deployment's Global (and its test/live setting) into the laptop's Local or Global draft, shown as a change list before you confirm. Air is never written. After a pull, the laptop is on its own again; nothing keeps it in step unless you pull again.
+
+Results data never needs copying: the laptop polls AP itself.
+
+**If the deployment is down** (ticker, graphics and control room all gone): on the standby laptop, open http://laptop:3000/studio, press **Pull from air…** if air is still answering (if not, the laptop already holds the last configuration it pulled or was seeded with), then change the hostname on the switcher's browser inputs from `ap-ind.vercel.app` to the laptop. Every path is the same. Producers publish on the laptop's control room from then on. If only the cron has stopped while the pages are fine, a laptop with the Blob token runs `npm run poll` instead and nothing else changes.
+
 Everything under `npm start` is the same code that runs on ap-ind.vercel.app: the static site, the four API functions in `api/`, and the poller in `lib/poll.js`. `scripts/serve.mjs` is the only file that exists for local use; it stands in for Vercel's static hosting, function routing and cron. `POLL_SECONDS` changes the interval; `node --env-file=.env scripts/serve.mjs --no-poll --port 4000` serves without polling.
 
 ## How it fits together

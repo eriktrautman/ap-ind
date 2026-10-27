@@ -23,7 +23,7 @@ const api = async (url, opts = {}) => {
 };
 const SRC_TEXT = {
   default: "Shipped defaults. Read-only: what the app does with nothing configured. Switch to Global or Local to make changes.",
-  global: "Global is what air uses: the on-air ticker and every graphic opened without a state parameter read it. Changes here go on air only when you publish.",
+  global: "Global is what air uses: the on-air ticker and every graphic opened without a state parameter read it. Changes here go on air only when you publish. On a laptop, Global is this machine's own copy.",
   local: "Local lives in this browser only. Edits save as you make them and never reach air unless you publish them to Global.",
 };
 
@@ -57,6 +57,7 @@ $("logout").addEventListener("click", async () => { await fetch("/api/login", { 
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
+let runtime = null;           // { local, store, upstream } when this room runs on a laptop (npm start); null on the deployment
 let globalState = null;       // last state read from or written to /api/producer (normalized)
 let globalSeenAt = null;      // updatedAt of the global copy this page last adopted
 let source = getSavedSource();
@@ -72,7 +73,10 @@ async function loadStatus() {
 }
 async function loadIndex() {
   try {
-    index = await (await fetch(`/data/index.json?t=${Math.floor(Date.now() / 15_000)}`, { cache: "no-store" })).json();
+    const res = await fetch(`/data/index.json?t=${Math.floor(Date.now() / 15_000)}`, { cache: "no-store" });
+    const next = res.ok ? await res.json() : null;
+    if (!Array.isArray(next?.races)) return;   // no poll has written an index yet (fresh laptop store)
+    index = next;
     index.byId = new Map(index.races.map((r) => [r.id, r]));
     const states = [...new Set(index.races.map((r) => r.state))].sort();
     for (const id of ["state", "cstate"]) { const sel = $(id); const cur = sel.value; sel.innerHTML = `<option value="">All states</option>${states.map((s) => `<option${s === cur ? " selected" : ""}>${s}</option>`).join("")}`; }
@@ -135,9 +139,10 @@ function renderSrcActions() {
     box.innerHTML = `<span class="note">Read-only. Switch to Global or Local to make changes.</span>`;
   } else if (source === "global") {
     const other = otherOperator() ? `<span class="note bad">Someone else published at ${esc(fmtTime(globalState.updatedAt))}. Publishing now overwrites theirs; Discard loads it.</span>` : "";
-    box.innerHTML = `<button class="primary" id="publish" ${d ? "" : "disabled"}>Publish to Global…</button><button id="discard" ${d ? "" : "hidden"}>Discard changes</button><button id="restoreg">Restore defaults…</button>
-      <span class="note ${d ? "dirty" : ""}">${d ? "Unpublished changes" : globalState?.updatedAt ? `Published ${esc(ago(globalState.updatedAt))}` : "Never published: air is on the defaults"}</span>${other}`;
+    box.innerHTML = `<button class="primary" id="publish" ${d ? "" : "disabled"}>Publish to Global…</button><button id="discard" ${d ? "" : "hidden"}>Discard changes</button><button id="restoreg">Restore defaults…</button>${pullButton()}
+      <span class="note ${d ? "dirty" : ""}">${d ? "Unpublished changes" : globalState?.updatedAt ? `Published ${esc(ago(globalState.updatedAt))}` : runtime ? "Never published on this laptop" : "Never published: air is on the defaults"}</span>${other}`;
     $("publish").addEventListener("click", () => publish(draft));
+    $("pullair")?.addEventListener("click", () => pullFromAir(false));
     $("discard").addEventListener("click", () => { draft = structuredClone(globalState ?? normalize(DEFAULTS)); globalSeenAt = globalState?.updatedAt ?? null; renderAll(); cards.broadcast(draft); });
     $("restoreg").addEventListener("click", async () => {
       const ok = await ask({ title: "Restore defaults into the Global draft?", body: `<p>The draft changes to the shipped defaults. Nothing goes on air until you publish.</p>${changeList(diffState(draft, DEFAULTS))}`, ok: "Restore defaults" });
@@ -145,9 +150,10 @@ function renderSrcActions() {
     });
   } else {
     const same = globalState && sameState(draft, globalState);
-    box.innerHTML = `<button id="publishl" class="primary" ${same ? "disabled" : ""}>Publish Local to Global…</button><button id="useglobal">Use global…</button><button id="restorel">Restore defaults…</button>
+    box.innerHTML = `<button id="publishl" class="primary" ${same ? "disabled" : ""}>Publish Local to Global…</button><button id="useglobal">Use global…</button><button id="restorel">Restore defaults…</button>${pullButton()}
       <span class="note">${readLocal() ? `Saved in this browser ${esc(ago(readLocal().updatedAt))}` : "No local changes yet: showing Global"}${same ? " · same as Global" : ""}</span>`;
     $("publishl").addEventListener("click", () => publish(draft));
+    $("pullair")?.addEventListener("click", () => pullFromAir(true));
     $("useglobal").addEventListener("click", async () => {
       const g = globalState ?? normalize(DEFAULTS);
       const ok = await ask({ title: "Replace Local with Global?", body: `<p>Local changes that will be lost:</p>${changeList(diffState(draft, g))}`, ok: "Use global", danger: true });
@@ -158,6 +164,34 @@ function renderSrcActions() {
       if (ok) { draft = normalize(DEFAULTS); saveLocal(draft); renderAll(); cards.broadcast(draft); }
     });
   }
+}
+
+const pullButton = () => runtime ? `<button id="pullair" title="Copy the configuration that is on air (${esc(runtime.upstream)}) into this laptop's ${source === "local" ? "Local" : "Global draft"}. Read-only: air is never changed.">Pull from air…</button>` : "";
+
+/** Laptop only: copy the deployment's Global (and its test/live setting) into the current source. Air is never written. */
+async function pullFromAir(toLocal) {
+  let air, airSettings;
+  try {
+    air = normalize(await api("/api/upstream/producer"));
+    airSettings = await api("/api/upstream/settings").catch(() => null);
+  } catch (e) {
+    await ask({ title: "Air is unreachable", body: `<div class="warnline bad">${esc(e.message)}</div><p>This laptop keeps the configuration it has. If the deployment is down, this is the moment to switch the switcher's inputs to this machine.</p>`, ok: "OK" });
+    return;
+  }
+  const changes = diffState(draft, air);
+  const rt = airSettings?.resultsType ?? airSettings?.envResultsType ?? null;
+  const localRt = settings?.resultsType ?? settings?.envResultsType ?? "t";
+  const rtLine = rt && rt !== localRt ? `<div class="warnline">Air is on <b>${rt === "l" ? "LIVE" : "TEST"}</b> results; this laptop is on <b>${localRt === "l" ? "LIVE" : "TEST"}</b>. The poller setting is copied too.</div>` : "";
+  const ok = await ask({
+    title: `Pull what is on air into ${toLocal ? "Local" : "the Global draft"}?`,
+    body: `<p>Read-only copy from ${esc(runtime.upstream)}, published there ${air.updatedAt ? esc(ago(air.updatedAt)) : "never (air is on the defaults)"}. Nothing on air changes.</p>${changeList(changes)}${rtLine}<p class="small muted">After this, edits here are this laptop's own: nothing keeps it in step with air unless you pull again.</p>`,
+    ok: "Pull from air",
+  });
+  if (!ok) return;
+  draft = air;
+  if (toLocal) saveLocal(draft);
+  if (rt && rt !== localRt) { try { settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, resultsType: rt }) }); } catch {} }
+  renderAll(); cards.broadcast(draft);
 }
 
 async function publish(state) {
@@ -204,7 +238,8 @@ function renderStatus() {
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     st("st-pub", `<span class="k">Last publish to air</span><b>${globalState?.updatedAt ? esc(ago(globalState.updatedAt)) : "never"}</b>`) +
-    st("st-air", `<span class="k">Publish reaches air in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
+    st("st-air", `<span class="k">Publish reaches air in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`) +
+    st("st-where", runtime ? `<span class="k">This control room</span><b style="color:#c4b5fd">this laptop · ${runtime.store === "files" ? "local store" : "shared Blob store"}</b><span class="k">· air is ${esc(runtime.upstream.replace(/^https?:\/\//, ""))}</span>` : `<span class="k">This control room</span><b>air</b>`);
   $("testbanner").hidden = rt !== "t";
   $("srcnote").className = `srcnote ${source}`;
   $("srcnote").innerHTML = `<b>${source.toUpperCase()}</b>${esc(SRC_TEXT[source])}`;
@@ -228,6 +263,7 @@ function renderStatus() {
   $("facts").innerHTML = facts.map(([k, v, c]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v ${c ?? ""}">${esc(String(v))}</div></div>`).join("");
 
   const problems = [];
+  if (!index && runtime && !runtime.polling) problems.push({ warn: true, title: "No results on this laptop yet.", text: "The app was started with --no-poll and the local store holds no index. Start it without --no-poll, or run npm run poll, and the lists fill in within a minute." });
   if (paused) problems.push({ warn: true, title: "Polling is paused.", text: "No new AP data is being fetched. Everything keeps showing the last data. Open AP poller and press Resume polling." });
   else if (!s) problems.push({ title: "The poller has never written a status file.", text: "Open AP poller and press Poll now. If that fails, the error appears here in plain English." });
   else if (s.lastError && (s.consecutiveFailures ?? 0) > 0) problems.push({ title: `Last poll failed (${ago(s.lastError.at)}).`, text: s.lastError.text, fix: fixFor(s.lastError.code) });
@@ -543,6 +579,7 @@ async function boot() {
   draft = structuredClone(stateFor(source));
   frame.src = `/ticker?preview=1&bg=black&src=${source}`;
   scalePreview();
+  runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   await Promise.all([loadStatus(), loadIndex(), loadGlobal()]);
   renderAll();
   timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadGlobal, 20_000), setInterval(() => { renderStatus(); renderSrcActions(); }, 10_000)];
