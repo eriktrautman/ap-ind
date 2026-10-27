@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AP Call Alert</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* A4: a full-width band announcing an AP call. ?id=<raceID> for one race; without it, the latest
+     call among the featured races (and nothing until there is one). Slides in when the call lands. */
+  .band { position: absolute; left: 0; right: 0; bottom: 150px; height: 150px; display: flex; align-items: stretch; background: linear-gradient(90deg, #1a1600, #2a2200 40%, var(--panel)); box-shadow: 0 10px 40px #000a; transform: translateY(200px); transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
+  .band.on { transform: none; }
+  .tag { background: var(--gold); color: #1a1600; font-weight: 800; font-size: 44px; letter-spacing: .08em; padding: 0 48px 0 96px; display: flex; align-items: center; clip-path: polygon(0 0, 100% 0, calc(100% - 36px) 100%, 0 100%); }
+  .text { padding: 0 48px; display: grid; align-content: center; gap: 4px; flex: 1; min-width: 0; }
+  .line1 { font-size: 46px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .line1 .lab { font-family: ui-monospace, Menlo, monospace; color: var(--gold); margin-right: 24px; }
+  .line2 { font-size: 30px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .line2 b { color: var(--fg); }
+  .when { padding: 0 96px 0 24px; display: flex; align-items: center; color: var(--muted); font-size: 26px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="band" id="band"><div class="tag">AP CALL</div><div class="text"><div class="line1" id="l1"></div><div class="line2" id="l2"></div></div><div class="when" id="when"></div></div>
+<script type="module">
+  import { connectFeed, raceState, partyKey, PARTY_COLOR, officeText, fmt } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const raceId = q.get("id");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let races = null, featured = FEATURED_RACES.map((r) => r.id);
+  function pick() {
+    if (raceId) { const r = races.get(raceId); return r?.called ? r : null; }
+    return featured.map((id) => races.get(id)).filter((r) => r?.called).sort((a, b) => Date.parse(b.calledAt ?? b.lastUpdated) - Date.parse(a.calledAt ?? a.lastUpdated))[0] ?? null;
+  }
+  function render() {
+    if (!races) return;
+    const r = pick();
+    $("band").classList.toggle("on", !!r);
+    if (!r) return;
+    const st = raceState(r);
+    const cands = [...r.candidates].sort((a, b) => b.votes - a.votes);
+    const w = st.cand, loser = cands.find((c) => c.id !== w.id);
+    const tag = (c) => ({ dem: "D", gop: "R", ind: "I", oth: "I" }[partyKey(c)]);
+    const office = r.office === "S" ? "Senate" : r.label.endsWith("AL") ? "House seat" : `House ${r.seat.replace(/\D/g, "") ? "District " + r.seat.replace(/\D/g, "") : ""}`;
+    $("l1").innerHTML = `<span class="lab">${esc(r.label)}</span><span style="color:${PARTY_COLOR[partyKey(w)]}">${esc(w.name)} (${tag(w)})</span> wins ${esc(r.stateName)} ${esc(office)}${r.flipped ? " · a flip" : ""}`;
+    $("l2").innerHTML = loser ? `<b>${Number(w.pct).toFixed(1)}%</b> to <b>${Number(loser.pct).toFixed(1)}%</b> over ${esc(loser.name)} (${tag(loser)}) · ${fmt(w.votes - loser.votes)} votes · ${Math.round(r.eevp || r.precinctsPct)}% of expected vote in` : `${Number(w.pct).toFixed(1)}% · ${Math.round(r.eevp || r.precinctsPct)}% in`;
+    $("when").textContent = r.calledAt ? `Called ${new Date(r.calledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
+  }
+  watchState({ onState: (s) => { if (s.featuredRaceIds.length) featured = s.featuredRaceIds; render(); } });
+  connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s) => { races = s.races; render(); } });
+</script>
+</body>
+</html>

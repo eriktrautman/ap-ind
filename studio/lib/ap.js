@@ -120,6 +120,7 @@ export function normalizeRace(r) {
   if (!ru || ru.reportingunitLevel === 0 || !OFFICE[r.officeID]) return null;
   const candidates = unitCandidates(ru);
   const winner = candidates.find((c) => c.winner);
+  const calledAt = ru.candidates.find((c) => c.winner === "X")?.winnerDateTime ?? null;
   const nonpartisan = /nonpartisan/i.test(r.raceType ?? "") || r.officeID === "I";
   return {
     id: r.raceID, state: ru.statePostal, stateName: ru.stateName, office: r.officeID,
@@ -127,7 +128,7 @@ export function normalizeRace(r) {
     title: raceTitle(ru.statePostal, ru.stateName, r.officeID, r.seatName, r),
     description: r.officeID === "I" ? (r.description ?? "") : undefined, summary: r.officeID === "I" ? (r.summary ?? "") : undefined, category: r.officeID === "I" ? (r.category ?? "") : undefined,
     seat: r.seatName ?? "", label: raceLabel(ru.statePostal, r.officeID, r.seatNum, r.seatName, r),
-    callStatus: r.raceCallStatus ?? "", called: !!winner || r.raceCallStatus === "Called",
+    callStatus: r.raceCallStatus ?? "", called: !!winner || r.raceCallStatus === "Called", calledAt,
     precinctsPct: ru.precinctsReportingPct ?? 0, eevp: ru.eevp ?? r.eevp ?? 0,
     totalVotes: candidates.reduce((s, c) => s + c.votes, 0),
     lastUpdated: ru.lastUpdated, pollClose: ru.pollClosingTime ?? null,

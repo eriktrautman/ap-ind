@@ -33,7 +33,8 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
 
   function pageUrl(c, forOpen) {
     const u = new URL(c.chart.page, location.origin);
-    if (c.race) u.searchParams.set("id", c.race.id);
+    if (c.race && c.chart.needsState) u.searchParams.set("st", c.race.state);
+    else if (c.race) u.searchParams.set("id", c.race.id);
     u.searchParams.set("src", getSource());
     const bg = forOpen ? getBg() : "black";
     if (bg) u.searchParams.set("bg", bg);

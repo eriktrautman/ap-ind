@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Featured Races Strip</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* A6: a lower third of the featured independents: share, margin and status, one tile each. */
+  .strip { position: absolute; left: 96px; right: 96px; bottom: 60px; height: 120px; display: flex; gap: 8px; }
+  .tile { flex: 1; min-width: 0; background: linear-gradient(160deg, var(--panel), var(--panel-edge)); border-radius: 6px; padding: 10px 16px; display: grid; grid-template-rows: auto auto auto; gap: 2px; border-top: 4px solid #2a3a5c; }
+  .tile.called { border-top-color: var(--gold); }
+  .lab { font-family: ui-monospace, Menlo, monospace; font-size: 22px; color: var(--gold); font-weight: 700; display: flex; justify-content: space-between; }
+  .lab .st { color: var(--muted); font-family: var(--font); font-weight: 400; font-size: 18px; }
+  .who { font-size: 28px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fde68a; }
+  .who b { float: right; color: var(--fg); }
+  .vs { font-size: 22px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vs b { float: right; color: var(--muted); }
+  .pos { color: var(--ok); } .neg { color: var(--bad); }
+</style>
+</head>
+<body>
+<div class="strip" id="strip"></div>
+<script type="module">
+  import { connectFeed, raceState, isFeaturedCand } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let races = null, ids = FEATURED_RACES.map((r) => r.id);
+  function render() {
+    if (!races) return;
+    const list = ids.map((id) => races.get(id)).filter(Boolean).slice(0, 8);
+    document.getElementById("strip").innerHTML = list.map((r) => {
+      const st = raceState(r);
+      const cands = [...r.candidates].sort((a, b) => b.votes - a.votes);
+      const ind = r.candidates.find((c) => c.featured) ?? r.candidates.find((c) => isFeaturedCand(c.id)) ?? r.candidates.find((c) => c.independent) ?? cands[0];
+      const other = cands.find((c) => c.id !== ind.id);
+      const margin = r.totalVotes ? (ind.pct ?? 0) - (other?.pct ?? 0) : null;
+      const status = st.status === "called" ? "AP CALL" : st.status === "leading" ? `${Math.round(r.eevp || r.precinctsPct)}% in` : st.status === "closed" ? "closed" : "polls open";
+      return `<div class="tile ${r.called ? "called" : ""}"><div class="lab"><span>${esc(r.label)}</span><span class="st">${status}</span></div>
+        <div class="who">${esc(ind.last)}${ind.winner ? " ✓" : ""}<b>${r.totalVotes ? Number(ind.pct).toFixed(1) : "—"}</b></div>
+        <div class="vs">${other ? esc(other.last) + (other.winner ? " ✓" : "") : ""}<b class="${margin === null ? "" : margin >= 0 ? "pos" : "neg"}">${margin === null ? (other ? Number(other.pct ?? 0) ? Number(other.pct).toFixed(1) : "—" : "") : (margin >= 0 ? "+" : "") + margin.toFixed(1)}</b></div></div>`;
+    }).join("");
+  }
+  watchState({ onState: (s) => { ids = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
+  connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s) => { races = s.races; render(); } });
+</script>
+</body>
+</html>

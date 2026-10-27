@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>State Overview</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D9: every federal race in one state. ?st=ID required (?id=<raceID> also works: that race's state). */
+  .body { min-height: 0; overflow: hidden; }
+  table { font-size: 30px; } th { font-size: 22px; } td { padding: 11px 10px; }
+  td.race { font-weight: 700; } td.lane { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px; }
+  tr.feat td.race { color: var(--gold); }
+  .pill { display: inline-block; font-size: 20px; font-weight: 700; padding: 3px 12px; border-radius: 4px; letter-spacing: .04em; }
+  .pill.call { background: var(--gold); color: #1a1600; } .pill.counting { background: #2a3a5c; color: #fff; } .pill.open { background: #16213a; color: var(--muted); border: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">State overview</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body"><table><thead><tr><th>Race</th><th>Leader</th><th class="r">Share</th><th>Runner-up</th><th class="r">Share</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · every federal race in the state · featured races in gold</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, raceState, partyKey, PARTY_COLOR } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let races = null, featured = new Set(FEATURED_RACES.map((r) => r.id));
+  const tag = (c) => `<span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}" style="font-size:20px;min-width:34px">${{ dem: "D", gop: "R", ind: "I", oth: "I" }[partyKey(c)]}</span>`;
+  function render() {
+    if (!races) return;
+    let st = q.get("st");
+    if (!st && q.get("id")) st = races.get(q.get("id"))?.state;
+    st = (st ?? "").toUpperCase();
+    const list = [...races.values()].filter((r) => r.state === st && r.kind === "federal").sort((a, b) => (a.office === "S" ? -1 : 1) - (b.office === "S" ? -1 : 1) || Number(a.seat.replace(/\D/g, "")) - Number(b.seat.replace(/\D/g, "")));
+    const name = list[0]?.stateName ?? st;
+    $("title").innerHTML = `${esc(name)} <small>${list.length} federal race${list.length === 1 ? "" : "s"}</small>`;
+    $("reporting").innerHTML = `<b>${list.filter((r) => r.called).length}</b> called`;
+    $("rows").innerHTML = list.slice(0, 11).map((r) => {
+      const s = raceState(r); const c = [...r.candidates].sort((a, b) => b.votes - a.votes);
+      const pill = s.status === "called" ? `<span class="pill call">AP CALL</span>` : s.status === "leading" ? `<span class="pill counting">${Math.round(r.eevp || r.precinctsPct)}% IN</span>` : s.status === "closed" ? `<span class="pill open">CLOSED</span>` : `<span class="pill open">OPEN</span>`;
+      const cell = (x) => x ? `<td class="lane"><span style="color:${PARTY_COLOR[partyKey(x)]}">${tag(x)}${esc(x.last)}${x.winner ? " ✓" : ""}</span></td><td class="r b">${r.totalVotes ? Number(x.pct).toFixed(1) : "—"}</td>` : "<td></td><td></td>";
+      return `<tr class="${featured.has(r.id) ? "feat" : ""}"><td class="race">${esc(r.office === "S" ? "Senate" : r.label.endsWith("AL") ? "House, at large" : "House " + r.seat.replace(/\D/g, ""))}</td>${cell(c[0])}${cell(c[1])}<td>${pill}</td></tr>`;
+    }).join("") || `<tr><td colspan="6" class="m">No federal races for ${esc(st || "(no state given: add ?st=XX)")}.</td></tr>`;
+    if (list.length > 11) $("rows").insertAdjacentHTML("beforeend", `<tr><td colspan="6" class="m">+ ${list.length - 11} more districts</td></tr>`);
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
+  connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s) => { races = s.races; render(); }, onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; } });
+</script>
+</body>
+</html>

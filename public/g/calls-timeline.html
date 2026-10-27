@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calls Timeline</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D8: every AP call tonight as a dot on a clock line; independents and featured races enlarged and labelled. ?office=S|H|all */
+  .body { display: grid; grid-template-rows: 1fr auto; gap: 20px; min-height: 0; }
+  .chart svg { width: 100%; height: 100%; display: block; }
+  .axis text { fill: var(--muted); font-size: 24px; font-family: var(--font); }
+  .lbl { font-size: 26px; font-weight: 700; fill: #fff; font-family: var(--font); }
+  .lbl.gold { fill: var(--gold); }
+  .tally { display: flex; gap: 48px; font-size: 30px; color: var(--muted); }
+  .tally b { color: var(--fg); font-size: 40px; margin-right: 8px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Calls so far</div><div class="title" id="title">AP calls tonight</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="chart"><svg id="chart" viewBox="0 0 1584 500"></svg></div>
+    <div class="tally" id="tally"></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · one dot per call, by the time AP called it · independents and featured races labelled</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const OFFICE = q.get("office") ?? "all";
+  const $ = (id) => document.getElementById(id);
+  let races = null, featured = new Set(FEATURED_RACES.map((r) => r.id));
+  function render() {
+    if (!races) return;
+    const calls = [];
+    for (const r of races.values()) {
+      if (r.kind !== "federal" || (OFFICE !== "all" && r.office !== OFFICE) || !r.called) continue;
+      const st = raceState(r); if (st.status !== "called") continue;
+      const t = Date.parse(r.calledAt ?? r.lastUpdated); if (!t) continue;
+      calls.push({ r, t, party: st.party, cand: st.cand, big: st.party === "ind" || featured.has(r.id) });
+    }
+    calls.sort((a, b) => a.t - b.t);
+    const svg = d3.select("#chart"); svg.selectAll("*").remove();
+    const W = 1584, H = 500, m = { l: 40, r: 40 };
+    $("reporting").innerHTML = `<b>${calls.length}</b> calls`;
+    if (!calls.length) { svg.append("text").attr("class", "lbl").attr("x", W / 2).attr("y", H / 2).attr("text-anchor", "middle").attr("fill", "#9aa7bd").text("No calls yet"); $("tally").innerHTML = ""; return; }
+    // The night's window: from the first call to now, at most the last 14 hours.
+    const end = Math.max(calls[calls.length - 1].t, Date.now());
+    const start = Math.max(calls[0].t, end - 14 * 3600_000);
+    const shown = calls.filter((c) => c.t >= start);
+    const t0 = d3.timeHour.floor(new Date(start)), t1 = d3.timeHour.ceil(new Date(end));
+    const x = d3.scaleTime().domain([t0, t1]).range([m.l, W - m.r]);
+    const y0 = 300;
+    svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y0).attr("y2", y0).attr("stroke", "#3a4f7a").attr("stroke-width", 3);
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${y0 + 60})`).call(d3.axisBottom(x).ticks(8).tickFormat(d3.timeFormat("%-I %p")).tickSize(0)).select(".domain").remove();
+    // Stack dots that fall within a few minutes of each other.
+    const placed = [];
+    for (const c of shown) {
+      const cx = x(c.t);
+      let level = 0; while (placed.some((p) => Math.abs(p.cx - cx) < 22 && p.level === level)) level++;
+      placed.push({ ...c, cx, level });
+    }
+    for (const p of placed) {
+      const r = p.big ? 14 : 8, cy = y0 - level2y(p.level, r);
+      svg.append("circle").attr("cx", p.cx).attr("cy", cy).attr("r", r).attr("fill", PARTY_COLOR[p.party]).attr("stroke", "#071222").attr("stroke-width", 2);
+      if (p.big) svg.append("text").attr("class", `lbl ${p.party === "ind" ? "gold" : ""}`).attr("x", Math.min(W - 160, Math.max(160, p.cx))).attr("y", cy - r - 14).attr("text-anchor", "middle").text(`${p.r.label} ${p.cand.last}`);
+    }
+    function level2y(level, r) { return level * (r * 2 + 6); }
+    const n = (k) => calls.filter((c) => c.party === k).length;
+    $("tally").innerHTML = `<span><b>${calls.filter((c) => c.r.office === "S").length}</b>Senate calls</span><span><b>${calls.filter((c) => c.r.office === "H").length}</b>House calls</span><span><b style="color:${PARTY_COLOR.dem}">${n("dem")}</b>Dem</span><span><b style="color:${PARTY_COLOR.gop}">${n("gop")}</b>GOP</span><span><b style="color:${PARTY_COLOR.ind}">${n("ind") + n("oth")}</b>independent</span>`;
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
+  connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s) => { races = s.races; render(); }, onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; } });
+</script>
+</body>
+</html>

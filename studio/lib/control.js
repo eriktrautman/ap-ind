@@ -40,10 +40,10 @@ export const CHARTS = [
   // A: persistent elements and lower thirds (the ticker is the one built)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
   { id: "A2",  kind: "other", name: "Name and title lower third",   page: null,                built: false },
-  { id: "A3",  kind: "other", name: "Race-status bug",              page: null,                built: false },
-  { id: "A4",  kind: "other", name: "AP call alert",                page: null,                built: false },
-  { id: "A5",  kind: "other", name: "Poll-closing strip",           page: null,                built: false },
-  { id: "A6",  kind: "other", name: "Featured races strip",         page: null,                built: false },
+  { id: "A3",  kind: "other", name: "Race-status bug",              page: "/g/bug.html",                built: true },
+  { id: "A4",  kind: "other", name: "AP call alert",                page: "/g/call-alert.html",                built: true },
+  { id: "A5",  kind: "other", name: "Poll-closing strip",           page: "/g/poll-closing.html",                built: true },
+  { id: "A6",  kind: "other", name: "Featured races strip",         page: "/g/featured-strip.html",                built: true },
   // B: featured race deep dives
   { id: "B1",  kind: "race", name: "Candidate profile",             page: null,                built: false },
   { id: "B2",  kind: "race", name: "Race setup",                    page: null,                built: false },
@@ -76,8 +76,8 @@ export const CHARTS = [
   { id: "D5",  kind: "movement", name: "Key races grid",            page: "/g/key-races.html",  built: true },
   { id: "D6",  kind: "movement", name: "Race zoom-in",              page: "/g/zoom.html",       built: true },
   { id: "D7",  kind: "movement", name: "Status map",                page: "/g/tiles.html",      built: true },
-  { id: "D8",  kind: "movement", name: "Calls timeline",            page: null,                 built: false },
-  { id: "D9",  kind: "movement", name: "State overview",            page: null,                 built: false },
+  { id: "D8",  kind: "movement", name: "Calls timeline",            page: "/g/calls-timeline.html",                 built: true },
+  { id: "D9",  kind: "movement", name: "State overview",            page: "/g/state-overview.html", built: true, needsState: true },
   { id: "D10", kind: "movement", name: "National popular vote",     page: "/g/house-pv.html",   built: true },
   { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: true },
   // F: from the AP reports feed

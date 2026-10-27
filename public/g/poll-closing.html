@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Poll-Closing Strip</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* A5: a lower strip of the next poll closings by state, from AP's poll-close times, with a countdown.
+     ?after=ISO pretends it is that time (rehearsal). */
+  .strip { position: absolute; left: 0; right: 0; bottom: 60px; height: 96px; display: flex; align-items: stretch; background: linear-gradient(90deg, var(--panel), var(--panel-edge)); font-size: 30px; }
+  .head { flex: none; background: var(--ind); color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 22px; padding: 0 28px; display: flex; align-items: center; }
+  .list { flex: 1; display: flex; align-items: center; gap: 0; overflow: hidden; padding: 0 12px; }
+  .slot { display: flex; align-items: baseline; gap: 12px; padding: 0 28px; border-right: 1px solid var(--rule); white-space: nowrap; }
+  .slot:last-child { border-right: 0; }
+  .slot .t { font-weight: 700; font-size: 32px; } .slot .st { color: var(--muted); font-size: 24px; }
+  .slot.next .t { color: var(--gold); }
+  .slot.past { opacity: .45; }
+  .cd { flex: none; padding: 0 96px 0 28px; display: flex; align-items: center; gap: 14px; font-size: 26px; color: var(--muted); }
+  .cd b { color: var(--fg); font-size: 34px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="strip"><div class="head">Polls close</div><div class="list" id="list"></div><div class="cd" id="cd"></div></div>
+<script type="module">
+  import { connectFeed } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const now = () => (q.get("after") ? Date.parse(q.get("after")) : Date.now());
+  let slots = [];
+  const fmtT = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  function build(races) {
+    const byTime = new Map();
+    for (const r of races.values()) {
+      if (!r.pollClose || r.kind !== "federal") continue;
+      const t = Date.parse(r.pollClose); if (!t) continue;
+      const set = byTime.get(t) ?? new Set(); set.add(r.state); byTime.set(t, set);
+    }
+    slots = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([t, set]) => ({ t, states: [...set].sort() }));
+  }
+  function render() {
+    const n = now();
+    const upcoming = slots.filter((s) => s.t > n);
+    const next = upcoming[0];
+    const show = [...slots.filter((s) => s.t <= n).slice(-1), ...upcoming.slice(0, 5)];
+    $("list").innerHTML = show.map((s) => `<div class="slot ${s === next ? "next" : s.t <= n ? "past" : ""}"><span class="t">${fmtT(s.t)}</span><span class="st">${s.states.length > 8 ? s.states.slice(0, 8).join(" ") + " +" + (s.states.length - 8) : s.states.join(" ")}</span></div>`).join("") || `<div class="slot"><span class="st">No poll-closing times in the feed yet.</span></div>`;
+    if (next) { const d = Math.max(0, next.t - n), h = Math.floor(d / 3600000), m = Math.floor(d / 60000) % 60, sec = Math.floor(d / 1000) % 60; $("cd").innerHTML = `next in <b>${h ? h + ":" : ""}${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}</b>`; }
+    else $("cd").innerHTML = slots.length ? "all polls closed" : "";
+  }
+  connectFeed({ onSnapshot: (s) => { build(s.races); render(); }, onUpdate: (s) => { build(s.races); render(); } });
+  setInterval(render, 1000);
+</script>
+</body>
+</html>

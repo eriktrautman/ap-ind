@@ -13,7 +13,11 @@ export function fabricateIndex(index, samples = []) {
   const byId = new Map(samples.map((r) => [r.id, r]));
   const races = index.races.map((r) => {
     const s = byId.get(r.id);
-    if (s) return { ...r, ...s, candidates: s.candidates.map((c) => ({ ...(r.candidates.find((x) => x.id === c.id) ?? {}), ...c })), featured: r.featured, hasIndependent: r.hasIndependent };
+    if (s) {
+      const rand = rng(`${r.id}-call`);
+      return { ...r, ...s, candidates: s.candidates.map((c) => ({ ...(r.candidates.find((x) => x.id === c.id) ?? {}), ...c })), featured: r.featured, hasIndependent: r.hasIndependent,
+        calledAt: s.called ? new Date(Date.now() - Math.round(rand() * 3 * 3600_000)).toISOString() : null, lastUpdated: new Date().toISOString() };
+    }
     const rand = rng(r.id);
     const total = Math.round((r.office === "S" || r.office === "G" ? 400_000 + rand() * 2_400_000 : r.office === "H" ? 120_000 + rand() * 260_000 : 50_000 + rand() * 900_000));
     const eevp = Math.round(15 + rand() * 85);
@@ -30,7 +34,8 @@ export function fabricateIndex(index, samples = []) {
     const margin = (candidates[0]?.pct ?? 0) - (candidates[1]?.pct ?? 0);
     const called = eevp >= 85 && margin > 4;
     if (called) candidates[0].winner = true;
-    return { ...r, candidates, totalVotes: ctot, eevp, precinctsPct: eevp, called, callStatus: called ? "Called" : "", lastUpdated: new Date().toISOString() };
+    const calledAt = called ? new Date(Date.now() - Math.round(rand() * 4 * 3600_000)).toISOString() : null;
+    return { ...r, candidates, totalVotes: ctot, eevp, precinctsPct: eevp, called, calledAt, callStatus: called ? "Called" : "", lastUpdated: new Date().toISOString() };
   });
   return { ...index, races, sample: true };
 }

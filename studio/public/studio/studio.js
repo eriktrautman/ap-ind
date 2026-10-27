@@ -573,7 +573,7 @@ function renderChartCatalog() {
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : "movementCharts";
       const on = kind !== "other" && draft[key].includes(chart.id);
-      const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 6, showRace: false });
+      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, priority: 6, showRace: false });
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (kind === "other") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${chart.built ? "Always on" : "Not built yet"}</span>`);

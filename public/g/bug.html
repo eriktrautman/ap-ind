@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Race Status Bug</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* A3: a small corner element for one race. ?id=<raceID> required. ?corner=tl|tr|bl|br (default tr). */
+  .bug { position: absolute; top: 60px; right: 96px; display: flex; align-items: stretch; background: linear-gradient(160deg, var(--panel), var(--panel-edge)); border-radius: 8px; overflow: hidden; font-size: 30px; box-shadow: 0 6px 24px #0008; }
+  .bug.bl, .bug.br { top: auto; bottom: 150px; } .bug.tl, .bug.bl { right: auto; left: 96px; }
+  .lab { background: var(--gold); color: #1a1600; font-weight: 700; padding: 14px 22px; font-family: ui-monospace, Menlo, monospace; font-size: 32px; display: flex; align-items: center; }
+  .body { padding: 10px 24px; display: grid; gap: 2px; min-width: 420px; }
+  .who { font-weight: 700; white-space: nowrap; }
+  .who small { color: var(--muted); font-weight: 400; margin-left: 12px; }
+  .st { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 24px; }
+  .pill { display: inline-block; font-size: 20px; font-weight: 700; padding: 3px 12px; border-radius: 4px; letter-spacing: .05em; }
+  .pill.call { background: var(--gold); color: #1a1600; } .pill.counting { background: #2a3a5c; color: #fff; } .pill.open { background: #16213a; color: var(--muted); border: 1px solid var(--rule); }
+</style>
+</head>
+<body>
+<div class="bug" id="bug"><div class="lab" id="lab">…</div><div class="body"><div class="who" id="who"></div><div class="st" id="st"></div></div></div>
+<script type="module">
+  import { connectFeed, raceState, partyKey, PARTY_COLOR } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const raceId = q.get("id");
+  document.getElementById("bug").classList.add(q.get("corner") ?? "tr");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  function render(race) {
+    if (!race) { $("lab").textContent = "?"; $("who").textContent = "Race not found"; return; }
+    const st = raceState(race);
+    const cands = [...race.candidates].sort((a, b) => b.votes - a.votes).slice(0, 2);
+    $("lab").textContent = race.label;
+    $("who").innerHTML = race.totalVotes
+      ? cands.map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> ${Number(c.pct).toFixed(1)}`).join(' <small>·</small> ')
+      : cands.map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span>`).join(' <small>v</small> ');
+    const pill = st.status === "called" ? `<span class="pill call">AP CALL · ${esc(st.cand.last)}</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(race.eevp || race.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">POLLS CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
+    $("st").innerHTML = `${pill}<span>${esc(race.stateName)} · ${esc(race.title)}</span>`;
+  }
+  connectFeed({
+    onSnapshot: (s) => render(s.races.get(raceId)),
+    onUpdate: (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) render(s.races.get(raceId)); },
+  });
+</script>
+</body>
+</html>
