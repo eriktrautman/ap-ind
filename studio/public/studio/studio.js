@@ -573,13 +573,14 @@ function renderChartCatalog() {
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : "movementCharts";
       const on = draft[key].includes(chart.id);
-      const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 6 });
+      const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 6, showRace: false });
+      el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
-      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
+      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured" : "✓ In overview") : (kind === "race" ? "☆ Feature" : "+ Add")}</button>`);
       grid.appendChild(el);
     }
   }
-  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="empty" style="grid-column:1/-1;padding:6px">Per-race previews use ${esc(sample.label)}, the first featured race.</div>`);
+  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="muted small" style="grid-column:1/-1">Previews use ${esc(sample.label)}, the first featured race. Gold outline = in use.</div>`);
 }
 $("charts").addEventListener("click", (e) => { const fc = e.target.closest(".featchart"); if (fc) toggleChart(fc.dataset.chart); });
 
