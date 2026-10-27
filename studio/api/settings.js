@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     return;
   }
   if (req.method === "PUT") {
-    if (!requireStudio(req, res)) return;
+    if (!(await requireStudio(req, res))) return;
     const b = readBody(req);
     const next = {
       resultsType: b.resultsType === "l" || b.resultsType === "t" ? b.resultsType : null,

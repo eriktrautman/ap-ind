@@ -17,7 +17,7 @@ const $ = (id) => document.getElementById(id);
 const api = async (url, opts = {}) => {
   const res = await fetch(url, { cache: "no-store", headers: { "content-type": "application/json" }, ...opts });
   const body = await res.json().catch(() => ({}));
-  if (res.status === 401) { showLogin(); throw new Error("signed out"); }
+  if (res.status === 401) { const wasTest = loginKind === "test"; loginKind = null; showLogin(); loginHint(wasTest); throw new Error("signed out"); }
   if (!res.ok) throw new Error(body.error ?? `${res.status}`);
   return body;
 };
@@ -64,6 +64,16 @@ const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>
 })();
 
 // ---------- auth ----------
+/** Tell people on the sign-in page why the rehearsal password will not work, and why they were signed out. */
+async function loginHint(wasTest, me = null) {
+  const hint = $("loginhint");
+  try { me = me ?? await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()); } catch { me = {}; }
+  const live = me.rehearsalAllowed === false;
+  hint.hidden = !live;
+  hint.innerHTML = !live ? "" : wasTest
+    ? "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with the real password to continue."
+    : "Results are <b>Live</b>, so the rehearsal password is switched off. Only the real password signs in.";
+}
 function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; $("poller").hidden = true; $("prodstrip").hidden = true; }
 function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; $("poller").hidden = false; }
 $("loginform").addEventListener("submit", async (e) => {
@@ -74,7 +84,7 @@ $("loginform").addEventListener("submit", async (e) => {
     loginKind = me.kind ?? "prod";
     $("password").value = "";
     showApp(); boot();
-  } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; }
+  } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; loginHint(false); }
 });
 $("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; showLogin(); });
 // The sticky header's height changes with the push/pull strip and the banners; anchor jumps from the
@@ -667,5 +677,6 @@ async function boot() {
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
   loginKind = me.authed ? (me.kind ?? "prod") : null;
+  if (!me.authed) loginHint(false, me);
   if (me.authed) { showApp(); boot(); } else showLogin();
 })();

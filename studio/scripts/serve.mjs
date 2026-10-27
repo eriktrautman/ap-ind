@@ -92,7 +92,7 @@ createServer(async (req, res) => {
       // there, and a push goes there (after the local sign-in check, then the deployment's).
       if (req.method === "PUT") {
         const body = await readBody(req); shim(req, res, body);
-        if (!(await import("../lib/auth.js")).isAuthed(req)) { res.status(401).json({ error: "not signed in" }); return; }
+        if (!(await (await import("../lib/auth.js")).isAuthed(req))) { res.status(401).json({ error: "not signed in" }); return; }
         try { const r = await upstreamProducer("PUT", body); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
         catch (e) { res.writeHead(e.status ?? 502, { "content-type": "application/json" }); res.end(JSON.stringify({ error: e.message })); }
         return;

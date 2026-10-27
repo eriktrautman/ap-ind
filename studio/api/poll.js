@@ -7,7 +7,7 @@ import { isCron, isAuthed } from "../lib/auth.js";
 export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
-  if (!isCron(req) && !isAuthed(req)) {
+  if (!isCron(req) && !(await isAuthed(req))) {
     res.status(401).json({ error: "unauthorized" });
     return;
   }

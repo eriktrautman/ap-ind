@@ -1,13 +1,13 @@
 // Studio sign-in. GET → { authed, kind, testLogin }, POST { password } → sets the cookie, DELETE → clears it.
 // `kind` is "prod" or "test" by which password signed in; the control room flags a test sign-in.
-import { checkPassword, issueCookie, clearCookie, authKind, configured, readBody } from "../lib/auth.js";
+import { matchPassword, rehearsalAllowed, REHEARSAL_OFF, issueCookie, clearCookie, authKind, configured, readBody } from "../lib/auth.js";
 
-const whoami = (req) => { const kind = authKind(req); return { authed: kind !== false, kind: kind || null, testLogin: kind === "test" }; };
+const whoami = async (req) => { const kind = await authKind(req); return { authed: kind !== false, kind: kind || null, testLogin: kind === "test" }; };
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   if (req.method === "GET") {
-    res.status(200).json({ ...whoami(req), configured: configured().length > 0, testConfigured: configured().includes("test") });
+    res.status(200).json({ ...(await whoami(req)), configured: configured().length > 0, testConfigured: configured().includes("test"), rehearsalAllowed: await rehearsalAllowed() });
     return;
   }
   if (req.method === "DELETE") {
@@ -22,9 +22,13 @@ export default async function handler(req, res) {
     }
     // A small fixed delay blunts online guessing without any state to keep.
     await new Promise((r) => setTimeout(r, 400));
-    const kind = checkPassword(readBody(req).password);
+    const kind = matchPassword(readBody(req).password);
     if (!kind) {
       res.status(403).json({ error: "wrong password" });
+      return;
+    }
+    if (kind === "test" && !(await rehearsalAllowed())) {
+      res.status(403).json({ error: REHEARSAL_OFF });
       return;
     }
     res.setHeader("Set-Cookie", issueCookie(req, kind));

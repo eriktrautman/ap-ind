@@ -68,6 +68,7 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .login h1 { font-family: var(--serif); font-weight: 400; font-size: 22px; margin: 0 0 6px; color: var(--navy); }
 .login p { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
 .login input { width: 100%; margin-bottom: 10px; }
+.login .hint { background: #fdf0f1; border-left: 3px solid var(--bad); padding: 6px 10px; border-radius: 4px; color: var(--ink); }
 .login .err { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 8px; }
 
 /* ---- layout ---- */

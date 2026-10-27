@@ -1,11 +1,14 @@
 // Studio login: a shared password and a signed, expiring cookie. Two passwords are accepted,
 // each from its own env var, and the cookie records which one signed in:
 //   STUDIO_PASSWORD        the real one, for the night
-//   STUDIO_TEST_PASSWORD   an easy one for rehearsals; the control room flags it, and removing the
-//                          variable (then redeploying) signs every test session out at once
+//   STUDIO_TEST_PASSWORD   an easy one for rehearsals. It works only while the poller is on AP's test
+//                          results: the moment results are switched to Live, sign-ins with it are
+//                          refused and every cookie it issued stops verifying. Removing the variable
+//                          (then redeploying) does the same for good.
 // No sessions to store: the cookie is "<expiry>.<kind>.<hmac>" and verifies statelessly, keyed by
 // the password it was issued for, so changing a password signs out everyone who used it.
 import { createHmac, timingSafeEqual, createHash } from "node:crypto";
+import { readJson } from "./store.js";
 
 const COOKIE = "studio";
 const TTL_MS = 12 * 60 * 60 * 1000;
@@ -26,11 +29,25 @@ function sig(kind, exp) {
 
 const same = (a, b) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-/** Which configured password `given` matches: "prod", "test", or null. */
-export function checkPassword(given) {
+/** Which configured password `given` matches: "prod", "test", or null. Does not apply the Live rule. */
+export function matchPassword(given) {
   const g = String(given ?? "");
   for (const kind of configured()) if (same(g, password(kind))) return kind;
   return null;
+}
+
+/** The rehearsal password is allowed only while the poller is on test results (settings.json, else AP_RESULTS_TYPE). */
+export async function rehearsalAllowed() {
+  let type = null;
+  try { type = (await readJson("settings.json"))?.resultsType ?? null; } catch {}
+  return (type ?? process.env.AP_RESULTS_TYPE ?? "t") !== "l";
+}
+export const REHEARSAL_OFF = "That is the rehearsal password, and results are now Live, so it is switched off. Sign in with the real password.";
+
+/** Like matchPassword, but a test match while results are Live returns null. */
+export async function checkPassword(given) {
+  const kind = matchPassword(given);
+  return kind === "test" && !(await rehearsalAllowed()) ? null : kind;
 }
 
 export function issueCookie(req, kind) {
@@ -43,21 +60,25 @@ export function clearCookie() {
   return `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
-/** The kind of password this request signed in with ("prod" | "test"), or false. */
-export function authKind(req) {
+/** The kind of password this request signed in with ("prod" | "test"), or false. A test cookie is false while results are Live. */
+export async function authKind(req) {
+  let kind;
   try {
     const raw = (req.headers.cookie ?? "").split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
     if (!raw) return false;
-    const [exp, kind, s] = raw.slice(COOKIE.length + 1).split(".");
-    if (!exp || !s || !(kind in KINDS) || Number(exp) < Date.now()) return false;
-    return same(s, sig(kind, Number(exp))) ? kind : false;
+    const [exp, k, s] = raw.slice(COOKIE.length + 1).split(".");
+    if (!exp || !s || !(k in KINDS) || Number(exp) < Date.now()) return false;
+    if (!same(s, sig(k, Number(exp)))) return false;
+    kind = k;
   } catch {
     return false;
   }
+  if (kind === "test" && !(await rehearsalAllowed())) return false;
+  return kind;
 }
 
-export function isAuthed(req) {
-  return authKind(req) !== false;
+export async function isAuthed(req) {
+  return (await authKind(req)) !== false;
 }
 
 /** Vercel Cron sends Authorization: Bearer CRON_SECRET; ?secret= is for curl. */
@@ -70,8 +91,8 @@ export function isCron(req) {
 }
 
 /** 401 and false unless the request carries a valid studio cookie. */
-export function requireStudio(req, res) {
-  if (isAuthed(req)) return true;
+export async function requireStudio(req, res) {
+  if (await isAuthed(req)) return true;
   res.status(401).json({ error: "not signed in" });
   return false;
 }

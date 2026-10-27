@@ -32,7 +32,7 @@
     <span class="note" id="pollmsg"></span>
   </div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
-  <div class="testbanner testlogin" id="loginbanner" hidden>TEST LOGIN · rehearsal password, switched off for election night</div>
+  <div class="testbanner testlogin" id="loginbanner" hidden>TEST LOGIN · rehearsal password · invalid once results go Live</div>
   <div class="problem top" id="problem" hidden></div>
 </header>
 
@@ -40,6 +40,7 @@
   <form id="loginform">
     <h1>Control room sign-in</h1>
     <p>Shared studio password. Ask the engineer on duty if you don't have it.</p>
+    <p class="hint" id="loginhint" hidden></p>
     <input type="password" id="password" placeholder="Password" autocomplete="current-password" autofocus>
     <button type="submit">Sign in</button>
     <div class="err" id="loginerr"></div>

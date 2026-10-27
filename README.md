@@ -159,9 +159,9 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 
 - **The ticker and every graphic are public links.** `/ticker` and the pages under `/g/` are fixed URLs, the same for everyone, and they only display. Anyone who has a link sees exactly what the switcher sees. No sign-in produces these links and opening one changes nothing.
 - **They show whatever was last pushed.** Each page reads the shared settings from the public, read-only `GET /api/producer` every few seconds. There is no other input.
-- **Two passwords, one of them temporary.** `/studio` accepts `STUDIO_PASSWORD` (the real one) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234` until election night). The cookie remembers which one signed in, so the control room shows a purple **TEST LOGIN** banner next to the TEST DATA banner for test sign-ins. Every browser that signed in with the rehearsal password is signed out the moment it is removed, because its cookie was keyed to that password. Sign out on the page clears only that one browser. Laptops that push with `GLOBAL_PASSWORD=test1234` lose push at the same moment and need the real password.
+- **Two passwords, one of them for rehearsals only.** `/studio` accepts `STUDIO_PASSWORD` (the real one) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234`). The rehearsal password works only while the poller is on AP's **Test** results. The moment anyone switches results to **Live** (the Test/Live switch in the control room, or `AP_RESULTS_TYPE=l` with no override), sign-ins with it are refused and every browser that used it is signed out, including laptops pushing with `GLOBAL_PASSWORD=test1234`; switching back to Test lets it work again. The cookie remembers which password signed in, so the control room shows a purple **TEST LOGIN** banner next to the TEST DATA banner for rehearsal sign-ins, and the sign-in page says when the rehearsal password is off. Sign out on the page clears only that one browser.
 
-  **Before election night, switch the rehearsal password off** (from `studio/`, in a terminal):
+  **For election night nothing needs doing beyond switching results to Live.** To switch the rehearsal password off for good anyway (from `studio/`, in a terminal):
 
   ```sh
   vercel env rm STUDIO_TEST_PASSWORD --environment production --yes

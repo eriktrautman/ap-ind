@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return;
   }
   if (req.method === "PUT") {
-    if (!requireStudio(req, res)) return;
+    if (!(await requireStudio(req, res))) return;
     try {
       const body = readBody(req);
       const prev = normalize((await readJson("producer.json")) ?? DEFAULTS);
