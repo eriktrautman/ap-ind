@@ -541,7 +541,7 @@ function catalogBody(r, featured) {
   const cg = document.createElement("div"); cg.className = "cardgrid";
   for (const chart of CHARTS.filter((c) => c.kind === "race")) {
     if (chart.only && !chart.only(r)) continue;
-    const el = cards.card({ chart, race: r, priority: 9, isStatic: true });
+    const el = cards.card({ chart, race: r, priority: 9, isStatic: true, open: "show" });
     const on = draft.featuredCharts.includes(chart.id);
     el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="featchart" data-chart="${chart.id}" title="Featured charts apply to every featured race">${on ? "★ Featured chart" : "☆ Make featured chart"}</button>`);
     cg.appendChild(el);

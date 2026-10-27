@@ -127,7 +127,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     c.link.href = pageUrl(c, true);
     if (chart.retired) { el.classList.add("retired"); c.link.removeAttribute("href"); c.link.textContent = "retired"; c.link.classList.add("muted"); }
     else if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
-    else { c.thumb.classList.add("clickable"); c.thumb.title = open === "show" ? "Open this element at 1920×1080 in a new tab" : "Open this graphic in a new tab, scaled to fit the window"; }
+    else { c.thumb.classList.add("clickable"); if (open === "show") el.classList.add("show"); c.thumb.title = open === "show" ? "Open this graphic at 1920×1080 in a new tab" : "Open this graphic in a new tab, scaled to fit the window"; }
     el.addEventListener("click", (e) => {
       if (e.target.closest(".kebab")) { const m = el.querySelector(".menu"); m.hidden = !m.hidden; return; }
       const mi = e.target.closest("[data-mi]"); if (mi) { el.querySelector(".menu").hidden = true; menu[Number(mi.dataset.mi)]?.onClick(); return; }

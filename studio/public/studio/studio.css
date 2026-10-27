@@ -179,6 +179,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .gcard .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
 .gcard .gfoot a.openbtn.muted { background: none; color: var(--muted); padding: 0; }
 .gcard .thumb.clickable { cursor: pointer; }
+.gcard.show .thumb.clickable:hover::after { content: "Show ↗"; }
 .gcard .thumb.clickable:hover::after { content: "Preview ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 .bubble { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: #e8f5ec; color: #1c6b3c; white-space: nowrap; }
 .bubble.warn { background: #fdf6ea; color: #8a5a0e; } .bubble.bad { background: #fdf0f1; color: var(--bad); } .bubble.off { background: #eee; color: var(--muted); }
