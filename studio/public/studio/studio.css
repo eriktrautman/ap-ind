@@ -25,9 +25,10 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .sections a { color: #c7cfdf; text-decoration: none; padding: 4px 10px; border-radius: 5px; }
 .sections a:hover, .sections a.here { background: #16305e; color: #fff; }
 .top .link { margin-left: auto; background: none; border: 1px solid #3a4f7a; color: #c7cfdf; font-size: 12px; padding: 3px 8px; }
-.statusbar { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 6px 16px 8px; background: #0e1a33; font-size: 12.5px; color: #c7cfdf; border-top: 1px solid #16305e; }
+.statusbar { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 6px 16px 7px; background: #1b2a4a; font-size: 12.5px; color: #c7cfdf; border-top: 1px solid #2a3a5c; }
 .statusbar .st { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.statusbar .st b { color: #fff; font-weight: 600; }
+.statusbar .st b { color: #eef2f9; font-weight: 400; }
+.statusbar #st-feed b { color: #fff; font-weight: 700; }
 .statusbar .st .k { color: #8a98b5; }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; }
 .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }

@@ -95,9 +95,11 @@
   function setQueue(items) {
     const same = queue.length === items.length && queue.every((q, i) => q.key === items[i].key && q.text === items[i].text);
     if (same) return;
-    const wasEmpty = !queue.length;
+    // Before any data, or while only the idle line is crawling, there is nothing worth finishing:
+    // start the new list at once. Otherwise what is on screen finishes and the new list follows.
+    const restart = !queue.length || queue.every((q) => q.kind === "idle");
     queue = items; next = 0;
-    if (wasEmpty) { track.innerHTML = ""; x = crawlWidth(); }
+    if (restart) { track.innerHTML = ""; x = crawlWidth(); }
     // otherwise the items already on the track finish crawling; the new queue starts at the next append
   }
   function setItems(items) { setQueue(items); }
