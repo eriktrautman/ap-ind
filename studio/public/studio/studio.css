@@ -93,6 +93,7 @@ main > section.card + section.card::before { content: ""; display: block; height
 .pollstrip .seg button { padding: 2px 8px; }
 .seg button { border: 0; border-left: 1px solid var(--sand); border-radius: 0; }
 .seg button.on { background: var(--navy); color: #fff; }
+.seg button.on[data-rt="t"] { background: var(--warn); color: #1a1200; } /* same orange and dark text as the TEST DATA banner */
 .seg button.on[data-rt="l"] { background: var(--bad); }
 .note { font-size: 13px; color: var(--muted); }
 .note.ok { color: var(--ok); } .note.bad { color: var(--bad); }
