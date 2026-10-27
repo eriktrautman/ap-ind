@@ -261,7 +261,7 @@ function renderStatus() {
     st("st-feed", `<span class="dot ${cls === "ok" ? "" : cls}"></span><b>${esc(feedLabel)}</b>`) +
     st("st-refresh", `<span class="k">Last refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
-    st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
+    st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     st("st-air", `<span class="k">A push ${onSite() ? "goes live in" : `reaches ${esc(prodHost())} in`}</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
