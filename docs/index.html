@@ -3,51 +3,56 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ap-ind</title>
+<title>IND Election Night</title>
 <style>
-  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; line-height: 1.5; color: #1f2937; background: #faf7f2; }
-  main { max-width: 760px; margin: 40px auto; padding: 0 16px; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 8px; opacity: 0.7; }
-  ul { padding-left: 20px; } li { margin: 4px 0; }
-  a { color: #0b1f44; }
-  code { font-family: Menlo, monospace; font-size: 13px; }
-  .status { font-family: Menlo, monospace; font-size: 13px; padding: 10px 14px; border: 1px solid #8884; border-radius: 4px; margin: 16px 0 28px; }
-  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #9ca3af; margin-right: 6px; }
-  .local { color: #6b7280; }
-  .tag { display: inline-block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: #e7e1d6; color: #4b5563; margin-left: 6px; }
+  :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; line-height: 1.5; color: var(--ink); background: var(--cream); }
+  main { max-width: 860px; margin: 32px auto 60px; padding: 0 16px; }
+  h1 { font-family: Georgia, "Iowan Old Style", serif; font-weight: 400; font-size: 34px; margin: 0 0 4px; color: var(--navy); }
+  .lede { color: var(--muted); margin: 0 0 24px; }
+  .hero { display: block; background: linear-gradient(160deg, var(--navy-deep), var(--navy)); color: #fff; border-radius: 12px; padding: 28px 30px; text-decoration: none; border-left: 10px solid var(--gold); box-shadow: 0 10px 30px #0b1f4433; margin-bottom: 28px; }
+  .hero:hover { box-shadow: 0 14px 36px #0b1f4455; }
+  .hero .k { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+  .hero .t { font-family: Georgia, serif; font-size: 32px; margin: 4px 0 6px; }
+  .hero .d { color: #c7cfdf; font-size: 15px; max-width: 620px; }
+  .hero .cta { display: inline-block; margin-top: 16px; background: var(--gold); color: #1a1600; font-weight: 700; padding: 9px 18px; border-radius: 6px; font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  .tile { display: block; background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 14px 16px; text-decoration: none; color: var(--ink); }
+  .tile:hover { border-color: var(--navy); }
+  .tile b { display: block; color: var(--navy); font-size: 16px; }
+  .tile span { color: var(--muted); font-size: 13.5px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; margin: 24px 0 8px; color: var(--muted); }
+  ul { padding-left: 20px; margin: 0; } li { margin: 4px 0; }
+  a { color: var(--navy); }
+  code { font-family: Menlo, monospace; font-size: 13px; background: #fff; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--sand); }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .hero .t { font-size: 26px; } }
 </style>
 </head>
 <body>
 <script src="nav.js"></script>
 <main>
-<h1>ap-ind</h1>
-<div>AP Elections API middleware for election night. Demo build.</div>
-<div class="status" id="status"><span class="dot"></span>Docs site · the AP poller, the ticker, the graphics and the producer control room run on this deployment.</div>
+<h1>IND Election Night</h1>
+<p class="lede">AP results for a broadcast about independent candidates: the control room, the ticker, and the graphics, all on this site.</p>
 
-<h2>Broadcast</h2>
+<a class="hero" href="/studio">
+  <div class="k">Producers start here</div>
+  <div class="t">Control room</div>
+  <div class="d">Set the ticker, the featured races and every chart; push to the site when ready. Password required.</div>
+  <span class="cta">Open the control room →</span>
+</a>
+
+<div class="grid">
+  <a class="tile" href="/ticker?bg=black"><b>Ticker</b><span>The live crawl at 1920×1080. Add <code>?bg=green</code> for the key.</span></a>
+  <a class="tile" href="producer-plan.html"><b>Build plan</b><span>Stories, burndown and what is left.</span></a>
+  <a class="tile" href="graphics-data-options.html"><b>Graphics lookbook</b><span>Every chart by series, with its data source and on-air notes.</span></a>
+  <a class="tile" href="spec.html"><b>Technical spec</b><span>Requirements, architecture as built, open questions.</span></a>
+</div>
+
+<h2>Also here</h2>
 <ul>
-  <li><a href="/studio">Producer control room</a> — status bar, ticker, race detail, movement overview, full catalog; Default / Global / Local state (password)</li>
-  <li><a href="/ticker?bg=black">Ticker</a> — 1920×1080, reads production; add <code>?bg=green</code> for the key</li>
-  <li><a href="producer-plan.html">Control room build plan</a> — stories, burndown and projected finish</li>
-</ul>
-
-<h2>Design</h2>
-<ul>
-  <li><a href="graphics-data-options.html">Graphics data options</a> — candidate graphics by segment, with a data audit and on-air key notes</li>
-  <li><a href="spec.html">Technical spec</a> — requirements, architecture, plan, open questions</li>
-  <li><a href="watch-party.html">Watch Party design</a> — public site for tracking every race in the AP feed, with an independent filter; separate deployment</li>
-</ul>
-
-
-<h2>Graphics (1920×1080)</h2>
-<ul>
-  <li><a href="/g/race?id=28594&bg=black">Race result</a>, one page per race by AP race id · <a href="/g/swing?id=28594&bg=black">Versus 2024 by county</a> · more as the control room build lands</li>
-</ul>
-
-<h2>Code</h2>
-<ul>
-  <li><a href="https://github.com/eriktrautman/ap-ind">github.com/eriktrautman/ap-ind</a> — clone, <code>cd studio</code>, put an AP key and a studio password in <code>.env</code>, <code>npm install</code>, <code>npm start</code></li>
+  <li><a href="watch-party.html">Watch Party design</a> — the public site for every race in the AP feed (separate deployment)</li>
+  <li>Graphics are one URL each under <code>/g/</code>, 1920×1080, transparent by default; the control room opens any of them</li>
+  <li><a href="https://github.com/eriktrautman/ap-ind">Code</a> — <code>cd studio</code>, <code>npm install</code>, <code>npm start</code> runs the whole app on a laptop</li>
 </ul>
 </main>
 </body>
