@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; awaiting push to production",
   note: "all 44 stories done; production deploy happens on git push",
-  updated: "2026-10-27T00:03:08Z",
+  updated: "2026-10-27T00:37:32Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -231,7 +231,8 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
-  { t: "2026-10-27T00:03:08Z", what: "Hardening: preview deployment https://ap-jolm1rci7-american-union.vercel.app serves every route (control room, all 19 graphics, data files, API). README and spec rewritten for the control room. Publish-to-air time is stated from the ticker's 5 s and graphics' 10 s poll intervals; a measured figure needs a publish on production, which this session did not do. Finding: the production poller last ran at 21:28Z because Vercel Cron on the Hobby plan runs once a day (spec section 4 notes this); the status bar flags it and Poll now works around it. Nothing has been pushed; main is 7 commits ahead of origin." },
+  { t: "2026-10-27T00:37:32Z", what: "Correction: the project is not on Hobby; the cron runs every minute. The 21:28Z to 00:17Z gap was the window before CRON_SECRET and the other env vars were set on the new project." },
+  { t: "2026-10-27T00:03:08Z", what: "Hardening: preview deployment https://ap-jolm1rci7-american-union.vercel.app serves every route (control room, all 19 graphics, data files, API). README and spec rewritten for the control room. Publish-to-air time is stated from the ticker's 5 s and graphics' 10 s poll intervals; a measured figure needs a publish on production, which this session did not do. Finding, corrected: the production poller paused between 21:28Z and 00:17Z while the new project had no CRON_SECRET (the cron's request is rejected without it); once the env vars were set it has polled every minute. The status bar flags any such gap. Nothing has been pushed; main is 7 commits ahead of origin." },
   { t: "2026-10-26T23:58:50Z", what: "Polling dataset compiled from public sources into config/polls.json (every row carries a source link; campaign-sponsored polls flagged; Gallup 45% independents for the C3 stat). C7 poll vs result renders with all seven featured races. Every chart in the library is now built." },
   { t: "2026-10-26T23:56:43Z", what: "Movement graphics landed: C1 featured board, C6 national independent vote, D1 Senate map and D2 House map on a shared national map module (usmap.js, us-atlas), D3/D4 balance of power from AP's Trend reports (the poller now writes trend.json), D5 key races grid, D6 zoom-in with the producer's context line, D7 tile map, D10 House popular vote, D11 too close to call. All rendered in headless Chrome at 1920x1080 inside the title-safe panel." },
   { t: "2026-10-26T23:48:18Z", what: "Per-race graphics landed: B6 county map, B8 votes still out, B9 ranked-choice rounds (first choices now; rounds when AP carries them), B10 then vs now on a new AP-fetched baseline (config/baseline-federal.json: 2024 national Senate/House totals and the last contest for each featured seat), B7 margin tracker fed by a new poller history file. Rendered and checked in headless Chrome." },

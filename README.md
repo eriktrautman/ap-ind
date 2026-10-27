@@ -39,7 +39,7 @@ Producer controls (no auth yet; bind to localhost or put behind a password): `PU
 
 ## Control room, graphics and on-air ticker (ap-ind on Vercel)
 
-The broadcast pages live in `studio/` (panel, ticker, poller functions) and `public/g/` (graphics), deployed together as the ap-ind Vercel project (ap-ind.vercel.app, which also serves these docs). No server of our own: the poller writes JSON to Vercel Blob (`/api/poll`, Vercel Cron once a minute on a Pro plan; Hobby runs it once a day, so press **Poll now** or run `npm run poll` during rehearsal), the pages poll those files.
+The broadcast pages live in `studio/` (panel, ticker, poller functions) and `public/g/` (graphics), deployed together as the ap-ind Vercel project (ap-ind.vercel.app, which also serves these docs). No server of our own: the poller writes JSON to Vercel Blob (`/api/poll`, Vercel Cron once a minute; the cron's request is accepted only when `CRON_SECRET` is set on the project, so a fresh project polls nothing until its env vars are in), the pages poll those files.
 
 | Path on ap-ind.vercel.app | Purpose |
 |---|---|
