@@ -578,7 +578,7 @@ function renderPersistent() {
     const chart = CHARTS.find((c) => c.id === id); if (!chart) continue;
     const st = draft.persistentSettings[id] ?? {};
     const race = st.raceId ? index?.byId?.get(st.raceId) ?? null : null;
-    const el = cards.card({ chart, race, params: id === "A2" ? { name: st.name, title: st.title } : null, priority: 4, showRace: !!race, menu: [{ label: "Remove from Persistent Elements…", onClick: () => toggleChart(chart.id) }] });
+    const el = cards.card({ chart, race, params: id === "A2" ? { name: st.name, title: st.title } : null, priority: 4, showRace: !!race, open: "show", menu: [{ label: "Remove from Persistent Elements…", onClick: () => toggleChart(chart.id) }] });
     const inputs = PERSIST_INPUTS[id] ?? [];
     if (inputs.length) {
       const form = document.createElement("div"); form.className = "pform";

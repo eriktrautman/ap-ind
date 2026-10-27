@@ -39,7 +39,8 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     u.searchParams.set("src", getSource());
     const bg = forOpen ? getBg() : "black";
     if (bg) u.searchParams.set("bg", bg);
-    if (forOpen) u.searchParams.set("fit", "1"); else u.searchParams.set("preview", "1");
+    if (forOpen && c.open === "preview") u.searchParams.set("fit", "1");   // "show": the real page at full size
+    if (!forOpen) u.searchParams.set("preview", "1");
     u.searchParams.set("sample", "auto");   // fabricated results until the count starts
     return u.pathname + u.search;
   }
@@ -112,21 +113,21 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     c.bubble.title = f.title;
   }
 
-  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null }) {
+  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null, open = "preview" }) {
     const el = document.createElement("div");
     el.className = "gcard";
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
     el.innerHTML = `
       <div class="ghead"><span class="cid">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
-      <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span><a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Preview</a></div>`;
-    const c = { el, chart, race, params, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
+      <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span><a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
+    const c = { el, chart, race, params, open, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
       title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a") };
     el._card = c; c.thumb._card = c;
     c.link.href = pageUrl(c, true);
     if (chart.retired) { el.classList.add("retired"); c.link.removeAttribute("href"); c.link.textContent = "retired"; c.link.classList.add("muted"); }
     else if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
-    else { c.thumb.classList.add("clickable"); c.thumb.title = "Open this graphic in a new tab, scaled to fit the window"; }
+    else { c.thumb.classList.add("clickable"); c.thumb.title = open === "show" ? "Open this element at 1920×1080 in a new tab" : "Open this graphic in a new tab, scaled to fit the window"; }
     el.addEventListener("click", (e) => {
       if (e.target.closest(".kebab")) { const m = el.querySelector(".menu"); m.hidden = !m.hidden; return; }
       const mi = e.target.closest("[data-mi]"); if (mi) { el.querySelector(".menu").hidden = true; menu[Number(mi.dataset.mi)]?.onClick(); return; }
