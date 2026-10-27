@@ -171,10 +171,10 @@ async function pushToProduction() {
   const someoneElse = latest && latest.updatedAt !== prodSeenAt;
   const ok = await ask({
     title: `Push your settings to ${prodHost()}?`,
-    body: `<p>The ticker and every graphic at <b>${esc(prodHost())}</b> will change to your settings: the ticker within 5 seconds, the graphics within 10.</p>
+    body: `<p><b>All</b> of your settings here (ticker races and order, manual items, idle text, featured races and charts, overview charts) replace the settings at <b>${esc(prodHost())}</b>, including anything someone else set there. The ticker and every graphic there change to yours: the ticker within 5 seconds, the graphics within 10.</p>
       ${changeList(changes)}
       <p class="small muted">Last push to ${esc(prodHost())}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else pushed settings to ${esc(prodHost())} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now replaces theirs. Press Cancel and Pull if you want to see it first.</div>` : ""}
+      ${someoneElse ? `<div class="warnline bad">Someone else pushed settings to ${esc(prodHost())} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now throws theirs away. Press Cancel and Pull if you want to see their settings first.</div>` : ""}
       ${!changes.length ? `<div class="warnline">Your settings are already the same as ${esc(prodHost())}.</div>` : ""}`,
     ok: `Push to ${prodHost()}`, danger: true,
   });
@@ -195,7 +195,7 @@ async function pullFromProduction() {
   const changes = diffState(draft, latest);
   const ok = await ask({
     title: `Pull the settings from ${prodHost()}? Yours are replaced.`,
-    body: `<p>Your settings are replaced by the ones at <b>${esc(prodHost())}</b> (last pushed ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so it is the defaults"}). Nothing at ${esc(prodHost())} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your settings are already the same as ${esc(prodHost())}.</div>` : ""}`,
+    body: `<p><b>All</b> of your settings here (ticker races and order, manual items, idle text, featured races and charts, overview charts) are replaced by the ones at <b>${esc(prodHost())}</b> (last pushed ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so it is the defaults"}). Nothing at ${esc(prodHost())} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your settings are already the same as ${esc(prodHost())}.</div>` : ""}`,
     ok: `Pull from ${prodHost()}`, danger: changes.length > 0,
   });
   if (!ok) return;
