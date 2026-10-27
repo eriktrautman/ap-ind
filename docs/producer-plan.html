@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; one runtime; awaiting push",
   note: "all stories done except S81 (candidate index pages)",
-  updated: "2026-10-27T02:30:42Z",
+  updated: "2026-10-27T02:31:12Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -235,6 +235,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T02:31:12Z", what: "Race Catalog list scrolls inside its own box (70% of the window) so the Chart Catalog stays a short scroll away." },
   { t: "2026-10-27T02:30:42Z", what: "Race Catalog gains an On-the-ticker filter beside Featured." },
   { t: "2026-10-27T02:24:44Z", what: "Previews: the control room feeds its copy of the results file and poller status to every thumbnail frame (one download for all; a frame falls back to polling if nothing arrives in 5 s); the live cap is 32; Chart Catalog previews load on scroll; featured race rows are tinted so the white cards stand out; the race tag on cards is plain text." },
   { t: "2026-10-27T02:19:53Z", what: "Card chrome calmed: the race tag on each card is a plain cream chip, and Open 1920x1080 is an ordinary outlined button." },

@@ -179,7 +179,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .gfoot .spacer { flex: 1; }
 
 /* ---- catalog ---- */
-.catalog { border: 1px solid var(--sand); border-radius: 8px; }
+.catalog { border: 1px solid var(--sand); border-radius: 8px; max-height: 70vh; overflow-y: auto; }
 .catalog .crow { border-bottom: 1px solid var(--sand); }
 .catalog .crow:last-child { border-bottom: 0; }
 .catalog .crow > .row { cursor: pointer; }
