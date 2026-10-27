@@ -5,15 +5,8 @@
   const onDocs = location.pathname.startsWith("/docs/");
   const local = onDocs || ["localhost", "127.0.0.1"].includes(location.hostname);
   const docs = onDocs ? "/docs/" : local ? "/docs/" : "/";
-  const links = [
-    ["Home", local ? "/" : "/"],
-    ["Spec", docs + "spec.html"],
-    ["Graphics data options", docs + "graphics-data-options.html"],
-    ["Watch Party design", docs + "watch-party.html"],
-  ];
-  links.push(["Control room", "/studio"], ["Ticker", "/ticker?bg=black"], ["Build plan", docs + "producer-plan.html"]);
-  if (!local) links.push(["GitHub", "https://github.com/eriktrautman/ap-ind"]);
-
+  // Kept deliberately short so it is not mistaken for the control room's own navbar.
+  const links = [["Home", "/"]];
   const here = location.pathname.replace(/\/$/, "/index.html");
   const style = document.createElement("style");
   style.textContent = `
@@ -22,14 +15,17 @@
     .apnav a { color: #c7cfdf; text-decoration: none; white-space: nowrap; }
     .apnav a:hover { color: #fff; text-decoration: underline; }
     .apnav a.here { color: #fff; font-weight: 700; }
+    .apnav a.cta { background: #d4af37; color: #1a1600; font-weight: 700; padding: 4px 12px; border-radius: 5px; }
+    .apnav a.cta:hover { background: #e4c04a; text-decoration: none; }
     .apnav .env { margin-left: auto; font-size: 11px; color: #6f7d99; letter-spacing: .06em; text-transform: uppercase; }
     @media (max-width: 640px) { .apnav { height: auto; flex-wrap: wrap; padding: 8px 16px; gap: 8px 14px; } .apnav .env { display: none; } }
   `;
   document.head.appendChild(style);
   const nav = document.createElement("nav");
   nav.className = "apnav";
-  nav.innerHTML = `<a class="brand" href="/">ap-ind</a>` +
+  nav.innerHTML = `<a class="brand" href="/">IND Election Night</a>` +
     links.map(([label, href]) => `<a href="${href}" class="${href.split("?")[0] === here ? "here" : ""}">${label}</a>`).join("") +
+    `<a class="cta" href="/studio">Control room →</a>` +
     `<span class="env">${local ? "local" : location.host}</span>`;
   document.body.insertBefore(nav, document.body.firstChild);
 })();
