@@ -396,7 +396,7 @@ function renderTickerNote() {
     : `This is a local preview. The ticker everyone uses is <a href="${esc(runtime?.production?.origin ?? "")}/ticker?bg=black" target="_blank" rel="noopener">${esc(prodHost())}/ticker</a> (add <code>?bg=green</code> for the key); to change that one, Push with the buttons above. It re-reads what was last pushed every 5 seconds.`;
 }
 /** The ticker opens like any chart: at full size, showing whatever the previews show. */
-function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}&fit=1${bg ? `&bg=${bg}` : ""}`; }
+function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}`; }
 function renderTickerOpen() {
   renderTickerNote();
   $("tickeropen").href = tickerOpenUrl();
@@ -430,7 +430,7 @@ function renderDetail() {
     for (const cid of draft.featuredCharts) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
       if (chart.only && !chart.only(r)) continue;
-      cg.appendChild(cards.card({ chart, race: r, priority: i === 0 ? 1 : 2, menu: [{ label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
+      cg.appendChild(cards.card({ chart, race: r, priority: i === 0 ? 1 : 2, open: "show", menu: [{ label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
     }
     if (!cg.children.length) cg.innerHTML = `<div class="empty">No featured charts selected.</div>`;
     row.appendChild(cg); grid.appendChild(row);
@@ -496,7 +496,7 @@ function renderMovement() {
     const grid = $(gridId); grid.className = "cardgrid"; grid.innerHTML = "";
     for (const cid of draft.movementCharts.filter((id) => seriesOf(id) === series)) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
-      grid.appendChild(cards.card({ chart, priority: 3, menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
+      grid.appendChild(cards.card({ chart, priority: 3, open: "show", menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
     }
     if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add ${series} charts from the Chart Catalog below.</div>`;
   }

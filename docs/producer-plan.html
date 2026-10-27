@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12",
   note: "S109 (B12) blocked on the AP VoteCast licence; S81 open",
-  updated: "2026-10-27T03:30:15Z",
+  updated: "2026-10-27T04:11:31Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T04:11:31Z", what: "Every card in a production section (Featured Races, both overviews, Persistent Elements) and the ticker preview opens at full size with Show 1920x1080; the catalogs keep Preview." },
   { t: "2026-10-27T03:30:15Z", what: "Persistent Elements cards open the element at full 1920x1080 with a Show 1920x1080 button; everything else keeps Preview (scaled to the window)." },
   { t: "2026-10-27T03:24:46Z", what: "Persistent Elements is a selectable section like the overviews: A-series elements are added from the Chart Catalog (never the ticker, which stays in its own section), each card carries its inputs (name and title for the lower third, which race for the status bug and the call alert), saved in the settings and pushed with everything else; removal is from the card's menu with confirmation." },
   { t: "2026-10-27T03:20:25Z", what: "Persistent Elements section above the Race Catalog: the A-series lower thirds and strips with previews, the status bug and call alert once per featured race, and the ticker card shown gold as managed in the Ticker section with no remove option." },
