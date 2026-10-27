@@ -212,19 +212,7 @@ function renderStatus() {
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
   $("pause").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
-  $("pollersummary").textContent = s ? `${s.raceCount ?? "?"} races · ${s.called ?? "?"} called · last run ${ago(s.generated)} · ${s.durationMs ?? "?"} ms` : "no status yet";
-  const facts = [
-    ["Last successful poll", ago(s?.lastApSuccess), cls],
-    ["AP data as of", s?.apTimestamp ? fmtTime(s.apTimestamp) : "—"],
-    ["Results type", rt === "l" ? "LIVE" : "TEST (AP simulation)", rt === "l" ? "bad" : "warn"],
-    ["Races in feed", s?.raceCount ?? "—"],
-    ["Called", s?.called ?? "—"],
-    ["Counting", s?.counting ?? "—"],
-    ["Last run", s?.generated ? `${ago(s.generated)} · ${s.durationMs ?? "?"} ms` : "—"],
-    ["Failures in a row", s?.consecutiveFailures ?? 0, (s?.consecutiveFailures ?? 0) > 0 ? "bad" : ""],
-    ["County states last run", (s?.countyStatesThisRun ?? []).join(", ") || "—"],
-  ];
-  $("facts").innerHTML = facts.map(([k, v, c]) => `<div class="fact"><div class="k">${esc(k)}</div><div class="v ${c ?? ""}">${esc(String(v))}</div></div>`).join("");
+  $("pollersummary").textContent = s ? `${s.raceCount ?? "?"} races · ${s.called ?? "?"} called · last run ${ago(s.generated)} (${s.durationMs ?? "?"} ms)${(s.consecutiveFailures ?? 0) > 0 ? ` · ${s.consecutiveFailures} failures in a row` : ""}` : "no status yet";
 
   const problems = [];
   if (!index && runtime && !runtime.polling) problems.push({ warn: true, title: "No results on this laptop yet.", text: "The app was started with --no-poll and the local store holds no index. Start it without --no-poll, or run npm run poll, and the lists fill in within a minute." });

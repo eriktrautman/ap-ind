@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; one runtime; awaiting push",
   note: "all stories done except S81 (candidate index pages)",
-  updated: "2026-10-27T01:25:36Z",
+  updated: "2026-10-27T01:31:34Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -235,6 +235,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T01:31:34Z", what: "Control room trimmed: the AP poller is one line (summary and controls), the facts grid and county-states-last-run are gone, Sign out sits at the right of the navbar." },
   { t: "2026-10-27T01:25:36Z", what: "Change lists name races by label and spell out a new order (Ticker races: order changes to NE-SEN, MT-SEN, … (was …)) after a report that a reorder read as no change." },
   { t: "2026-10-27T01:21:10Z", what: "Polish: ticker note says production; a store with no status file no longer shows 'Infinity minutes'." },
   { t: "2026-10-27T01:20:49Z", what: "Push/pull model: the control room always edits a Local working copy; a production strip under the status bar carries Push to production, Pull from production and Restore defaults, each with an overwrite dialog, plus a live line (changes not on production / same as production) and what production is. On a laptop GLOBAL in .env makes production the deployment (push needs GLOBAL_PASSWORD; the strip says pull only without it) or the laptop itself (standby). Verified both modes on test instances: pull-only strip and dialogs when unconfigured; push writing the standby's own store; the deployment untouched." },

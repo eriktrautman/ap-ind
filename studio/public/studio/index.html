@@ -43,17 +43,16 @@
 
 <main id="app" hidden>
 
-  <details class="card poller" id="poller">
-    <summary><h2>AP poller</h2><span class="muted small" id="pollersummary"></span></summary>
-    <div class="actions">
+  <div class="poller" id="poller">
+    <span class="pl-k">AP poller</span><span class="pl-sum" id="pollersummary"></span>
+    <span class="pl-actions">
       <button id="pollnow">Poll now</button>
-      <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">Poll now + reset caches</button>
+      <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">+ reset caches</button>
       <button id="pause">Pause polling</button>
       <span class="seg" id="rtype"><span class="lbl">Results</span><button data-rt="t">Test</button><button data-rt="l">Live</button></span>
-      <span class="note" id="pollmsg"></span>
-    </div>
-    <div class="facts" id="facts"></div>
-  </details>
+    </span>
+    <span class="note" id="pollmsg"></span>
+  </div>
 
   <div class="toolbar">
     <span class="seg" id="previewsel"><span class="lbl">Previews show</span><button data-view="local" class="on">your working copy</button><button data-view="global">production</button></span>
