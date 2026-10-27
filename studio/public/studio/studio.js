@@ -159,6 +159,8 @@ function commit() {
 
 /** The box at the top of the page: public links only display; only a push, after sign-in, changes them. */
 function renderHow() {
+  // On a phone the box starts collapsed to its one-line heading.
+  if (!renderHow.sized) { renderHow.sized = true; if (window.innerWidth <= 700) $("howbox").open = false; }
   const host = prodHost();
   const where = onSite() ? "this site" : host;
   $("howtext").innerHTML = `Anyone with the link can open the ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`}; the links are public and they only display. What they show is whatever was last pushed. Nothing on them changes until someone signs in to a control room with the shared password and presses <b>Push</b>${onSite() ? "" : ` (from this laptop, push also needs ${esc(host)}'s password in <code>.env</code>)`}. The switcher operator should open graphics only from the <b>Show</b> buttons on this page, never from a link someone else sends.`;

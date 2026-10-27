@@ -33,6 +33,8 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; }
 .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
 .howbox { margin: 10px 0 2px; padding: 8px 12px; border: 1px solid var(--sand); border-left: 3px solid var(--gold); border-radius: 6px; background: #fff; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.howbox summary { cursor: pointer; list-style: none; display: inline; } .howbox summary::-webkit-details-marker { display: none; }
+.howbox[open] summary::after { content: ". "; } .howbox:not([open]) summary::after { content: " ▸"; color: var(--gold); }
 .howbox b { color: var(--ink); font-weight: 600; }
 .howbox code { font-family: var(--mono); font-size: 12px; }
 .howbox a { color: inherit; text-decoration: underline; }
@@ -229,3 +231,27 @@ dialog::backdrop { background: #071222aa; }
 .dlgform .warnline { background: #fdf6ea; border-left: 4px solid var(--warn); padding: 8px 12px; border-radius: 6px; margin: 10px 0; font-size: 13.5px; }
 .dlgform .warnline.bad { background: #fdf0f1; border-left-color: var(--bad); }
 .dlgactions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+/* ---- phones: every sticky bar is one short line; the section nav scrolls sideways; chips that matter least are hidden ---- */
+@media (max-width: 700px) {
+  .brandrow { flex-wrap: wrap; gap: 6px 10px; padding: 6px 12px; }
+  .brandrow b { font-size: 15px; } .subbrand { font-size: 13px; }
+  .sections { order: 10; flex-basis: 100%; margin: 2px -12px 0; padding: 0 12px; gap: 0; overflow-x: auto; flex-wrap: nowrap; white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .sections::-webkit-scrollbar { display: none; }
+  .sections a { padding: 3px 8px; font-size: 12.5px; flex: none; }
+  .top .link { padding: 2px 7px; font-size: 11.5px; }
+  .statusbar { flex-wrap: nowrap; gap: 12px; padding: 4px 12px; font-size: 12px; overflow: hidden; }
+  .statusbar #st-asof, .statusbar #st-api, .statusbar #st-air { display: none; }
+  .prodstrip, .pollstrip { padding: 3px 10px; font-size: 12px; }
+  .prodstrip .ps-work { flex: 1; min-width: 0; }
+  .prodstrip button, .pollstrip button { padding: 2px 7px; font-size: 11.5px; }
+  .pollstrip { gap: 8px; }
+  .pollstrip .pl-sum, .pollstrip .note, .pollstrip #pollfresh, .pollstrip .seg .lbl { display: none; }
+  .pollstrip .pl-actions { gap: 4px; }
+  .testbanner { font-size: 11px; padding: 3px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .testbanner .wide { display: none; }
+  .howbox { font-size: 12px; padding: 6px 10px; }
+  .toolbar { margin-top: 8px; }
+  main > section.card { margin: 22px 0; padding: 10px 12px 14px; }
+  .cardhead h2 { font-size: 19px; }
+}
