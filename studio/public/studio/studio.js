@@ -282,9 +282,30 @@ function raceBand(r, { featured }) {
     <span class="meta">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results yet"}${r.called ? " · AP CALL" : ""}${r.rankedChoice ? " · ranked choice" : ""}</span>
     <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
 }
+const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
+/** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
+async function confirmThen(title, body, fn) {
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes your working copy only; nothing goes on air until you push.</p>`, ok: title.replace(/\?$/, "") });
+  if (ok) { fn(); commit(); }
+}
 function toggleFeatured(id) {
-  draft.featuredRaceIds = draft.featuredRaceIds.includes(id) ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id];
-  commit();
+  const on = draft.featuredRaceIds.includes(id);
+  confirmThen(on ? "Remove from Featured Races?" : "Feature this race?", `${esc(raceName(id))} ${on ? "leaves the Featured Races section." : "gets a row in Featured Races with every featured chart."}`,
+    () => { draft.featuredRaceIds = on ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id]; });
+}
+function toggleTicker(id) {
+  const a = draft.pinnedRaceIds, on = a.includes(id);
+  if (on && a.length === 1) { ask({ title: "The ticker keeps at least one race", body: "<p>Add another race before removing this one.</p>", ok: "OK" }); return; }
+  confirmThen(on ? "Remove from the ticker?" : "Add to the ticker?", `${esc(raceName(id))} ${on ? "stops crawling." : "joins the crawl at the end of the list."}`,
+    () => { draft.pinnedRaceIds = on ? a.filter((x) => x !== id) : [...a, id]; });
+}
+function toggleChart(id) {
+  const chart = CHARTS.find((c) => c.id === id); if (!chart) return;
+  const key = chart.kind === "race" ? "featuredCharts" : "movementCharts";
+  const on = draft[key].includes(id);
+  const where = chart.kind === "race" ? "the Featured Races set (every featured race)" : "the Movement Overview";
+  confirmThen(on ? `Remove ${id} from ${chart.kind === "race" ? "Featured Charts" : "Movement Overview"}?` : `Add ${id} to ${chart.kind === "race" ? "Featured Charts" : "Movement Overview"}?`, `${esc(chart.id)} ${esc(chart.name)} ${on ? "leaves" : "joins"} ${where}.`,
+    () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); });
 }
 
 // ---------- Ticker section ----------
@@ -307,8 +328,8 @@ function renderManual() {
 $("pins").addEventListener("click", (e) => {
   const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!row || !b) return;
   const a = draft.pinnedRaceIds; const i = a.indexOf(row.dataset.id); if (i < 0) return;
-  if (b.classList.contains("rm")) { if (a.length > 1) a.splice(i, 1); else { a.splice(0, a.length, ...DEFAULTS.pinnedRaceIds); } }
-  else if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
+  if (b.classList.contains("rm")) { toggleTicker(row.dataset.id); return; }
+  if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
   else if (b.classList.contains("down") && i < a.length - 1) [a[i + 1], a[i]] = [a[i], a[i + 1]];
   commit();
 });
@@ -363,21 +384,17 @@ function renderDetail() {
     if (!cg.children.length) cg.innerHTML = `<div class="empty">No featured charts selected.</div>`;
     row.appendChild(cg); grid.appendChild(row);
   });
+  if (!draft.featuredRaceIds.length) grid.innerHTML = `<div class="empty">No featured races. Feature one above or from the Race Catalog and its charts appear here.</div>`;
 }
 $("featured").addEventListener("click", (e) => {
   const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!row || !b) return;
   const a = draft.featuredRaceIds; const i = a.indexOf(row.dataset.id); if (i < 0) return;
-  if (b.classList.contains("rm")) a.splice(i, 1);
-  else if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
+  if (b.classList.contains("rm")) { toggleFeatured(row.dataset.id); return; }
+  if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
   else if (b.classList.contains("down") && i < a.length - 1) [a[i + 1], a[i]] = [a[i], a[i + 1]];
   commit();
 });
-$("racecharts").addEventListener("change", (e) => {
-  const id = e.target.dataset.chart; if (!id) return;
-  draft.featuredCharts = e.target.checked ? [...draft.featuredCharts, id] : draft.featuredCharts.filter((x) => x !== id);
-  draft.featuredCharts = CHARTS.filter((c) => draft.featuredCharts.includes(c.id)).map((c) => c.id);
-  commit();
-});
+$("racecharts").addEventListener("change", (e) => { const id = e.target.dataset.chart; if (id) { renderDetail(); cards.prune(); toggleChart(id); } });
 /** Type-to-add race picker shared by the ticker and Race Detail: matches label, state, office and
  *  candidate names; with nothing typed it suggests featured races, then races with an independent. */
 function racePicker(inputId, boxId, { exclude, onPick }) {
@@ -399,15 +416,10 @@ function racePicker(inputId, boxId, { exclude, onPick }) {
   input.addEventListener("keydown", (e) => { if (e.key === "Escape") { box.hidden = true; input.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box.querySelector(".row"); if (first) { onPick(first.dataset.id); input.value = ""; render(); } } });
   document.addEventListener("click", (e) => { if (!e.target.closest(`#${inputId}, #${boxId}`)) box.hidden = true; });
 }
-racePicker("pinq", "pinsuggest", { exclude: () => draft.pinnedRaceIds, onPick: (id) => { draft.pinnedRaceIds.push(id); commit(); } });
-racePicker("featq", "featsuggest", { exclude: () => draft.featuredRaceIds, onPick: (id) => { draft.featuredRaceIds.push(id); commit(); } });
+racePicker("pinq", "pinsuggest", { exclude: () => draft.pinnedRaceIds, onPick: toggleTicker });
+racePicker("featq", "featsuggest", { exclude: () => draft.featuredRaceIds, onPick: toggleFeatured });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-feat]"); if (b) toggleFeatured(b.dataset.feat); });
-document.addEventListener("click", (e) => {
-  const b = e.target.closest("[data-pin]"); if (!b) return;
-  const id = b.dataset.pin, a = draft.pinnedRaceIds;
-  if (a.includes(id)) { if (a.length > 1) draft.pinnedRaceIds = a.filter((x) => x !== id); } else a.push(id);
-  commit();
-});
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-pin]"); if (b) toggleTicker(b.dataset.pin); });
 
 // ---------- Movement Overview ----------
 function renderMovement() {
@@ -417,12 +429,7 @@ function renderMovement() {
   for (const cid of draft.movementCharts) { const chart = CHARTS.find((c) => c.id === cid); if (chart) grid.appendChild(cards.card({ chart, priority: 3 })); }
   if (!grid.children.length) grid.innerHTML = `<div class="empty">No movement charts selected.</div>`;
 }
-$("movecharts").addEventListener("change", (e) => {
-  const id = e.target.dataset.chart; if (!id) return;
-  const set = new Set(draft.movementCharts); e.target.checked ? set.add(id) : set.delete(id);
-  draft.movementCharts = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id);
-  commit();
-});
+$("movecharts").addEventListener("change", (e) => { const id = e.target.dataset.chart; if (id) { renderMovement(); cards.prune(); toggleChart(id); } });
 
 // ---------- Full Catalog ----------
 const cfilters = new Set();
@@ -472,10 +479,7 @@ function catalogBody(r, featured) {
 }
 $("catalogList").addEventListener("click", (e) => {
   const fc = e.target.closest(".featchart");
-  if (fc) {
-    const id = fc.dataset.chart; const set = new Set(draft.featuredCharts); set.has(id) ? set.delete(id) : set.add(id);
-    draft.featuredCharts = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); commit(); return;
-  }
+  if (fc) { toggleChart(fc.dataset.chart); return; }
   if (e.target.closest("[data-feat], [data-pin], .gcard")) return;
   const crow = e.target.closest(".crow"); if (!crow || !e.target.closest(".row")) return;
   const id = crow.dataset.id;
@@ -489,19 +493,36 @@ document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventLi
 $("bg").addEventListener("change", () => { try { localStorage.setItem("studio.bg", $("bg").value); } catch {} cards.refreshLinks(); });
 try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").value = bg; } catch {}
 
+// ---------- Chart Catalog ----------
+function renderChartCatalog() {
+  const sample = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
+  for (const [gridId, kind] of [["chartsRace", "race"], ["chartsMove", "movement"]]) {
+    const grid = $(gridId); grid.innerHTML = "";
+    for (const chart of CHARTS.filter((c) => c.kind === kind)) {
+      const key = kind === "race" ? "featuredCharts" : "movementCharts";
+      const on = draft[key].includes(chart.id);
+      const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 9, isStatic: true });
+      el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : "Shown in the Movement Overview"}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
+      grid.appendChild(el);
+    }
+  }
+  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="empty" style="grid-column:1/-1;padding:6px">Per-race previews use ${esc(sample.label)}, the first featured race.</div>`);
+}
+$("charts").addEventListener("click", (e) => { const fc = e.target.closest(".featchart"); if (fc) toggleChart(fc.dataset.chart); });
+
 // ---------- render everything ----------
 function renderAll() {
   renderStatus();
   renderStrip();
   renderPins(); renderManual(); sendPreview();
-  renderDetail(); renderMovement(); renderCatalog();
+  renderDetail(); renderMovement(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }
 // highlight the section in view
 const secObs = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) document.querySelectorAll("#sectionnav a").forEach((a) => a.classList.toggle("here", a.getAttribute("href") === `#${e.target.id}`));
 }, { rootMargin: "-120px 0px -60% 0px" });
-for (const id of ["ticker", "detail", "movement", "catalog"]) secObs.observe($(id));
+for (const id of ["ticker", "detail", "movement", "catalog", "charts"]) secObs.observe($(id));
 
 // ---------- boot ----------
 let timers = [];

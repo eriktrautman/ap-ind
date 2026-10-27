@@ -11,7 +11,7 @@
   <div class="brandrow">
     <b>IND Election Night</b><span class="subbrand">Control room</span>
     <nav class="sections" id="sectionnav">
-      <a href="#ticker">Ticker</a><a href="#detail">Race Detail</a><a href="#movement">Movement Overview</a><a href="#catalog">Full Catalog</a>
+      <a href="#ticker">Ticker</a><a href="#detail">Featured Races</a><a href="#movement">Movement Overview</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
     </nav>
     <button class="link" id="logout" hidden>Sign out</button>
   </div>
@@ -65,7 +65,7 @@
         <h3>Ticker races <span class="muted" id="pincount"></span></h3>
         <div class="list pins" id="pins"></div>
         <div class="filters addfeat"><input id="pinq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
-        <p class="muted small">Or add races from the <a href="#catalog">Full Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
+        <p class="muted small">Or add races from the <a href="#catalog">Race Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
       </div>
       <div class="col">
         <h3>Manual items</h3>
@@ -81,13 +81,13 @@
   </section>
 
   <section class="card" id="detail">
-    <div class="cardhead"><h2>Race Detail</h2></div>
+    <div class="cardhead"><h2>Featured Races</h2><span class="muted small">Featuring a race only makes its charts easy to grab here, one row per race. It changes nothing on air.</span></div>
     <div class="cols">
       <div class="col">
         <h3>Featured races <span class="muted" id="featcount"></span></h3>
         <div class="list pins" id="featured"></div>
         <div class="filters addfeat"><input id="featq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="featsuggest" hidden></div></div>
-        <p class="muted small">Or set any race as featured from the <a href="#catalog">Full Catalog</a> below.</p>
+        <p class="muted small">Or feature any race from the <a href="#catalog">Race Catalog</a> below; pick the charts from the <a href="#charts">Chart Catalog</a>.</p>
       </div>
       <div class="col">
         <h3>Featured charts <span class="muted small">(the same set for every featured race)</span></h3>
@@ -105,7 +105,7 @@
   </section>
 
   <section class="card" id="catalog">
-    <div class="cardhead"><h2>Full Catalog</h2><span class="muted small">Every race in the AP feed. Expand a race for all of its graphics.</span></div>
+    <div class="cardhead"><h2>Race Catalog</h2><span class="muted small">Every race in the AP feed. Add any to the ticker or feature it; expand a race for all of its graphics.</span></div>
     <div class="filters">
       <input id="cq" placeholder="Search label, state, office, candidate" size="30">
       <select id="cstate"><option value="">All states</option></select>
@@ -117,6 +117,13 @@
       <span class="muted small" id="ccount"></span>
     </div>
     <div class="catalog" id="catalogList"></div>
+  </section>
+  <section class="card" id="charts">
+    <div class="cardhead"><h2>Chart Catalog</h2><span class="muted small">Every chart the app can draw. Per-race charts go into the Featured Races set (one set for every featured race); movement charts go into the Movement Overview.</span></div>
+    <h3>Per-race charts</h3>
+    <div class="cardgrid" id="chartsRace"></div>
+    <h3>Movement charts</h3>
+    <div class="cardgrid" id="chartsMove"></div>
   </section>
 </main>
 

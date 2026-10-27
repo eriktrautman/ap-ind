@@ -53,33 +53,54 @@
   const dot = document.getElementById("dot");
   const crawlWidth = () => track.parentElement.clientWidth;
 
-  // Two copies of the queue are rendered back to back; when the first scrolls out we
-  // swap in the latest queue so updates land at a loop boundary, never mid-crawl.
+  // A continuous crawl. The track holds only the items on or near the screen: items that have
+  // scrolled fully off the left are dropped (the transform is adjusted by their width, so nothing
+  // visible moves) and the next item of the queue is appended whenever the track's right edge
+  // comes within the crawl's width. A new queue therefore takes effect at the next item boundary:
+  // what is on screen finishes crawling, then the new items follow. No loop restart, no jump.
   let queue = [];
-  let pending = null;
-  let x = 32;
+  let next = 0;                     // index into queue of the next item to append
+  let x = 0;                        // translateX of the track
   let lastT = performance.now();
-
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  function render(items) {
-    track.innerHTML = items.map((it) => `<span class="item ${it.kind} ${it.emphasis ? "emphasis" : ""}">${esc(it.text)}</span>`).join("");
+  function itemEl(it) {
+    const el = document.createElement("span");
+    el.className = `item ${it.kind} ${it.emphasis ? "emphasis" : ""}`;
+    el.textContent = it.text;
+    return el;
+  }
+  function fill() {
+    const W = crawlWidth();
+    let guard = 0;
+    while (queue.length && x + track.offsetWidth < W + 64 && guard++ < 200) {
+      track.appendChild(itemEl(queue[next % queue.length]));
+      next = (next + 1) % queue.length;
+    }
+  }
+  function trim() {
+    while (track.children.length > 1) {
+      const first = track.children[0], second = track.children[1];
+      const w = second.offsetLeft - first.offsetLeft;
+      if (x + w > 0) break;         // the first item is still (partly) on screen
+      first.remove(); x += w;
+    }
   }
   function frame(t) {
     const dt = Math.min((t - lastT) / 1000, 0.1); lastT = t;
     x -= PX_PER_SEC * dt;
-    if (x < -track.offsetWidth) {
-      if (pending) { queue = pending; pending = null; render(queue); }
-      x = crawlWidth();
-    }
+    trim(); fill();
     track.style.transform = `translateX(${x}px)`;
     requestAnimationFrame(frame);
   }
   function setQueue(items) {
     const same = queue.length === items.length && queue.every((q, i) => q.key === items[i].key && q.text === items[i].text);
-    if (same) { pending = null; return; }
-    if (!queue.length) { queue = items; render(queue); }
-    else pending = items;
+    if (same) return;
+    const wasEmpty = !queue.length;
+    queue = items; next = 0;
+    if (wasEmpty) { track.innerHTML = ""; x = crawlWidth(); }
+    // otherwise the items already on the track finish crawling; the new queue starts at the next append
   }
+  function setItems(items) { setQueue(items); }
 
   // Data. Every fetch is best-effort: on failure the last good copy stays on air.
   let races = [];
@@ -118,6 +139,7 @@
   }
 
   rebuild();                      // idle crawl is on screen before any data arrives
+  x = crawlWidth();
   loadIndex(); loadStatus();
   setInterval(loadIndex, INDEX_MS);
   setInterval(loadStatus, STATUS_MS);

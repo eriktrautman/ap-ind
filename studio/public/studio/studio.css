@@ -151,8 +151,11 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .gcard .thumb .ph.unbuilt { color: #d4af37; }
 .gcard .thumb .ph .num { font-size: 22px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .gcard .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
-.gcard .gfoot a { font-weight: 600; text-decoration: none; }
-.gcard .gfoot a:hover { text-decoration: underline; }
+.gcard .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: var(--navy); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; }
+.gcard .gfoot a.openbtn:hover { background: #16305e; }
+.gcard .gfoot a.openbtn.muted { background: none; color: var(--muted); padding: 0; }
+.gcard .thumb.clickable { cursor: pointer; }
+.gcard .thumb.clickable:hover::after { content: "Open ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 .bubble { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 1px 8px; border-radius: 10px; background: #e8f5ec; color: #1c6b3c; white-space: nowrap; }
 .bubble.warn { background: #fdf6ea; color: #8a5a0e; } .bubble.bad { background: #fdf0f1; color: var(--bad); } .bubble.off { background: #eee; color: var(--muted); }
 .bubble .dot { width: 7px; height: 7px; }
