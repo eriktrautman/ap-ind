@@ -62,7 +62,7 @@ export const DEFAULTS = Object.freeze({
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
   manualItems: [],
-  idleText: "",
+  idleText: "Welcome to the Independent Election Night coverage",
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
   featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
   movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11"],

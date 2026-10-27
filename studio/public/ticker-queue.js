@@ -1,7 +1,7 @@
 // Builds the ticker queue from the race index and producer state. Shared by the on-air
 // ticker and the studio preview so both show exactly the same crawl. Pure: no fetches.
 
-const PLACEHOLDER_IDLE = "Election night coverage · results as they come in from AP";
+const PLACEHOLDER_IDLE = "Welcome to the Independent Election Night coverage";
 
 export function partyTag(c) {
   if (c.independent) return "I";
