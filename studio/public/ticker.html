@@ -45,7 +45,7 @@
   if (bg) document.body.classList.add(`bg-${bg}`);
   const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
   // Producer state source: ?src=default|global|local, else the selector saved by /studio in this
-  // browser, else Global. Air runs /ticker with no parameter, so it is always on Global.
+  // browser, else Global. The deployed /ticker has no parameter, so it always reads production.
   const PX_PER_SEC = Number(params.get("speed") ?? 170);
   const INDEX_MS = 15_000, PRODUCER_MS = 5_000, STATUS_MS = 30_000;
 
@@ -102,7 +102,7 @@
   }
   function setItems(items) { setQueue(items); }
 
-  // Data. Every fetch is best-effort: on failure the last good copy stays on air.
+  // Data. Every fetch is best-effort: on failure the last good copy keeps crawling.
   let races = [];
   let producer = null;
   let status = null;

@@ -100,7 +100,7 @@ const dirty = () => !prod || !sameState(draft, prod);
 const otherOperator = () => prod && prodSeenAt !== prod.updatedAt;
 const canPush = () => runtime ? !!runtime.production?.canPush : true;
 const canPull = () => runtime ? !!runtime.production?.canPull : !prodError;
-const prodName = () => runtime?.production?.where === "self" ? "this laptop (standby)" : runtime?.production?.origin?.replace(/^https?:\/\//, "") ?? "air";
+const prodName = () => runtime?.production?.where === "self" ? "this laptop (standby)" : runtime?.production?.origin?.replace(/^https?:\/\//, "") ?? "the deployment";
 
 /** Every edit comes through here: the working copy saves to this browser at once. */
 function commit() {
@@ -137,8 +137,8 @@ async function pushToProduction() {
   const changes = diffState(latest ?? DEFAULTS, draft);
   const someoneElse = latest && latest.updatedAt !== prodSeenAt;
   const ok = await ask({
-    title: `Push to production (${prodName()})? This goes on air.`,
-    body: `<p>Production is overwritten with your working copy. The on-air ticker re-reads it within 5 seconds; graphics within 10.</p>
+    title: `Push to production (${prodName()})?`,
+    body: `<p>Production is overwritten with your working copy. The deployed ticker picks it up within 5 seconds and the graphics within 10.</p>
       ${changeList(changes)}
       <p class="small muted">Production last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
       ${someoneElse ? `<div class="warnline bad">Production changed at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now overwrites that. Pull first if you want to see it.</div>` : ""}
@@ -162,7 +162,7 @@ async function pullFromProduction() {
   const changes = diffState(draft, latest);
   const ok = await ask({
     title: `Pull from production (${prodName()})? Your working copy is overwritten.`,
-    body: `<p>Production, last published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never (the defaults)"}, replaces what you have here. Nothing on air changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches production.</div>` : ""}`,
+    body: `<p>Production, last published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never (the defaults)"}, replaces what you have here. Production itself does not change.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches production.</div>` : ""}`,
     ok: "Pull from production", danger: changes.length > 0,
   });
   if (!ok) return;
@@ -172,7 +172,7 @@ async function pullFromProduction() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the shipped defaults? Your working copy is overwritten.", body: `<p>Nothing on air changes until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches the defaults.</div>` : ""}`, ok: "Restore defaults", danger: changes.length > 0 });
+  const ok = await ask({ title: "Restore the shipped defaults? Your working copy is overwritten.", body: `<p>Production does not change until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches the defaults.</div>` : ""}`, ok: "Restore defaults", danger: changes.length > 0 });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   renderAll(); cards.broadcast(draft);
@@ -205,7 +205,7 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-air", `<span class="k">Push reaches air in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
+    st("st-air", `<span class="k">Push reaches production outputs in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
@@ -285,7 +285,7 @@ function raceBand(r, { featured }) {
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
-  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes your working copy only; nothing goes on air until you push.</p>`, ok: title.replace(/\?$/, "") });
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes your working copy only; production does not change until you push.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
 }
 function toggleFeatured(id) {
@@ -316,7 +316,7 @@ function renderPins() {
   $("pins").innerHTML = draft.pinnedRaceIds.map((id, i) => {
     const r = index.byId.get(id);
     return `<div class="row" data-id="${id}">
-      <div><div class="nm"><span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(id)}</span><span class="muted">not in the current AP feed; skipped on air</span>`}</div>${r ? `<div class="sub">${cands(r)}</div>` : ""}</div>
+      <div><div class="nm"><span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(id)}</span><span class="muted">not in the current AP feed; the ticker skips it</span>`}</div>${r ? `<div class="sub">${cands(r)}</div>` : ""}</div>
       <div class="btns"><button class="up" ${i === 0 ? "disabled" : ""}>▲</button><button class="down" ${i === draft.pinnedRaceIds.length - 1 ? "disabled" : ""}>▼</button><button class="rm" ${draft.pinnedRaceIds.length === 1 ? 'title="At least one race stays on the ticker"' : ""}>✕</button></div>
     </div>`;
   }).join("");

@@ -1,6 +1,6 @@
 # ap-ind
 
-Election-night app for a broadcast about independent candidates: an AP poller, a producer control room, an on-air ticker and nineteen full-screen graphics, all on the AP Elections API. One codebase runs two ways, with the same code in both: deployed on Vercel (ap-ind.vercel.app) or as a single Node process on any machine.
+Election-night app for a broadcast about independent candidates: an AP poller, a producer control room, a ticker and nineteen full-screen graphics, all on the AP Elections API. One codebase runs two ways, with the same code in both: deployed on Vercel (ap-ind.vercel.app) or as a single Node process on any machine.
 
 Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) · [control room build plan](docs/producer-plan.html) (also published at https://ap-ind.vercel.app).
 
@@ -36,17 +36,17 @@ What you will be sent, and what it is for:
 |---|---|---|
 | `AP_API_KEY` | **Yes** | Reads results from the AP Elections API. Without it nothing polls. AP allows ten requests a minute per key, and a local run uses about two, so several laptops can share one key. |
 | `STUDIO_PASSWORD` | You choose it yourself | Password for `/studio` on your machine only. Not a shared secret. |
-| `BLOB_READ_WRITE_TOKEN` | No | Only if your laptop should write into the production data store (standing in for the Vercel cron). Then also delete the `STORE_DIR` line. Ask before using it: pause, test/live and every publish would then change what is on air. |
+| `BLOB_READ_WRITE_TOKEN` | No | Only if your laptop should write into the production data store (standing in for the Vercel cron). Then also delete the `STORE_DIR` line. Ask before using it: pause, test/live and every push would then change production. |
 | `CRON_SECRET` | No | Vercel only; lets the cron call the poll function. Unused locally. |
 
 `AP_RESULTS_TYPE=t` in `.env` means AP's simulated test election; change it to `l` for live results on election night (the control room's Test/Live switch does the same without a restart). The key must never be committed or put in a URL; `.env` is gitignored.
 
-**Your working copy, production, and the two big buttons.** The control room always edits a working copy saved in your browser. Nothing you change goes anywhere until you press **Push to production**, which overwrites what is on air after showing every change, when production was last published, and a warning if someone else pushed since you last looked. **Pull from production** does the reverse: it overwrites your working copy with what is on air, after the same change list. **Restore defaults** overwrites your working copy with the shipped configuration. The strip under the status bar always says where you stand ("3 changes not on production" or "Same as production") and what production is. The previews switch shows either your working copy or production in every thumbnail and the example ticker.
+**Your working copy, production, and the two big buttons.** The control room always edits a working copy saved in your browser. Nothing you change goes anywhere until you press **Push to production**, which overwrites production (the shared state the deployed ticker and graphics read) after showing every change, when production was last published, and a warning if someone else pushed since you last looked. **Pull from production** does the reverse: it overwrites your working copy with production, after the same change list. **Restore defaults** overwrites your working copy with the shipped configuration. The strip under the status bar always says where you stand ("3 changes not on production" or "Same as production") and what production is. The previews switch shows either your working copy or production in every thumbnail and the example ticker.
 
 On a laptop, production is whatever `GLOBAL` in `.env` says:
 
 - `GLOBAL=https://ap-ind.vercel.app` (the default): the deployment is production. Pull works with nothing more. Push needs `GLOBAL_PASSWORD`, the deployment's studio password; without it the strip says **pull only** and the push button explains what to add. The laptop's own ticker and graphics read production from the deployment too.
-- `GLOBAL=self`: this machine is production. Its own outputs read its own store, and push writes there. This is the standby setup for the night the deployment is down. A store that has never been pushed to starts from a copy of the deployment's configuration, so a fresh standby begins where air was.
+- `GLOBAL=self`: this machine is production. Its own outputs read its own store, and push writes there. This is the standby setup for the night the deployment is down. A store that has never been pushed to starts from a copy of the deployment's configuration, so a fresh standby begins where production was.
 
 Results data never needs copying: the laptop polls AP itself.
 
@@ -61,11 +61,11 @@ The broadcast pages live in `studio/` (panel, ticker, poller functions) and `pub
 | Path on ap-ind.vercel.app | Purpose |
 |---|---|
 | `/studio` | Producer control room (shared password, `STUDIO_PASSWORD`). Status bar, Default / Global / Local state selector, four sections: Ticker, Race Detail, Movement Overview, Full Catalog. |
-| `/ticker` | On-air ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Always reads the Global state. |
+| `/ticker` | The ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. Always reads production. |
 | `/g/<page>?id=<raceID>` | One graphic per URL at 1920×1080: `race` (B5), `county` (B6), `margin` (B7), `outstanding` (B8), `rcv` (B9), `then-now` (B10), `swing` (B13); movement: `board` (C1), `ind-vote` (C6), `polls` (C7), `senate-map` (D1), `house-map` (D2), `bop-senate` (D3), `bop-house` (D4), `key-races` (D5), `zoom` (D6), `tiles` (D7), `house-pv` (D10), `too-close` (D11). `?bg=` as above; `?src=default|global|local` picks the producer state. |
 | `/producer-plan` | Build plan and burndown for the control room. |
 
-**State model.** One schema (`studio/lib/control.js`, served at `/g/control.js`): ticker races, AP Call highlight, manual items, idle text, featured races, featured charts, movement charts, key races, context lines. The working copy lives in the browser (localStorage); production is `producer.json` in the store, written only by a push; the shipped defaults are in code. A graphic opened with `?src=local` shows this browser's working copy, `?src=global` (the default) shows production, `?src=default` the shipped defaults. The ticker re-reads production every 5 s and graphics every 10 s, so a push is on air within that.
+**State model.** One schema (`studio/lib/control.js`, served at `/g/control.js`): ticker races, AP Call highlight, manual items, idle text, featured races, featured charts, movement charts, key races, context lines. The working copy lives in the browser (localStorage); production is `producer.json` in the store, written only by a push, and is what the deployed ticker and graphics read; the shipped defaults are in code. A graphic opened with `?src=local` shows this browser's working copy, `?src=global` (the default) shows production, `?src=default` the shipped defaults. The ticker re-reads production every 5 s and graphics every 10 s, so a push is in production within that.
 
 **Chart ids are fixed.** The ids in the lookbook and the control room (B5, C1, D7, …) have been shared and are used in rundowns and by other people, so from 27 October 2026 an id never changes meaning and is never reused. To retire a chart, keep its entry in `studio/lib/control.js` and set `retired: true`: the control room greys it out with a placeholder, refuses to add it, and drops it from existing selections. A new chart gets a new id at the end of its series (B14, C10, D12, …).
 

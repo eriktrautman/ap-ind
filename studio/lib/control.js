@@ -1,7 +1,7 @@
-// Producer control state shared by the control room (/studio), the on-air ticker and every
+// Producer control state shared by the control room (/studio), the ticker and every
 // graphic. One schema, three sources:
 //   default  the shipped values in this file
-//   global   producer.json in Vercel Blob, read through /api/producer (what air uses)
+//   global   producer.json in the store, read through /api/producer (production: what the deployed ticker and graphics read)
 //   local    this browser's localStorage; never written to Blob
 // A page picks its source with ?src=default|global|local, else the selector the control room
 // saved in this browser, else global. A local source with nothing saved falls back to global.
@@ -57,7 +57,7 @@ export const CHARTS = [
   { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: true },
 ];
 
-/** The shipped state. pinnedRaceIds is the ticker list (the name the on-air ticker has always read). */
+/** The shipped state. pinnedRaceIds is the ticker list (the name the ticker has always read). */
 export const DEFAULTS = Object.freeze({
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
@@ -110,7 +110,7 @@ export function normalize(raw) {
   };
 }
 
-/** True when two states would put the same thing on air. */
+/** True when two states would produce the same ticker and graphics. */
 export function sameState(a, b) {
   const A = normalize(a), B = normalize(b);
   delete A.updatedAt; delete B.updatedAt;

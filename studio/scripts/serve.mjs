@@ -130,7 +130,7 @@ createServer(async (req, res) => {
   }
 }).listen(PORT, async () => {
   // Standby (GLOBAL=self) with a store that has never held a producer state: start from what the
-  // deployment has, so the laptop carries the on-air ticker and featured races from the first minute.
+  // deployment has, so the laptop carries the production ticker list and featured races from the first minute.
   if (!CONNECTED && isLocalStore() && !(await readJson("producer.json").catch(() => null))) {
     try {
       const r = await fetch(`${DEPLOYMENT}/api/producer`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
