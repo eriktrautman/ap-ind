@@ -159,7 +159,24 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 
 - **The ticker and every graphic are public links.** `/ticker` and the pages under `/g/` are fixed URLs, the same for everyone, and they only display. Anyone who has a link sees exactly what the switcher sees. No sign-in produces these links and opening one changes nothing.
 - **They show whatever was last pushed.** Each page reads the shared settings from the public, read-only `GET /api/producer` every few seconds. There is no other input.
-- **Two passwords, one of them temporary.** `/studio` accepts `STUDIO_PASSWORD` (the real one) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234` until election night). The cookie remembers which one signed in, so the control room shows a purple **TEST LOGIN** banner next to the TEST DATA banner for test sign-ins. **Before the night:** remove `STUDIO_TEST_PASSWORD` from the Vercel project (`vercel env rm STUDIO_TEST_PASSWORD production` in `studio/`) and redeploy; every browser that signed in with it is signed out at once, because its cookie was keyed to that password. Sign out on the page clears only that one browser. Laptops that push with `GLOBAL_PASSWORD=test1234` lose push at the same moment and need the real password.
+- **Two passwords, one of them temporary.** `/studio` accepts `STUDIO_PASSWORD` (the real one) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234` until election night). The cookie remembers which one signed in, so the control room shows a purple **TEST LOGIN** banner next to the TEST DATA banner for test sign-ins. Every browser that signed in with the rehearsal password is signed out the moment it is removed, because its cookie was keyed to that password. Sign out on the page clears only that one browser. Laptops that push with `GLOBAL_PASSWORD=test1234` lose push at the same moment and need the real password.
+
+  **Before election night, switch the rehearsal password off** (from `studio/`, in a terminal):
+
+  ```sh
+  vercel env rm STUDIO_TEST_PASSWORD --environment production --yes
+  vercel redeploy ap-ind.vercel.app
+  ```
+
+  **To set or change the real password** (the first command prompts for it; the `!` shell inside Claude Code cannot prompt, so use a normal terminal):
+
+  ```sh
+  vercel env rm STUDIO_PASSWORD --environment production --yes
+  vercel env add STUDIO_PASSWORD --environment production --sensitive
+  vercel redeploy ap-ind.vercel.app
+  ```
+
+  Env changes take effect only after that redeploy. Vercel never shows a secret's value again, so keep the real password somewhere safe; if it is lost, set a new one the same way, which signs everyone out.
 - **Only a push changes them.** A push is a `PUT /api/producer`, accepted only with the signed cookie you get by signing in to `/studio` with one of those passwords. A push from a laptop goes through the laptop's own sign-in and then signs in to the deployment with `GLOBAL_PASSWORD`, which is that same password. One shared password gates every change; change it in the Vercel project and every open control room is signed out at once.
 - **Per-browser knobs affect one screen only.** `?src=local` on a graphic reads that browser's own saved settings, and a few pages take display text from the URL (the lower third's `?name=&title=`, the quote card's `?quote=&who=`). They change what that one window shows and nothing else, and the text is rendered as text, never as markup. The operational rule that matters: the switcher operator opens graphics only from the control room's **Show** buttons, never from a link someone else sends.
 - **What is not there.** Sign-in guessing is slowed by a fixed delay but not rate-limited or locked out, so use a long random password (a Vercel Firewall rate-limit rule on `/api/login` closes this properly). The shared password means no per-person revocation and no record of who pushed beyond the time of the last push.
