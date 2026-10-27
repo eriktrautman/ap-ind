@@ -28,7 +28,7 @@
   const $ = (id) => document.getElementById(id);
   const now = () => (q.get("after") ? Date.parse(q.get("after")) : Date.now());
   let slots = [];
-  const fmtT = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  const fmtT = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET";
   function build(races) {
     const byTime = new Map();
     for (const r of races.values()) {

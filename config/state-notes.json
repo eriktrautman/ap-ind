@@ -1,0 +1,29 @@
+{
+  "about": "How each state counts, for F4 and F5, editorial. Keyed by state postal. counting: one or two sentences; expect: when meaningful results usually arrive; note: anything else.",
+  "states": {
+    "NE": {
+      "counting": "Early and mail ballots are counted first and reported soon after polls close; election-day precincts follow through the evening.",
+      "expect": "Most of the vote within two hours of poll close; Douglas County (Omaha) can run later."
+    },
+    "MT": {
+      "counting": "Absentee ballots, which are most of the vote, are counted on election day and reported early; election-day totals follow.",
+      "expect": "Half the vote by midnight Eastern; rural counties can take until morning."
+    },
+    "ID": {
+      "counting": "Counties report precinct totals through the night; Ada County (Boise) reports in batches.",
+      "expect": "Most of the vote by 1 a.m. Eastern."
+    },
+    "SD": {
+      "counting": "Precinct totals through the night; small counties finish quickly.",
+      "expect": "Nearly complete by midnight Eastern."
+    },
+    "CA": {
+      "counting": "Mail ballots postmarked by election day count if they arrive within seven days, so the count continues for weeks; election-night totals are partial.",
+      "expect": "Early mail results right after poll close, then slow updates for days."
+    },
+    "AK": {
+      "counting": "First choices are reported on election night; the ranked-choice tabulation happens about two weeks later.",
+      "expect": "Partial first-choice results overnight; final result after the ranked-choice count."
+    }
+  }
+}

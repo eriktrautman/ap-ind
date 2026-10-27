@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Explainer Card</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C9: explainer cards from config/explainers.json (editorial). ?n=<index>; without it the page cycles every 12 s. */
+  .panel { grid-template-rows: auto 1fr auto; }
+  .card-title { font-size: 72px; font-weight: 700; line-height: 1.1; }
+  .body-text { font-size: 42px; line-height: 1.4; color: #e6ebf5; align-self: center; max-width: 1400px; }
+  .dots { display: flex; gap: 10px; } .dots i { width: 14px; height: 14px; border-radius: 50%; background: #2a3a5c; } .dots i.on { background: var(--gold); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker" id="kicker">Explainer</div><div class="card-title" id="title"></div></div></div>
+  <div class="body-text" id="body"></div>
+  <div class="foot"><span class="dots" id="dots"></span><span id="count"></span></div>
+</div>
+<script type="module">
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  fetch("./explainers.json").then((r) => r.json()).then((d) => {
+    const list = d.cards ?? [];
+    if (!list.length) { $("title").textContent = "No explainer cards yet"; $("body").textContent = "Add cards to config/explainers.json."; return; }
+    let i = Number(q.get("n") ?? 0) % list.length;
+    const show = () => { const c = list[i]; $("kicker").textContent = c.kicker ?? "Explainer"; $("title").textContent = c.title; $("body").textContent = c.body; $("dots").innerHTML = list.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join(""); $("count").textContent = `${i + 1} of ${list.length}`; };
+    show();
+    if (!q.has("n") && list.length > 1) setInterval(() => { i = (i + 1) % list.length; show(); }, 12000);
+  });
+</script>
+</body>
+</html>

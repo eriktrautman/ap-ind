@@ -1,0 +1,20 @@
+{
+  "about": "Explainer cards for C9, editorial. Each: title, body (one or two sentences), optional kicker. ?n= picks one; otherwise the page cycles every 12 s.",
+  "cards": [
+    {
+      "kicker": "How it works",
+      "title": "What counts as an independent",
+      "body": "Any candidate on the ballot who is not the Democratic or Republican nominee: no party, a minor party, or a nonpartisan line."
+    },
+    {
+      "kicker": "How it works",
+      "title": "Who they caucus with",
+      "body": "An independent senator chooses which party to meet with for committee seats. King and Sanders sit with the Democrats; a new independent decides for themselves."
+    },
+    {
+      "kicker": "How it works",
+      "title": "Ranked choice in Alaska",
+      "body": "Voters rank the candidates. If nobody has a majority of first choices, the last-placed candidate is dropped and their ballots move to the next choice, until someone passes 50%."
+    }
+  ]
+}

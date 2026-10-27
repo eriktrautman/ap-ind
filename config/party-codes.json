@@ -1,0 +1,29 @@
+{
+  "about": "AP party codes and the names to show for them (F7). Add codes as they appear in the feed.",
+  "codes": {
+    "Dem": "Democrat",
+    "GOP": "Republican",
+    "Ind": "Independent",
+    "NP": "Nonpartisan (no party on the ballot)",
+    "Lib": "Libertarian",
+    "Grn": "Green",
+    "Con": "Constitution",
+    "WFP": "Working Families",
+    "AFi": "Approval Voting",
+    "NWk": "No Label",
+    "LMN": "Legal Marijuana Now",
+    "AKI": "Alaskan Independence",
+    "Oth": "Other",
+    "WI": "Write-in",
+    "Una": "Unaffiliated",
+    "Ref": "Reform",
+    "CP": "Conservative",
+    "AIP": "American Independent",
+    "PF": "Peace and Freedom",
+    "SWP": "Socialist Workers",
+    "NL": "Natural Law",
+    "UST": "U.S. Taxpayers",
+    "Yes": "Yes (ballot measure)",
+    "No": "No (ballot measure)"
+  }
+}

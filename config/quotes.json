@@ -1,0 +1,12 @@
+{
+  "about": "Pull quotes for B11, editorial. Each: quote, who (candidate id or name), source, date. ?n= picks one by index; otherwise the page cycles.",
+  "quotes": [
+    {
+      "quote": "I'm not going to Washington to join a team. I'm going to fix the thing.",
+      "who": "Dan Osborn",
+      "cand": "168007",
+      "source": "Campaign remarks, 2026",
+      "note": "placeholder wording, replace with a sourced quote"
+    }
+  ]
+}

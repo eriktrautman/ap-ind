@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Name Lower Third</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* A2: name and title lower third. ?name=…&title=… (or ?cand=<candidateID>&id=<raceID> to take them from the feed). ?corner=l|r */
+  .lt { position: absolute; left: 96px; bottom: 150px; display: grid; grid-template-columns: 10px auto; background: linear-gradient(90deg, var(--panel), var(--panel-edge)); border-radius: 6px; overflow: hidden; box-shadow: 0 8px 30px #0008; min-width: 640px; max-width: 1200px; }
+  .lt.r { left: auto; right: 96px; }
+  .bar { background: var(--gold); }
+  .txt { padding: 16px 36px 18px 28px; }
+  .nm { font-size: 52px; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tt { font-size: 30px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<div class="lt" id="lt"><div class="bar"></div><div class="txt"><div class="nm" id="nm"></div><div class="tt" id="tt"></div></div></div>
+<script type="module">
+  import { connectFeed, partyKey } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  if (q.get("corner") === "r") document.getElementById("lt").classList.add("r");
+  const $ = (id) => document.getElementById(id);
+  const set = (name, title) => { $("nm").textContent = name || "Name"; $("tt").textContent = title || ""; };
+  if (q.get("name") || !q.get("cand")) set(q.get("name") ?? "Name goes here", q.get("title") ?? "Title goes here (?name=&title=)");
+  else connectFeed({ onSnapshot: (s) => {
+    const r = s.races.get(q.get("id")); const c = r?.candidates.find((x) => x.id === q.get("cand"));
+    if (!c) { set("Candidate not found", ""); return; }
+    const party = partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.party;
+    set(c.name, q.get("title") ?? `${party}${c.incumbent ? ", incumbent" : ""} · ${r.stateName} ${r.office === "S" ? "Senate" : "House"} candidate`);
+  } });
+</script>
+</body>
+</html>

@@ -39,7 +39,7 @@ export const FEATURED_RACES = [
 export const CHARTS = [
   // A: persistent elements and lower thirds (the ticker is the one built)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
-  { id: "A2",  kind: "other", name: "Name and title lower third",   page: null,                built: false },
+  { id: "A2",  kind: "other", name: "Name and title lower third",   page: "/g/lower-third.html",                built: true },
   { id: "A3",  kind: "other", name: "Race-status bug",              page: "/g/bug.html",                built: true },
   { id: "A4",  kind: "other", name: "AP call alert",                page: "/g/call-alert.html",                built: true },
   { id: "A5",  kind: "other", name: "Poll-closing strip",           page: "/g/poll-closing.html",                built: true },
@@ -55,8 +55,8 @@ export const CHARTS = [
   { id: "B8",  kind: "race", name: "Votes still out",               page: "/g/outstanding.html", built: true },
   { id: "B9",  kind: "race", name: "Ranked-choice rounds",          page: "/g/rcv.html",       built: true, only: (r) => !!r?.rankedChoice },
   { id: "B10", kind: "race", name: "Then vs now",                   page: "/g/then-now.html",  built: true },
-  { id: "B11", kind: "race", name: "Quote card",                    page: null,                built: false },
-  { id: "B12", kind: "race", name: "Who voted for the independent", page: null,                built: false },
+  { id: "B11", kind: "race", name: "Quote card",                    page: "/g/quote.html",                built: true },
+  { id: "B12", kind: "race", name: "Who voted for the independent", page: null,                built: false, unavailable: "needs an AP VoteCast licence" },
   { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
   // C: the independent movement
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: true },
@@ -67,7 +67,7 @@ export const CHARTS = [
   { id: "C6",  kind: "movement", name: "National independent vote", page: "/g/ind-vote.html",  built: true },
   { id: "C7",  kind: "movement", name: "Poll vs result",            page: "/g/polls.html",     built: true },
   { id: "C8",  kind: "movement", name: "What if the featured candidates win", page: "/g/scenario.html",      built: true },
-  { id: "C9",  kind: "movement", name: "Explainer cards",           page: null,                built: false },
+  { id: "C9",  kind: "movement", name: "Explainer cards",           page: "/g/explainer.html",                built: true },
   // D: election updates
   { id: "D1",  kind: "movement", name: "State of the Senate races, map", page: "/g/senate-map.html", built: true },
   { id: "D2",  kind: "movement", name: "State of the House races, map",  page: "/g/house-map.html",  built: true },
@@ -81,13 +81,13 @@ export const CHARTS = [
   { id: "D10", kind: "movement", name: "National popular vote",     page: "/g/house-pv.html",   built: true },
   { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: true },
   // F: from the AP reports feed
-  { id: "F1",  kind: "other", name: "Balance of power from AP Trend", page: null,              built: false },
-  { id: "F2",  kind: "other", name: "House composition and net change", page: null,            built: false },
-  { id: "F3",  kind: "other", name: "Closing times by district",    page: null,                built: false },
-  { id: "F4",  kind: "other", name: "How this state counts",        page: null,                built: false },
-  { id: "F5",  kind: "other", name: "When to expect results",       page: null,                built: false },
-  { id: "F6",  kind: "other", name: "Ballot roster and status",     page: null,                built: false },
-  { id: "F7",  kind: "other", name: "Party names from AP codes",    page: null,                built: false },
+  { id: "F1",  kind: "other", name: "Balance of power from AP Trend", page: "/g/reports.html?view=bop",              built: true },
+  { id: "F2",  kind: "other", name: "House composition and net change", page: "/g/reports.html?view=house",            built: true },
+  { id: "F3",  kind: "other", name: "Closing times by district",    page: "/g/reports.html?view=closing",                built: true },
+  { id: "F4",  kind: "other", name: "How this state counts",        page: "/g/reports.html?view=counts", built: true, needsState: true },
+  { id: "F5",  kind: "other", name: "When to expect results",       page: "/g/reports.html?view=expect",                built: true },
+  { id: "F6",  kind: "other", name: "Ballot roster and status",     page: "/g/reports.html?view=roster", built: true, needsState: true },
+  { id: "F7",  kind: "other", name: "Party names from AP codes",    page: "/g/reports.html?view=parties",                built: true },
 ];
 
 /** The shipped state. pinnedRaceIds is the ticker list (the name the ticker has always read). */

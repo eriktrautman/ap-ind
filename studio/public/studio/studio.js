@@ -576,6 +576,7 @@ function renderChartCatalog() {
       const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, priority: 6, showRace: false });
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
+      else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
       else if (kind === "other") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${chart.built ? "Always on" : "Not built yet"}</span>`);
       else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured" : "✓ In overview") : (kind === "race" ? "☆ Feature" : "+ Add")}</button>`);
       grid.appendChild(el);

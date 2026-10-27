@@ -68,6 +68,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
   function unmount(c, reason) {
     if (c.frame) { c.frame.remove(); c.frame = null; }
     if (c.chart.retired) { placeholder(c, `<span>Retired</span><span class="small">${esc(c.chart.name)}${c.chart.retiredNote ? " · " + esc(c.chart.retiredNote) : ""}</span><span class="small">The id ${esc(c.chart.id)} stays reserved.</span>`, "retired"); return; }
+    if (c.chart.unavailable) { placeholder(c, `<span>Not available</span><span class="small">${esc(c.chart.name)} · ${esc(c.chart.unavailable)}</span>`, "retired"); return; }
     if (!c.chart.built) { placeholder(c, `<span>Not built yet</span><span class="small">${esc(c.chart.name)}</span>`, "unbuilt"); return; }
     if (c.static) { placeholder(c, staticHtml(c) + `<button class="loadbtn">Preview</button>`); return; }
     if (reason === "paused") { placeholder(c, `<span>Preview paused (${maxLive} live thumbnails at once)</span><button class="loadbtn">Load this one</button>`); return; }

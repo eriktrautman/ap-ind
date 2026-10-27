@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AP Reports</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* F series, one page: ?view=bop (F1 balance of power from Trend) | house (F2 House composition and net change) |
+     closing (F3 closing times by district) | counts (F4 how this state counts, ?st=) | expect (F5 when to expect results)
+     | roster (F6 ballot roster and status, ?st=) | parties (F7 party names from AP codes). */
+  .body { min-height: 0; overflow: hidden; }
+  table { font-size: 27px; } th { font-size: 21px; } td { padding: 8px 10px; }
+  td.p { font-weight: 700; }
+  .seg { display: flex; height: 70px; border-radius: 8px; overflow: hidden; background: #16244a; margin-bottom: 22px; }
+  .seg i { display: block; height: 100%; }
+  .prose { font-size: 36px; line-height: 1.45; max-width: 1500px; } .prose p { margin: 0 0 22px; } .prose .k { color: var(--muted); font-size: 24px; text-transform: uppercase; letter-spacing: .08em; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker" id="kicker">From the AP reports feed</div><div class="title" id="title">…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body" id="body"></div>
+  <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP</span></span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, PARTY_COLOR, partyKey, raceState } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const view = q.get("view") ?? "bop", ST = (q.get("st") ?? "").toUpperCase();
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const fmtT = (iso) => new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET";
+  let races = null, trend = null, notes = null, codes = null;
+  const g = (P, k) => P[k] ?? { won: 0, leading: 0, holdovers: 0, winningTrend: 0, current: 0, net: 0 };
+  const row = (name, p, color) => `<tr><td class="p" style="color:${color}">${name}</td><td class="r">${p.won}</td><td class="r">${p.leading}</td><td class="r">${p.holdovers}</td><td class="r b">${p.winningTrend}</td><td class="r m">${p.current}</td><td class="r ${p.net > 0 ? "ahead" : p.net < 0 ? "behind" : ""}">${p.net > 0 ? "+" : ""}${p.net}</td></tr>`;
+  function render() {
+    const views = {
+      bop() {
+        const t = trend?.senate; $("title").innerHTML = `Senate · AP balance of power <small>35 seats up · 51 for control</small>`;
+        if (!t) return `<div class="empty">Waiting for AP's Trend report.</div>`;
+        const P = t.parties, d = g(P, "Dem"), r = g(P, "GOP"), cd = g(P, "caucusDem"), cg = g(P, "caucusGop");
+        const und = Math.max(0, 100 - d.winningTrend - r.winningTrend - cd.winningTrend - cg.winningTrend);
+        $("reporting").innerHTML = `<b>${d.won + r.won + cd.won + cg.won}</b> called tonight`;
+        return `<div class="seg"><i style="width:${d.winningTrend}%;background:${PARTY_COLOR.dem}"></i><i style="width:${cd.winningTrend}%;background:${PARTY_COLOR.ind}"></i><i style="width:${und}%;background:#3a4f7a"></i><i style="width:${cg.winningTrend}%;background:${PARTY_COLOR.ind}"></i><i style="width:${r.winningTrend}%;background:${PARTY_COLOR.gop}"></i></div>
+          <table><thead><tr><th></th><th class="r">Won</th><th class="r">Leading</th><th class="r">Holdovers</th><th class="r">Trend</th><th class="r">Before</th><th class="r">Net</th></tr></thead><tbody>${row("Dem", d, PARTY_COLOR.dem)}${row("Others caucus with Dem", cd, PARTY_COLOR.ind)}${row("Others caucus with GOP", cg, PARTY_COLOR.ind)}${row("GOP", r, PARTY_COLOR.gop)}</tbody></table>`;
+      },
+      house() {
+        const t = trend?.house; $("title").innerHTML = `House composition and net change <small>435 seats · 218 for control</small>`;
+        if (!t) return `<div class="empty">Waiting for AP's Trend report.</div>`;
+        const P = t.parties, d = g(P, "Dem"), r = g(P, "GOP"), o = g(P, "other");
+        const und = Math.max(0, 435 - d.winningTrend - r.winningTrend - o.winningTrend);
+        $("reporting").innerHTML = `<b>${d.won + r.won + o.won}</b> called`;
+        return `<div class="seg"><i style="width:${d.winningTrend / 4.35}%;background:${PARTY_COLOR.dem}"></i><i style="width:${o.winningTrend / 4.35}%;background:${PARTY_COLOR.ind}"></i><i style="width:${und / 4.35}%;background:#3a4f7a"></i><i style="width:${r.winningTrend / 4.35}%;background:${PARTY_COLOR.gop}"></i></div>
+          <table><thead><tr><th></th><th class="r">Won</th><th class="r">Leading</th><th class="r">Holdovers</th><th class="r">Trend</th><th class="r">Before</th><th class="r">Net</th></tr></thead><tbody>${row("Dem", d, PARTY_COLOR.dem)}${row("Other", o, PARTY_COLOR.ind)}${row("GOP", r, PARTY_COLOR.gop)}</tbody></table>`;
+      },
+      closing() {
+        $("title").innerHTML = `Closing times <small>by state, Eastern</small>`;
+        const by = new Map();
+        for (const r of races?.values() ?? []) { if (r.kind !== "federal" || !r.pollClose) continue; const s = by.get(r.pollClose) ?? new Set(); s.add(r.state); by.set(r.pollClose, s); }
+        const rows = [...by.entries()].sort((a, b) => Date.parse(a[0]) - Date.parse(b[0]));
+        $("reporting").innerHTML = `<b>${rows.length}</b> closing times`;
+        return `<table><thead><tr><th>Polls close</th><th>States</th><th class="r">Races</th></tr></thead><tbody>${rows.map(([t, set]) => `<tr><td class="p">${fmtT(t)}</td><td>${[...set].sort().join(" ")}</td><td class="r m">${[...races.values()].filter((r) => r.kind === "federal" && r.pollClose === t).length}</td></tr>`).join("") || `<tr><td colspan="3" class="m">No poll-closing times in the feed.</td></tr>`}</tbody></table>`;
+      },
+      counts() {
+        const n = notes?.states?.[ST]; const name = [...races?.values() ?? []].find((r) => r.state === ST)?.stateName ?? ST;
+        $("title").innerHTML = `How ${esc(name)} counts`; $("reporting").textContent = "";
+        return n ? `<div class="prose"><p class="k">Counting</p><p>${esc(n.counting)}</p><p class="k">When to expect results</p><p>${esc(n.expect)}</p>${n.note ? `<p class="k">Note</p><p>${esc(n.note)}</p>` : ""}</div>` : `<div class="empty">No notes for ${esc(ST || "(add ?st=XX)")} in config/state-notes.json.</div>`;
+      },
+      expect() {
+        $("title").innerHTML = `When to expect results`;
+        const list = Object.entries(notes?.states ?? {}).map(([st, n]) => { const r = [...races?.values() ?? []].find((x) => x.state === st && x.pollClose); return { st, name: r?.stateName ?? st, close: r?.pollClose, expect: n.expect }; }).sort((a, b) => Date.parse(a.close ?? 0) - Date.parse(b.close ?? 0));
+        $("reporting").innerHTML = `<b>${list.length}</b> states`;
+        return `<table><thead><tr><th>State</th><th>Polls close</th><th>Expect</th></tr></thead><tbody>${list.map((x) => `<tr><td class="p">${esc(x.name)}</td><td>${x.close ? fmtT(x.close) : "—"}</td><td>${esc(x.expect)}</td></tr>`).join("") || `<tr><td colspan="3" class="m">Add states to config/state-notes.json.</td></tr>`}</tbody></table>`;
+      },
+      roster() {
+        const list = [...races?.values() ?? []].filter((r) => r.state === ST && r.kind === "federal").sort((a, b) => (a.office === "S" ? -1 : 1) - (b.office === "S" ? -1 : 1) || a.label.localeCompare(b.label));
+        $("title").innerHTML = `${esc(list[0]?.stateName ?? ST)} ballot <small>${list.length} federal races</small>`; $("reporting").innerHTML = `<b>${list.filter((r) => r.called).length}</b> called`;
+        return `<table><thead><tr><th>Race</th><th>Candidates</th><th>Status</th></tr></thead><tbody>${list.slice(0, 12).map((r) => { const st = raceState(r); return `<tr><td class="p">${esc(r.label)}</td><td>${r.candidates.map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> (${esc(c.party)})${c.incumbent ? "*" : ""}`).join(" · ")}</td><td class="m">${st.status === "called" ? "AP call: " + esc(st.cand.last) : st.status === "leading" ? Math.round(r.eevp || r.precinctsPct) + "% in" : st.status}</td></tr>`; }).join("") || `<tr><td colspan="3" class="m">No races for ${esc(ST || "(add ?st=XX)")}.</td></tr>`}</tbody></table>`;
+      },
+      parties() {
+        $("title").innerHTML = `Party names from AP codes`;
+        const seen = new Map();
+        for (const r of races?.values() ?? []) for (const c of r.candidates) seen.set(c.party, (seen.get(c.party) ?? 0) + 1);
+        const rows = [...seen.entries()].sort((a, b) => b[1] - a[1]);
+        $("reporting").innerHTML = `<b>${rows.length}</b> codes in the feed`;
+        const half = Math.ceil(rows.length / 2);
+        const tbl = (rs) => `<table><thead><tr><th>Code</th><th>Means</th><th class="r">Candidates</th></tr></thead><tbody>${rs.map(([code, n]) => `<tr><td class="p">${esc(code)}</td><td>${esc(codes?.codes?.[code] ?? "(add to config/party-codes.json)")}</td><td class="r m">${n}</td></tr>`).join("")}</tbody></table>`;
+        return `<div class="cols">${tbl(rows.slice(0, half))}${tbl(rows.slice(half))}</div>`;
+      },
+    };
+    $("body").innerHTML = (views[view] ?? views.bop)();
+    $("src").textContent = ["bop", "house"].includes(view) ? "Source: AP Trend report" : ["counts", "expect"].includes(view) ? "Source: editorial notes (config/state-notes.json) and AP poll-close times" : view === "parties" ? "Source: AP candidate lists and config/party-codes.json" : "Source: AP";
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { races = s.races; trend = await feed.trend(); try { notes = await (await fetch("./state-notes.json")).json(); } catch {} try { codes = await (await fetch("./party-codes.json")).json(); } catch {} render(); },
+    onUpdate: async (s, msg) => { if (msg.changed.length) { races = s.races; trend = await feed.trend(); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>
