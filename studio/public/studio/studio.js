@@ -355,6 +355,7 @@ function renderPins() {
   }).join("");
 }
 function renderManual() {
+  $("manualcount").textContent = `${draft.manualItems.length}`;
   $("manual").innerHTML = draft.manualItems.length ? draft.manualItems.map((m) => `<div class="row manual" data-id="${esc(m.id)}"><div class="nm">${esc(m.text)}</div><div class="btns"><button class="rm">✕</button></div></div>`).join("") : "";
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").checked = draft.callHighlight;
