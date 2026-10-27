@@ -4,6 +4,13 @@ Election-night app for a broadcast about independent candidates: an AP poller, a
 
 Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) · [control room build plan](docs/producer-plan.html) (also published at https://ap-ind.vercel.app).
 
+## TL;DR: a new machine
+
+1. Install Node 24 or newer (`node -v`) and clone the repo. No other tools, no database server, no Vercel account.
+2. `cd studio && npm install && cp .env.example .env`, then put the AP key on the `AP_API_KEY=` line and choose any `STUDIO_PASSWORD`. The key is the one secret; it lives only in `studio/.env`, which is gitignored.
+3. `npm start` in `studio/` and open http://localhost:3000/studio. That is the control room; the ticker is `/ticker` and the graphics are under `/g/`.
+4. **Historical results database** (for SQL analytics, not needed for the broadcast): from the repo root run `npm run history -- --all --states auto`. It makes about 1,200 AP requests at one every 10 seconds, so roughly 3.5 hours, and writes `data/ap-history.sqlite` (about 220 MB). The file is gitignored and is never in the repo, so every machine regenerates it; the run can be stopped and restarted at any point without losing work. Everything a person or a Claude needs for this is under [Historical results](#historical-results-analytics).
+
 ## Run it on your laptop
 
 You need Node 24 or newer (`node -v`), the repo, and one key from the producer. Nothing else: no Vercel account, no database, no build tools.
@@ -96,19 +103,58 @@ Checking pages without a browser: `node scripts/browse.mjs "http://localhost:300
 
 ## Historical results (analytics)
 
-`scripts/fetch-history.mjs` downloads AP's final results for a past election date into `data/ap-history.sqlite` (gitignored), one row per candidate per reporting unit, for SQL analytics:
+`scripts/fetch-history.mjs` downloads AP's final results for past election dates into `data/ap-history.sqlite`, one row per candidate per reporting unit, for SQL analytics. The database is gitignored (`data/`, `*.sqlite`), so it exists only on machines that have run the script.
+
+### Regenerating the database on another machine
+
+What has to be true before starting:
+
+- Node 24 or newer. The script uses only built-in modules (`node:sqlite`, `node:zlib`), so no `npm install` is needed for it.
+- `studio/.env` exists with `AP_API_KEY=` filled in (the same key the app uses; copy `studio/.env.example` if the file is missing). The script reads nothing else from the file.
+- Nothing else is hammering the key. AP allows 10 requests a minute per key, shared by everything using it. The script sends one every 10 seconds and the deployed poller uses about one a minute, so both can run together; a second copy of the script on another machine with the same key would make both pause on the quota.
+- About 300 MB free under `data/` (219 MB database plus SQLite's journal).
+
+The run, from the repo root:
 
 ```sh
-node --env-file=.env scripts/fetch-history.mjs 2024-11-05                 # federal races (P, S, H), state + county level
-node --env-file=.env scripts/fetch-history.mjs 2022-11-08 2020-11-03      # several dates in one run
-node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --offices G,S   # other offices
-node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --dry-run       # show the planned requests
-node --env-file=.env scripts/fetch-history.mjs --all --states auto        # every date AP lists (back to 2012): generals,
-                                                                          # primaries, specials, runoffs; county level only
-                                                                          # for states that had a federal race that day
+npm run history -- --all --states auto
 ```
 
-It is kind to the key: AP's quota is 10 requests per minute (`x-electionsapi-q-minute-*` headers), the script sends one request every 10 s (`--gap` ms to change) and pauses when the bucket is nearly empty, and every response is cached in `raw_responses`, so re-running a date costs no requests (`--refresh` re-downloads, `--reparse` rebuilds the tables from the cache). One election date is 52 requests (one state-level call plus one county-level call per state), about nine minutes.
+which is `node --env-file=studio/.env scripts/fetch-history.mjs --all --states auto`. What it does, in order:
+
+1. Asks AP for the list of election dates this key can see (326 as of 27 October 2026, from 2012 onwards; stored in `ap_elections`).
+2. For every date before today, general elections first (November of even years), then the rest newest first: one state-level request for every federal race (president, Senate, House), then one county-level request per state that had a federal race that day (`--states auto` reads that from the state-level response; a presidential general is 51 states, a special election is one).
+3. Stores every response gzipped in `raw_responses` and normalises it into the tables below. Prints one line per request and a `== <date> done` summary per date.
+
+Size of the job: 1,190 requests in total (ten generals at about 52 each, the other 314 dates average under three), one every 10 seconds, so about 3 hours 20 minutes if AP never makes it wait. The result is identical on every machine because AP's past results do not change.
+
+Stopping and restarting: Ctrl-C at any time. Running the same command again skips every request already in `raw_responses` (zero API calls for those) and continues with the rest, so a run interrupted after two hours finishes in the remaining time. A request that fails (network, HTTP error) is logged with `skipped (re-run to retry)` and the same restart picks it up.
+
+Checking it worked (the `sqlite3` command-line tool ships with macOS; `node -e` with `node:sqlite` works everywhere):
+
+```sh
+sqlite3 data/ap-history.sqlite "SELECT COUNT(*) FROM ap_elections; SELECT COUNT(*) FROM raw_responses WHERE status=200; SELECT COUNT(*) FROM results;"
+# expect about 326, 1190 and 870,000 as of October 2026 (AP adds dates over time, so a later run returns slightly more)
+sqlite3 -header data/ap-history.sqlite "SELECT * FROM v_coverage ORDER BY election_date DESC LIMIT 5;"
+```
+
+A past date whose `requests` in `v_coverage` is lower than 1 + its state count was interrupted; rerun the command. Future dates show zero until they happen.
+
+Other forms of the same command:
+
+```sh
+npm run history -- 2024-11-05                     # one date: federal races, state + county level, 52 requests, about nine minutes
+npm run history -- 2022-11-08 2020-11-03          # several dates
+npm run history -- 2024-11-05 --offices G,S       # other offices (AP office codes; default P,S,H)
+npm run history -- --all --states auto --dry-run  # list the planned requests, no API calls
+npm run history -- --all --states auto --since 2020-01-01   # a date range (--until too)
+npm run history -- 2024-11-05 --no-ru             # state and national level only, one request
+npm run history -- 2024-11-05 --reparse           # rebuild the tables from the stored raw responses, no API calls
+npm run history -- 2024-11-05 --refresh           # re-download even if cached
+npm run history -- 2024-11-05 --gap 6000          # one request every 6 s (do not go under 6000 on a shared key)
+```
+
+`--db <path>` chooses another database file, `--results-type c` asks for AP's certified feed on the dates that have one.
 
 Tables, all keyed by `(election_date, state_postal, race_id)` because AP race ids are unique only within a state (the presidential race is id `0` in every state):
 
