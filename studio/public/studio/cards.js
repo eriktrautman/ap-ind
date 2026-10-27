@@ -107,12 +107,12 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
     c.bubble.title = f.title;
   }
 
-  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true }) {
+  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [] }) {
     const el = document.createElement("div");
     el.className = "gcard";
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
     el.innerHTML = `
-      <div class="ghead"><span class="cid">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}</div>
+      <div class="ghead"><span class="cid">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
       <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span><a class="openbtn" target="_blank" rel="noopener" title="Open this graphic at 1920×1080 in a new tab"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Open 1920×1080</a></div>`;
     const c = { el, chart, race, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
@@ -122,6 +122,8 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
     if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
     else { c.thumb.classList.add("clickable"); c.thumb.title = "Open this graphic at 1920×1080 in a new tab"; }
     el.addEventListener("click", (e) => {
+      if (e.target.closest(".kebab")) { const m = el.querySelector(".menu"); m.hidden = !m.hidden; return; }
+      const mi = e.target.closest("[data-mi]"); if (mi) { el.querySelector(".menu").hidden = true; menu[Number(mi.dataset.mi)]?.onClick(); return; }
       if (e.target.closest(".loadbtn")) { c.static = false; c.priority = 0; c.visible = true; schedule(); return; }
       if (e.target.closest(".thumb") && chart.built) window.open(c.link.href, "_blank", "noopener");
     });
@@ -155,6 +157,7 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
   }
   function refreshLinks() { for (const c of cards) if (c.chart.built) c.link.href = pageUrl(c, true); }
   setInterval(() => { for (const c of cards) renderFresh(c); reconcile(); }, 15_000);
+  document.addEventListener("click", (e) => { if (!e.target.closest(".kebab, .menu")) for (const m of document.querySelectorAll(".gcard .menu")) m.hidden = true; });
   window.addEventListener("scroll", schedule, { passive: true });
 
   return { card, prune, setData, broadcast, refreshSource, refreshLinks, onBudget: (fn) => { onBudget = fn; }, get count() { return cards.size; } };

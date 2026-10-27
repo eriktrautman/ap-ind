@@ -379,7 +379,7 @@ function renderDetail() {
     for (const cid of draft.featuredCharts) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
       if (chart.only && !chart.only(r)) continue;
-      cg.appendChild(cards.card({ chart, race: r, priority: i === 0 ? 1 : 2 }));
+      cg.appendChild(cards.card({ chart, race: r, priority: i === 0 ? 1 : 2, menu: [{ label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
     }
     if (!cg.children.length) cg.innerHTML = `<div class="empty">No featured charts selected.</div>`;
     row.appendChild(cg); grid.appendChild(row);
@@ -423,13 +423,10 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-pi
 
 // ---------- Movement Overview ----------
 function renderMovement() {
-  const moveCharts = CHARTS.filter((c) => c.kind === "movement");
-  $("movecharts").innerHTML = moveCharts.map((c) => `<label class="${draft.movementCharts.includes(c.id) ? "on" : ""} ${c.built ? "" : "unbuilt"}"><input type="checkbox" data-chart="${c.id}" ${draft.movementCharts.includes(c.id) ? "checked" : ""}><span class="cid">${c.id}</span>${esc(c.name)}${c.built ? "" : ' <span class="soon">not built yet</span>'}</label>`).join("");
   const grid = $("movegrid"); grid.className = "cardgrid"; grid.innerHTML = "";
-  for (const cid of draft.movementCharts) { const chart = CHARTS.find((c) => c.id === cid); if (chart) grid.appendChild(cards.card({ chart, priority: 3 })); }
-  if (!grid.children.length) grid.innerHTML = `<div class="empty">No movement charts selected.</div>`;
+  for (const cid of draft.movementCharts) { const chart = CHARTS.find((c) => c.id === cid); if (chart) grid.appendChild(cards.card({ chart, priority: 3, menu: [{ label: "Remove from Movement Overview…", onClick: () => toggleChart(chart.id) }] })); }
+  if (!grid.children.length) grid.innerHTML = `<div class="empty">No movement charts selected. Add some from the Chart Catalog below.</div>`;
 }
-$("movecharts").addEventListener("change", (e) => { const id = e.target.dataset.chart; if (id) { renderMovement(); cards.prune(); toggleChart(id); } });
 
 // ---------- Full Catalog ----------
 const cfilters = new Set();
