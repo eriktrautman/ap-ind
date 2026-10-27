@@ -1,7 +1,7 @@
 // Control room: status bar and poller controls, the Default / Global / Local state model,
 // and the four sections (Ticker, Race Detail, Movement Overview, Full Catalog).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, sameState, diffState, readLocal, saveLocal, getSavedSource, setSavedSource } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, sameState, diffState, readLocal, saveLocal } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -20,11 +20,6 @@ const api = async (url, opts = {}) => {
   if (res.status === 401) { showLogin(); throw new Error("signed out"); }
   if (!res.ok) throw new Error(body.error ?? `${res.status}`);
   return body;
-};
-const SRC_TEXT = {
-  default: "Shipped defaults. Read-only: what the app does with nothing configured. Switch to Global or Local to make changes.",
-  global: "Global is what air uses: the on-air ticker and every graphic opened without a state parameter read it. Changes here go on air only when you publish. On a laptop, Global is this machine's own copy.",
-  local: "Local lives in this browser only. Edits save as you make them and never reach air unless you publish them to Global.",
 };
 
 // ---------- dialog ----------
@@ -57,12 +52,13 @@ $("logout").addEventListener("click", async () => { await fetch("/api/login", { 
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
-let runtime = null;           // { local, store, upstream } when this room runs on a laptop (npm start); null on the deployment
-let globalState = null;       // last state read from or written to /api/producer (normalized)
-let globalSeenAt = null;      // updatedAt of the global copy this page last adopted
-let source = getSavedSource();
-let draft = normalize(DEFAULTS);
-const cards = createCardManager({ maxLive: 12, getBg: () => $("bg").value, getSource: () => source, getDraft: () => draft });
+let runtime = null;           // from /api/runtime on a laptop (npm start); null on the deployment, where production is this site
+let prod = null;              // production state as last read (normalized), or null if never read
+let prodSeenAt = null;        // updatedAt of the production copy this page last pulled or pushed
+let prodError = null;         // why production is unreadable right now, or null
+let draft = normalize(DEFAULTS);   // the working copy: always Local (this browser), seeded from production on first use
+let view = "local";           // what the thumbnails and the example ticker show: the working copy, or production
+const cards = createCardManager({ maxLive: 12, getBg: () => $("bg").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (budget ${12})` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
@@ -84,142 +80,111 @@ async function loadIndex() {
     renderAll();
   } catch {}
 }
-async function loadGlobal() {
+/** Read production. On a laptop the runner answers from the deployment (or from itself when GLOBAL=self). */
+async function loadProd() {
   try {
     const remote = normalize(await api("/api/producer"));
-    const first = !globalState;
-    const changedRemotely = !first && remote.updatedAt !== globalState.updatedAt;
-    globalState = remote;
-    if (first) { globalSeenAt = remote.updatedAt; if (source === "global" || (source === "local" && !readLocal())) { draft = structuredClone(stateFor(source)); renderAll(); } }
-    else if (changedRemotely) {
-      if (source === "global" && !dirty()) { globalSeenAt = remote.updatedAt; draft = structuredClone(remote); renderAll(); }
-      else if (source === "local" && !readLocal()) { draft = structuredClone(remote); renderAll(); }
-      else renderSrcActions();
-    }
-    renderStatus();
-  } catch {}
+    prodError = null;
+    const first = !prod;
+    prod = remote;
+    if (first && !readLocal()) { prodSeenAt = remote.updatedAt; draft = saveLocal(structuredClone(remote)); renderAll(); cards.broadcast(draft); }
+    else renderStrip();
+  } catch (e) { prodError = e.message; renderStrip(); }
+  renderStatus();
 }
 
-// ---------- state model ----------
-function stateFor(src) {
-  if (src === "default") return normalize(DEFAULTS);
-  if (src === "local") return readLocal() ?? globalState ?? normalize(DEFAULTS);
-  return globalState ?? normalize(DEFAULTS);
-}
-const dirty = () => source === "global" && !sameState(draft, globalState ?? DEFAULTS);
-const otherOperator = () => globalState && globalSeenAt !== globalState.updatedAt;
+// ---------- state model: the working copy is Local; production is pushed to or pulled from ----------
+const dirty = () => !prod || !sameState(draft, prod);
+const otherOperator = () => prod && prodSeenAt !== prod.updatedAt;
+const canPush = () => runtime ? !!runtime.production?.canPush : true;
+const canPull = () => runtime ? !!runtime.production?.canPull : !prodError;
+const prodName = () => runtime?.production?.where === "self" ? "this laptop (standby)" : runtime?.production?.origin?.replace(/^https?:\/\//, "") ?? "air";
 
-async function switchSource(src) {
-  if (src === source) return;
-  if (dirty()) {
-    const ok = await ask({ title: "Leave Global with unpublished changes?", body: `<p>These changes are not published and will be dropped:</p>${changeList(diffState(globalState, draft))}`, ok: "Drop changes and switch", danger: true });
-    if (!ok) return;
-  }
-  source = src; setSavedSource(src);
-  draft = structuredClone(stateFor(src));
-  if (src === "global") globalSeenAt = globalState?.updatedAt ?? null;
-  renderAll();
-  cards.refreshSource();
-}
-$("srcsel").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => switchSource(b.dataset.src)));
-
-/** Every edit comes through here. Local saves at once; Global waits for Publish; Default refuses. */
+/** Every edit comes through here: the working copy saves to this browser at once. */
 function commit() {
-  if (source === "default") return;
-  draft = normalize(draft);
-  if (source === "local") draft = saveLocal(draft);
+  draft = saveLocal(normalize(draft));
   renderAll();
   cards.broadcast(draft);
 }
 
-function renderSrcActions() {
-  const box = $("srcactions");
+function renderStrip() {
+  $("prodstrip").hidden = false;
   const d = dirty();
-  if (source === "default") {
-    box.innerHTML = `<span class="note">Read-only. Switch to Global or Local to make changes.</span>`;
-  } else if (source === "global") {
-    const other = otherOperator() ? `<span class="note bad">Someone else published at ${esc(fmtTime(globalState.updatedAt))}. Publishing now overwrites theirs; Discard loads it.</span>` : "";
-    box.innerHTML = `<button class="primary" id="publish" ${d ? "" : "disabled"}>Publish to Global…</button><button id="discard" ${d ? "" : "hidden"}>Discard changes</button><button id="restoreg">Restore defaults…</button>${pullButton()}
-      <span class="note ${d ? "dirty" : ""}">${d ? "Unpublished changes" : globalState?.updatedAt ? `Published ${esc(ago(globalState.updatedAt))}` : runtime ? "Never published on this laptop" : "Never published: air is on the defaults"}</span>${other}`;
-    $("publish").addEventListener("click", () => publish(draft));
-    $("pullair")?.addEventListener("click", () => pullFromAir(false));
-    $("discard").addEventListener("click", () => { draft = structuredClone(globalState ?? normalize(DEFAULTS)); globalSeenAt = globalState?.updatedAt ?? null; renderAll(); cards.broadcast(draft); });
-    $("restoreg").addEventListener("click", async () => {
-      const ok = await ask({ title: "Restore defaults into the Global draft?", body: `<p>The draft changes to the shipped defaults. Nothing goes on air until you publish.</p>${changeList(diffState(draft, DEFAULTS))}`, ok: "Restore defaults" });
-      if (ok) { draft = normalize(DEFAULTS); renderAll(); cards.broadcast(draft); }
-    });
-  } else {
-    const same = globalState && sameState(draft, globalState);
-    box.innerHTML = `<button id="publishl" class="primary" ${same ? "disabled" : ""}>Publish Local to Global…</button><button id="useglobal">Use global…</button><button id="restorel">Restore defaults…</button>${pullButton()}
-      <span class="note">${readLocal() ? `Saved in this browser ${esc(ago(readLocal().updatedAt))}` : "No local changes yet: showing Global"}${same ? " · same as Global" : ""}</span>`;
-    $("publishl").addEventListener("click", () => publish(draft));
-    $("pullair")?.addEventListener("click", () => pullFromAir(true));
-    $("useglobal").addEventListener("click", async () => {
-      const g = globalState ?? normalize(DEFAULTS);
-      const ok = await ask({ title: "Replace Local with Global?", body: `<p>Local changes that will be lost:</p>${changeList(diffState(draft, g))}`, ok: "Use global", danger: true });
-      if (ok) { draft = structuredClone(g); saveLocal(draft); renderAll(); cards.broadcast(draft); }
-    });
-    $("restorel").addEventListener("click", async () => {
-      const ok = await ask({ title: "Restore defaults in Local?", body: `<p>Local changes that will be lost:</p>${changeList(diffState(draft, DEFAULTS))}`, ok: "Restore defaults", danger: true });
-      if (ok) { draft = normalize(DEFAULTS); saveLocal(draft); renderAll(); cards.broadcast(draft); }
-    });
-  }
+  const changes = prod ? diffState(prod, draft) : [];
+  const st = $("ps-state");
+  st.className = d ? "dirty" : "same";
+  st.textContent = !prod ? "Saved here · production unknown" : d ? `${changes.length} change${changes.length === 1 ? "" : "s"} not on production` : "Same as production";
+  $("ps-sub").textContent = readLocal()?.updatedAt ? `Saved in this browser ${ago(readLocal().updatedAt)} · nothing goes on air until you push` : "Nothing goes on air until you push";
+  const p = $("ps-prod");
+  const r = runtime?.production;
+  if (runtime && r && !r.reachable) { p.className = "bad"; p.textContent = `${prodName()} · unreachable`; $("ps-prodsub").textContent = r.reason ?? ""; }
+  else if (prodError) { p.className = "bad"; p.textContent = `${prodName()} · unreadable`; $("ps-prodsub").textContent = prodError; }
+  else if (runtime && r && !r.canPush) { p.className = "warn"; p.textContent = `${prodName()} · pull only`; $("ps-prodsub").textContent = r.reason ?? "push not configured"; }
+  else { p.className = ""; p.textContent = prodName(); $("ps-prodsub").textContent = prod?.updatedAt ? `Last published ${ago(prod.updatedAt)}${otherOperator() ? " · changed since you last pulled" : ""}` : "Never published: production is on the defaults"; }
+  $("push").disabled = !canPush() || !d;
+  $("push").title = !canPush() ? (r?.reason ?? "push unavailable") : !d ? "Your working copy already matches production" : `Overwrite production with your working copy (${changes.length} changes)`;
+  $("pull").disabled = !canPull() || !prod;
+  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pull unavailable") : "Replace your working copy with what is on production";
 }
 
-const pullButton = () => runtime ? `<button id="pullair" title="Copy the configuration that is on air (${esc(runtime.upstream)}) into this laptop's ${source === "local" ? "Local" : "Global draft"}. Read-only: air is never changed.">Pull from air…</button>` : "";
-
-/** Laptop only: copy the deployment's Global (and its test/live setting) into the current source. Air is never written. */
-async function pullFromAir(toLocal) {
-  let air, airSettings;
-  try {
-    air = normalize(await api("/api/upstream/producer"));
-    airSettings = await api("/api/upstream/settings").catch(() => null);
-  } catch (e) {
-    await ask({ title: "Air is unreachable", body: `<div class="warnline bad">${esc(e.message)}</div><p>This laptop keeps the configuration it has. If the deployment is down, this is the moment to switch the switcher's inputs to this machine.</p>`, ok: "OK" });
-    return;
-  }
-  const changes = diffState(draft, air);
-  const rt = airSettings?.resultsType ?? airSettings?.envResultsType ?? null;
-  const localRt = settings?.resultsType ?? settings?.envResultsType ?? "t";
-  const rtLine = rt && rt !== localRt ? `<div class="warnline">Air is on <b>${rt === "l" ? "LIVE" : "TEST"}</b> results; this laptop is on <b>${localRt === "l" ? "LIVE" : "TEST"}</b>. The poller setting is copied too.</div>` : "";
+async function pushToProduction() {
+  if (!canPush()) return;
+  let latest = prod;
+  try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; } catch (e) { prodError = e.message; }
+  const changes = diffState(latest ?? DEFAULTS, draft);
+  const someoneElse = latest && latest.updatedAt !== prodSeenAt;
   const ok = await ask({
-    title: `Pull what is on air into ${toLocal ? "Local" : "the Global draft"}?`,
-    body: `<p>Read-only copy from ${esc(runtime.upstream)}, published there ${air.updatedAt ? esc(ago(air.updatedAt)) : "never (air is on the defaults)"}. Nothing on air changes.</p>${changeList(changes)}${rtLine}<p class="small muted">After this, edits here are this laptop's own: nothing keeps it in step with air unless you pull again.</p>`,
-    ok: "Pull from air",
+    title: `Push to production (${prodName()})? This goes on air.`,
+    body: `<p>Production is overwritten with your working copy. The on-air ticker re-reads it within 5 seconds; graphics within 10.</p>
+      ${changeList(changes)}
+      <p class="small muted">Production last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
+      ${someoneElse ? `<div class="warnline bad">Production changed at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now overwrites that. Pull first if you want to see it.</div>` : ""}
+      ${!changes.length ? `<div class="warnline">Nothing differs from production.</div>` : ""}`,
+    ok: "Push to production", danger: true,
   });
   if (!ok) return;
-  draft = air;
-  if (toLocal) saveLocal(draft);
-  if (rt && rt !== localRt) { try { settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, resultsType: rt }) }); } catch {} }
+  try {
+    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(draft) }));
+    prod = saved; prodSeenAt = saved.updatedAt; prodError = null;
+    draft = saveLocal(structuredClone(saved));
+    renderAll(); cards.broadcast(draft);
+  } catch (e) {
+    await ask({ title: "Push failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed on production. Your working copy is still saved here.</p>`, ok: "OK" });
+  }
+}
+async function pullFromProduction() {
+  let latest;
+  try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; }
+  catch (e) { prodError = e.message; renderStrip(); await ask({ title: "Production is unreadable", body: `<div class="warnline bad">${esc(e.message)}</div><p>Your working copy is unchanged.</p>`, ok: "OK" }); return; }
+  const changes = diffState(draft, latest);
+  const ok = await ask({
+    title: `Pull from production (${prodName()})? Your working copy is overwritten.`,
+    body: `<p>Production, last published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never (the defaults)"}, replaces what you have here. Nothing on air changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches production.</div>` : ""}`,
+    ok: "Pull from production", danger: changes.length > 0,
+  });
+  if (!ok) return;
+  prodSeenAt = latest.updatedAt;
+  draft = saveLocal(structuredClone(latest));
   renderAll(); cards.broadcast(draft);
 }
-
-async function publish(state) {
-  const before = globalState ?? normalize(DEFAULTS);
-  const changes = diffState(before, state);
-  let latest = null;
-  try { latest = normalize(await api("/api/producer")); } catch {}
-  const someoneElse = latest && latest.updatedAt !== globalSeenAt && latest.updatedAt !== before.updatedAt;
-  const ok = await ask({
-    title: "Publish to Global? This goes on air.",
-    body: `<p>The on-air ticker re-reads Global within 5 seconds; graphics within 10.</p>
-      ${changeList(changes)}
-      <p class="small muted">Last published by anyone: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else published at ${esc(fmtTime(latest.updatedAt))}, after you loaded this page. Confirming overwrites their version.</div>` : ""}
-      ${!changes.length ? `<div class="warnline">Nothing differs from Global.</div>` : ""}`,
-    ok: "Publish",
-  });
+async function restoreDefaults() {
+  const changes = diffState(draft, DEFAULTS);
+  const ok = await ask({ title: "Restore the shipped defaults? Your working copy is overwritten.", body: `<p>Nothing on air changes until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches the defaults.</div>` : ""}`, ok: "Restore defaults", danger: changes.length > 0 });
   if (!ok) return;
-  try {
-    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(state) }));
-    globalState = saved; globalSeenAt = saved.updatedAt;
-    if (source === "global") draft = structuredClone(saved);
-    renderAll(); cards.broadcast(draft);
-    $("st-pub").title = `Published ${fmtTime(saved.updatedAt)}`;
-  } catch (e) {
-    await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed on air. Try again; if it keeps failing, tell the engineer.</p>`, ok: "OK" });
-  }
+  draft = saveLocal(normalize(DEFAULTS));
+  renderAll(); cards.broadcast(draft);
 }
+$("push").addEventListener("click", pushToProduction);
+$("pull").addEventListener("click", pullFromProduction);
+$("defaults").addEventListener("click", restoreDefaults);
+$("previewsel").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+  view = b.dataset.view;
+  $("previewsel").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+  frame.contentWindow?.postMessage({ type: "producer-source", source: view }, "*");
+  if (view === "local") sendPreview();
+  cards.refreshSource();
+  if (view === "local") cards.broadcast(draft);
+}));
 
 // ---------- status bar + poller ----------
 function renderStatus() {
@@ -237,13 +202,10 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-pub", `<span class="k">Last publish to air</span><b>${globalState?.updatedAt ? esc(ago(globalState.updatedAt)) : "never"}</b>`) +
+    st("st-pub", `<span class="k">Last push to production</span><b>${prod?.updatedAt ? esc(ago(prod.updatedAt)) : "never"}</b>`) +
     st("st-air", `<span class="k">Publish reaches air in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`) +
-    st("st-where", runtime ? `<span class="k">This control room</span><b style="color:#c4b5fd">this laptop · ${runtime.store === "files" ? "local store" : "shared Blob store"}</b><span class="k">· air is ${esc(runtime.upstream.replace(/^https?:\/\//, ""))}</span>` : `<span class="k">This control room</span><b>air</b>`);
+    st("st-where", runtime ? `<span class="k">This control room</span><b style="color:#c4b5fd">this laptop · ${runtime.store === "files" ? "local store" : "shared Blob store"}</b><span class="k">· production is ${esc(prodName())}</span>` : `<span class="k">This control room</span><b>air (production)</b>`);
   $("testbanner").hidden = rt !== "t";
-  $("srcnote").className = `srcnote ${source}`;
-  $("srcnote").innerHTML = `<b>${source.toUpperCase()}</b>${esc(SRC_TEXT[source])}`;
-  $("srcsel").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.src === source));
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
   $("pause").textContent = paused ? "Resume polling" : "Pause polling";
@@ -330,7 +292,6 @@ function raceBand(r, { featured }) {
     <button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
 }
 function toggleFeatured(id) {
-  if (source === "default") return;
   draft.featuredRaceIds = draft.featuredRaceIds.includes(id) ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id];
   commit();
 }
@@ -414,6 +375,7 @@ document.querySelectorAll("#ticker .filters .chip").forEach((c) => c.addEventLis
 const frame = $("preview");
 function scalePreview() { frame.style.transform = `scale(${frame.parentElement.clientWidth / 1920})`; }
 function sendPreview() {
+  if (view !== "local") return;
   frame.contentWindow?.postMessage({ type: "producer", state: draft }, "*");
   if (index) { const q = buildQueue(index.races, draft); $("previewnote").textContent = `${q.items.length} items · ${q.source === "idle" ? "idle crawl" : q.source === "default" ? "default races" : "your race list"}${q.missing.length ? ` · ${q.missing.length} not in feed` : ""}`; }
 }
@@ -539,7 +501,6 @@ function catalogBody(r, featured) {
 $("catalogList").addEventListener("click", (e) => {
   const fc = e.target.closest(".featchart");
   if (fc) {
-    if (source === "default") return;
     const id = fc.dataset.chart; const set = new Set(draft.featuredCharts); set.has(id) ? set.delete(id) : set.add(id);
     draft.featuredCharts = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); commit(); return;
   }
@@ -558,10 +519,8 @@ try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").val
 
 // ---------- render everything ----------
 function renderAll() {
-  document.body.classList.toggle("ro", source === "default");
-  document.querySelectorAll(".srcbadge").forEach((b) => { b.className = `srcbadge ${source}`; b.textContent = source; });
   renderStatus();
-  renderSrcActions();
+  renderStrip();
   renderAvailable(); renderPins(); renderManual(); sendPreview();
   renderDetail(); renderMovement(); renderCatalog();
   cards.prune();
@@ -576,13 +535,14 @@ for (const id of ["ticker", "detail", "movement", "catalog"]) secObs.observe($(i
 let timers = [];
 async function boot() {
   timers.forEach(clearInterval);
-  draft = structuredClone(stateFor(source));
-  frame.src = `/ticker?preview=1&bg=black&src=${source}`;
+  draft = readLocal() ?? normalize(DEFAULTS);
+  frame.src = `/ticker?preview=1&bg=black&src=local`;
   scalePreview();
-  runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  await Promise.all([loadStatus(), loadIndex(), loadGlobal()]);
+  const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
+  await loadRuntime();
+  await Promise.all([loadStatus(), loadIndex(), loadProd()]);
   renderAll();
-  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadGlobal, 20_000), setInterval(() => { renderStatus(); renderSrcActions(); }, 10_000)];
+  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadProd, 20_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderStrip(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

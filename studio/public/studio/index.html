@@ -13,16 +13,20 @@
     <nav class="sections" id="sectionnav">
       <a href="#ticker">Ticker</a><a href="#detail">Race Detail</a><a href="#movement">Movement Overview</a><a href="#catalog">Full Catalog</a>
     </nav>
-    <div class="srcsel" id="srcsel" title="Which state feeds this page's previews and which one your edits go to">
-      <span class="lbl">State</span>
-      <button data-src="default">Default</button><button data-src="global">Global</button><button data-src="local">Local</button>
-    </div>
     <button class="link" id="logout" hidden>Sign out</button>
   </div>
   <div class="statusbar" id="statusbar">
     <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
   </div>
-  <div class="srcnote" id="srcnote"></div>
+  <div class="prodstrip" id="prodstrip" hidden>
+    <div class="ps-work"><span class="ps-k">Your working copy</span><b id="ps-state">…</b><span class="ps-sub" id="ps-sub"></span></div>
+    <div class="ps-actions">
+      <button class="big push" id="push">Push to production…</button>
+      <button class="big pull" id="pull">Pull from production…</button>
+      <button class="big" id="defaults">Restore defaults…</button>
+    </div>
+    <div class="ps-prod"><span class="ps-k">Production</span><b id="ps-prod">…</b><span class="ps-sub" id="ps-prodsub"></span></div>
+  </div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
   <div class="problem top" id="problem" hidden></div>
 </header>
@@ -52,13 +56,13 @@
   </details>
 
   <div class="toolbar">
-    <div class="srcactions" id="srcactions"></div>
+    <span class="seg" id="previewsel"><span class="lbl">Previews show</span><button data-view="local" class="on">your working copy</button><button data-view="global">production</button></span>
     <label class="bgpick">Open graphics on <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>
     <span class="muted small" id="thumbbudget"></span>
   </div>
 
   <section class="card" id="ticker">
-    <div class="cardhead"><h2>Ticker</h2><span class="srcbadge"></span>
+    <div class="cardhead"><h2>Ticker</h2>
       <div class="actions"><label class="toggle"><input type="checkbox" id="callhl"> AP Call yellow highlight</label></div>
     </div>
     <div class="cols">
@@ -93,7 +97,7 @@
   </section>
 
   <section class="card" id="detail">
-    <div class="cardhead"><h2>Race Detail</h2><span class="srcbadge"></span></div>
+    <div class="cardhead"><h2>Race Detail</h2></div>
     <div class="cols">
       <div class="col">
         <h3>Featured races <span class="muted" id="featcount"></span></h3>
@@ -109,14 +113,14 @@
   </section>
 
   <section class="card" id="movement">
-    <div class="cardhead"><h2>Movement Overview</h2><span class="srcbadge"></span></div>
+    <div class="cardhead"><h2>Movement Overview</h2></div>
     <h3>Movement charts</h3>
     <div class="chartpick" id="movecharts"></div>
     <div class="cardgrid" id="movegrid"></div>
   </section>
 
   <section class="card" id="catalog">
-    <div class="cardhead"><h2>Full Catalog</h2><span class="srcbadge"></span><span class="muted small">Every race in the AP feed. Expand a race for all of its graphics.</span></div>
+    <div class="cardhead"><h2>Full Catalog</h2><span class="muted small">Every race in the AP feed. Expand a race for all of its graphics.</span></div>
     <div class="filters">
       <input id="cq" placeholder="Search label, state, office, candidate" size="30">
       <select id="cstate"><option value="">All states</option></select>
