@@ -4,20 +4,46 @@ Election-night app for a broadcast about independent candidates: an AP poller, a
 
 Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) · [control room build plan](docs/producer-plan.html) (also published at https://ap-ind.vercel.app).
 
-## Run
+## Run it on your laptop
 
-Requires Node 24 or newer. No native dependencies, no Vercel account.
+You need Node 24 or newer (`node -v`), the repo, and one key from the producer. Nothing else: no Vercel account, no database, no build tools.
 
 ```sh
-git clone https://github.com/eriktrautman/ap-ind.git && cd ap-ind/studio
+git clone https://github.com/eriktrautman/ap-ind.git
+cd ap-ind/studio
 npm install
-cp .env.example .env        # set AP_API_KEY and STUDIO_PASSWORD; STORE_DIR=./data keeps everything local
-npm start                   # http://localhost:3000  control room /studio · ticker /ticker · graphics /g/
+cp .env.example .env
 ```
 
-`npm start` builds the static site into `dist/`, serves it, mounts the four API functions from `api/`, and runs the poller every 60 s (`POLL_SECONDS` to change, `--no-poll` to skip). With `STORE_DIR` set, the poller writes its JSON files to that folder and nothing leaves the machine except AP requests. With `BLOB_READ_WRITE_TOKEN` set instead (and `STORE_DIR` unset), it writes to the deployment's Vercel Blob store, so a laptop can stand in for the cron. `npm run serve` skips the build.
+Open `studio/.env` in a text editor and fill in two lines:
 
-## Control room, graphics and on-air ticker (ap-ind on Vercel)
+```
+AP_API_KEY=the key you were sent
+STUDIO_PASSWORD=anything you like   # the control room's sign-in password on your machine
+```
+
+Leave `STORE_DIR=./data` as it is. Then:
+
+```sh
+npm start
+```
+
+and open http://localhost:3000/studio. Sign in with the password you chose. The first poll takes about ten seconds; after that the status bar turns green and the app polls AP once a minute. The ticker is at http://localhost:3000/ticker and the graphics under http://localhost:3000/g/ (the control room links to every one). Stop it with Ctrl-C; `npm start` again picks up where it left off, because the data files are in `studio/data/`.
+
+What you will be sent, and what it is for:
+
+| Key | Needed to run locally? | What it does |
+|---|---|---|
+| `AP_API_KEY` | **Yes** | Reads results from the AP Elections API. Without it nothing polls. AP allows ten requests a minute per key, and a local run uses about two, so several laptops can share one key. |
+| `STUDIO_PASSWORD` | You choose it yourself | Password for `/studio` on your machine only. Not a shared secret. |
+| `BLOB_READ_WRITE_TOKEN` | No | Only if your laptop should write into the production data store (standing in for the Vercel cron). Then also delete the `STORE_DIR` line. Ask before using it: pause, test/live and every publish would then change what is on air. |
+| `CRON_SECRET` | No | Vercel only; lets the cron call the poll function. Unused locally. |
+
+`AP_RESULTS_TYPE=t` in `.env` means AP's simulated test election; change it to `l` for live results on election night (the control room's Test/Live switch does the same without a restart). The key must never be committed or put in a URL; `.env` is gitignored.
+
+Everything under `npm start` is the same code that runs on ap-ind.vercel.app: the static site, the four API functions in `api/`, and the poller in `lib/poll.js`. `scripts/serve.mjs` is the only file that exists for local use; it stands in for Vercel's static hosting, function routing and cron. `POLL_SECONDS` changes the interval; `node --env-file=.env scripts/serve.mjs --no-poll --port 4000` serves without polling.
+
+## How it fits together
 
 The broadcast pages live in `studio/` (panel, ticker, poller functions) and `public/g/` (graphics), deployed together as the ap-ind Vercel project (ap-ind.vercel.app, which also serves these docs). No server of our own: the poller writes JSON to Vercel Blob (`/api/poll`, Vercel Cron once a minute; the cron's request is accepted only when `CRON_SECRET` is set on the project, so a fresh project polls nothing until its env vars are in), the pages poll those files.
 
