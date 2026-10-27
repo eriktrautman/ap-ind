@@ -386,7 +386,7 @@ function sendPreview() {
   renderTickerOpen();
   if (view !== "local") return;
   frame.contentWindow?.postMessage({ type: "producer", state: draft }, "*");
-  if (index) { const q = buildQueue(index.races, draft); $("previewnote").textContent = `${q.items.length} items · ${q.source === "idle" ? "idle crawl" : q.source === "default" ? "default races" : "your race list"}${q.missing.length ? ` · ${q.missing.length} not in feed` : ""}`; }
+  if (index) { const q = buildQueue(index.races, draft); $("previewnote").textContent = `${q.items.length} item${q.items.length === 1 ? "" : "s"}${q.missing.length ? ` · ${q.missing.length} not in the AP feed, skipped` : ""}`; }
 }
 frame.addEventListener("load", sendPreview);
 window.addEventListener("resize", scalePreview);

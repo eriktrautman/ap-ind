@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; one runtime; awaiting push",
   note: "all stories done except S81 (candidate index pages)",
-  updated: "2026-10-27T02:12:08Z",
+  updated: "2026-10-27T02:13:36Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -235,6 +235,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T02:13:36Z", what: "Example ticker header shows the item count only; the queue-source label (your race list / default races) is gone since the list always has at least one race." },
   { t: "2026-10-27T02:12:08Z", what: "Push/Pull strip: status of your settings and the buttons on the first line, right-aligned; the site's status on a second line." },
   { t: "2026-10-27T02:11:06Z", what: "Tooltips appear after 150 ms in the room's own box instead of the browser's slow native ones." },
   { t: "2026-10-27T02:10:11Z", what: "Wording for laypeople: 'your settings' and 'the settings at ap-ind.vercel.app' replace 'your copy' and 'everyone's version'; Push / Pull / Defaults." },
