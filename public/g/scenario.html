@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>If the Featured Candidates Win</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C8: the Senate balance with the featured independents as a bloc: what is settled, what they have won, what they could still add. */
+  .body { display: grid; grid-template-rows: auto auto 1fr; gap: 28px; min-height: 0; }
+  .seg { display: flex; height: 120px; border-radius: 8px; overflow: hidden; background: #16244a; position: relative; }
+  .seg i { display: block; height: 100%; }
+  .seg .mid { position: absolute; left: 50%; top: -14px; bottom: -14px; width: 4px; background: #fff; }
+  .tot { display: flex; justify-content: space-between; font-size: 54px; font-weight: 700; }
+  .tot small { font-size: 24px; font-weight: 400; color: var(--muted); margin-left: 10px; }
+  .headline { font-size: 44px; line-height: 1.25; } .headline b { color: var(--gold); }
+  .list { font-size: 26px; color: var(--muted); margin-top: 14px; line-height: 1.5; } .list b { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">If the featured candidates win</div><div class="title">Senate <small>51 for control</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="tot" id="tot"></div>
+    <div class="seg" id="seg"></div>
+    <div><div class="headline" id="headline"></div><div class="list" id="list"></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP balance-of-power report and results · solid = won or holdover · faded gold = featured independents still counting · grey = other undecided seats</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, PARTY_COLOR, isFeaturedCand } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let races = null, trend = null, featured = FEATURED_RACES.map((r) => r.id);
+  function render() {
+    if (!races) return;
+    const P = trend?.senate?.parties ?? {};
+    const g = (k) => P[k] ?? { won: 0, leading: 0, holdovers: 0 };
+    const dem = g("Dem"), gop = g("GOP"), cd = g("caucusDem"), cg = g("caucusGop"), oth = g("other");
+    const senFeat = featured.map((id) => races.get(id)).filter((r) => r?.office === "S");
+    const indOf = (r) => r.candidates.find((c) => c.featured) ?? r.candidates.find((c) => isFeaturedCand(c.id)) ?? r.candidates.find((c) => c.independent);
+    const wonFeat = senFeat.filter((r) => r.called && indOf(r)?.winner);
+    const openFeat = senFeat.filter((r) => !r.called);
+    const lostFeat = senFeat.filter((r) => r.called && !indOf(r)?.winner);
+    const solidD = dem.won + dem.holdovers, solidR = gop.won + gop.holdovers;
+    const sittingI = cd.holdovers + cg.holdovers + oth.holdovers + cd.won + cg.won + oth.won;   // includes featured wins once AP counts them
+    const possible = openFeat.length;
+    const und = Math.max(0, 100 - solidD - solidR - sittingI - possible);
+    const w = (n) => `${n}%`;
+    $("seg").innerHTML = `<i style="width:${w(solidD)};background:${PARTY_COLOR.dem}"></i><i style="width:${w(sittingI)};background:${PARTY_COLOR.ind}"></i><i style="width:${w(possible)};background:${PARTY_COLOR.ind};opacity:.4"></i><i style="width:${w(und)};background:#3a4f7a"></i><i style="width:${w(solidR)};background:${PARTY_COLOR.gop}"></i><span class="mid"></span>`;
+    $("tot").innerHTML = `<span style="color:${PARTY_COLOR.dem}">${solidD}<small>Dem</small></span><span style="color:${PARTY_COLOR.ind}">${sittingI}<small>independents${possible ? ` + up to ${possible}` : ""}</small></span><span style="color:${PARTY_COLOR.gop}">${solidR}<small>GOP</small></span>`;
+    const bloc = sittingI + possible;
+    const neither = solidD < 51 && solidR < 51;
+    $("headline").innerHTML = !senFeat.length ? "No featured Senate races in the list."
+      : neither && bloc && (solidD + bloc >= 51 || solidR + bloc >= 51) ? `<b>${bloc} seats</b> of independents would decide control: neither party reaches 51 without them.`
+      : neither ? `Neither party is at 51 yet. The independent bloc could reach <b>${bloc}</b>.`
+      : `${solidD >= 51 ? "Democrats" : "Republicans"} have reached 51; an independent bloc of <b>${bloc}</b> would not hold the balance.`;
+    $("list").innerHTML = [wonFeat.length ? `Won tonight: <b>${wonFeat.map((r) => `${esc(indOf(r).last)} (${esc(r.label)})`).join(", ")}</b>` : "", openFeat.length ? `Still counting: ${openFeat.map((r) => `${esc(indOf(r)?.last ?? "")} (${esc(r.label)})`).join(", ")}` : "", lostFeat.length ? `Lost: ${lostFeat.map((r) => `${esc(indOf(r)?.last ?? "")} (${esc(r.label)})`).join(", ")}` : ""].filter(Boolean).join(" · ");
+    $("reporting").innerHTML = `<b>${wonFeat.length}</b> of ${senFeat.length} featured Senate races won`;
+    $("updated").textContent = trend?.senate?.timestamp ? `AP report ${new Date(trend.senate.timestamp).toLocaleTimeString("en-US")}` : "";
+  }
+  watchState({ onState: (s) => { featured = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
+  const feed = connectFeed({
+    onSnapshot: async (s) => { races = s.races; trend = await feed.trend(); render(); },
+    onUpdate: async (s, msg) => { if (msg.changed.length) { races = s.races; trend = await feed.trend(); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

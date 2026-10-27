@@ -33,4 +33,3 @@ for (const st of STATES) {
   console.log(`${st}: ${Object.keys(units).length} units, statewide Dem ${out.states[st].statewide.demPct} / GOP ${out.states[st].statewide.gopPct}, sample key ${Object.keys(units)[0]} ${JSON.stringify(Object.values(units)[0]).slice(0, 80)}`);
 }
 writeFileSync(new URL("../config/baseline-2024-pres.json", import.meta.url), JSON.stringify(out));
-writeFileSync(new URL("../public/g/baseline-2024-pres.json", import.meta.url), JSON.stringify(out)); // static copy for demo mode

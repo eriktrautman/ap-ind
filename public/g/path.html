@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Path to Victory</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* B4: where the independent needs to win, from the last contest's county map, with tonight's reporting overlaid.
+     ?id=<raceID>; ?who=ind (default) | main. Counties: colour = the lane's prior share (dark = strong), overlaid
+     with tonight's result once a county reports (outline gold where the candidate is running ahead of that pace). */
+  .body { display: grid; grid-template-columns: 1fr 600px; gap: 56px; min-height: 0; }
+  .map { background: rgba(0,0,0,.25); border-radius: 8px; padding: 16px; position: relative; min-height: 0; }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .legend { position: absolute; left: 24px; bottom: 18px; display: flex; gap: 22px; font-size: 22px; color: var(--muted); }
+  .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; vertical-align: -3px; margin-right: 8px; }
+  .side { display: grid; gap: 18px; align-content: start; min-height: 0; min-width: 0; overflow: hidden; }
+  .headline { font-size: 34px; line-height: 1.2; } .headline b { color: var(--gold); }
+  table { font-size: 24px; table-layout: fixed; } th, td { padding: 7px 6px; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Path to victory</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="map"><svg id="map" viewBox="0 0 980 640"></svg><div class="legend" id="legend"></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th>Must-win county</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and the last contest for this seat · "then" is the comparison candidate's share in that county</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, normName, loadGeo, isFeaturedCand, fmt } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const raceId = q.get("id"), who = q.get("who") ?? "ind";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let race = null, counties = null, prior = null, geo = null;
+  const unitKey = (u) => geo.kind === "county" ? String(u.fips) : normName(u.name);
+  const featKey = (d) => geo.kind === "county" ? String(d.id) : normName(d.properties.name);
+  function laneFor(cand) {
+    const pc = prior.candidates;
+    return pc.find((c) => c.id === cand.id) ?? (cand.party === "GOP" || cand.party === "Dem" ? pc.find((c) => c.party === cand.party) : null) ?? pc.find((c) => c.independent) ?? pc.find((c) => c.party !== pc[0].party) ?? pc[1] ?? pc[0];
+  }
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
+    const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => isFeaturedCand(c.id)) ?? race.candidates.find((c) => c.independent) ?? cands[0];
+    const cand = who === "main" ? (cands.find((c) => c.id !== ind.id) ?? cands[0]) : ind;
+    const color = PARTY_COLOR[partyKey(cand)];
+    $("title").innerHTML = `${esc(cand.last)}'s path <small>${esc(race.stateName)} · ${esc(officeText(race))}</small>`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    if (!prior || !geo) { $("headline").innerHTML = `<span class="note">No county-level prior result on file for this seat.</span>`; $("rows").innerHTML = ""; return; }
+    const lane = laneFor(cand);
+    const year = prior.date.slice(0, 4);
+    $("th-then").textContent = `${lane.last} ${year}`; $("th-now").textContent = `${cand.last} now`;
+    const byKey = new Map(Object.entries(prior.units).map(([fips, u]) => [geo.kind === "county" ? String(fips) : normName(u.name), { ...u, fips }]));
+    const nowBy = new Map((counties ?? []).map((u) => [unitKey(u), u]));
+    const rows = [...byKey.entries()].map(([k, b]) => {
+      const share = b.total ? (b.votes[lane.id] ?? 0) / b.total * 100 : 0;
+      const n = nowBy.get(k); const tot = n ? Object.values(n.votes).reduce((s, v) => s + v, 0) : 0;
+      const now = tot ? (n.votes[cand.id] ?? 0) / tot * 100 : null;
+      return { k, name: b.name, then: share, votesThen: b.votes[lane.id] ?? 0, total: b.total, inPct: n ? (n.eevp || n.precinctsPct) : 0, now, ahead: now !== null && tot > 0 ? now >= share : null };
+    });
+    const maxShare = Math.max(1, ...rows.map((r) => r.then));
+    const scale = d3.scaleLinear().domain([0, maxShare]).range([0.12, 1]);
+    const svg = d3.select("#map");
+    const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
+    sel.enter().append("path").attr("d", geo.path).merge(sel)
+      .attr("fill", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r ? color : "#1b2a4a"; })
+      .attr("fill-opacity", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r ? scale(r.then) : 1; })
+      .attr("stroke", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r?.ahead === true ? "#facc15" : r?.ahead === false ? "#071222" : "#071222"; })
+      .attr("stroke-width", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r?.ahead === true ? 2.5 : 0.8; });
+    $("legend").innerHTML = `<span><i style="background:${color};opacity:1"></i>${esc(lane.last)} strong in ${year}</span><span><i style="background:${color};opacity:.2"></i>weak</span><span><i style="border:3px solid #facc15;box-sizing:border-box"></i>${esc(cand.last)} ahead of that pace tonight</span>`;
+    // Must-win: the counties that gave the lane the most votes last time.
+    const must = [...rows].sort((a, b) => b.votesThen - a.votesThen).slice(0, 6);
+    const needShare = must.reduce((s, r) => s + r.votesThen, 0) / Math.max(1, rows.reduce((s, r) => s + r.votesThen, 0)) * 100;
+    $("headline").innerHTML = `The ${must.length} biggest counties for ${esc(lane.last)} in ${year} gave <b>${needShare.toFixed(0)}%</b> of that vote. ${esc(cand.last)} ${rows.some((r) => r.now !== null) ? `is ahead of that pace in <b>${rows.filter((r) => r.ahead === true).length}</b> of ${rows.filter((r) => r.now !== null).length} counties reporting.` : "needs to match it there."}`;
+    $("rows").innerHTML = must.map((r) => `<tr><td class="b">${esc(r.name)}</td><td class="r">${r.then.toFixed(1)}%</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b ${r.ahead === true ? "ahead" : r.ahead === false ? "behind" : ""}">${r.now === null ? "—" : r.now.toFixed(1) + "%"}</td></tr>`).join("");
+    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => {
+      race = s.races.get(raceId);
+      if (race) { try { prior = (await (await fetch("./baseline-federal.json")).json()).races?.[raceId] ?? null; } catch {} geo ??= await loadGeo(race.state, [980, 640]); counties = await feed.counties(raceId); }
+      render();
+    },
+    onUpdate: async (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } if (msg.type === "counties" && race) { counties = await feed.counties(raceId); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

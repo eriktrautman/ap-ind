@@ -1,0 +1,53 @@
+{
+  "about": "Best results by independent candidates in two-party federal races, seeded 2026-10-27; editorial: correct or extend. share is the independent's share of the vote.",
+  "rows": [
+    {
+      "name": "Angus King",
+      "race": "ME-SEN",
+      "year": 2012,
+      "share": 52.9,
+      "won": true,
+      "note": "Open seat; former governor"
+    },
+    {
+      "name": "Angus King",
+      "race": "ME-SEN",
+      "year": 2018,
+      "share": 54.3,
+      "won": true,
+      "note": "Incumbent"
+    },
+    {
+      "name": "Joe Lieberman",
+      "race": "CT-SEN",
+      "year": 2006,
+      "share": 49.7,
+      "won": true,
+      "note": "Sitting senator running as an independent after losing the primary"
+    },
+    {
+      "name": "Dan Osborn",
+      "race": "NE-SEN",
+      "year": 2024,
+      "share": 46.5,
+      "won": false,
+      "note": "No Democrat on the ballot"
+    },
+    {
+      "name": "Evan McMullin",
+      "race": "UT-SEN",
+      "year": 2022,
+      "share": 42.8,
+      "won": false,
+      "note": "No Democrat on the ballot"
+    },
+    {
+      "name": "Greg Orman",
+      "race": "KS-SEN",
+      "year": 2014,
+      "share": 42.5,
+      "won": false,
+      "note": "Democrat withdrew"
+    }
+  ]
+}

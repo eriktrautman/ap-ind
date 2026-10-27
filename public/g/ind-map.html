@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Independents Across the Map</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C2: tile map of where independents are on the federal ballot, from the AP feed; featured-race states in gold. */
+  .body { display: grid; grid-template-columns: 1fr 520px; gap: 40px; align-items: center; min-height: 0; overflow: hidden; }
+  .map { min-height: 0; height: 100%; } .map svg { width: 100%; height: 100%; display: block; }
+  .side .h { font-size: 44px; font-weight: 700; margin-bottom: 18px; }
+  .legend { display: grid; gap: 12px; font-size: 26px; color: var(--muted); }
+  .legend i { display: inline-block; width: 30px; height: 24px; border-radius: 4px; vertical-align: -4px; margin-right: 12px; }
+  .big { margin-top: 28px; font-size: 26px; color: var(--muted); } .big b { display: block; font-size: 72px; color: var(--fg); line-height: 1; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">The independent movement</div><div class="title">Independents on the ballot</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="map"><svg id="map" viewBox="0 0 900 600"></svg></div>
+    <div class="side"><div class="h">Where they are running</div><div class="legend" id="legend"></div><div class="big" id="big"></div></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP candidate lists for Senate and House · independent = any candidate who is not a Democrat or Republican</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script type="module">
+  import { connectFeed, freshness } from "./feed.js";
+  import { drawTileMap } from "./usmap.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const svg = d3.select("#map");
+  let races = null, featured = new Set(FEATURED_RACES.map((r) => r.id));
+  function render() {
+    if (!races) return;
+    const byState = new Map();
+    let total = 0, racesWith = 0;
+    for (const r of races.values()) {
+      if (r.kind !== "federal") continue;
+      const n = r.candidates.filter((c) => c.independent).length;
+      const s = byState.get(r.state) ?? { n: 0, races: 0, featured: false };
+      s.n += n; if (n) s.races++; if (featured.has(r.id)) s.featured = true;
+      byState.set(r.state, s); total += n; if (n) racesWith++;
+    }
+    const fill = (st) => { const s = byState.get(st); if (!s || !s.n) return "#1b2a4a"; return s.featured ? "#facc15" : s.n >= 4 ? "#7c3aed" : "#a855f7"; };
+    const stroke = (st) => (byState.get(st)?.featured ? { color: "#fff", width: 2 } : null);
+    const sub = (st) => { const s = byState.get(st); return s?.n ? String(s.n) : null; };
+    const dims = drawTileMap(svg, { size: 68, gap: 6, x0: 6, y0: 6, fill, stroke, sub });
+    svg.attr("viewBox", `0 0 ${dims.width + 12} ${dims.height + 12}`);
+    $("reporting").innerHTML = `<b>${[...byState.values()].filter((s) => s.n).length}</b> states`;
+    $("legend").innerHTML = `<span><i style="background:#facc15"></i>Featured race (${[...byState.values()].filter((s) => s.featured).length} states)</span><span><i style="background:#a855f7"></i>Independents on the federal ballot</span><span><i style="background:#7c3aed"></i>Four or more</span><span><i style="background:#1b2a4a"></i>None</span>`;
+    $("big").innerHTML = `<b>${total}</b>independent and third-party candidates for Congress in ${racesWith} races`;
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
+  connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s, msg) => { if (msg.changed.length) { races = s.races; render(); } }, onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; } });
+</script>
+</body>
+</html>

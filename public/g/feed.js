@@ -47,7 +47,7 @@ export function connectFeed(handlers) {
     sampleMod ??= await import("./sample.js");
     sampleData ??= (await import("./sample-data.js")).SAMPLE;
     setSample(true);
-    return sampleMod.fabricateIndex(index, sampleData.races);
+    return sampleMod.fabricateIndex(index, sampleData.races, FEATURED_CANDS);
   }
   function setSample(on) {
     if (on === state.sample) return;

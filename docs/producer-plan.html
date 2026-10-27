@@ -160,8 +160,8 @@ const META = {
   minPerPoint: 5,          // assumed pace until three stories are done
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "E7 Remaining lookbook charts",
-  note: "next: B1, B2, B3, B4, C2, C3, C4, C5, C8",
-  updated: "2026-10-27T02:56:55Z",
+  note: "next: F1-F7, A2, B11, C9",
+  updated: "2026-10-27T03:05:58Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -226,15 +226,15 @@ const STORIES = [
   { id: "S91", epic: "E7", pts: 3, status: "done", title: "A4 AP call alert: full-width band for a call, for one race or the latest call among the featured races; poller keeps the call time", doneAt: "2026-10-27T02:56:55Z" },
   { id: "S92", epic: "E7", pts: 2, status: "done", title: "A5 poll-closing strip: upcoming closings by state from AP's poll-close times, with countdown", doneAt: "2026-10-27T02:56:55Z" },
   { id: "S93", epic: "E7", pts: 2, status: "done", title: "A6 featured races strip: compact lower third of the featured independents with share and status", doneAt: "2026-10-27T02:56:55Z" },
-  { id: "S94", epic: "E7", pts: 3, status: "todo", title: "B1 candidate profile: bio and photo from config/candidates.json with live numbers" },
-  { id: "S95", epic: "E7", pts: 3, status: "todo", title: "B2 race setup: candidates, incumbency, the last result for the seat, the latest poll" },
-  { id: "S96", epic: "E7", pts: 3, status: "todo", title: "B3 polling trend: every public poll for the race on a timeline from config/polls.json" },
-  { id: "S97", epic: "E7", pts: 3, status: "todo", title: "B4 path to victory map: counties by the lane's prior result, with tonight's reporting overlaid" },
-  { id: "S98", epic: "E7", pts: 2, status: "todo", title: "C2 independents across the map: tile map of states with independents on the federal ballot, featured in gold" },
-  { id: "S99", epic: "E7", pts: 2, status: "todo", title: "C3 big-number stats: Gallup independents, independents in the Senate, featured races, independents on federal ballots tonight" },
-  { id: "S100", epic: "E7", pts: 2, status: "todo", title: "C4 independents in Congress historically: bar per Congress from a committed table (editorial, seeded)" },
-  { id: "S101", epic: "E7", pts: 2, status: "todo", title: "C5 tonight against history: best independent results on record with tonight's featured rows live" },
-  { id: "S102", epic: "E7", pts: 3, status: "todo", title: "C8 what if the featured candidates win: Senate scenario bar with the featured independents as a bloc" },
+  { id: "S94", epic: "E7", pts: 3, status: "done", title: "B1 candidate profile: bio and photo from config/candidates.json with live numbers", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S95", epic: "E7", pts: 3, status: "done", title: "B2 race setup: candidates, incumbency, the last result for the seat, the latest poll", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S96", epic: "E7", pts: 3, status: "done", title: "B3 polling trend: every public poll for the race on a timeline from config/polls.json", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S97", epic: "E7", pts: 3, status: "done", title: "B4 path to victory map: counties by the lane's prior result, with tonight's reporting overlaid", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S98", epic: "E7", pts: 2, status: "done", title: "C2 independents across the map: tile map of states with independents on the federal ballot, featured in gold", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S99", epic: "E7", pts: 2, status: "done", title: "C3 big-number stats: Gallup independents, independents in the Senate, featured races, independents on federal ballots tonight", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S100", epic: "E7", pts: 2, status: "done", title: "C4 independents in Congress historically: bar per Congress from a committed table (editorial, seeded)", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S101", epic: "E7", pts: 2, status: "done", title: "C5 tonight against history: best independent results on record with tonight's featured rows live", doneAt: "2026-10-27T03:05:58Z" },
+  { id: "S102", epic: "E7", pts: 3, status: "done", title: "C8 what if the featured candidates win: Senate scenario bar with the featured independents as a bloc", doneAt: "2026-10-27T03:05:58Z" },
   { id: "S103", epic: "E7", pts: 2, status: "todo", title: "C9 explainer cards: template fed by config/explainers.json (editorial)" },
   { id: "S104", epic: "E7", pts: 3, status: "done", title: "D8 calls timeline: every AP call as a dot on a clock line, independents enlarged and labelled", doneAt: "2026-10-27T02:56:55Z" },
   { id: "S105", epic: "E7", pts: 2, status: "done", title: "D9 state overview: every federal race in one state", doneAt: "2026-10-27T02:56:55Z" },
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T03:05:58Z", what: "Nine more lookbook charts: B1 candidate profile, B2 race setup, B3 polling trend, B4 path to victory, C2 independents across the map, C3 big numbers, C4 independents in Congress (seeded editorial table), C5 tonight against history (seeded table), C8 what if the featured candidates win. Config data now ships to the graphics from config/ in the build; the public/g duplicates are gone." },
   { t: "2026-10-27T02:56:55Z", what: "Six lookbook charts landed: A3 race-status bug, A4 AP call alert (the poller now keeps AP's call time), A5 poll-closing strip with countdown, A6 featured races strip, D8 calls timeline, D9 state overview. All render with sample data in the catalog previews." },
   { t: "2026-10-27T02:52:22Z", what: "Decision: build every remaining lookbook chart. New epic E7 with a story per chart (48 points); B12 stays blocked on the AP VoteCast licence." },
   { t: "2026-10-27T02:44:56Z", what: "Previews show fabricated results while the count has not started (?sample=auto on preview frames and Preview links): every race gets stable made-up votes, reporting and calls, with county, history and balance-of-power data to match, under a SAMPLE DATA badge; real votes take over the moment they appear. The Chart Catalog now lists every chart in the lookbook (46 ids: A, B, C, D and F series), unbuilt ones greyed. The ticker's first item no longer leads with a separator." },

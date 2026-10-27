@@ -77,5 +77,4 @@ for (const seat of SEATS) {
 
 const json = JSON.stringify(out);
 writeFileSync(new URL("../config/baseline-federal.json", import.meta.url), json);
-writeFileSync(new URL("../public/g/baseline-federal.json", import.meta.url), json);
 console.log(`wrote config/baseline-federal.json (${(json.length / 1024).toFixed(0)} KB)`);

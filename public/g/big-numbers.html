@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Big Numbers</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C3: three or four figures with sources: Gallup party identification, independents in the Senate, featured races, independents on the ballot tonight. */
+  .body { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; align-content: center; }
+  .stat { text-align: center; background: rgba(0,0,0,.25); border-radius: 8px; padding: 40px 24px; }
+  .stat .big { font-size: 120px; font-weight: 800; line-height: 1; color: var(--gold); letter-spacing: -0.02em; }
+  .stat .lab { font-size: 28px; line-height: 1.3; margin-top: 18px; }
+  .stat .src { font-size: 20px; color: var(--muted); margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">The independent movement</div><div class="title">By the numbers</div></div><div class="reporting"></div></div>
+  <div class="body" id="stats"></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Sources on each figure</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  let races = null, gallup = null, nFeatured = FEATURED_RACES.length;
+  function render() {
+    const onBallot = races ? [...races.values()].filter((r) => r.kind === "federal").reduce((s, r) => s + r.candidates.filter((c) => c.independent).length, 0) : null;
+    const stats = [
+      gallup ? { big: `${gallup.independents}%`, lab: "of Americans identify as independent", src: `Gallup, ${gallup.year}` } : null,
+      { big: "2", lab: "independents in the Senate today (King, Sanders)", src: "U.S. Senate" },
+      { big: String(nFeatured), lab: "featured independent races tonight", src: "This broadcast" },
+      onBallot !== null ? { big: String(onBallot), lab: "independent and third-party candidates for Congress", src: "AP candidate lists" } : null,
+    ].filter(Boolean);
+    $("stats").innerHTML = stats.map((s) => `<div class="stat"><div class="big">${s.big}</div><div class="lab">${s.lab}</div><div class="src">${s.src}</div></div>`).join("");
+    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+  }
+  watchState({ onState: (s) => { nFeatured = s.featuredRaceIds.length || FEATURED_RACES.length; render(); } });
+  connectFeed({
+    onSnapshot: async (s) => { races = s.races; try { gallup = (await (await fetch("./polls.json")).json()).gallup; } catch {} render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

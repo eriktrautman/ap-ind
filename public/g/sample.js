@@ -9,13 +9,14 @@ function rng(seed) {
 }
 
 /** Give every race in an index plausible votes, reporting and some calls. Returns a new index. */
-export function fabricateIndex(index, samples = []) {
+export function fabricateIndex(index, samples = [], featuredCands = new Set()) {
   const byId = new Map(samples.map((r) => [r.id, r]));
   const races = index.races.map((r) => {
     const s = byId.get(r.id);
     if (s) {
       const rand = rng(`${r.id}-call`);
-      return { ...r, ...s, candidates: s.candidates.map((c) => ({ ...(r.candidates.find((x) => x.id === c.id) ?? {}), ...c })), featured: r.featured, hasIndependent: r.hasIndependent,
+      // The hand-written sample flags every minor candidate as featured; only the curated independent is.
+      return { ...r, ...s, candidates: s.candidates.map((c) => ({ ...(r.candidates.find((x) => x.id === c.id) ?? {}), ...c, featured: featuredCands.has(c.id), independent: c.party !== "Dem" && c.party !== "GOP" })), featured: r.featured, hasIndependent: r.hasIndependent,
         calledAt: s.called ? new Date(Date.now() - Math.round(rand() * 3 * 3600_000)).toISOString() : null, lastUpdated: new Date().toISOString() };
     }
     const rand = rng(r.id);
@@ -66,6 +67,7 @@ export function fabricateTrend(races) {
   const build = (office, holdDem, holdGop, curDem, curGop) => {
     const p = { Dem: mk(), GOP: mk(), caucusDem: mk(), caucusGop: mk(), other: mk() };
     p.Dem.holdovers = holdDem; p.GOP.holdovers = holdGop; p.Dem.current = curDem; p.GOP.current = curGop;
+    if (office === "S") { p.caucusDem.holdovers = 2; p.caucusDem.current = 2; }   // King and Sanders
     for (const r of races.filter((x) => x.office === office)) {
       const top = [...r.candidates].sort((a, b) => b.votes - a.votes)[0]; if (!top || !r.totalVotes) continue;
       const k = top.party === "Dem" ? "Dem" : top.party === "GOP" ? "GOP" : "other";
