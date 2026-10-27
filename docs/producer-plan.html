@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12",
   note: "S109 (B12) blocked on the AP VoteCast licence; S81 open",
-  updated: "2026-10-27T03:18:51Z",
+  updated: "2026-10-27T03:20:25Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T03:20:25Z", what: "Persistent Elements section above the Race Catalog: the A-series lower thirds and strips with previews, the status bug and call alert once per featured race, and the ticker card shown gold as managed in the Ticker section with no remove option." },
   { t: "2026-10-27T03:18:51Z", what: "B2 race setup no longer overflows: the candidate column and side boxes are allowed to shrink and long lines ellipsize." },
   { t: "2026-10-27T03:08:23Z", what: "Last ten lookbook charts: A2 name lower third, B11 quote card, C9 explainer cards (editorial files seeded: quotes, explainers, state notes, party codes), F1 to F7 as views of one reports page (balance of power from Trend, House composition, closing times, how this state counts, when to expect results, ballot roster, party names). Every chart in the lookbook is now built except B12, which the catalog marks as needing an AP VoteCast licence." },
   { t: "2026-10-27T03:05:58Z", what: "Nine more lookbook charts: B1 candidate profile, B2 race setup, B3 polling trend, B4 path to victory, C2 independents across the map, C3 big numbers, C4 independents in Congress (seeded editorial table), C5 tonight against history (seeded table), C8 what if the featured candidates win. Config data now ships to the graphics from config/ in the build; the public/g duplicates are gone." },

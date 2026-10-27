@@ -11,7 +11,7 @@
   <div class="brandrow">
     <b>IND Election Night</b><span class="subbrand">Control room</span>
     <nav class="sections" id="sectionnav">
-      <a href="#ticker">Ticker</a><a href="#detail">Featured Races</a><a href="#broad">Broad Races Overview</a><a href="#movement">Movement Overview</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
+      <a href="#ticker">Ticker</a><a href="#detail">Featured Races</a><a href="#broad">Broad Races Overview</a><a href="#movement">Movement Overview</a><a href="#persistent">Persistent</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
     </nav>
     <button class="link" id="logout" hidden>Sign out</button>
   </div>
@@ -106,6 +106,13 @@
   <section class="card" id="movement">
     <div class="cardhead"><h2>Movement Overview</h2><span class="muted small">The independent movement as a whole rather than any one race: the featured-races board, the national independent vote, polls against results (the C series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
     <div class="cardgrid" id="movegrid"></div>
+  </section>
+
+  <section class="card" id="persistent">
+    <div class="cardhead"><h2>Persistent Elements</h2><span class="muted small">Lower thirds and strips that are always available (the A series). The live ticker is managed in the <a href="#ticker">Ticker</a> section above.</span></div>
+    <div class="cardgrid" id="persistgrid"></div>
+    <h3>Per race · status bug and call alert for each featured race</h3>
+    <div class="cardgrid" id="persistrace"></div>
   </section>
 
   <section class="card" id="catalog">

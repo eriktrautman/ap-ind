@@ -565,6 +565,24 @@ document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventLi
 $("bg").addEventListener("change", () => { try { localStorage.setItem("studio.bg", $("bg").value); } catch {} cards.refreshLinks(); });
 try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").value = bg; } catch {}
 
+// ---------- Persistent Elements (A series) ----------
+function renderPersistent() {
+  const grid = $("persistgrid"); grid.innerHTML = "";
+  const first = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? null;
+  for (const chart of CHARTS.filter((c) => seriesOf(c.id) === "A" && !c.needsRace)) {
+    const el = cards.card({ chart, race: null, priority: 4, showRace: false });
+    if (chart.id === "A1") { el.classList.add("inuse", "ticker-managed"); el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<a class="mini on" href="#ticker" title="The ticker's races, order, manual items and idle text are set in the Ticker section">★ Managed in Ticker</a>`); }
+    grid.appendChild(el);
+  }
+  const pr = $("persistrace"); pr.innerHTML = "";
+  const perRace = CHARTS.filter((c) => seriesOf(c.id) === "A" && c.needsRace);
+  for (const id of draft.featuredRaceIds) {
+    const r = index?.byId?.get(id); if (!r) continue;
+    for (const chart of perRace) pr.appendChild(cards.card({ chart, race: r, priority: 5 }));
+  }
+  if (!pr.children.length) pr.innerHTML = `<div class="empty">Feature a race and its status bug and call alert appear here.</div>`;
+}
+
 // ---------- Chart Catalog ----------
 function renderChartCatalog() {
   const sample = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
@@ -577,7 +595,8 @@ function renderChartCatalog() {
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
-      else if (kind === "other") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${chart.built ? "Always on" : "Not built yet"}</span>`);
+      else if (chart.id === "A1") { el.classList.add("inuse"); el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<a class="mini on" href="#ticker">★ Managed in Ticker</a>`); }
+      else if (kind === "other") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${chart.built ? (seriesOf(chart.id) === "A" ? "Always available · Persistent Elements" : "Reference") : "Not built yet"}</span>`);
       else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured" : "✓ In overview") : (kind === "race" ? "☆ Feature" : "+ Add")}</button>`);
       grid.appendChild(el);
     }
@@ -591,14 +610,14 @@ function renderAll() {
   renderStatus();
   renderStrip();
   renderPins(); renderManual(); sendPreview();
-  renderDetail(); renderMovement(); renderCatalog(); renderChartCatalog();
+  renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }
 // highlight the section in view
 const secObs = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) document.querySelectorAll("#sectionnav a").forEach((a) => a.classList.toggle("here", a.getAttribute("href") === `#${e.target.id}`));
 }, { rootMargin: "-120px 0px -60% 0px" });
-for (const id of ["ticker", "detail", "broad", "movement", "catalog", "charts"]) secObs.observe($(id));
+for (const id of ["ticker", "detail", "broad", "movement", "persistent", "catalog", "charts"]) secObs.observe($(id));
 
 // ---------- boot ----------
 let timers = [];
