@@ -32,6 +32,10 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .statusbar .st .k { color: #8a98b5; }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; }
 .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
+.howbox { margin: 10px 0 2px; padding: 8px 12px; border: 1px solid var(--sand); border-left: 3px solid var(--gold); border-radius: 6px; background: #fff; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.howbox b { color: var(--ink); font-weight: 600; }
+.howbox code { font-family: var(--mono); font-size: 12px; }
+.howbox a { color: inherit; text-decoration: underline; }
 .testbanner { background: var(--warn); color: #1a1200; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; letter-spacing: .04em; }
 .problem { background: #fdf0f1; border: 1px solid #f0c3c7; border-left: 4px solid var(--bad); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 14px; color: var(--ink); }
 .problem.warn { background: #fdf6ea; border-color: #f1d9a8; border-left-color: var(--warn); }

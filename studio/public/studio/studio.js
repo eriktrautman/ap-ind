@@ -141,8 +141,16 @@ function commit() {
   cards.broadcast(draft);
 }
 
+/** The box at the top of the page: public links only display; only a push, after sign-in, changes them. */
+function renderHow() {
+  const host = prodHost();
+  const where = onSite() ? "this site" : host;
+  $("howtext").innerHTML = `Anyone with the link can open the ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`}; the links are public and they only display. What they show is whatever was last pushed. Nothing on them changes until someone signs in to a control room with the shared password and presses <b>Push</b>${onSite() ? "" : ` (from this laptop, push also needs ${esc(host)}'s password in <code>.env</code>)`}. The switcher operator should open graphics only from the <b>Show</b> buttons on this page, never from a link someone else sends.`;
+}
+
 function renderStrip() {
   $("prodstrip").hidden = false;
+  renderHow();
   const d = dirty();
   const changes = prod ? diffState(prod, draft) : [];
   const host = prodHost();
@@ -181,7 +189,8 @@ async function pushToProduction() {
       ${changeList(changes)}
       <p class="small muted">Last push${onSite() ? "" : ` to ${esc(host)}`}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
       ${someoneElse ? `<div class="warnline bad">Someone else pushed${onSite() ? "" : ` to ${esc(host)}`} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now throws their settings away. Press Cancel and Pull if you want to see them first.</div>` : ""}
-      ${!changes.length ? `<div class="warnline">This page already matches ${onSite() ? "live" : esc(host)}.</div>` : ""}`,
+      ${!changes.length ? `<div class="warnline">This page already matches ${onSite() ? "live" : esc(host)}.</div>` : ""}
+      <p class="small muted">Push is the only way the public ticker and graphics change. Anyone can open them by link, but only a signed-in control room can push.</p>`,
     ok: onSite() ? "Push live" : `Push to ${host}`, danger: true,
   });
   if (!ok) return;

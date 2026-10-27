@@ -41,7 +41,7 @@ What you will be sent, and what it is for:
 
 `AP_RESULTS_TYPE=t` in `.env` means AP's simulated test election; change it to `l` for live results on election night (the control room's Test/Live switch does the same without a restart). The key must never be committed or put in a URL; `.env` is gitignored.
 
-**Your working copy, production, and the two big buttons.** The control room always edits a working copy saved in your browser. Nothing you change goes anywhere until you press **Push to production**, which overwrites production (the shared state the deployed ticker and graphics read) after showing every change, when production was last published, and a warning if someone else pushed since you last looked. **Pull from production** does the reverse: it overwrites your working copy with production, after the same change list. **Restore defaults** overwrites your working copy with the shipped configuration. The strip under the status bar always says where you stand ("3 changes not on production" or "Same as production") and what production is. The previews switch shows either your working copy or production in every thumbnail and the example ticker.
+**The settings on the page, Push and Pull.** The control room always edits the settings on the page, saved in that browser. Nothing changes anywhere else until you press **Push**, which replaces the settings at the site (what its ticker and graphics show) with all of the settings on the page, after listing every change and warning if someone else pushed since you last looked. **Pull** does the reverse: it replaces the settings on the page with the site's, after the same change list. **Defaults** resets the page to the shipped configuration. The strip under the status bar always says where you stand ("3 changes on this page not pushed" or "Same as ap-ind.vercel.app") and when the last push happened.
 
 On a laptop, production is whatever `GLOBAL` in `.env` says:
 
@@ -151,6 +151,14 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 ## Watch Party
 
 `watch-party/` is a separate Vercel project (https://ind-watch-party.vercel.app): static pages that read the same Blob files the ap-ind poller writes. It covers every race the AP key returns (Senate, House, governor, other statewide offices, ballot measures, big-city mayors; not state legislatures). It has no poller or secrets of its own.
+
+## Who can change what
+
+- **The ticker and every graphic are public links.** `/ticker` and the pages under `/g/` are fixed URLs, the same for everyone, and they only display. Anyone who has a link sees exactly what the switcher sees. No sign-in produces these links and opening one changes nothing.
+- **They show whatever was last pushed.** Each page reads the shared settings from the public, read-only `GET /api/producer` every few seconds. There is no other input.
+- **Only a push changes them.** A push is a `PUT /api/producer`, accepted only with the signed cookie you get by signing in to `/studio` with `STUDIO_PASSWORD`. A push from a laptop goes through the laptop's own sign-in and then signs in to the deployment with `GLOBAL_PASSWORD`, which is that same password. One shared password gates every change; change it in the Vercel project and every open control room is signed out at once.
+- **Per-browser knobs affect one screen only.** `?src=local` on a graphic reads that browser's own saved settings, and a few pages take display text from the URL (the lower third's `?name=&title=`, the quote card's `?quote=&who=`). They change what that one window shows and nothing else, and the text is rendered as text, never as markup. The operational rule that matters: the switcher operator opens graphics only from the control room's **Show** buttons, never from a link someone else sends.
+- **What is not there.** Sign-in guessing is slowed by a fixed delay but not rate-limited or locked out, so use a long random password (a Vercel Firewall rate-limit rule on `/api/login` closes this properly). The shared password means no per-person revocation and no record of who pushed beyond the time of the last push.
 
 ## Secrets
 

@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12",
   note: "S109 (B12) blocked on the AP VoteCast licence; S81 open",
-  updated: "2026-10-27T04:15:27Z",
+  updated: "2026-10-27T04:37:51Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T04:37:51Z", what: "Explainer box atop the control room, a note in the Push dialog and a README section on who can change what: public links only display; only a signed-in push changes them." },
   { t: "2026-10-27T04:15:27Z", what: "Docs navbar reduced to the site name, Home and a gold Control room button, so it is not confused with the control room's own bar." },
   { t: "2026-10-27T04:14:19Z", what: "Homepage redesigned: the control room is the one big call to action, with the ticker, plan, lookbook and spec as tiles below." },
   { t: "2026-10-27T04:11:46Z", what: "Preview is only in the Chart Catalog; the Race Catalog's expanded cards show full size too." },
