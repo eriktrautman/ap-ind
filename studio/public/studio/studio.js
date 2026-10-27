@@ -303,8 +303,9 @@ function toggleChart(id) {
   const chart = CHARTS.find((c) => c.id === id); if (!chart) return;
   const key = chart.kind === "race" ? "featuredCharts" : "movementCharts";
   const on = draft[key].includes(id);
-  const where = chart.kind === "race" ? "the Featured Races set (every featured race)" : "the Movement Overview";
-  confirmThen(on ? `Remove ${id} from ${chart.kind === "race" ? "Featured Charts" : "Movement Overview"}?` : `Add ${id} to ${chart.kind === "race" ? "Featured Charts" : "Movement Overview"}?`, `${esc(chart.id)} ${esc(chart.name)} ${on ? "leaves" : "joins"} ${where}.`,
+  const target = chart.kind === "race" ? "Featured Charts" : overviewName(chart);
+  const where = chart.kind === "race" ? "the Featured Races set (every featured race)" : `the ${target}`;
+  confirmThen(on ? `Remove ${id} from ${target}?` : `Add ${id} to ${target}?`, `${esc(chart.id)} ${esc(chart.name)} ${on ? "leaves" : "joins"} ${where}.`,
     () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); });
 }
 
@@ -422,10 +423,18 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-fe
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-pin]"); if (b) toggleTicker(b.dataset.pin); });
 
 // ---------- Movement Overview ----------
+// movementCharts holds both series; the C charts render in Movement Overview, the D charts in Broad Races Overview.
+const seriesOf = (id) => id[0];
+const overviewName = (chart) => (seriesOf(chart.id) === "D" ? "Broad Races Overview" : "Movement Overview");
 function renderMovement() {
-  const grid = $("movegrid"); grid.className = "cardgrid"; grid.innerHTML = "";
-  for (const cid of draft.movementCharts) { const chart = CHARTS.find((c) => c.id === cid); if (chart) grid.appendChild(cards.card({ chart, priority: 3, menu: [{ label: "Remove from Movement Overview…", onClick: () => toggleChart(chart.id) }] })); }
-  if (!grid.children.length) grid.innerHTML = `<div class="empty">No movement charts selected. Add some from the Chart Catalog below.</div>`;
+  for (const [gridId, series] of [["movegrid", "C"], ["broadgrid", "D"]]) {
+    const grid = $(gridId); grid.className = "cardgrid"; grid.innerHTML = "";
+    for (const cid of draft.movementCharts.filter((id) => seriesOf(id) === series)) {
+      const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
+      grid.appendChild(cards.card({ chart, priority: 3, menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
+    }
+    if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add ${series} charts from the Chart Catalog below.</div>`;
+  }
 }
 
 // ---------- Full Catalog ----------
@@ -493,14 +502,14 @@ try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").val
 // ---------- Chart Catalog ----------
 function renderChartCatalog() {
   const sample = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
-  for (const [gridId, kind] of [["chartsRace", "race"], ["chartsMove", "movement"]]) {
+  for (const [gridId, kind, series] of [["chartsRace", "race", "B"], ["chartsMove", "movement", "C"], ["chartsBroad", "movement", "D"]]) {
     const grid = $(gridId); grid.innerHTML = "";
-    for (const chart of CHARTS.filter((c) => c.kind === kind)) {
+    for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : "movementCharts";
       const on = draft[key].includes(chart.id);
       const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 9, isStatic: true });
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
-      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : "Shown in the Movement Overview"}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
+      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
       grid.appendChild(el);
     }
   }
@@ -520,7 +529,7 @@ function renderAll() {
 const secObs = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) document.querySelectorAll("#sectionnav a").forEach((a) => a.classList.toggle("here", a.getAttribute("href") === `#${e.target.id}`));
 }, { rootMargin: "-120px 0px -60% 0px" });
-for (const id of ["ticker", "detail", "movement", "catalog", "charts"]) secObs.observe($(id));
+for (const id of ["ticker", "detail", "broad", "movement", "catalog", "charts"]) secObs.observe($(id));
 
 // ---------- boot ----------
 let timers = [];

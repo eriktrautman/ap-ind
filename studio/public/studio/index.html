@@ -11,7 +11,7 @@
   <div class="brandrow">
     <b>IND Election Night</b><span class="subbrand">Control room</span>
     <nav class="sections" id="sectionnav">
-      <a href="#ticker">Ticker</a><a href="#detail">Featured Races</a><a href="#movement">Movement Overview</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
+      <a href="#ticker">Ticker</a><a href="#detail">Featured Races</a><a href="#broad">Broad Races Overview</a><a href="#movement">Movement Overview</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
     </nav>
     <button class="link" id="logout" hidden>Sign out</button>
   </div>
@@ -97,8 +97,13 @@
     <div class="racegrid" id="racegrid"></div>
   </section>
 
+  <section class="card" id="broad">
+    <div class="cardhead"><h2>Broad Races Overview</h2><span class="muted small">The whole night at a glance: Senate and House maps, balance of power, key races, zoom-ins, the popular vote, too close to call (the D series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
+    <div class="cardgrid" id="broadgrid"></div>
+  </section>
+
   <section class="card" id="movement">
-    <div class="cardhead"><h2>Movement Overview</h2><span class="muted small">Add charts from the <a href="#charts">Chart Catalog</a>; remove one from its ⋯ menu.</span></div>
+    <div class="cardhead"><h2>Movement Overview</h2><span class="muted small">The independent movement as a whole rather than any one race: the featured-races board, the national independent vote, polls against results (the C series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
     <div class="cardgrid" id="movegrid"></div>
   </section>
 
@@ -117,11 +122,13 @@
     <div class="catalog" id="catalogList"></div>
   </section>
   <section class="card" id="charts">
-    <div class="cardhead"><h2>Chart Catalog</h2><span class="muted small">Every chart the app can draw. Per-race charts go into the Featured Races set (one set for every featured race); movement charts go into the Movement Overview.</span></div>
-    <h3>Per-race charts</h3>
+    <div class="cardhead"><h2>Chart Catalog</h2><span class="muted small">Every chart the app can draw. Per-race charts go into the Featured Races set (one set for every featured race); C charts into the Movement Overview; D charts into the Broad Races Overview.</span></div>
+    <h3>Per-race charts (B series) · go into Featured Races</h3>
     <div class="cardgrid" id="chartsRace"></div>
-    <h3>Movement charts</h3>
+    <h3>Independent movement charts (C series) · go into Movement Overview</h3>
     <div class="cardgrid" id="chartsMove"></div>
+    <h3>Broad races charts (D series) · go into Broad Races Overview</h3>
+    <div class="cardgrid" id="chartsBroad"></div>
   </section>
 </main>
 
