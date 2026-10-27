@@ -94,7 +94,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .pill.call { background: var(--gold); color: #1a1600; }
 .sic { display: inline-block; margin-left: 6px; vertical-align: -1px; } .sic.feat { color: #c9a227; } .sic.tick { color: var(--navy); }
 .list { border: 1px solid var(--sand); border-radius: 8px; max-height: 420px; overflow: auto; }
-.list.pins { max-height: 320px; }
+.list.pins { max-height: none; overflow: visible; }
 .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 7px 10px; border-bottom: 1px solid var(--sand); font-size: 13.5px; }
 .row:last-child { border-bottom: 0; }
 .row .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -132,6 +132,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .racegrid { display: grid; gap: 18px; margin-top: 16px; }
 .racerow { border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; }
 .raceband { display: flex; align-items: baseline; gap: 12px; padding: 8px 14px; background: var(--navy); color: #fff; flex-wrap: wrap; }
+.raceband .pos { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--navy); background: #fff; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
 .raceband .lab { font-size: 18px; font-weight: 700; background: var(--gold); color: #1a1600; padding: 1px 9px; margin: 0; }
 .raceband .ttl { font-family: var(--serif); font-size: 17px; }
 .raceband .who { color: #e9d5ff; }

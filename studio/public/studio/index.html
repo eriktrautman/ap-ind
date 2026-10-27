@@ -20,7 +20,7 @@
   </div>
   <div class="prodstrip" id="prodstrip" hidden>
     <span class="ps-work"><b id="ps-state">…</b><span class="ps-sub" id="ps-sub"></span></span>
-    <span class="ps-actions"><button class="push" id="push" title="Overwrite production with your working copy"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Push</button><button class="pull" id="pull" title="Replace your working copy with production"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button><button id="defaults" title="Replace your working copy with the shipped defaults"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span>
+    <span class="ps-actions"><button class="push" id="push" title="Send your copy to everyone's version"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Send</button><button class="pull" id="pull" title="Replace your copy with everyone's version"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Get</button><button id="defaults" title="Replace your copy with the defaults the app came with"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span>
     <span class="ps-prod"><b id="ps-prod">…</b><span class="ps-sub" id="ps-prodsub"></span></span>
   </div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
@@ -51,7 +51,7 @@
   </div>
 
   <div class="toolbar">
-    <span class="seg" id="previewsel"><span class="lbl">Previews show</span><button data-view="local" class="on">your working copy</button><button data-view="global">production</button></span>
+    <span class="seg" id="previewsel"><span class="lbl">Previews show</span><button data-view="local" class="on">your copy</button><button data-view="global" id="previewprod">everyone's version</button></span>
     <label class="bgpick">Open graphics on <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>
     <span class="muted small" id="thumbbudget"></span>
   </div>
@@ -60,11 +60,14 @@
     <div class="cardhead"><h2>Ticker</h2>
       <div class="actions"><label class="toggle"><input type="checkbox" id="callhl"> AP Call yellow highlight</label></div>
     </div>
-    <div class="cols">
+    <h3>Example ticker <span class="muted" id="previewnote"></span></h3>
+    <div class="preview"><div class="frame"><iframe id="preview" title="Ticker preview"></iframe></div></div>
+    <p class="muted small">The ticker everyone uses is <code id="tickerurl"></code> (add <code>?bg=green</code> for the key). It shows whatever was last sent and re-reads it every 5 seconds.</p>
+      <div class="cols">
       <div class="col">
         <h3>Ticker races <span class="muted" id="pincount"></span></h3>
+        <div class="filters addfeat"><input id="pinq" placeholder="Add a race to the ticker: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
         <div class="list pins" id="pins"></div>
-        <div class="filters addfeat"><input id="pinq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
         <p class="muted small">Or add races from the <a href="#catalog">Race Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
       </div>
       <div class="col">
@@ -75,23 +78,22 @@
         <input id="idletext" placeholder="Shown only if nothing at all is on the ticker" maxlength="240">
       </div>
     </div>
-    <h3>Example ticker <span class="muted" id="previewnote"></span></h3>
-    <div class="preview"><div class="frame"><iframe id="preview" title="Ticker preview"></iframe></div></div>
-    <p class="muted small">The ticker page is <code id="tickerurl"></code> (add <code>?bg=green</code> for the key). It always shows production and re-reads it every 5 seconds.</p>
-  </section>
+</section>
 
   <section class="card" id="detail">
     <div class="cardhead"><h2>Featured Races</h2><span class="muted small">Featuring a race only makes its charts easy to grab here, one row per race. It changes nothing in the ticker or graphics.</span></div>
     <div class="cols">
       <div class="col">
         <h3>Featured races <span class="muted" id="featcount"></span></h3>
+        <div class="filters addfeat"><input id="featq" placeholder="Add a featured race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="featsuggest" hidden></div></div>
         <div class="list pins" id="featured"></div>
-        <div class="filters addfeat"><input id="featq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="featsuggest" hidden></div></div>
         <p class="muted small">Or feature any race from the <a href="#catalog">Race Catalog</a> below; pick the charts from the <a href="#charts">Chart Catalog</a>.</p>
       </div>
       <div class="col">
-        <h3>Featured charts <span class="muted small">(the same set for every featured race)</span></h3>
-        <div class="chartpick" id="racecharts"></div>
+        <h3>Featured charts <span class="muted" id="chartcount"></span> <span class="muted small">· the same set for every featured race</span></h3>
+        <div class="filters addfeat"><input id="chartq" placeholder="Add a chart: type an id or name (B5, county map…)" size="34" autocomplete="off"><div class="suggest" id="chartsuggest" hidden></div></div>
+        <div class="list pins" id="featcharts"></div>
+        <p class="muted small">Or add from the <a href="#charts">Chart Catalog</a> below.</p>
       </div>
     </div>
     <div class="racegrid" id="racegrid"></div>

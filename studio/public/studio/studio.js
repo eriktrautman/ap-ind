@@ -100,7 +100,9 @@ const dirty = () => !prod || !sameState(draft, prod);
 const otherOperator = () => prod && prodSeenAt !== prod.updatedAt;
 const canPush = () => runtime ? !!runtime.production?.canPush : true;
 const canPull = () => runtime ? !!runtime.production?.canPull : !prodError;
-const prodName = () => runtime?.production?.where === "self" ? "this laptop (standby)" : runtime?.production?.origin?.replace(/^https?:\/\//, "") ?? "the deployment";
+// The shared version is always named by its web address, never by a word like "production": on the
+// website that is this site; on a laptop it is the website it points at, or the laptop itself (GLOBAL=self).
+const prodHost = () => runtime ? (runtime.production?.where === "self" ? `${location.host} (this laptop)` : runtime.production?.origin?.replace(/^https?:\/\//, "") ?? "the website") : location.host;
 
 /** Every edit comes through here: the working copy saves to this browser at once. */
 function commit() {
@@ -111,23 +113,24 @@ function commit() {
 
 function renderStrip() {
   $("prodstrip").hidden = false;
+  $("previewprod").textContent = `the version at ${prodHost()}`;
   const d = dirty();
   const changes = prod ? diffState(prod, draft) : [];
   const st = $("ps-state");
   st.className = d ? "dirty" : "same";
-  st.textContent = !prod ? "Working copy: production unknown" : d ? `Working copy: ${changes.length} change${changes.length === 1 ? "" : "s"} vs production` : "Working copy = production";
-  $("ps-sub").textContent = readLocal()?.updatedAt ? `saved ${ago(readLocal().updatedAt)}` : "";
+  st.textContent = !prod ? `Your copy · can't read ${prodHost()}` : d ? `Your copy · ${changes.length} change${changes.length === 1 ? "" : "s"} not yet sent to ${prodHost()}` : `Your copy · same as ${prodHost()}`;
+  $("ps-sub").textContent = readLocal()?.updatedAt ? `saved in this browser ${ago(readLocal().updatedAt)}` : "";
   const p = $("ps-prod");
   const r = runtime?.production;
-  const pub = prod?.updatedAt ? `published ${ago(prod.updatedAt)}${otherOperator() ? " · changed since your last pull" : ""}` : "never published (defaults)";
-  if (runtime && r && !r.reachable) { p.className = "bad"; p.textContent = `Production: ${prodName()} · unreachable`; $("ps-prodsub").textContent = ""; }
-  else if (prodError) { p.className = "bad"; p.textContent = `Production: ${prodName()} · unreadable`; $("ps-prodsub").textContent = ""; }
-  else if (runtime && r && !r.canPush) { p.className = "warn"; p.textContent = `Production: ${prodName()} · pull only`; $("ps-prodsub").textContent = `no GLOBAL_PASSWORD · ${pub}`; }
-  else { p.className = ""; p.textContent = `Production: ${prodName()}`; $("ps-prodsub").textContent = pub; }
+  const pub = prod?.updatedAt ? `last sent ${ago(prod.updatedAt)}${otherOperator() ? " · changed since you last got it" : ""}` : "nothing sent yet, so it shows the defaults";
+  if (runtime && r && !r.reachable) { p.className = "bad"; p.textContent = `Everyone's version at ${prodHost()} · not answering`; $("ps-prodsub").textContent = ""; }
+  else if (prodError) { p.className = "bad"; p.textContent = `Everyone's version at ${prodHost()} · can't be read`; $("ps-prodsub").textContent = ""; }
+  else if (runtime && r && !r.canPush) { p.className = "warn"; p.textContent = `Everyone's version at ${prodHost()} · you can get it, not send`; $("ps-prodsub").textContent = `this laptop has no password for it · ${pub}`; }
+  else { p.className = ""; p.textContent = `Everyone's version at ${prodHost()}`; $("ps-prodsub").textContent = pub; }
   $("push").disabled = !canPush() || !d;
-  $("push").title = !canPush() ? (r?.reason ?? "push unavailable") : !d ? "Your working copy already matches production" : `Overwrite production with your working copy (${changes.length} changes)`;
+  $("push").title = !canPush() ? (r?.reason ?? "sending is not possible from here") : !d ? `Your copy is already the same as ${prodHost()}` : `Send your copy to ${prodHost()} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !prod;
-  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pull unavailable") : "Replace your working copy with production";
+  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "getting is not possible right now") : `Replace your copy with the version at ${prodHost()}`;
 }
 
 async function pushToProduction() {
@@ -137,13 +140,13 @@ async function pushToProduction() {
   const changes = diffState(latest ?? DEFAULTS, draft);
   const someoneElse = latest && latest.updatedAt !== prodSeenAt;
   const ok = await ask({
-    title: `Push to production (${prodName()})?`,
-    body: `<p>Production is overwritten with your working copy. The deployed ticker picks it up within 5 seconds and the graphics within 10.</p>
+    title: `Send your copy to ${prodHost()}?`,
+    body: `<p>The ticker and every graphic at <b>${esc(prodHost())}</b> will change to what you have here: the ticker within 5 seconds, the graphics within 10.</p>
       ${changeList(changes)}
-      <p class="small muted">Production last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Production changed at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now overwrites that. Pull first if you want to see it.</div>` : ""}
-      ${!changes.length ? `<div class="warnline">Nothing differs from production.</div>` : ""}`,
-    ok: "Push to production", danger: true,
+      <p class="small muted">Last send to ${esc(prodHost())}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
+      ${someoneElse ? `<div class="warnline bad">Someone else sent a version to ${esc(prodHost())} at ${esc(fmtTime(latest.updatedAt))}, after you last got or sent one. Sending now replaces theirs. Press Cancel and Get if you want to see it first.</div>` : ""}
+      ${!changes.length ? `<div class="warnline">Your copy is already the same as ${esc(prodHost())}.</div>` : ""}`,
+    ok: `Send to ${prodHost()}`, danger: true,
   });
   if (!ok) return;
   try {
@@ -152,18 +155,18 @@ async function pushToProduction() {
     draft = saveLocal(structuredClone(saved));
     renderAll(); cards.broadcast(draft);
   } catch (e) {
-    await ask({ title: "Push failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed on production. Your working copy is still saved here.</p>`, ok: "OK" });
+    await ask({ title: "Sending failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed at ${esc(prodHost())}. Your copy is still saved here.</p>`, ok: "OK" });
   }
 }
 async function pullFromProduction() {
   let latest;
   try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; }
-  catch (e) { prodError = e.message; renderStrip(); await ask({ title: "Production is unreadable", body: `<div class="warnline bad">${esc(e.message)}</div><p>Your working copy is unchanged.</p>`, ok: "OK" }); return; }
+  catch (e) { prodError = e.message; renderStrip(); await ask({ title: `Can't read ${prodHost()}`, body: `<div class="warnline bad">${esc(e.message)}</div><p>Your copy is unchanged.</p>`, ok: "OK" }); return; }
   const changes = diffState(draft, latest);
   const ok = await ask({
-    title: `Pull from production (${prodName()})? Your working copy is overwritten.`,
-    body: `<p>Production, last published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never (the defaults)"}, replaces what you have here. Production itself does not change.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches production.</div>` : ""}`,
-    ok: "Pull from production", danger: changes.length > 0,
+    title: `Get the version at ${prodHost()}? Your copy is replaced.`,
+    body: `<p>What you have here is replaced by what is at <b>${esc(prodHost())}</b> (last sent ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so it is the defaults"}). Nothing at ${esc(prodHost())} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your copy is already the same as ${esc(prodHost())}.</div>` : ""}`,
+    ok: `Get from ${prodHost()}`, danger: changes.length > 0,
   });
   if (!ok) return;
   prodSeenAt = latest.updatedAt;
@@ -172,7 +175,7 @@ async function pullFromProduction() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the shipped defaults? Your working copy is overwritten.", body: `<p>Production does not change until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your working copy already matches the defaults.</div>` : ""}`, ok: "Restore defaults", danger: changes.length > 0 });
+  const ok = await ask({ title: "Reset your copy to the defaults?", body: `<p>What you have here is replaced by the defaults the app came with. Nothing at ${esc(prodHost())} changes until you send.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your copy is already the defaults.</div>` : ""}`, ok: "Reset to defaults", danger: changes.length > 0 });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   renderAll(); cards.broadcast(draft);
@@ -205,7 +208,7 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-air", `<span class="k">Push reaches production outputs in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
+    st("st-air", `<span class="k">A send reaches ${esc(prodHost())} in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
@@ -254,7 +257,7 @@ $("pollnow").addEventListener("click", () => runPoll(false));
 $("pollfresh").addEventListener("click", () => runPoll(true));
 $("pause").addEventListener("click", async () => {
   const paused = settings?.pollEnabled === false;
-  if (!paused && !(await ask({ title: "Pause polling?", body: "<p>The ticker, every graphic and the watch party stop getting new AP data until you resume.</p>", ok: "Pause", danger: true }))) return;
+  if (!paused && !(await ask({ title: "Pause polling?", body: `<p>The ticker, every graphic and the watch party at ${esc(location.host)} stop getting new AP results until you resume.</p>`, ok: "Pause", danger: true }))) return;
   settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, pollEnabled: paused }) });
   renderStatus();
   if (!paused) $("pollmsg").textContent = "Paused. Resume polling when ready.";
@@ -264,7 +267,7 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
   const rt = b.dataset.rt;
   const cur = settings?.resultsType ?? settings?.envResultsType ?? "t";
   if (rt === cur) return;
-  const body = rt === "l" ? "<p>The ticker, every graphic and the public watch party show real AP results from the next poll.</p>" : "<p>Real results are replaced by AP's simulation on the next poll.</p>";
+  const body = rt === "l" ? `<p>The ticker, every graphic and the public watch party at ${esc(location.host)} show real AP results from the next poll.</p>` : "<p>Real results are replaced by AP's practice simulation on the next poll.</p>";
   if (!(await ask({ title: rt === "l" ? "Switch to LIVE results?" : "Switch to AP TEST data?", body, ok: rt === "l" ? "Go live" : "Use test data", danger: rt === "l" }))) return;
   settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, resultsType: rt }) });
   renderStatus(); runPoll(false);
@@ -276,16 +279,16 @@ const indName = (r) => FEATURED_RACES.find((f) => f.id === r.id)?.who ?? r.candi
 const ICON_FEAT = '<span class="sic feat" title="Featured race"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3 .8 4.4L8 11.5l-3.9 2.1.8-4.4-3.2-3 4.4-.6z" fill="currentColor"/></svg></span>';
 const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M1 4h14v8H1z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 8h6M11 8h1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
 const raceLine = (r) => `<span class="lab">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.featuredRaceIds.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
-function raceBand(r, { featured }) {
+function raceBand(r, { featured, position = null }) {
   const who = indName(r);
-  return `<div class="raceband"><span class="lab">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
+  return `<div class="raceband">${position ? `<span class="pos" title="Position ${position} in the Featured races list">${position}</span>` : ""}<span class="lab">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
     <span class="meta">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results yet"}${r.called ? " · AP CALL" : ""}${r.rankedChoice ? " · ranked choice" : ""}</span>
     <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
 }
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
-  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes your working copy only; production does not change until you push.</p>`, ok: title.replace(/\?$/, "") });
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only your copy. Nothing at ${esc(prodHost())} changes until you send.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
 }
 function toggleFeatured(id) {
@@ -367,15 +370,19 @@ function renderDetail() {
     return `<div class="row" data-id="${id}"><div><div class="nm"><span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(id)}</span><span class="muted">not in the current AP feed</span>`}</div>${r ? `<div class="sub">${esc(r.stateName)}${indName(r) ? " · " + esc(indName(r)) : ""} · ${cands(r)}</div>` : ""}</div>
       <div class="btns"><button class="up" ${i === 0 ? "disabled" : ""}>▲</button><button class="down" ${i === draft.featuredRaceIds.length - 1 ? "disabled" : ""}>▼</button><button class="rm">✕</button></div></div>`;
   }).join("") : `<div class="empty">No featured races. Add one below or from the catalog.</div>`;
-  const raceCharts = CHARTS.filter((c) => c.kind === "race");
-  $("racecharts").innerHTML = raceCharts.filter((c) => !c.retired).map((c) => `<label class="${draft.featuredCharts.includes(c.id) ? "on" : ""} ${c.built ? "" : "unbuilt"}"><input type="checkbox" data-chart="${c.id}" ${draft.featuredCharts.includes(c.id) ? "checked" : ""}><span class="cid">${c.id}</span>${esc(c.name)}${c.built ? "" : ' <span class="soon">not built yet</span>'}</label>`).join("");
+  $("chartcount").textContent = `${draft.featuredCharts.length}`;
+  $("featcharts").innerHTML = draft.featuredCharts.length ? draft.featuredCharts.map((id, i) => {
+    const c = CHARTS.find((x) => x.id === id); if (!c) return "";
+    return `<div class="row" data-id="${id}"><div><div class="nm"><span class="ord">${i + 1}</span><span class="lab">${esc(c.id)}</span>${esc(c.name)}${c.built ? "" : ' <span class="pill" style="background:#fdf6ea;color:#8a5a0e">not built yet</span>'}</div></div>
+      <div class="btns"><button class="rm" title="Remove from Featured Charts">✕</button></div></div>`;
+  }).join("") : `<div class="empty">No featured charts. Add one above or from the Chart Catalog.</div>`;
   const grid = $("racegrid");
   grid.innerHTML = "";
   draft.featuredRaceIds.forEach((id, i) => {
     const r = index.byId.get(id);
     const row = document.createElement("div"); row.className = "racerow";
-    if (!r) { row.innerHTML = `<div class="raceband"><span class="lab">${esc(id)}</span><span class="ttl">Not in the current AP feed</span><button class="featbtn" data-feat="${esc(id)}">Remove from Featured</button></div>`; grid.appendChild(row); return; }
-    row.innerHTML = raceBand(r, { featured: true });
+    if (!r) { row.innerHTML = `<div class="raceband"><span class="pos">${i + 1}</span><span class="lab">${esc(id)}</span><span class="ttl">Not in the current AP feed</span><button class="featbtn" data-feat="${esc(id)}">Remove from Featured</button></div>`; grid.appendChild(row); return; }
+    row.innerHTML = raceBand(r, { featured: true, position: i + 1 });
     const cg = document.createElement("div"); cg.className = "cardgrid";
     for (const cid of draft.featuredCharts) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
@@ -395,7 +402,22 @@ $("featured").addEventListener("click", (e) => {
   else if (b.classList.contains("down") && i < a.length - 1) [a[i + 1], a[i]] = [a[i], a[i + 1]];
   commit();
 });
-$("racecharts").addEventListener("change", (e) => { const id = e.target.dataset.chart; if (id) { renderDetail(); cards.prune(); toggleChart(id); } });
+$("featcharts").addEventListener("click", (e) => { const row = e.target.closest(".row"); if (row && e.target.closest(".rm")) toggleChart(row.dataset.id); });
+/** Type-to-add chart picker for the Featured Charts list: per-race charts not yet in the set. */
+(() => {
+  const input = $("chartq"), box = $("chartsuggest");
+  const render = () => {
+    const q = input.value.trim().toLowerCase();
+    let rows = CHARTS.filter((c) => c.kind === "race" && !c.retired && !draft.featuredCharts.includes(c.id));
+    if (q) rows = rows.filter((c) => `${c.id} ${c.name}`.toLowerCase().includes(q));
+    box.hidden = false;
+    box.innerHTML = rows.length ? rows.map((c) => `<div class="row" data-id="${c.id}"><div><div class="nm"><span class="lab">${esc(c.id)}</span>${esc(c.name)}${c.built ? "" : ' <span class="muted small">not built yet</span>'}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") : `<div class="empty">${q ? "No charts match." : "Every per-race chart is already featured."}</div>`;
+  };
+  input.addEventListener("input", render); input.addEventListener("focus", render);
+  box.addEventListener("mousedown", (e) => { const row = e.target.closest(".row"); if (!row) return; e.preventDefault(); toggleChart(row.dataset.id); input.value = ""; box.hidden = true; });
+  input.addEventListener("keydown", (e) => { if (e.key === "Escape") { box.hidden = true; input.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box.querySelector(".row"); if (first) { toggleChart(first.dataset.id); input.value = ""; box.hidden = true; } } });
+  document.addEventListener("click", (e) => { if (!e.target.closest("#chartq, #chartsuggest")) box.hidden = true; });
+})();
 /** Type-to-add race picker shared by the ticker and Race Detail: matches label, state, office and
  *  candidate names; with nothing typed it suggests featured races, then races with an independent. */
 function racePicker(inputId, boxId, { exclude, onPick }) {
