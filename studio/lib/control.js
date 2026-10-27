@@ -100,6 +100,8 @@ export const DEFAULTS = Object.freeze({
   featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
   movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11"],
   keyRaceIds: [],            // D5; empty means "the ticker races"
+  persistentCharts: [],      // A series elements in the Persistent Elements section (never A1, the ticker)
+  persistentSettings: {},    // per element inputs: A2 {name, title}, A3 {raceId}, A4 {raceId}
   contextLines: {},          // D6: raceId -> one line the producer typed
   updatedAt: null,
 });
@@ -108,7 +110,7 @@ const LIMITS = { pins: 60, featured: 40, manual: 20, text: 240, key: 8, context:
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
 const chartIds = (arr, kind) => {
-  const known = new Set(CHARTS.filter((c) => c.kind === kind && !c.retired).map((c) => c.id));
+  const known = new Set(CHARTS.filter((c) => c.kind === kind && !c.retired && c.id !== "A1").map((c) => c.id));
   return [...new Set((Array.isArray(arr) ? arr : []).filter((id) => known.has(id)))];
 };
 
@@ -138,6 +140,8 @@ export function normalize(raw) {
     featuredCharts: Array.isArray(r.featuredCharts) ? chartIds(r.featuredCharts, "race") : [...DEFAULTS.featuredCharts],
     movementCharts: Array.isArray(r.movementCharts) ? chartIds(r.movementCharts, "movement") : [...DEFAULTS.movementCharts],
     keyRaceIds: uniqIds(r.keyRaceIds, LIMITS.key),
+    persistentCharts: Array.isArray(r.persistentCharts) ? chartIds(r.persistentCharts, "other").filter((id) => id[0] === "A") : [],
+    persistentSettings: (() => { const out = {}; const src = r.persistentSettings && typeof r.persistentSettings === "object" ? r.persistentSettings : {}; for (const [k, v] of Object.entries(src)) { if (!/^A\d+$/.test(k) || !v || typeof v !== "object") continue; const o = {}; for (const [f, x] of Object.entries(v)) if (/^[a-zA-Z]+$/.test(f) && typeof x === "string") o[f] = x.trim().slice(0, LIMITS.context); out[k] = o; } return out; })(),
     contextLines: context,
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null,
   };
@@ -170,6 +174,10 @@ export function diffState(from, to) {
   list("featuredCharts", "Featured charts", false);
   list("movementCharts", "Movement charts", false);
   list("keyRaceIds", "Key races", true);
+  list("persistentCharts", "Persistent elements", false);
+  for (const k of new Set([...Object.keys(A.persistentSettings), ...Object.keys(B.persistentSettings)])) {
+    if (JSON.stringify(A.persistentSettings[k] ?? {}) !== JSON.stringify(B.persistentSettings[k] ?? {})) out.push({ field: "persistentSettings", text: `${k} settings: ${Object.entries(B.persistentSettings[k] ?? {}).map(([f, v]) => `${f} "${v}"`).join(", ") || "(cleared)"}` });
+  }
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
   const am = A.manualItems.map((m) => m.text), bm = B.manualItems.map((m) => m.text);

@@ -332,13 +332,13 @@ function toggleTicker(id) {
     () => { draft.pinnedRaceIds = on ? a.filter((x) => x !== id) : [...a, id]; });
 }
 function toggleChart(id) {
-  const chart = CHARTS.find((c) => c.id === id); if (!chart) return;
-  const key = chart.kind === "race" ? "featuredCharts" : "movementCharts";
+  const chart = CHARTS.find((c) => c.id === id); if (!chart || id === "A1") return;
+  const key = chart.kind === "race" ? "featuredCharts" : chart.kind === "other" ? "persistentCharts" : "movementCharts";
   const on = draft[key].includes(id);
-  const target = chart.kind === "race" ? "Featured Charts" : overviewName(chart);
-  const where = chart.kind === "race" ? "the Featured Races set (every featured race)" : `the ${target}`;
+  const target = chart.kind === "race" ? "Featured Charts" : chart.kind === "other" ? "Persistent Elements" : overviewName(chart);
+  const where = chart.kind === "race" ? "the Featured Races set (every featured race)" : `the ${target}${chart.kind === "other" ? " section, where its inputs are set" : ""}`;
   confirmThen(on ? `Remove ${id} from ${target}?` : `Add ${id} to ${target}?`, `${esc(chart.id)} ${esc(chart.name)} ${on ? "leaves" : "joins"} ${where}.`,
-    () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); });
+    () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); if (on && key === "persistentCharts") delete draft.persistentSettings[id]; });
 }
 
 // ---------- Ticker section ----------
@@ -565,23 +565,39 @@ document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventLi
 $("bg").addEventListener("change", () => { try { localStorage.setItem("studio.bg", $("bg").value); } catch {} cards.refreshLinks(); });
 try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").value = bg; } catch {}
 
-// ---------- Persistent Elements (A series) ----------
+// ---------- Persistent Elements (A series, except the ticker) ----------
+// Each element's inputs live in draft.persistentSettings[id] and go into its preview and open URLs.
+const PERSIST_INPUTS = {
+  A2: [{ f: "name", label: "Name", ph: "e.g. Dan Osborn" }, { f: "title", label: "Title", ph: "e.g. Independent candidate, U.S. Senate" }],
+  A3: [{ f: "raceId", label: "Race", race: true }],
+  A4: [{ f: "raceId", label: "Race", race: true, ph: "latest featured call (leave empty)" }],
+};
 function renderPersistent() {
   const grid = $("persistgrid"); grid.innerHTML = "";
-  const first = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? null;
-  for (const chart of CHARTS.filter((c) => seriesOf(c.id) === "A" && !c.needsRace)) {
-    const el = cards.card({ chart, race: null, priority: 4, showRace: false });
-    if (chart.id === "A1") { el.classList.add("inuse", "ticker-managed"); el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<a class="mini on" href="#ticker" title="The ticker's races, order, manual items and idle text are set in the Ticker section">★ Managed in Ticker</a>`); }
+  for (const id of draft.persistentCharts) {
+    const chart = CHARTS.find((c) => c.id === id); if (!chart) continue;
+    const st = draft.persistentSettings[id] ?? {};
+    const race = st.raceId ? index?.byId?.get(st.raceId) ?? null : null;
+    const el = cards.card({ chart, race, params: id === "A2" ? { name: st.name, title: st.title } : null, priority: 4, showRace: !!race, menu: [{ label: "Remove from Persistent Elements…", onClick: () => toggleChart(chart.id) }] });
+    const inputs = PERSIST_INPUTS[id] ?? [];
+    if (inputs.length) {
+      const form = document.createElement("div"); form.className = "pform";
+      form.innerHTML = inputs.map((i) => i.race
+        ? `<label>${i.label}<select data-pid="${id}" data-f="${i.f}"><option value="">${esc(i.ph ?? "choose a race")}</option>${draft.featuredRaceIds.map((rid) => { const r = index?.byId?.get(rid); return r ? `<option value="${rid}" ${st.raceId === rid ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)}</option>` : ""; }).join("")}${index ? `<optgroup label="Any race">${index.races.filter((r) => r.kind === "federal" && !draft.featuredRaceIds.includes(r.id)).slice(0, 500).map((r) => `<option value="${r.id}" ${st.raceId === r.id ? "selected" : ""}>${esc(r.label)}</option>`).join("")}</optgroup>` : ""}</select></label>`
+        : `<label>${i.label}<input data-pid="${id}" data-f="${i.f}" value="${esc(st[i.f] ?? "")}" placeholder="${esc(i.ph ?? "")}" maxlength="120"></label>`).join("");
+      el.appendChild(form);
+    }
     grid.appendChild(el);
   }
-  const pr = $("persistrace"); pr.innerHTML = "";
-  const perRace = CHARTS.filter((c) => seriesOf(c.id) === "A" && c.needsRace);
-  for (const id of draft.featuredRaceIds) {
-    const r = index?.byId?.get(id); if (!r) continue;
-    for (const chart of perRace) pr.appendChild(cards.card({ chart, race: r, priority: 5 }));
-  }
-  if (!pr.children.length) pr.innerHTML = `<div class="empty">Feature a race and its status bug and call alert appear here.</div>`;
+  if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add lower thirds and strips from the Chart Catalog below.</div>`;
 }
+let pformTimer = null;
+$("persistgrid").addEventListener("input", (e) => {
+  const i = e.target.closest("[data-pid]"); if (!i) return;
+  const id = i.dataset.pid; draft.persistentSettings[id] = { ...(draft.persistentSettings[id] ?? {}), [i.dataset.f]: i.value };
+  clearTimeout(pformTimer); pformTimer = setTimeout(() => { draft = saveLocal(normalize(draft)); renderStrip(); renderPersistent(); cards.prune(); cards.broadcast(draft); }, i.tagName === "SELECT" ? 0 : 600);
+});
+$("persistgrid").addEventListener("change", (e) => { const i = e.target.closest("select[data-pid]"); if (i) i.dispatchEvent(new Event("input", { bubbles: true })); });
 
 // ---------- Chart Catalog ----------
 function renderChartCatalog() {
@@ -589,14 +605,15 @@ function renderChartCatalog() {
   for (const [gridId, kind, series] of [["chartsA", "other", "A"], ["chartsRace", "race", "B"], ["chartsMove", "movement", "C"], ["chartsBroad", "movement", "D"], ["chartsF", "other", "F"]]) {
     const grid = $(gridId); grid.innerHTML = "";
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
-      const key = kind === "race" ? "featuredCharts" : "movementCharts";
-      const on = kind !== "other" && draft[key].includes(chart.id);
+      const key = kind === "race" ? "featuredCharts" : kind === "other" ? "persistentCharts" : "movementCharts";
+      const on = draft[key].includes(chart.id);
       const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, priority: 6, showRace: false });
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
       else if (chart.id === "A1") { el.classList.add("inuse"); el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<a class="mini on" href="#ticker">★ Managed in Ticker</a>`); }
-      else if (kind === "other") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${chart.built ? (seriesOf(chart.id) === "A" ? "Always available · Persistent Elements" : "Reference") : "Not built yet"}</span>`);
+      else if (series === "F") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Reference page</span>`);
+      else if (series === "A") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="Shown in Persistent Elements with its inputs">${on ? "✓ In Persistent" : "+ Add to Persistent"}</button>`);
       else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured" : "✓ In overview") : (kind === "race" ? "☆ Feature" : "+ Add")}</button>`);
       grid.appendChild(el);
     }

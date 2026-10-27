@@ -35,6 +35,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     const u = new URL(c.chart.page, location.origin);
     if (c.race && c.chart.needsState) u.searchParams.set("st", c.race.state);
     else if (c.race) u.searchParams.set("id", c.race.id);
+    for (const [k, v] of Object.entries(c.params ?? {})) if (v) u.searchParams.set(k, v);
     u.searchParams.set("src", getSource());
     const bg = forOpen ? getBg() : "black";
     if (bg) u.searchParams.set("bg", bg);
@@ -111,7 +112,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     c.bubble.title = f.title;
   }
 
-  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [] }) {
+  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null }) {
     const el = document.createElement("div");
     el.className = "gcard";
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
@@ -119,7 +120,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
       <div class="ghead"><span class="cid">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
       <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span><a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Preview</a></div>`;
-    const c = { el, chart, race, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
+    const c = { el, chart, race, params, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
       title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a") };
     el._card = c; c.thumb._card = c;
     c.link.href = pageUrl(c, true);
