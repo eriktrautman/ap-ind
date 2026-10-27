@@ -40,7 +40,7 @@ export const CHARTS = [
   // A: persistent elements and lower thirds (the ticker is the one built)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
   { id: "A2",  kind: "other", name: "Name and title lower third",   page: "/g/lower-third.html",                built: true },
-  { id: "A3",  kind: "other", name: "Race-status bug",              page: "/g/bug.html",                built: true },
+  { id: "A3",  kind: "other", name: "Race-status bug",              page: "/g/bug.html",                built: true, needsRace: true },
   { id: "A4",  kind: "other", name: "AP call alert",                page: "/g/call-alert.html", built: true, needsRace: true },
   { id: "A5",  kind: "other", name: "Poll-closing strip",           page: "/g/poll-closing.html",                built: true },
   { id: "A6",  kind: "other", name: "Featured races strip",         page: "/g/featured-strip.html",                built: true },
