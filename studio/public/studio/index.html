@@ -62,23 +62,12 @@
     </div>
     <div class="cols">
       <div class="col">
-        <h3>Races in the feed <span class="muted" id="count"></span></h3>
-        <div class="filters">
-          <input id="q" placeholder="Search state, office, candidate" size="26">
-          <select id="state"><option value="">All states</option></select>
-          <span class="chip on" data-f="ind">Independent on ballot</span>
-          <span class="chip" data-f="featured">Featured</span>
-          <span class="chip" data-f="S">Senate</span>
-          <span class="chip" data-f="H">House</span>
-          <span class="chip" data-f="governor">Governor</span>
-          <span class="chip" data-f="other">Other</span>
-        </div>
-        <div class="list" id="available"><div class="empty">Loading races…</div></div>
-      </div>
-      <div class="col">
         <h3>Ticker races <span class="muted" id="pincount"></span></h3>
         <div class="list pins" id="pins"></div>
-        <p class="muted small">At least one race stays on the ticker. Removing the last one puts the default list back.</p>
+        <div class="filters addfeat"><input id="pinq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
+        <p class="muted small">Or add races from the <a href="#catalog">Full Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
+      </div>
+      <div class="col">
         <h3>Manual items</h3>
         <form class="addmanual" id="addmanual"><input id="manualtext" placeholder="Text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add</button></form>
         <div class="list" id="manual"></div>
@@ -97,7 +86,8 @@
       <div class="col">
         <h3>Featured races <span class="muted" id="featcount"></span></h3>
         <div class="list pins" id="featured"></div>
-        <div class="filters addfeat"><input id="featq" placeholder="Add a race: search label, state, candidate" size="34"><div class="suggest" id="featsuggest" hidden></div></div>
+        <div class="filters addfeat"><input id="featq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="featsuggest" hidden></div></div>
+        <p class="muted small">Or set any race as featured from the <a href="#catalog">Full Catalog</a> below.</p>
       </div>
       <div class="col">
         <h3>Featured charts <span class="muted small">(the same set for every featured race)</span></h3>

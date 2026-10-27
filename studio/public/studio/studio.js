@@ -77,7 +77,7 @@ async function loadIndex() {
     index = next;
     index.byId = new Map(index.races.map((r) => [r.id, r]));
     const states = [...new Set(index.races.map((r) => r.state))].sort();
-    for (const id of ["state", "cstate"]) { const sel = $(id); const cur = sel.value; sel.innerHTML = `<option value="">All states</option>${states.map((s) => `<option${s === cur ? " selected" : ""}>${s}</option>`).join("")}`; }
+    for (const id of ["cstate"]) { const sel = $(id); const cur = sel.value; sel.innerHTML = `<option value="">All states</option>${states.map((s) => `<option${s === cur ? " selected" : ""}>${s}</option>`).join("")}`; }
     cards.setData({ index });
     renderAll();
   } catch {}
@@ -273,12 +273,14 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
 // ---------- shared race rendering ----------
 const cands = (r) => r.candidates.slice(0, 3).map((c) => `${esc(c.last ?? c.name)} ${c.independent || c.featured ? "(I)" : c.party === "Dem" ? "(D)" : c.party === "GOP" ? "(R)" : ""}${r.totalVotes ? ` ${Number(c.pct).toFixed(1)}%` : ""}`).join(" · ");
 const indName = (r) => FEATURED_RACES.find((f) => f.id === r.id)?.who ?? r.candidates.find((c) => c.featured)?.name ?? r.candidates.find((c) => c.independent)?.name ?? null;
-const raceLine = (r) => `<span class="lab">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${r.featured ? ' <span class="pill feat">FEATURED</span>' : ""}`;
+const ICON_FEAT = '<span class="sic feat" title="Featured race"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3 .8 4.4L8 11.5l-3.9 2.1.8-4.4-3.2-3 4.4-.6z" fill="currentColor"/></svg></span>';
+const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M1 4h14v8H1z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 8h6M11 8h1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
+const raceLine = (r) => `<span class="lab">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.featuredRaceIds.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
 function raceBand(r, { featured }) {
   const who = indName(r);
   return `<div class="raceband"><span class="lab">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
     <span class="meta">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results yet"}${r.called ? " · AP CALL" : ""}${r.rankedChoice ? " · ranked choice" : ""}</span>
-    <button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
+    <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
 }
 function toggleFeatured(id) {
   draft.featuredRaceIds = draft.featuredRaceIds.includes(id) ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id];
@@ -286,30 +288,6 @@ function toggleFeatured(id) {
 }
 
 // ---------- Ticker section ----------
-let filter = "ind";
-function matches(r) {
-  const q = $("q").value.trim().toLowerCase();
-  const st = $("state").value;
-  if (st && r.state !== st) return false;
-  if (filter === "ind" && !r.hasIndependent) return false;
-  if (filter === "featured" && !draft.featuredRaceIds.includes(r.id)) return false;
-  if ((filter === "S" || filter === "H") && r.office !== filter) return false;
-  if (filter === "governor" && r.kind !== "governor") return false;
-  if (filter === "other" && ["federal", "governor"].includes(r.kind)) return false;
-  if (q) { const hay = `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase(); if (!hay.includes(q)) return false; }
-  return true;
-}
-function renderAvailable() {
-  if (!index) return;
-  const rows = index.races.filter(matches).sort((a, b) => a.label.localeCompare(b.label));
-  $("count").textContent = `${rows.length} of ${index.races.length}`;
-  const pinned = new Set(draft.pinnedRaceIds);
-  $("available").innerHTML = rows.length ? rows.slice(0, 400).map((r) => `
-    <div class="row ${pinned.has(r.id) ? "on" : ""}" data-id="${r.id}">
-      <div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
-      <div class="btns"><button class="add">${pinned.has(r.id) ? "On ticker" : "+ Add"}</button></div>
-    </div>`).join("") + (rows.length > 400 ? `<div class="empty">Showing 400. Narrow the search.</div>` : "") : `<div class="empty">No races match.</div>`;
-}
 function renderPins() {
   if (!index) return;
   $("pincount").textContent = `${draft.pinnedRaceIds.length}`;
@@ -326,13 +304,6 @@ function renderManual() {
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").checked = draft.callHighlight;
 }
-$("available").addEventListener("click", (e) => {
-  const row = e.target.closest(".row"); if (!row || !e.target.closest("button")) return;
-  const id = row.dataset.id;
-  if (draft.pinnedRaceIds.includes(id)) { if (draft.pinnedRaceIds.length > 1) draft.pinnedRaceIds = draft.pinnedRaceIds.filter((x) => x !== id); }
-  else draft.pinnedRaceIds.push(id);
-  commit();
-});
 $("pins").addEventListener("click", (e) => {
   const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!row || !b) return;
   const a = draft.pinnedRaceIds; const i = a.indexOf(row.dataset.id); if (i < 0) return;
@@ -354,13 +325,6 @@ $("addmanual").addEventListener("submit", (e) => {
 let idleTimer = null;
 $("idletext").addEventListener("input", () => { draft.idleText = $("idletext").value; clearTimeout(idleTimer); idleTimer = setTimeout(commit, 400); });
 $("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl").checked; commit(); });
-$("q").addEventListener("input", renderAvailable);
-$("state").addEventListener("change", renderAvailable);
-document.querySelectorAll("#ticker .filters .chip").forEach((c) => c.addEventListener("click", () => {
-  filter = c.dataset.f === filter ? "all" : c.dataset.f;
-  document.querySelectorAll("#ticker .filters .chip").forEach((x) => x.classList.toggle("on", x.dataset.f === filter));
-  renderAvailable();
-}));
 const frame = $("preview");
 function scalePreview() { frame.style.transform = `scale(${frame.parentElement.clientWidth / 1920})`; }
 function sendPreview() {
@@ -414,19 +378,36 @@ $("racecharts").addEventListener("change", (e) => {
   draft.featuredCharts = CHARTS.filter((c) => draft.featuredCharts.includes(c.id)).map((c) => c.id);
   commit();
 });
-$("featq").addEventListener("input", () => {
-  const q = $("featq").value.trim().toLowerCase(); const box = $("featsuggest");
-  if (!q || !index) { box.hidden = true; return; }
-  const rows = index.races.filter((r) => !draft.featuredRaceIds.includes(r.id) && `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase().includes(q)).slice(0, 12);
-  box.hidden = false;
-  box.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-id="${r.id}"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns"><button>+ Feature</button></div></div>`).join("") : `<div class="empty">No races match.</div>`;
-});
-$("featsuggest").addEventListener("click", (e) => {
-  const row = e.target.closest(".row"); if (!row) return;
-  draft.featuredRaceIds.push(row.dataset.id); $("featq").value = ""; $("featsuggest").hidden = true; commit();
-});
-document.addEventListener("click", (e) => { if (!e.target.closest(".addfeat")) $("featsuggest").hidden = true; });
+/** Type-to-add race picker shared by the ticker and Race Detail: matches label, state, office and
+ *  candidate names; with nothing typed it suggests featured races, then races with an independent. */
+function racePicker(inputId, boxId, { exclude, onPick }) {
+  const input = $(inputId), box = $(boxId);
+  const render = () => {
+    if (!index) { box.hidden = true; return; }
+    const q = input.value.trim().toLowerCase();
+    const skip = new Set(exclude());
+    let rows = index.races.filter((r) => !skip.has(r.id));
+    if (q) rows = rows.filter((r) => `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase().includes(q));
+    else rows = rows.filter((r) => draft.featuredRaceIds.includes(r.id) || r.hasIndependent).sort((a, b) => (draft.featuredRaceIds.includes(b.id) - draft.featuredRaceIds.includes(a.id)) || a.label.localeCompare(b.label));
+    rows = rows.slice(0, 12);
+    box.hidden = false;
+    box.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-id="${r.id}"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") + (!q ? `<div class="empty">Type to search all ${index.races.length} races.</div>` : "") : `<div class="empty">No races match.</div>`;
+  };
+  input.addEventListener("input", render);
+  input.addEventListener("focus", render);
+  box.addEventListener("mousedown", (e) => { const row = e.target.closest(".row"); if (!row) return; e.preventDefault(); onPick(row.dataset.id); input.value = ""; render(); });
+  input.addEventListener("keydown", (e) => { if (e.key === "Escape") { box.hidden = true; input.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box.querySelector(".row"); if (first) { onPick(first.dataset.id); input.value = ""; render(); } } });
+  document.addEventListener("click", (e) => { if (!e.target.closest(`#${inputId}, #${boxId}`)) box.hidden = true; });
+}
+racePicker("pinq", "pinsuggest", { exclude: () => draft.pinnedRaceIds, onPick: (id) => { draft.pinnedRaceIds.push(id); commit(); } });
+racePicker("featq", "featsuggest", { exclude: () => draft.featuredRaceIds, onPick: (id) => { draft.featuredRaceIds.push(id); commit(); } });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-feat]"); if (b) toggleFeatured(b.dataset.feat); });
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pin]"); if (!b) return;
+  const id = b.dataset.pin, a = draft.pinnedRaceIds;
+  if (a.includes(id)) { if (a.length > 1) draft.pinnedRaceIds = a.filter((x) => x !== id); } else a.push(id);
+  commit();
+});
 
 // ---------- Movement Overview ----------
 function renderMovement() {
@@ -466,7 +447,9 @@ function renderCatalog() {
   for (const r of rows.slice(0, 300)) {
     const crow = document.createElement("div"); crow.className = `crow ${openRaces.has(r.id) ? "open" : ""}`; crow.dataset.id = r.id;
     const featured = draft.featuredRaceIds.includes(r.id);
-    crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}${featured && !r.featured ? ' <span class="pill feat">FEATURED</span>' : ""}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</div></div>`;
+    const onTicker = draft.pinnedRaceIds.includes(r.id);
+    crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
+      <div class="btns"><span class="nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</span><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button><button class="mini ${featured ? "on" : ""}" data-feat="${r.id}" title="${featured ? "Remove from Featured races" : "Set as a Featured race"}">${featured ? "★ Featured" : "☆ Feature"}</button></div></div>`;
     if (openRaces.has(r.id)) crow.appendChild(catalogBody(r, featured));
     list.appendChild(crow);
   }
@@ -493,7 +476,7 @@ $("catalogList").addEventListener("click", (e) => {
     const id = fc.dataset.chart; const set = new Set(draft.featuredCharts); set.has(id) ? set.delete(id) : set.add(id);
     draft.featuredCharts = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); commit(); return;
   }
-  if (e.target.closest("[data-feat]") || e.target.closest(".gcard")) return;
+  if (e.target.closest("[data-feat], [data-pin], .gcard")) return;
   const crow = e.target.closest(".crow"); if (!crow || !e.target.closest(".row")) return;
   const id = crow.dataset.id;
   openRaces.has(id) ? openRaces.delete(id) : openRaces.add(id);
@@ -510,7 +493,7 @@ try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").val
 function renderAll() {
   renderStatus();
   renderStrip();
-  renderAvailable(); renderPins(); renderManual(); sendPreview();
+  renderPins(); renderManual(); sendPreview();
   renderDetail(); renderMovement(); renderCatalog();
   cards.prune();
 }
