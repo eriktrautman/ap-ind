@@ -82,6 +82,7 @@ main > section.card + section.card::before { content: ""; display: block; height
 .cardhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 .cardhead h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--navy); margin: 0; }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.callhl { margin: 4px 0 10px; font-size: 13.5px; } .callhl input { vertical-align: -2px; margin-left: 4px; }
 .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; font-size: 13px; }
 .bgpick { margin-left: auto; color: var(--muted); }
 .pollstrip .pl-k { font-family: var(--serif); color: var(--navy); font-size: 14px; }

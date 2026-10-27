@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12",
   note: "S109 (B12) blocked on the AP VoteCast licence; S81 open",
-  updated: "2026-10-27T13:25:55Z",
+  updated: "2026-10-27T13:27:38Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T13:27:38Z", what: "Ticker: the AP Call highlight checkbox sits under the example ticker, labelled Highlight AP Calls Yellow." },
   { t: "2026-10-27T13:25:55Z", what: "Poller's active Live toggle and the status bar's LIVE chip are green." },
   { t: "2026-10-27T13:25:24Z", what: "AP poller's active Test toggle uses the TEST DATA banner's orange with dark text." },
   { t: "2026-10-27T13:24:46Z", what: "Phone audit: no element overflows the viewport (list rows shrink, two-column layouts stack, catalog buttons wrap); Senate badge blue, House sand." },
