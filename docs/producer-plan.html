@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; one runtime; awaiting push",
   note: "all stories done except S81 (candidate index pages)",
-  updated: "2026-10-27T02:08:57Z",
+  updated: "2026-10-27T02:10:11Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -235,6 +235,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T02:10:11Z", what: "Wording for laypeople: 'your settings' and 'the settings at ap-ind.vercel.app' replace 'your copy' and 'everyone's version'; Push / Pull / Defaults." },
   { t: "2026-10-27T02:08:57Z", what: "Ticker crawl no longer jumps (every item carries its own separator, so widths are stable when an item drops off); the ticker preview is clickable with an Open 1920x1080 button and says it is the local preview, naming the ticker everyone uses and that a Push changes it. Buttons are Push / Pull / Defaults." },
   { t: "2026-10-27T02:06:09Z", what: "Send/Get strip right-justified." },
   { t: "2026-10-27T02:04:50Z", what: "Disabled Send and Get buttons are outlined with muted text instead of pale fills with white text." },
