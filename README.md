@@ -138,7 +138,7 @@ WHERE a.election_date='2020-11-03' AND b.election_date='2024-11-05' AND a.race_i
 
 ## Photos
 
-Sources, in order: official congressional portraits (public domain), hand-verified photos for the featured races, Ballotpedia for the rest. Each photo records its source and an automatic confidence; low-confidence photos are withheld until a person checks them at `/photos.html`.
+Sources, in order: official congressional portraits (public domain), hand-verified photos for the featured races, Ballotpedia for the rest. Each photo records its source and an automatic confidence; low-confidence photos are withheld until a person checks them at `/photos` (every candidate, filterable by state, confidence and source). `/candidates` is the curated index for the featured races: bios, links, photo credits and the live share from the feed.
 
 Photos are served from the project's own CDN (Vercel Blob) under a random path prefix, never hotlinked. Pipeline:
 

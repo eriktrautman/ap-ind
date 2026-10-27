@@ -160,8 +160,8 @@ const META = {
   minPerPoint: 5,          // assumed pace until three stories are done
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12",
-  note: "S109 (B12) blocked on the AP VoteCast licence; S81 open",
-  updated: "2026-10-27T13:27:38Z",
+  note: "S109 (B12) blocked on the AP VoteCast licence; everything else done",
+  updated: "2026-10-27T17:16:41Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -219,7 +219,7 @@ const STORIES = [
   { id: "S70", epic: "E6", pts: 2, status: "done", title: "Operator conflicts and refresh: another operator's publish shown with its time, state re-read on an interval, Blob propagation delay stated beside the publish button", deps: "S12", doneAt: "2026-10-26T23:36:01Z" },
   { id: "S71", epic: "E6", pts: 2, status: "done", title: "Preview deployment check of every section and graphic with real data, publish-to-air latency measured, README and spec updated", deps: "S61", doneAt: "2026-10-27T00:03:08Z" },
   { id: "S80", epic: "E6", pts: 5, status: "done", title: "One app, run anywhere: studio/scripts/serve.mjs serves the built site, mounts the four API functions and runs the poller loop in one Node process (npm start); the store is Vercel Blob or local files (STORE_DIR); the old Fastify/WebSocket server (src/, port 3000) and the read-only dev proxy are removed", note: "Added 2026-10-27 at the user's request: no second app to keep in sync, no Vercel account needed to run locally.", doneAt: "2026-10-27T00:50:11Z" },
-  { id: "S81", epic: "E6", pts: 3, status: "todo", title: "Candidate index and photo pages (public/candidates.html, photos.html) ported to the static data files; they still expect the retired server's /api/candidates and /api/photos", note: "Follow-up found while retiring the server. Not on air; the control room does not use them." },
+  { id: "S81", epic: "E6", pts: 3, status: "done", title: "Candidate index and photo pages (/candidates, /photos) ported to the static data files: candidates.json and photos.json from the build, live shares from the poller's index.json, photos from the CDN manifest", note: "Follow-up found while retiring the server. Not on air; the control room does not use them.", doneAt: "2026-10-27T17:16:41Z" },
   { id: "S82", epic: "E6", pts: 3, status: "done", title: "Laptop and air: the control room says which it is; Pull from air copies the deployment's configuration (read-only) into the laptop's Local or Global draft with a change list; a fresh local store seeds itself from air on first start; README failover drill", note: "Added 2026-10-27. Decision: the laptop is a standby and rehearsal machine, never a second writer of the on-air state.", doneAt: "2026-10-27T01:13:16Z" },
   { id: "S83", epic: "E6", pts: 8, status: "done", title: "One working copy, two big buttons: the Default/Global/Local selector is replaced by a production strip (your working copy, Push to production, Pull from production, Restore defaults, what production is) with overwrite dialogs both ways; previews switch between the working copy and production; a laptop's production is the deployment (pull always, push with GLOBAL_PASSWORD, 'pull only' shown otherwise) or itself (GLOBAL=self, standby)", note: "Added 2026-10-27 after the laptop discussion. Replaces the three-source selector from S10/S13 and the Pull-from-air button from S82.", doneAt: "2026-10-27T01:20:49Z" },
   { id: "S90", epic: "E7", pts: 2, status: "done", title: "A3 race-status bug: small corner element for one race with label and status pill", doneAt: "2026-10-27T02:56:55Z" },
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T17:16:41Z", what: "Candidate index (/candidates) and photo review (/photos) pages back in the app: moved into the studio build, reading the static candidates.json and photos.json, live shares from index.json, every image from the CDN manifest. Checked in headless Chrome: 25 candidates with live numbers, 1295 photo cards, no console errors." },
   { t: "2026-10-27T13:27:38Z", what: "Ticker: the AP Call highlight checkbox sits under the example ticker, labelled Highlight AP Calls Yellow." },
   { t: "2026-10-27T13:25:55Z", what: "Poller's active Live toggle and the status bar's LIVE chip are green." },
   { t: "2026-10-27T13:25:24Z", what: "AP poller's active Test toggle uses the TEST DATA banner's orange with dark text." },

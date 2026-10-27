@@ -34,7 +34,7 @@
 </style>
 </head>
 <body>
-<script src="/docs/nav.js"></script>
+<script src="/nav.js"></script>
 <header><div class="in">
   <h1>Candidate Photos</h1>
   <p>Every candidate in every Senate and House race. Gold-framed cards are the featured races (hand-verified). Official congressional portraits are public domain. Ballotpedia-sourced photos carry an automatic confidence and need a human look before air: <b>low</b> means neither the filename nor the exact name matched, so check those first. Cleared photos are served from our CDN (<code>cdn</code> in <code>config/photos.json</code>); nothing is hotlinked.</p>
@@ -54,7 +54,8 @@
 <script type="module">
   import { partyClass } from "/g/feed.js";
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const data = await fetch("/api/photos").then((r) => r.json());
+  // Static copy of config/photos.json (the build puts it under /g/).
+  const data = await fetch("/g/photos.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { photos: {}, generated: null })).catch(() => ({ photos: {}, generated: null }));
   const all = Object.entries(data.photos ?? {}).map(([id, e]) => ({ id, ...e }));
   const states = [...new Set(all.map((e) => e.race.slice(0, 2)))].sort();
   const sel = document.getElementById("f-state");
@@ -72,7 +73,7 @@
     for (const e of rows) byRace.set(e.race, [...(byRace.get(e.race) ?? []), e]);
     const races = [...byRace.keys()].sort((a, b) => a.slice(0, 2).localeCompare(b.slice(0, 2)) || (a.includes("SEN") ? -1 : 1) || a.localeCompare(b, undefined, { numeric: true }));
     $("out").innerHTML = races.map((r) => `<h2>${esc(r)}</h2><div class="grid">` + byRace.get(r).sort((a, b) => b.featured - a.featured || a.name.localeCompare(b.name)).map((e) => {
-      const img = e.cdn ?? e.file;
+      const img = e.cdn ?? null;   // only the CDN copy is served; e.file is the pipeline's local path
       const conf = e.confidence ?? "none";
       return `<div class="ph ${e.featured ? "featured" : ""}">
         <div class="img">${img ? `<img src="${esc(img)}" alt="${esc(e.name)}" loading="lazy">` : "no photo"}</div>

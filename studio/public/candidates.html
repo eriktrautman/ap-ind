@@ -41,10 +41,10 @@
 </style>
 </head>
 <body>
-<script src="/docs/nav.js"></script>
+<script src="/nav.js"></script>
 <header><div class="in">
   <h1>Candidate Index</h1>
-  <p>Everyone on the ballot in the featured races: live numbers from AP, bios and photos curated by us. Photos are served from <code>/photos/&lt;AP candidateID&gt;.jpg</code> so every graphic can reference a candidate by the same id AP uses.</p>
+  <p>Everyone on the ballot in the featured races: live numbers from AP, bios and photos curated by us. Photos come from the CDN through the manifest in <code>config/photos.json</code>, keyed by AP <code>candidateID</code>, so every graphic can reference a candidate by the same id AP uses.</p>
 </div></header>
 <main>
   <div class="note" id="status">Loading…</div>
@@ -64,12 +64,16 @@
   import { partyClass, fmt } from "/g/feed.js";
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const year = new Date().getFullYear();
-  const [idx, races] = await Promise.all([fetch("/api/candidates").then((r) => r.json()), fetch("/api/races").then((r) => r.json())]);
+  // Static copies of config/candidates.json and config/photos.json (the build puts them under /g/);
+  // live numbers from the poller's index.json, the same file every graphic reads.
+  const j = (u) => fetch(u, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(`${u}: ${r.status}`); return r.json(); });
+  const [idx, manifest, index] = await Promise.all([j("/g/candidates.json"), j("/g/photos.json").catch(() => ({ photos: {} })), j("/data/index.json").catch(() => ({ races: [] }))]);
+  const races = index.races ?? [];
   const raceById = new Map(races.map((r) => [r.id, r]));
   const live = new Map(); for (const r of races) for (const c of r.candidates) live.set(c.id, { ...c, race: r });
 
-  // Served photo = our cleared file; a permission-needed photo is shown from the campaign's URL for the demo only.
-  const src = (c) => c.photo?.file ? `/photos/${c.photo.file}` : null;
+  // The image is the manifest's CDN copy of our cleared file (the local set under public/photos/ is the pipeline's working copy, not served).
+  const src = (c) => c.photo?.file ? manifest.photos?.[c.id]?.cdn ?? null : null;
   const withPhoto = idx.candidates.filter((c) => c.photo?.file).length;
   const needPerm = idx.candidates.filter((c) => c.photo?.usage === "fair-use").length;
   document.getElementById("status").innerHTML =
