@@ -512,6 +512,7 @@ function cmatches(r) {
   if (off === "statewide" ? r.kind !== "statewide" : off && r.office !== off) return false;
   if (cfilters.has("ind") && !r.hasIndependent) return false;
   if (cfilters.has("featured") && !draft.featuredRaceIds.includes(r.id)) return false;
+  if (cfilters.has("ticker") && !draft.pinnedRaceIds.includes(r.id)) return false;
   if (cfilters.has("called") && !r.called) return false;
   if (cfilters.has("counting") && (r.called || !r.totalVotes)) return false;
   if (q) { const hay = `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase(); if (!hay.includes(q)) return false; }
