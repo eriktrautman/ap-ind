@@ -19,13 +19,9 @@
     <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
   </div>
   <div class="prodstrip" id="prodstrip" hidden>
-    <div class="ps-work"><span class="ps-k">Your working copy</span><b id="ps-state">…</b><span class="ps-sub" id="ps-sub"></span></div>
-    <div class="ps-actions">
-      <button class="big push" id="push">Push to production…</button>
-      <button class="big pull" id="pull">Pull from production…</button>
-      <button class="big" id="defaults">Restore defaults…</button>
-    </div>
-    <div class="ps-prod"><span class="ps-k">Production</span><b id="ps-prod">…</b><span class="ps-sub" id="ps-prodsub"></span></div>
+    <span class="ps-work"><b id="ps-state">…</b><span class="ps-sub" id="ps-sub"></span></span>
+    <span class="ps-actions"><button class="push" id="push" title="Overwrite production with your working copy"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Push</button><button class="pull" id="pull" title="Replace your working copy with production"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button><button id="defaults" title="Replace your working copy with the shipped defaults"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span>
+    <span class="ps-prod"><b id="ps-prod">…</b><span class="ps-sub" id="ps-prodsub"></span></span>
   </div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
   <div class="problem top" id="problem" hidden></div>

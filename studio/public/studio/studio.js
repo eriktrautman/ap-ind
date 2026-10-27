@@ -115,18 +115,19 @@ function renderStrip() {
   const changes = prod ? diffState(prod, draft) : [];
   const st = $("ps-state");
   st.className = d ? "dirty" : "same";
-  st.textContent = !prod ? "Saved here · production unknown" : d ? `${changes.length} change${changes.length === 1 ? "" : "s"} not on production` : "Same as production";
-  $("ps-sub").textContent = readLocal()?.updatedAt ? `Saved in this browser ${ago(readLocal().updatedAt)} · nothing goes on air until you push` : "Nothing goes on air until you push";
+  st.textContent = !prod ? "Working copy: production unknown" : d ? `Working copy: ${changes.length} change${changes.length === 1 ? "" : "s"} vs production` : "Working copy = production";
+  $("ps-sub").textContent = readLocal()?.updatedAt ? `saved ${ago(readLocal().updatedAt)}` : "";
   const p = $("ps-prod");
   const r = runtime?.production;
-  if (runtime && r && !r.reachable) { p.className = "bad"; p.textContent = `${prodName()} · unreachable`; $("ps-prodsub").textContent = r.reason ?? ""; }
-  else if (prodError) { p.className = "bad"; p.textContent = `${prodName()} · unreadable`; $("ps-prodsub").textContent = prodError; }
-  else if (runtime && r && !r.canPush) { p.className = "warn"; p.textContent = `${prodName()} · pull only`; $("ps-prodsub").textContent = r.reason ?? "push not configured"; }
-  else { p.className = ""; p.textContent = prodName(); $("ps-prodsub").textContent = prod?.updatedAt ? `Last published ${ago(prod.updatedAt)}${otherOperator() ? " · changed since you last pulled" : ""}` : "Never published: production is on the defaults"; }
+  const pub = prod?.updatedAt ? `published ${ago(prod.updatedAt)}${otherOperator() ? " · changed since your last pull" : ""}` : "never published (defaults)";
+  if (runtime && r && !r.reachable) { p.className = "bad"; p.textContent = `Production: ${prodName()} · unreachable`; $("ps-prodsub").textContent = ""; }
+  else if (prodError) { p.className = "bad"; p.textContent = `Production: ${prodName()} · unreadable`; $("ps-prodsub").textContent = ""; }
+  else if (runtime && r && !r.canPush) { p.className = "warn"; p.textContent = `Production: ${prodName()} · pull only`; $("ps-prodsub").textContent = `no GLOBAL_PASSWORD · ${pub}`; }
+  else { p.className = ""; p.textContent = `Production: ${prodName()}`; $("ps-prodsub").textContent = pub; }
   $("push").disabled = !canPush() || !d;
   $("push").title = !canPush() ? (r?.reason ?? "push unavailable") : !d ? "Your working copy already matches production" : `Overwrite production with your working copy (${changes.length} changes)`;
   $("pull").disabled = !canPull() || !prod;
-  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pull unavailable") : "Replace your working copy with what is on production";
+  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pull unavailable") : "Replace your working copy with production";
 }
 
 async function pushToProduction() {
@@ -204,9 +205,7 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-pub", `<span class="k">Last push to production</span><b>${prod?.updatedAt ? esc(ago(prod.updatedAt)) : "never"}</b>`) +
-    st("st-air", `<span class="k">Publish reaches air in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`) +
-    st("st-where", runtime ? `<span class="k">This control room</span><b style="color:#c4b5fd">this laptop · ${runtime.store === "files" ? "local store" : "shared Blob store"}</b><span class="k">· production is ${esc(prodName())}</span>` : `<span class="k">This control room</span><b>air (production)</b>`);
+    st("st-air", `<span class="k">Push reaches air in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
