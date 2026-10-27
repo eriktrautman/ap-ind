@@ -4,6 +4,9 @@
 // snapshot, update and counties messages, a freshness indicator, and helpers for county units,
 // margin history, trend reports and the committed baselines.
 //   ?demo=1   an embedded sample snapshot, no network (the docs site's embeds)
+//   ?sample=auto  (the control room's previews) when no race has any votes yet, every race gets
+//             fabricated results (sample.js) and the page shows a SAMPLE DATA badge; the moment
+//             real votes arrive, the real feed takes over.
 //   ?preview=1 inside the control room: the room posts {type:"feed", index, status} to the frame,
 //             so forty thumbnails share one download instead of each polling; a frame that gets no
 //             message within 5 s falls back to polling on its own.
@@ -35,7 +38,24 @@ const COUNTY_MS = 60_000;
 
 export function connectFeed(handlers) {
   const params = new URLSearchParams(location.search);
-  const state = { races: new Map(), status: null, connected: false, mode: "blob" };
+  const state = { races: new Map(), status: null, connected: false, mode: "blob", sample: false };
+  const sampleAuto = params.get("sample") === "auto";
+  let sampleMod = null, sampleData = null;
+  async function maybeFabricate(index) {
+    const empty = !index.races.some((r) => r.totalVotes > 0);
+    if (!sampleAuto || !empty) { setSample(false); return index; }
+    sampleMod ??= await import("./sample.js");
+    sampleData ??= (await import("./sample-data.js")).SAMPLE;
+    setSample(true);
+    return sampleMod.fabricateIndex(index, sampleData.races);
+  }
+  function setSample(on) {
+    if (on === state.sample) return;
+    state.sample = on;
+    let b = document.getElementById("sample-badge");
+    if (on && !b) { b = document.createElement("div"); b.id = "sample-badge"; b.textContent = "SAMPLE DATA · the count has not started"; b.style.cssText = "position:absolute;left:96px;top:24px;z-index:9;background:#f59e0b;color:#1a1200;font:700 22px/1 Helvetica,Arial,sans-serif;letter-spacing:.06em;padding:10px 18px;border-radius:4px"; document.body.appendChild(b); }
+    if (!on && b) b.remove();
+  }
 
   function apply(msg) {
     if (msg.type === "snapshot") {
@@ -80,8 +100,9 @@ export function connectFeed(handlers) {
     };
   }
   const raceKey = (r) => `${r.lastUpdated}|${r.totalVotes}|${r.called}|${r.eevp}|${r.candidates.map((c) => c.votes).join(",")}`;
-  function applyIndex(index) {
+  async function applyIndex(index) {
     if (!Array.isArray(index?.races)) return;
+    index = await maybeFabricate(index);
     // The curated independent is flagged on every candidate record (older files lack the flag).
     for (const r of index.races) for (const c of r.candidates) c.featured = !!c.featured || FEATURED_CANDS.has(c.id) || (!r.featured && !!c.independent);
     state.connected = true;
@@ -105,7 +126,7 @@ export function connectFeed(handlers) {
     const r = state.races.get(raceId);
     if (!r) return null;
     const cached = stateFiles.get(r.state);
-    const pick = (data) => data?.races.find((x) => x.id === raceId)?.counties ?? null;
+    const pick = (data) => { const u = data?.races.find((x) => x.id === raceId)?.counties ?? null; return state.sample && u && sampleMod ? sampleMod.fabricateCounties(u, r) : u; };
     if (cached && Date.now() - cached.at < COUNTY_MS) return pick(cached.data);
     try { const data = await getJSON(`/data/state/${r.state}.json?t=${bucket(COUNTY_MS)}`); stateFiles.set(r.state, { at: Date.now(), data }); return pick(data); }
     catch { return pick(cached?.data); }
@@ -115,9 +136,15 @@ export function connectFeed(handlers) {
   /** 2024 national totals and the prior contest per featured seat (config/baseline-federal.json), or null. */
   state.baselineFederal = async () => { try { return await (await fetch("./baseline-federal.json")).json(); } catch { return null; } };
   /** Margin history for a featured race from the poller: [[epochSec, leaderId, gapPts, eevp, totalVotes], ...] or null. */
-  state.history = async (raceId) => { try { return (await getJSON(`/data/history.json?t=${bucket(INDEX_MS)}`)).races?.[raceId] ?? null; } catch { return null; } };
+  state.history = async (raceId) => {
+    if (state.sample && sampleMod) { const r = state.races.get(raceId); return r ? sampleMod.fabricateHistory(r) : null; }
+    try { return (await getJSON(`/data/history.json?t=${bucket(INDEX_MS)}`)).races?.[raceId] ?? null; } catch { return null; }
+  };
   /** AP balance-of-power trend from the poller: { senate: {parties}, house: {parties} } or null. */
-  state.trend = async () => { try { return await getJSON(`/data/trend.json?t=${bucket(INDEX_MS)}`); } catch { return null; } };
+  state.trend = async () => {
+    if (state.sample && sampleMod) return sampleMod.fabricateTrend([...state.races.values()]);
+    try { return await getJSON(`/data/trend.json?t=${bucket(INDEX_MS)}`); } catch { return null; }
+  };
 
   if (params.get("demo")) {
     state.mode = "demo";

@@ -26,7 +26,8 @@ export const FEATURED_RACES = [
 ];
 
 /**
- * Every graphic the control room knows. kind: race (needs ?id=) or movement. built: a page exists.
+ * Every graphic in the lookbook. kind: race (needs ?id=), movement (C and D series), or other (A and
+ * F series, which have no section in the control room and show only in the Chart Catalog). built: a page exists.
  *
  * CHART IDS ARE FIXED (from 27 October 2026). The lookbook ids (B5, C1, D7, ...) have been shared and are
  * used in rundowns and by other people, so an id never changes meaning and is never reused:
@@ -36,16 +37,38 @@ export const FEATURED_RACES = [
  *   - renaming a chart's page is fine; renaming its id is not.
  */
 export const CHARTS = [
+  // A: persistent elements and lower thirds (the ticker is the one built)
+  { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
+  { id: "A2",  kind: "other", name: "Name and title lower third",   page: null,                built: false },
+  { id: "A3",  kind: "other", name: "Race-status bug",              page: null,                built: false },
+  { id: "A4",  kind: "other", name: "AP call alert",                page: null,                built: false },
+  { id: "A5",  kind: "other", name: "Poll-closing strip",           page: null,                built: false },
+  { id: "A6",  kind: "other", name: "Featured races strip",         page: null,                built: false },
+  // B: featured race deep dives
+  { id: "B1",  kind: "race", name: "Candidate profile",             page: null,                built: false },
+  { id: "B2",  kind: "race", name: "Race setup",                    page: null,                built: false },
+  { id: "B3",  kind: "race", name: "Polling trend",                 page: null,                built: false },
+  { id: "B4",  kind: "race", name: "Path to victory map",           page: null,                built: false },
   { id: "B5",  kind: "race", name: "Live race result",              page: "/g/race.html",      built: true },
   { id: "B6",  kind: "race", name: "Live county map",               page: "/g/county.html",    built: true },
   { id: "B7",  kind: "race", name: "Margin tracker",                page: "/g/margin.html",    built: true },
   { id: "B8",  kind: "race", name: "Votes still out",               page: "/g/outstanding.html", built: true },
   { id: "B9",  kind: "race", name: "Ranked-choice rounds",          page: "/g/rcv.html",       built: true, only: (r) => !!r?.rankedChoice },
   { id: "B10", kind: "race", name: "Then vs now",                   page: "/g/then-now.html",  built: true },
+  { id: "B11", kind: "race", name: "Quote card",                    page: null,                built: false },
+  { id: "B12", kind: "race", name: "Who voted for the independent", page: null,                built: false },
   { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
+  // C: the independent movement
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: true },
+  { id: "C2",  kind: "movement", name: "Independents across the map", page: null,              built: false },
+  { id: "C3",  kind: "movement", name: "Big-number stats",          page: null,                built: false },
+  { id: "C4",  kind: "movement", name: "Independents in Congress, historically", page: null,   built: false },
+  { id: "C5",  kind: "movement", name: "Tonight against history",   page: null,                built: false },
   { id: "C6",  kind: "movement", name: "National independent vote", page: "/g/ind-vote.html",  built: true },
   { id: "C7",  kind: "movement", name: "Poll vs result",            page: "/g/polls.html",     built: true },
+  { id: "C8",  kind: "movement", name: "What if the featured candidates win", page: null,      built: false },
+  { id: "C9",  kind: "movement", name: "Explainer cards",           page: null,                built: false },
+  // D: election updates
   { id: "D1",  kind: "movement", name: "State of the Senate races, map", page: "/g/senate-map.html", built: true },
   { id: "D2",  kind: "movement", name: "State of the House races, map",  page: "/g/house-map.html",  built: true },
   { id: "D3",  kind: "movement", name: "Balance of power, Senate",  page: "/g/bop-senate.html", built: true },
@@ -53,8 +76,18 @@ export const CHARTS = [
   { id: "D5",  kind: "movement", name: "Key races grid",            page: "/g/key-races.html",  built: true },
   { id: "D6",  kind: "movement", name: "Race zoom-in",              page: "/g/zoom.html",       built: true },
   { id: "D7",  kind: "movement", name: "Status map",                page: "/g/tiles.html",      built: true },
+  { id: "D8",  kind: "movement", name: "Calls timeline",            page: null,                 built: false },
+  { id: "D9",  kind: "movement", name: "State overview",            page: null,                 built: false },
   { id: "D10", kind: "movement", name: "National popular vote",     page: "/g/house-pv.html",   built: true },
   { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: true },
+  // F: from the AP reports feed
+  { id: "F1",  kind: "other", name: "Balance of power from AP Trend", page: null,              built: false },
+  { id: "F2",  kind: "other", name: "House composition and net change", page: null,            built: false },
+  { id: "F3",  kind: "other", name: "Closing times by district",    page: null,                built: false },
+  { id: "F4",  kind: "other", name: "How this state counts",        page: null,                built: false },
+  { id: "F5",  kind: "other", name: "When to expect results",       page: null,                built: false },
+  { id: "F6",  kind: "other", name: "Ballot roster and status",     page: null,                built: false },
+  { id: "F7",  kind: "other", name: "Party names from AP codes",    page: null,                built: false },
 ];
 
 /** The shipped state. pinnedRaceIds is the ticker list (the name the ticker has always read). */

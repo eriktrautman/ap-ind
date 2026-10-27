@@ -27,6 +27,7 @@
      is dropped off the left edge (a width change there would make the crawl jump). */
   .item { display: inline-block; padding: 0 48px 0 0; }
   .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin: 0 48px; vertical-align: middle; }
+  .item.lead::before { visibility: hidden; }   /* the first item of a fresh crawl: no separator ahead of it, same width */
   .item.emphasis { color: var(--call); font-weight: 700; }
   .item.manual { color: #fff; font-weight: 600; }
   .item.idle { color: var(--muted); }
@@ -79,7 +80,9 @@
     const W = crawlWidth();
     let guard = 0;
     while (queue.length && x + track.offsetWidth < W + 64 && guard++ < 200) {
-      track.appendChild(itemEl(queue[next % queue.length]));
+      const el = itemEl(queue[next % queue.length]);
+      if (!track.children.length) el.classList.add("lead");
+      track.appendChild(el);
       next = (next + 1) % queue.length;
     }
   }

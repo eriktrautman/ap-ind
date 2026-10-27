@@ -38,6 +38,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     const bg = forOpen ? getBg() : "black";
     if (bg) u.searchParams.set("bg", bg);
     if (forOpen) u.searchParams.set("fit", "1"); else u.searchParams.set("preview", "1");
+    u.searchParams.set("sample", "auto");   // fabricated results until the count starts
     return u.pathname + u.search;
   }
 

@@ -568,14 +568,15 @@ try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").val
 // ---------- Chart Catalog ----------
 function renderChartCatalog() {
   const sample = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
-  for (const [gridId, kind, series] of [["chartsRace", "race", "B"], ["chartsMove", "movement", "C"], ["chartsBroad", "movement", "D"]]) {
+  for (const [gridId, kind, series] of [["chartsA", "other", "A"], ["chartsRace", "race", "B"], ["chartsMove", "movement", "C"], ["chartsBroad", "movement", "D"], ["chartsF", "other", "F"]]) {
     const grid = $(gridId); grid.innerHTML = "";
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : "movementCharts";
-      const on = draft[key].includes(chart.id);
+      const on = kind !== "other" && draft[key].includes(chart.id);
       const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 6, showRace: false });
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
+      else if (kind === "other") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${chart.built ? "Always on" : "Not built yet"}</span>`);
       else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured" : "✓ In overview") : (kind === "race" ? "☆ Feature" : "+ Add")}</button>`);
       grid.appendChild(el);
     }
