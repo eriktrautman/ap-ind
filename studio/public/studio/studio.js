@@ -116,21 +116,26 @@ function renderStrip() {
   $("previewprod").textContent = `the version at ${prodHost()}`;
   const d = dirty();
   const changes = prod ? diffState(prod, draft) : [];
+  const host = prodHost();
   const st = $("ps-state");
   st.className = d ? "dirty" : "same";
-  st.textContent = !prod ? `Your copy · can't read ${prodHost()}` : d ? `Your copy · ${changes.length} change${changes.length === 1 ? "" : "s"} not yet sent to ${prodHost()}` : `Your copy · same as ${prodHost()}`;
-  $("ps-sub").textContent = readLocal()?.updatedAt ? `saved in this browser ${ago(readLocal().updatedAt)}` : "";
+  st.textContent = !prod ? "Your copy" : d ? `Your copy · ${changes.length} change${changes.length === 1 ? "" : "s"} not sent` : "Your copy · in sync";
+  $("ps-sub").textContent = "";
+  $("ps-work").title = `${readLocal()?.updatedAt ? `Saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}Nothing at ${host} changes until you send.${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
   const p = $("ps-prod");
   const r = runtime?.production;
-  const pub = prod?.updatedAt ? `last sent ${ago(prod.updatedAt)}${otherOperator() ? " · changed since you last got it" : ""}` : "nothing sent yet, so it shows the defaults";
-  if (runtime && r && !r.reachable) { p.className = "bad"; p.textContent = `Everyone's version at ${prodHost()} · not answering`; $("ps-prodsub").textContent = ""; }
-  else if (prodError) { p.className = "bad"; p.textContent = `Everyone's version at ${prodHost()} · can't be read`; $("ps-prodsub").textContent = ""; }
-  else if (runtime && r && !r.canPush) { p.className = "warn"; p.textContent = `Everyone's version at ${prodHost()} · you can get it, not send`; $("ps-prodsub").textContent = `this laptop has no password for it · ${pub}`; }
-  else { p.className = ""; p.textContent = `Everyone's version at ${prodHost()}`; $("ps-prodsub").textContent = pub; }
+  const sent = prod?.updatedAt ? `sent ${ago(prod.updatedAt)}` : "nothing sent yet";
+  const since = otherOperator() ? " · changed since you last got it" : "";
+  let cls = "", text, tip;
+  if (runtime && r && !r.reachable) { cls = "bad"; text = `${host} · not answering`; tip = `${host} is not responding, so you can neither get its version nor send yours. ${r.reason ?? ""}`; }
+  else if (prodError) { cls = "bad"; text = `${host} · can't read`; tip = `The version at ${host} could not be read: ${prodError}`; }
+  else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · get only · ${sent}`; tip = `This laptop has no password for ${host}, so you can get its version but not send yours. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been sent there yet, so it shows the defaults."}`; }
+  else { text = `${host} · ${sent}${since}`; tip = `Everyone's version lives at ${host}: its ticker and graphics show whatever was last sent there.${prod?.updatedAt ? ` Last send ${fmtTime(prod.updatedAt)}.` : " Nothing has been sent yet, so it shows the defaults."}${since ? " Someone sent a version after you last got it." : ""}`; }
+  p.className = cls; p.textContent = text; $("ps-prodsub").textContent = ""; $("ps-prod").title = tip;
   $("push").disabled = !canPush() || !d;
-  $("push").title = !canPush() ? (r?.reason ?? "sending is not possible from here") : !d ? `Your copy is already the same as ${prodHost()}` : `Send your copy to ${prodHost()} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  $("push").title = !canPush() ? (r?.reason ?? "sending is not possible from here") : !d ? `Your copy is already the same as ${host}` : `Send your copy to ${host} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !prod;
-  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "getting is not possible right now") : `Replace your copy with the version at ${prodHost()}`;
+  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "getting is not possible right now") : `Replace your copy with the version at ${host}`;
 }
 
 async function pushToProduction() {
