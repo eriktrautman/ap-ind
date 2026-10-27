@@ -19,8 +19,17 @@
     <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
   </div>
   <div class="prodstrip" id="prodstrip" hidden>
-    <div class="ps-line"><span class="ps-work" id="ps-work"><b id="ps-state">…</b><span class="ps-sub" id="ps-sub"></span></span><span class="ps-actions"><button class="push" id="push" title="Push the settings on this page"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Push</button><button class="pull" id="pull" title="Replace the settings on this page"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button><button id="defaults" title="Reset this page to the defaults the app came with"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span></div>
-    <div class="ps-line"><span class="ps-prod"><b id="ps-prod">…</b><span class="ps-sub" id="ps-prodsub"></span></span></div>
+    <div class="ps-line"><span class="ps-work" id="ps-work"><b id="ps-state">…</b></span><span class="ps-info" id="ps-prod" data-tip=""><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7v4.2M8 4.6v.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="ps-actions"><button class="push" id="push" title="Push the settings on this page"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Push</button><button class="pull" id="pull" title="Replace the settings on this page"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button><button id="defaults" title="Reset this page to the defaults the app came with"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span></div>
+  </div>
+  <div class="pollstrip" id="poller" hidden>
+    <span class="pl-k">AP poller</span><span class="pl-sum" id="pollersummary"></span>
+    <span class="pl-actions">
+      <button id="pollnow">Poll now</button>
+      <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">+ reset caches</button>
+      <button id="pause">Pause polling</button>
+      <span class="seg" id="rtype"><span class="lbl">Results</span><button data-rt="t">Test</button><button data-rt="l">Live</button></span>
+    </span>
+    <span class="note" id="pollmsg"></span>
   </div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
   <div class="testbanner testlogin" id="loginbanner" hidden>TEST LOGIN · rehearsal password, switched off for election night</div>
@@ -40,17 +49,6 @@
 <main id="app" hidden>
 
   <div class="howbox" id="howbox"><b>How changes reach the screen.</b> <span id="howtext"></span></div>
-
-  <div class="poller" id="poller">
-    <span class="pl-k">AP poller</span><span class="pl-sum" id="pollersummary"></span>
-    <span class="pl-actions">
-      <button id="pollnow">Poll now</button>
-      <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">+ reset caches</button>
-      <button id="pause">Pause polling</button>
-      <span class="seg" id="rtype"><span class="lbl">Results</span><button data-rt="t">Test</button><button data-rt="l">Live</button></span>
-    </span>
-    <span class="note" id="pollmsg"></span>
-  </div>
 
   <div class="toolbar">
     <label class="bgpick">Open graphics on <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>

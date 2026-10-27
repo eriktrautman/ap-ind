@@ -64,8 +64,8 @@ const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>
 })();
 
 // ---------- auth ----------
-function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; }
-function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; }
+function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; $("poller").hidden = true; $("prodstrip").hidden = true; }
+function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; $("poller").hidden = false; }
 $("loginform").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("loginerr").textContent = "";
@@ -163,7 +163,6 @@ function renderStrip() {
   const st = $("ps-state");
   st.className = d ? "dirty" : "same";
   st.textContent = !prod ? "Not pushed" : d ? `${changes.length} change${changes.length === 1 ? "" : "s"} on this page not pushed` : `Same as ${onSite() ? "live" : host}`;
-  $("ps-sub").textContent = "";
   $("ps-work").title = `${readLocal()?.updatedAt ? `The settings on this page were saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}${onSite() ? "Nothing goes live until you push." : `Nothing at ${host} changes until you push.`}${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
   const p = $("ps-prod");
   const r = runtime?.production;
@@ -175,7 +174,7 @@ function renderStrip() {
   else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · pull only · ${sent}`; tip = `This laptop has no password for ${host}, so you can pull its settings but not push. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been pushed there yet, so it shows the defaults."}`; }
   else if (onSite()) { text = `Live on this site · ${sent}${since}`; tip = `The live settings are what this site's ticker and graphics show: whatever was last pushed, by anyone.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so the defaults are live."}${since ? " Someone pushed after you last pulled." : ""}`; }
   else { text = `${host} · ${sent}${since}`; tip = `${host} is the site everyone uses: its ticker and graphics show whatever was last pushed there, by anyone.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so it shows the defaults."}${since ? " Someone pushed after you last pulled." : ""}`; }
-  p.className = cls; p.textContent = text; $("ps-prodsub").textContent = ""; $("ps-prod").title = tip;
+  p.className = `ps-info ${cls}`; p.dataset.tip = `${text}\n\n${tip}`;
   $("push").disabled = !canPush() || !d;
   $("push").title = !canPush() ? (r?.reason ?? "pushing is not possible from here") : !d ? `Nothing to push: this page already matches ${onSite() ? "live" : host}` : `${onSite() ? "Push the settings on this page live" : `Push the settings on this page to ${host}`} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !prod;
