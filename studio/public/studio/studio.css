@@ -190,6 +190,9 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 button.mini { padding: 2px 8px; font-size: 11.5px; }
 button.mini.on { background: #fbf8ef; border-color: var(--gold); }
 
+/* ---- quick tooltip ---- */
+.qtip { position: fixed; z-index: 50; max-width: 360px; background: #0e1a33; color: #eef2f9; font-size: 12.5px; line-height: 1.4; padding: 7px 10px; border-radius: 6px; box-shadow: 0 6px 20px #0004; white-space: pre-line; pointer-events: none; }
+
 /* ---- dialog ---- */
 dialog { border: 0; border-radius: 10px; padding: 0; max-width: 560px; width: calc(100% - 32px); box-shadow: 0 20px 60px #0004; }
 dialog::backdrop { background: #071222aa; }

@@ -38,6 +38,31 @@ function ask({ title, body, ok = "Confirm", danger = false }) {
 const withLabels = (text) => text.replace(/\{(\d+)\}/g, (_, id) => index?.byId?.get(id)?.label ?? `race ${id}`);
 const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>${esc(withLabels(c.text))}</li>`).join("")}</ul>` : `<p class="muted">No differences.</p>`;
 
+// ---------- quick tooltips ----------
+// Native title tooltips wait about a second. Every title on the page becomes a data-tip shown
+// after 150 ms in a small box of our own; the text and markup stay exactly as written.
+(() => {
+  const tip = document.createElement("div"); tip.className = "qtip"; tip.hidden = true; document.body.appendChild(tip);
+  let timer = null, current = null;
+  const adopt = (el) => { if (el.hasAttribute("title")) { el.dataset.tip = el.getAttribute("title"); el.removeAttribute("title"); } return el.dataset.tip; };
+  const show = (el) => {
+    const text = adopt(el); if (!text) return;
+    tip.textContent = text; tip.hidden = false;
+    const r = el.getBoundingClientRect();
+    tip.style.left = `${Math.max(8, Math.min(window.innerWidth - tip.offsetWidth - 8, r.left))}px`;
+    const below = r.bottom + 8 + tip.offsetHeight < window.innerHeight;
+    tip.style.top = `${below ? r.bottom + 8 : r.top - tip.offsetHeight - 8}px`;
+  };
+  document.addEventListener("mouseover", (e) => {
+    const el = e.target.closest("[title], [data-tip]"); if (!el || el === current) return;
+    clearTimeout(timer); current = el; tip.hidden = true;
+    timer = setTimeout(() => show(el), 150);
+  });
+  document.addEventListener("mouseout", (e) => { if (current && !current.contains(e.relatedTarget)) { clearTimeout(timer); current = null; tip.hidden = true; } });
+  document.addEventListener("mousedown", () => { clearTimeout(timer); tip.hidden = true; });
+  window.addEventListener("scroll", () => { tip.hidden = true; }, { passive: true });
+})();
+
 // ---------- auth ----------
 function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; }
 function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; }
