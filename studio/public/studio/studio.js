@@ -85,8 +85,8 @@ let prodSeenAt = null;        // updatedAt of the production copy this page last
 let prodError = null;         // why production is unreadable right now, or null
 let draft = normalize(DEFAULTS);   // the working copy: always Local (this browser), seeded from production on first use
 const view = "local";         // thumbnails and the example ticker always show the settings on this page
-const cards = createCardManager({ maxLive: 12, getBg: () => $("bg").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
-cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (budget ${12})` : live ? `${live} live previews` : ""; });
+const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
+cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
   try { const r = await fetch(`/data/status.json?t=${Math.floor(Date.now() / 15_000)}`, { cache: "no-store" }); const next = r.ok ? await r.json() : null; status = next?.generated ? next : null; } catch {}
@@ -572,7 +572,7 @@ function renderChartCatalog() {
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : "movementCharts";
       const on = draft[key].includes(chart.id);
-      const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 9, isStatic: true });
+      const el = cards.card({ chart, race: kind === "race" ? sample : null, priority: 6 });
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured chart" : "✓ In overview") : (kind === "race" ? "☆ Make featured" : "+ Add to overview")}</button>`);
       grid.appendChild(el);

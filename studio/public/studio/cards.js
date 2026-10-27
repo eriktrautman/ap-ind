@@ -15,7 +15,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 12, getBg = () => "black", getSource = () => "global", getDraft = () => null } = {}) {
+export function createCardManager({ maxLive = 32, getBg = () => "black", getSource = () => "global", getDraft = () => null } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -57,7 +57,7 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
     f.title = c.title;
     f.loading = "eager";
     f.src = pageUrl(c, false);
-    f.addEventListener("load", () => { const d = getDraft(); if (d) f.contentWindow?.postMessage({ type: "producer", state: d }, "*"); });
+    f.addEventListener("load", () => { feedFrame(f); const d = getDraft(); if (d) f.contentWindow?.postMessage({ type: "producer", state: d }, "*"); });
     c.thumb.querySelector(".ph")?.remove();
     c.thumb.appendChild(f);
     c.frame = f;
@@ -142,10 +142,19 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
     for (const c of [...cards]) if (!c.el.isConnected) { io.unobserve(c.el); ro.unobserve(c.thumb); if (c.frame) c.frame.remove(); cards.delete(c); }
     schedule();
   }
+  /** One download for every preview: the room's copy of the results file and poller status goes to each frame. */
+  function feedPayload() {
+    return { type: "feed", index: index ? { generated: index.generated, resultsType: index.resultsType, apTimestamp: index.apTimestamp, races: index.races } : null, status: status ?? null };
+  }
+  function feedFrame(f) { if (index || status) f.contentWindow?.postMessage(feedPayload(), "*"); }
+  window.addEventListener("message", (e) => {
+    if (e.data?.type !== "feed-request") return;
+    for (const c of cards) if (c.frame?.contentWindow === e.source) feedFrame(c.frame);
+  });
   function setData({ status: s, index: i }) {
     if (s) status = s;
     if (i) { index = i; index.byId = new Map(i.races.map((r) => [r.id, r])); }
-    for (const c of cards) renderFresh(c);
+    for (const c of cards) { renderFresh(c); if (c.frame) feedFrame(c.frame); }
   }
   function broadcast(draft) {
     for (const c of cards) c.frame?.contentWindow?.postMessage({ type: "producer", state: draft }, "*");

@@ -4,6 +4,9 @@
 // snapshot, update and counties messages, a freshness indicator, and helpers for county units,
 // margin history, trend reports and the committed baselines.
 //   ?demo=1   an embedded sample snapshot, no network (the docs site's embeds)
+//   ?preview=1 inside the control room: the room posts {type:"feed", index, status} to the frame,
+//             so forty thumbnails share one download instead of each polling; a frame that gets no
+//             message within 5 s falls back to polling on its own.
 // Usage: const feed = connectFeed({ onSnapshot, onUpdate, onStatus });
 
 import { FEATURED_RACES } from "./control.js";
@@ -63,16 +66,19 @@ export function connectFeed(handlers) {
     };
   }
   const raceKey = (r) => `${r.lastUpdated}|${r.totalVotes}|${r.called}|${r.eevp}|${r.candidates.map((c) => c.votes).join(",")}`;
-  async function loadIndex() {
-    let index;
-    try { index = await getJSON(`/data/index.json?t=${bucket(INDEX_MS)}`); } catch { state.connected = false; handlers.onStatus?.(state); return; }
-    if (!Array.isArray(index.races)) return;
+  function applyIndex(index) {
+    if (!Array.isArray(index?.races)) return;
     // The curated independent is flagged on every candidate record (older files lack the flag).
     for (const r of index.races) for (const c of r.candidates) c.featured = !!c.featured || FEATURED_CANDS.has(c.id) || (!r.featured && !!c.independent);
     state.connected = true;
     if (first) { first = false; apply({ type: "snapshot", races: index.races, status: statusView(index) }); return; }
     const changed = index.races.filter((r) => { const old = state.races.get(r.id); return !old || raceKey(old) !== raceKey(r); });
     apply({ type: "update", changed, status: statusView(index) });
+  }
+  async function loadIndex() {
+    let index;
+    try { index = await getJSON(`/data/index.json?t=${bucket(INDEX_MS)}`); } catch { state.connected = false; handlers.onStatus?.(state); return; }
+    applyIndex(index);
   }
   async function loadStatus() {
     try { pollerStatus = await getJSON(`/data/status.json?t=${bucket(STATUS_MS)}`); } catch {}
@@ -111,9 +117,26 @@ export function connectFeed(handlers) {
     });
     return state;
   }
-  loadStatus().then(loadIndex);
-  setInterval(loadIndex, INDEX_MS);
-  setInterval(loadStatus, STATUS_MS);
+  const fedByParent = params.get("preview") === "1" && window.parent !== window;
+  let polling = false;
+  const startPolling = () => {
+    if (polling) return; polling = true;
+    loadStatus().then(loadIndex);
+    setInterval(loadIndex, INDEX_MS);
+    setInterval(loadStatus, STATUS_MS);
+  };
+  if (fedByParent) {
+    let fed = false;
+    window.addEventListener("message", (e) => {
+      if (e.data?.type !== "feed") return;
+      fed = true;
+      if (e.data.status) pollerStatus = e.data.status;
+      if (e.data.index) applyIndex(e.data.index);
+      else if (!first) apply({ type: "status", status: statusView(null) });
+    });
+    window.parent.postMessage({ type: "feed-request" }, "*");
+    setTimeout(() => { if (!fed) startPolling(); }, 5000);
+  } else startPolling();
   setInterval(() => apply({ type: "counties", changed: [], states: [] }), COUNTY_MS);
   return state;
 }
