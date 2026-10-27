@@ -30,6 +30,6 @@
   nav.className = "apnav";
   nav.innerHTML = `<a class="brand" href="/">ap-ind</a>` +
     links.map(([label, href]) => `<a href="${href}" class="${href.split("?")[0] === here ? "here" : ""}">${label}</a>`).join("") +
-    `<span class="env">${local ? "local" : "ap-ind.vercel.app"}</span>`;
+    `<span class="env">${local ? "local" : location.host}</span>`;
   document.body.insertBefore(nav, document.body.firstChild);
 })();
