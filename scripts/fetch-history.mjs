@@ -11,6 +11,8 @@
 //   node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --dry-run        # list planned requests
 //   node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --no-ru          # state/national level only
 //   node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --reparse        # rebuild tables from stored raw
+//   node --env-file=.env scripts/fetch-history.mjs --all --states auto          # every date AP lists, county level
+//                                                                               # only where a federal race was held
 //
 // Options: --db <path> (default data/ap-history.sqlite), --results-type l|c|t (default l; AP lists
 // certifiedResults=true for some dates and 'c' asks for that feed), --gap <ms> between requests.
@@ -32,17 +34,21 @@ const flag = (name, dflt) => {
 const has = (name) => argv.includes(`--${name}`);
 const opts = {
   offices: String(flag("offices", "P,S,H")),
+  // --states CA,TX limits county pulls; --states auto pulls county level only for states that had a
+  // federal race on that date (from the state-level response); default is every state.
   states: flag("states", null) ? String(flag("states")).split(",").map((s) => s.trim().toUpperCase()) : null,
+  all: has("all"),                     // every date AP lists up to today (generals first, then newest first)
+  since: flag("since", null), until: flag("until", null),
   resultsType: String(flag("results-type", "l")),
   db: String(flag("db", "data/ap-history.sqlite")),
-  gapMs: Number(flag("gap", 7000)), // 7 s => max ~8.5/min, under AP's 10/min
+  gapMs: Number(flag("gap", 10000)), // 10 s => 6/min, leaving headroom under AP's 10/min for other users of the key
   dryRun: has("dry-run"),
   noRu: has("no-ru"),
   refresh: has("refresh"),
   reparse: has("reparse"),
 };
-if (dates.length === 0 && !has("list")) {
-  console.error("usage: fetch-history.mjs <YYYY-MM-DD>... [--offices P,S,H] [--states CA,TX] [--no-ru] [--dry-run] [--refresh] [--reparse] [--list]");
+if (dates.length === 0 && !has("list") && !opts.all) {
+  console.error("usage: fetch-history.mjs <YYYY-MM-DD>... | --all [--since 2012-01-01] [--until 2025-12-31] [--offices P,S,H] [--states CA,TX|auto] [--no-ru] [--dry-run] [--refresh] [--reparse] [--list]");
   process.exit(2);
 }
 const key = process.env.AP_API_KEY;
@@ -159,17 +165,20 @@ db.exec(`
     PRIMARY KEY (election_date, state_postal, race_id, ru_key, candidate_id)
   );
 
-  -- Who each candidate_id is (per election; names/party can vary across elections).
+  -- Who each candidate_id is. candidate_id is unique only within a state and election (AP reuses
+  -- numbers across states); pol_id identifies the person across races and elections. Party is the
+  -- label on this state's ballot; presidential candidates carry different labels in different states.
   CREATE TABLE IF NOT EXISTS candidates (
     election_date TEXT NOT NULL,
+    state_postal TEXT NOT NULL,
     candidate_id TEXT NOT NULL,
     pol_id TEXT, pol_num TEXT,
     first TEXT, middle TEXT, last TEXT, suffix TEXT, abbrv TEXT,
     party TEXT, caucus_with TEXT,
-    PRIMARY KEY (election_date, candidate_id)
+    PRIMARY KEY (election_date, state_postal, candidate_id)
   );
 
-  CREATE INDEX IF NOT EXISTS results_cand ON results (candidate_id, election_date);
+  CREATE INDEX IF NOT EXISTS results_pol ON results (pol_id, election_date);
   CREATE INDEX IF NOT EXISTS results_party ON results (election_date, party);
   CREATE INDEX IF NOT EXISTS ru_level ON reporting_units (election_date, ru_level);
   CREATE INDEX IF NOT EXISTS ru_fips ON reporting_units (fips);
@@ -180,26 +189,26 @@ db.exec(`
   CREATE VIEW IF NOT EXISTS v_race_results AS
     SELECT r.election_date, r.race_id, r.state_postal, r.office_id, r.office_name, r.seat_name, r.race_type,
            r.race_call_status, r.uncontested, r.ranked_choice, r.flipped_seat,
-           c.candidate_id, c.pol_id, c.first, c.last, c.party, res.incumbent,
+           c.candidate_id, c.pol_id, c.first, c.last, res.party, res.incumbent,
            res.vote_count, res.vote_pct, res.winner, res.winner_datetime,
            u.total_votes, u.precincts_reporting, u.precincts_total, u.eevp
     FROM results res
     JOIN reporting_units u USING (election_date, state_postal, race_id, ru_key)
     JOIN races r USING (election_date, state_postal, race_id)
-    JOIN candidates c USING (election_date, candidate_id)
+    JOIN candidates c USING (election_date, state_postal, candidate_id)
     WHERE u.ru_level = 1;
 
   -- County / town level rows with names, for maps and swing analysis.
   CREATE VIEW IF NOT EXISTS v_county_results AS
     SELECT r.election_date, r.race_id, r.state_postal, r.office_id, r.seat_name, r.race_type,
            u.ru_key, u.ru_name, u.fips, u.level_name,
-           c.candidate_id, c.first, c.last, c.party, res.incumbent,
+           c.candidate_id, c.first, c.last, res.party, res.incumbent,
            res.vote_count, res.vote_pct, res.winner,
            u.total_votes, u.precincts_reporting, u.precincts_total
     FROM results res
     JOIN reporting_units u USING (election_date, state_postal, race_id, ru_key)
     JOIN races r USING (election_date, state_postal, race_id)
-    JOIN candidates c USING (election_date, candidate_id)
+    JOIN candidates c USING (election_date, state_postal, candidate_id)
     WHERE u.ru_level >= 2;
 
   -- One row per race: the winner and the margin over the runner-up (state/district level).
@@ -217,6 +226,19 @@ db.exec(`
            ROUND(w.vote_pct - COALESCE(s.vote_pct, 0), 3) AS margin_pct
     FROM ranked w LEFT JOIN ranked s ON s.election_date = w.election_date AND s.state_postal = w.state_postal AND s.race_id = w.race_id AND s.rk = 2
     WHERE w.rk = 1;
+
+  -- What has been loaded per election date.
+  CREATE VIEW IF NOT EXISTS v_coverage AS
+    SELECT e.election_date,
+           (SELECT COUNT(*) FROM raw_responses x WHERE x.election_date = e.election_date AND x.status = 200) AS requests,
+           (SELECT COUNT(*) FROM races r WHERE r.election_date = e.election_date AND r.state_postal <> 'US') AS races,
+           (SELECT COUNT(*) FROM races r WHERE r.election_date = e.election_date AND r.office_id = 'P' AND r.state_postal <> 'US') AS pres,
+           (SELECT COUNT(*) FROM races r WHERE r.election_date = e.election_date AND r.office_id = 'S' AND r.state_postal <> 'US') AS senate,
+           (SELECT COUNT(*) FROM races r WHERE r.election_date = e.election_date AND r.office_id = 'H' AND r.state_postal <> 'US') AS house,
+           (SELECT COUNT(DISTINCT state_postal) FROM races r WHERE r.election_date = e.election_date AND r.state_postal <> 'US') AS states,
+           (SELECT COUNT(*) FROM reporting_units u WHERE u.election_date = e.election_date AND u.ru_level >= 2) AS county_units,
+           (SELECT GROUP_CONCAT(DISTINCT race_type) FROM races r WHERE r.election_date = e.election_date) AS race_types
+    FROM ap_elections e;
 `);
 
 const ins = {
@@ -228,7 +250,7 @@ const ins = {
   race: db.prepare(`INSERT OR REPLACE INTO races VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`),
   ru: db.prepare(`INSERT OR REPLACE INTO reporting_units VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`),
   result: db.prepare(`INSERT OR REPLACE INTO results VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`),
-  cand: db.prepare(`INSERT OR REPLACE INTO candidates VALUES (?,?,?,?,?,?,?,?,?,?,?)`),
+  cand: db.prepare(`INSERT OR REPLACE INTO candidates VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`),
 };
 
 // ---------- HTTP, politely ----------
@@ -337,7 +359,7 @@ function ingest(date, data) {
             c.rankedChoiceVoting ? JSON.stringify(c.rankedChoiceVoting) : null,
           );
           ins.cand.run(
-            date, String(c.candidateID), c.polID ?? null, c.polNum ?? null, c.first ?? null, c.middle ?? null, c.last ?? null,
+            date, st, String(c.candidateID), c.polID ?? null, c.polNum ?? null, c.first ?? null, c.middle ?? null, c.last ?? null,
             c.suffix ?? null, c.abbrv ?? null, c.party ?? null, c.caucusWith ?? null,
           );
           nResults++;
@@ -353,17 +375,9 @@ function ingest(date, data) {
 }
 
 // ---------- Plan ----------
-function plan(date) {
-  const reqs = [];
-  const base = { officeID: opts.offices, resultsType: opts.resultsType };
-  reqs.push({ key: `${date}|${opts.offices}|state|ALL|${opts.resultsType}`, url: buildUrl(date, { ...base, level: "state" }), label: "state level, all states" });
-  if (!opts.noRu) {
-    for (const st of opts.states ?? STATES) {
-      reqs.push({ key: `${date}|${opts.offices}|ru|${st}|${opts.resultsType}`, url: buildUrl(date, { ...base, level: "ru", statePostal: st }), label: `county level, ${st}` });
-    }
-  }
-  return reqs;
-}
+const base = () => ({ officeID: opts.offices, resultsType: opts.resultsType });
+const stateReq = (date) => ({ key: `${date}|${opts.offices}|state|ALL|${opts.resultsType}`, url: buildUrl(date, { ...base(), level: "state" }), label: "state level, all states" });
+const ruReq = (date, st) => ({ key: `${date}|${opts.offices}|ru|${st}|${opts.resultsType}`, url: buildUrl(date, { ...base(), level: "ru", statePostal: st }), label: `county level, ${st}` });
 
 async function listElections() {
   const url = "https://api.ap.org/v3/elections?format=json";
@@ -377,51 +391,80 @@ async function listElections() {
   console.log(`AP lists ${d.elections?.length ?? 0} election dates for this key (stored in ap_elections)`);
 }
 
+/** Fetch (or load from cache) one request; returns parsed JSON, or null when AP refused it. */
+async function obtain(date, r, tag) {
+  const existing = ins.rawExists.get(r.key);
+  if (existing && !opts.refresh) {
+    if (!opts.reparse) return { data: null, cached: true, skipIngest: true };
+    const row = db.prepare("SELECT body_gz FROM raw_responses WHERE id = ?").get(existing.id);
+    return { data: JSON.parse(gunzipSync(row.body_gz).toString("utf8")), cached: true };
+  }
+  let status, body, quota;
+  try { ({ status, text: body, quota } = await apGet(r.url)); } catch (e) {
+    console.warn(`  ${tag} ${r.label}: ${e.message}; skipped (re-run to retry)`);
+    return { data: null, cached: false, failed: true };
+  }
+  let data = null;
+  try { data = JSON.parse(body); } catch { /* keep raw even if not JSON */ }
+  ins.raw.run(date, r.key, r.url, new Date().toISOString(), status, Buffer.byteLength(body), data?.races?.length ?? null,
+    data?.timestamp ?? null, quota.used, quota.allowed, gzipSync(body));
+  if (status !== 200) {
+    console.warn(`  ${tag} ${r.label}: HTTP ${status} ${body.slice(0, 160)}`);
+    return { data: null, cached: false, failed: true };
+  }
+  console.log(`  ${tag} ${r.label}: ${data?.races?.length ?? "?"} races, ${(Buffer.byteLength(body) / 1e6).toFixed(1)} MB, quota ${quota.used}/${quota.allowed}`);
+  return { data, cached: false };
+}
+
+/** States that had a race on this date, from the state-level response (cached or just fetched). */
+function statesWithRaces(date) {
+  const row = ins.rawExists.get(stateReq(date).key);
+  if (!row) return null;
+  const d = JSON.parse(gunzipSync(db.prepare("SELECT body_gz FROM raw_responses WHERE id = ?").get(row.id).body_gz).toString("utf8"));
+  const set = new Set();
+  for (const r of d.races ?? []) for (const u of r.reportingUnits ?? []) if (u.reportingunitLevel === 1 && u.statePostal) set.add(u.statePostal);
+  return STATES.filter((s) => set.has(s));
+}
+
 async function runDate(date) {
-  const reqs = plan(date);
-  console.log(`\n== ${date}: ${reqs.length} requests planned (offices ${opts.offices}, resultsType ${opts.resultsType})`);
+  const auto = opts.states?.[0] === "AUTO";
   if (opts.dryRun) {
-    for (const r of reqs) console.log(`  ${ins.rawExists.get(r.key) ? "cached " : "FETCH  "} ${r.label}  ${r.url}`);
+    const sts = opts.noRu ? [] : auto ? (statesWithRaces(date) ?? ["(state-level call first, then states with races)"]) : (opts.states ?? STATES);
+    console.log(`\n== ${date}: 1 + ${sts.length} requests: ${ins.rawExists.get(stateReq(date).key) ? "cached" : "FETCH"} state level; county level for ${sts.join(",") || "nobody"}`);
     return;
   }
-  let fetched = 0, cached = 0;
-  const totals = { nRaces: 0, nUnits: 0, nResults: 0 };
   const started = Date.now();
-  for (const [i, r] of reqs.entries()) {
-    const existing = ins.rawExists.get(r.key);
-    let text;
-    if (existing && !opts.refresh) {
-      if (!opts.reparse) { cached++; continue; }
-      const row = db.prepare("SELECT body_gz FROM raw_responses WHERE id = ?").get(existing.id);
-      text = gunzipSync(row.body_gz).toString("utf8");
-      cached++;
-    } else {
-      const { status, text: body, quota } = await apGet(r.url);
-      let data = null;
-      try { data = JSON.parse(body); } catch { /* keep raw even if not JSON */ }
-      ins.raw.run(date, r.key, r.url, new Date().toISOString(), status, Buffer.byteLength(body), data?.races?.length ?? null,
-        data?.timestamp ?? null, quota.used, quota.allowed, gzipSync(body));
-      if (status !== 200) {
-        console.warn(`  [${i + 1}/${reqs.length}] ${r.label}: HTTP ${status} ${body.slice(0, 160)}`);
-        continue;
-      }
-      fetched++;
-      text = body;
-      const elapsed = ((Date.now() - started) / 1000).toFixed(0);
-      console.log(`  [${i + 1}/${reqs.length}] ${r.label}: ${data?.races?.length ?? "?"} races, ${(Buffer.byteLength(body) / 1e6).toFixed(1)} MB, quota ${quota.used}/${quota.allowed}, ${elapsed}s elapsed`);
-    }
-    const n = ingest(date, JSON.parse(text));
-    totals.nRaces += n.nRaces; totals.nUnits += n.nUnits; totals.nResults += n.nResults;
+  let fetched = 0, cached = 0, failed = 0;
+  const account = (o) => { if (o.failed) failed++; else if (o.cached) cached++; else fetched++; };
+  const first = await obtain(date, stateReq(date), `[${date}]`);
+  account(first);
+  if (first.failed) { console.warn(`== ${date}: state-level call failed; skipping county level`); return; }
+  if (first.data) ingest(date, first.data);
+  let sts = opts.noRu ? [] : auto ? statesWithRaces(date) : (opts.states ?? STATES);
+  if (auto && sts.length === 0) console.log(`  [${date}] no ${opts.offices} races on this date`);
+  for (const [i, st] of sts.entries()) {
+    const o = await obtain(date, ruReq(date, st), `[${date} ${i + 1}/${sts.length}]`);
+    account(o);
+    if (o.data) ingest(date, o.data);
   }
   const counts = db.prepare(`SELECT (SELECT COUNT(*) FROM races WHERE election_date = ?) AS races,
     (SELECT COUNT(*) FROM reporting_units WHERE election_date = ?) AS units,
-    (SELECT COUNT(*) FROM results WHERE election_date = ?) AS results,
-    (SELECT COUNT(*) FROM candidates WHERE election_date = ?) AS candidates`).get(date, date, date, date);
-  console.log(`== ${date} done: ${fetched} fetched, ${cached} from cache. DB now has ${counts.races} races, ${counts.units} reporting units, ${counts.results} result rows, ${counts.candidates} candidates for this date.`);
+    (SELECT COUNT(*) FROM results WHERE election_date = ?) AS results`).get(date, date, date);
+  console.log(`== ${date} done in ${((Date.now() - started) / 1000).toFixed(0)}s: ${fetched} fetched, ${cached} cached, ${failed} failed. ${counts.races} races, ${counts.units} units, ${counts.results} result rows.`);
+}
+
+function allDates() {
+  const today = new Date().toISOString().slice(0, 10);
+  const rows = db.prepare("SELECT election_date FROM ap_elections WHERE election_date < ? ORDER BY election_date DESC").all(today).map((r) => r.election_date);
+  const inRange = rows.filter((d) => (!opts.since || d >= opts.since) && (!opts.until || d <= opts.until));
+  const isGeneral = (d) => Number(d.slice(0, 4)) % 2 === 0 && d.slice(5, 7) === "11" && Number(d.slice(8)) <= 8;
+  return [...inRange.filter(isGeneral), ...inRange.filter((d) => !isGeneral(d))];
 }
 
 if (has("list") || (!opts.dryRun && !opts.reparse && db.prepare("SELECT COUNT(*) AS n FROM ap_elections").get().n === 0)) {
   await listElections();
 }
-for (const d of dates) await runDate(d);
+const todo = opts.all ? allDates() : dates;
+console.log(`${todo.length} election date(s) to process; offices ${opts.offices}; county level: ${opts.noRu ? "no" : opts.states ? opts.states.join(",") : "all states"}`);
+for (const d of todo) await runDate(d);
 db.close();

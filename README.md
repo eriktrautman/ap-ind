@@ -106,7 +106,7 @@ node --env-file=.env scripts/fetch-history.mjs --all --states auto        # ever
                                                                           # for states that had a federal race that day
 ```
 
-It is kind to the key: AP's quota is 10 requests per minute (`x-electionsapi-q-minute-*` headers), the script sends one request every 7 s and pauses when the bucket is nearly empty, and every response is cached in `raw_responses`, so re-running a date costs no requests (`--refresh` re-downloads, `--reparse` rebuilds the tables from the cache). One election date is 52 requests (one state-level call plus one county-level call per state), about six minutes.
+It is kind to the key: AP's quota is 10 requests per minute (`x-electionsapi-q-minute-*` headers), the script sends one request every 10 s (`--gap` ms to change) and pauses when the bucket is nearly empty, and every response is cached in `raw_responses`, so re-running a date costs no requests (`--refresh` re-downloads, `--reparse` rebuilds the tables from the cache). One election date is 52 requests (one state-level call plus one county-level call per state), about nine minutes.
 
 Tables, all keyed by `(election_date, state_postal, race_id)` because AP race ids are unique only within a state (the presidential race is id `0` in every state):
 
@@ -114,12 +114,13 @@ Tables, all keyed by `(election_date, state_postal, race_id)` because AP race id
 |---|---|
 | `races` | race: office, seat, district, type, call status, uncontested, ranked choice, flipped seat |
 | `reporting_units` | race × unit: national (`ru_level` 0), state (1), county or New England town (2), with FIPS, precincts, total votes |
-| `results` | race × unit × candidate: votes, percentage of the unit, AP winner flag, RCV rounds |
-| `candidates` | candidate per election: names, party, `pol_id` (stable across elections) |
+| `results` | race × unit × candidate: votes, percentage of the unit, party, AP winner flag (`X` won, `R` to runoff), RCV rounds |
+| `candidates` | candidate per election and state (AP reuses `candidate_id` numbers across states): names, party label on that ballot, `pol_id` (the person, stable across races and elections) |
 | `ap_elections` | election date AP exposes to this key, with live/test/certified flags |
 | `v_race_results` | state- or district-wide result per candidate, with names |
 | `v_county_results` | county/town result per candidate, with names |
 | `v_race_summary` | race: leader, runner-up, margin in votes and points |
+| `v_coverage` | election date: requests made, races by office, states, county units, race types |
 
 ```sql
 -- Non-major-party candidates who cleared 5% in a federal race
