@@ -4,7 +4,7 @@
 //   - the poller loop in place of Vercel Cron (every POLL_SECONDS, default 60; --no-poll to skip)
 //
 //   npm start                  build, then serve on http://localhost:3000
-//   node scripts/serve.mjs --port 4174 --no-poll
+//   node scripts/serve.mjs --port 4000 --no-poll
 //
 // Needs a .env in studio/ with AP_API_KEY and STUDIO_PASSWORD, plus either
 //   BLOB_READ_WRITE_TOKEN   to share the deployment's Blob store (what production uses), or

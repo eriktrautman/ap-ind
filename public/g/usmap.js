@@ -1,10 +1,10 @@
 // Shared national map for the D graphics: a geographic state map (us-atlas via CDN, Albers USA)
 // and a tile-grid map, both drawn into an SVG with d3. Fill rules are the caller's.
 
-export const FIPS = { "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE", "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA", "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA", "54": "WV", "55": "WI", "56": "WY" };
+const FIPS = { "01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE", "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA", "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA", "54": "WV", "55": "WI", "56": "WY" };
 
 /** Tile grid: [col, row] per state. */
-export const TILES = {
+const TILES = {
   AK: [0, 0], ME: [11, 0],
   VT: [10, 1], NH: [11, 1],
   WA: [1, 2], ID: [2, 2], MT: [3, 2], ND: [4, 2], MN: [5, 2], IL: [6, 2], WI: [7, 2], MI: [8, 2], NY: [9, 2], RI: [10, 2], MA: [11, 2],
@@ -17,7 +17,7 @@ export const TILES = {
 
 const ATLAS = "https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json";
 let atlasPromise = null;
-export function loadStates() {
+function loadStates() {
   atlasPromise ??= fetch(ATLAS).then((r) => r.json()).then((topo) => {
     const feats = topojson.feature(topo, topo.objects.states).features.filter((f) => FIPS[f.id]);
     for (const f of feats) f.postal = FIPS[f.id];

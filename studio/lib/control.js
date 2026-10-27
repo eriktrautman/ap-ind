@@ -8,7 +8,7 @@
 //
 // Usage in a graphic:
 //   import { watchState } from "./control.js";
-//   watchState({ onState: (state, info) => render(state) });   // info: {source, requested, updatedAt}
+//   watchState({ onState: (state, info) => render(state) });   // info: {source, requested, error, preview}
 
 export const SOURCES = ["default", "global", "local"];
 const LS_LOCAL = "studio.local";
@@ -47,7 +47,6 @@ export const CHARTS = [
   { id: "D10", kind: "movement", name: "National popular vote",     page: "/g/house-pv.html",   built: true },
   { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: true },
 ];
-export const chartById = (id) => CHARTS.find((c) => c.id === id) ?? null;
 
 /** The shipped state. pinnedRaceIds is the ticker list (the name the on-air ticker has always read). */
 export const DEFAULTS = Object.freeze({
@@ -145,12 +144,11 @@ const ls = {
 };
 export function readLocal() { try { const raw = ls.get(LS_LOCAL); return raw ? normalize(JSON.parse(raw)) : null; } catch { return null; } }
 export function saveLocal(state) { const s = normalize({ ...state, updatedAt: new Date().toISOString() }); ls.set(LS_LOCAL, JSON.stringify(s)); return s; }
-export function clearLocal() { ls.del(LS_LOCAL); }
 export function getSavedSource() { const s = ls.get(LS_SOURCE); return SOURCES.includes(s) ? s : "global"; }
 export function setSavedSource(src) { if (SOURCES.includes(src)) ls.set(LS_SOURCE, src); }
 
 /** Which source this page should use: the URL wins, then the saved selector, then global. */
-export function requestedSource(search = location.search) {
+function requestedSource(search = location.search) {
   const q = new URLSearchParams(search).get("src");
   return SOURCES.includes(q) ? q : getSavedSource();
 }
@@ -166,7 +164,7 @@ export async function loadGlobal() {
  * what actually fed the state (local with nothing saved falls back to global; global
  * unreachable falls back to the last copy given, else default).
  */
-export async function loadState(requested = requestedSource(), { lastGlobal = null } = {}) {
+async function loadState(requested = requestedSource(), { lastGlobal = null } = {}) {
   if (requested === "default") return { state: normalize(DEFAULTS), source: "default", requested, error: null };
   if (requested === "local") {
     const local = readLocal();
@@ -219,11 +217,4 @@ export function watchState({ source = requestedSource(), intervalMs = 10_000, on
     refresh: tick,
     stop() { clearInterval(timer); window.removeEventListener("storage", onStorage); window.removeEventListener("message", onMessage); },
   };
-}
-
-/** Append the page's source to a graphic URL so it opens on the same state. */
-export function withSource(url, source) {
-  const u = new URL(url, location.href);
-  if (SOURCES.includes(source)) u.searchParams.set("src", source);
-  return u.pathname + u.search;
 }

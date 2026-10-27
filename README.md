@@ -66,21 +66,15 @@ The Watch Party project (`watch-party/`, ind-watch-party.vercel.app) is a pure r
 
 Functions: `GET/POST/DELETE /api/login`, `GET/PUT /api/producer` (partial bodies merge over the stored state; every field validated), `GET/PUT /api/settings`, `GET|POST /api/poll`. Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `STUDIO_PASSWORD`.
 
-Local preview of the deployment (reads the live Blob data, refuses writes):
-
-```sh
-cd studio
-npm run build && DEV_AUTHED=1 node scripts/dev.mjs 4174   # control room at http://localhost:4174/studio, graphics under /g/
-node scripts/browse.mjs "http://localhost:4174/g/county.html?id=28594&feed=blob&bg=black" --shot out.png   # headless render check
-npm run poll                                                # poll AP every 60 s from this machine if the cron is not running
-```
+Checking pages without a browser: `node scripts/browse.mjs "http://localhost:3000/g/county.html?id=28594&bg=black" --shot out.png` renders a page in headless Chrome, prints console errors and failed requests, and can run `--eval` snippets. `npm run poll` runs the poll loop alone (no web server) for a laptop standing in for the cron.
 
 ## Data
 
 - `config/candidates.json`: curated bios for the featured races, keyed by AP `candidateID`.
 - `config/photos.json`: photo manifest for every candidate in every race: source, licence, confidence, and the CDN URL. Images are not in the repository.
-- `config/featured.json`: candidate ids to feature regardless of party code. Any non-Democrat, non-Republican candidate is featured by default.
-- `config/baseline-2024-pres.json`: 2024 presidential result by voting area for the featured states, from AP.
+- `config/baseline-2024-pres.json`: 2024 presidential result by voting area for the featured states, from AP (B13).
+- `config/baseline-federal.json`: 2024 national Senate and House totals by party and the last contest for each featured seat, from AP (B10, C6, D10).
+- `config/polls.json`: public polls for the featured races with a source on every row (C7).
 - `watch-party/public/geo/<ST>.json`: map geometry per state, matching AP's reporting units (counties; towns in New England; House districts in Alaska). Built by `scripts/build-geo.mjs`.
 
 ## Historical results (analytics)
@@ -137,11 +131,11 @@ cd watch-party && node --env-file=.env.blob scripts/upload-photos.mjs   # push t
 cd watch-party && node scripts/sync-photos.mjs              # pull the set onto a machine (studio server) for local serving
 ```
 
-The broadcast server serves photos from `public/photos/` so air does not depend on the CDN; the Watch Party reads the CDN URLs from the manifest.
+The pages read the CDN URLs from the manifest (`config/photos.json`); `public/photos/` is the resized local set the pipeline produces.
 
 ## Watch Party
 
-`watch-party/` is a separate Vercel project (https://ind-watch-party.vercel.app): a poller writes JSON snapshots to Vercel Blob and static pages read them. It covers every race the AP key returns (Senate, House, governor, other statewide offices, ballot measures, big-city mayors; not state legislatures). Run the poller locally with `cd watch-party && node --env-file=.env.blob --env-file=../.env scripts/run-local.mjs`.
+`watch-party/` is a separate Vercel project (https://ind-watch-party.vercel.app): static pages that read the same Blob files the ap-ind poller writes. It covers every race the AP key returns (Senate, House, governor, other statewide offices, ballot measures, big-city mayors; not state legislatures). It has no poller or secrets of its own.
 
 ## Secrets
 

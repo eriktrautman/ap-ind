@@ -37,7 +37,7 @@ export function createCardManager({ maxLive = 12, getBg = () => "black", getSour
     u.searchParams.set("src", getSource());
     const bg = forOpen ? getBg() : "black";
     if (bg) u.searchParams.set("bg", bg);
-    if (!forOpen) { u.searchParams.set("preview", "1"); u.searchParams.set("feed", "blob"); }
+    if (!forOpen) u.searchParams.set("preview", "1");
     return u.pathname + u.search;
   }
 

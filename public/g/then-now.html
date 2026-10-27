@@ -35,7 +35,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and the last contest for this seat · same-county comparison over counties with 10%+ of the expected vote in</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt, officeText, normName, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, partyClass, officeText, normName, isFeaturedCand } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);

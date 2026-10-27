@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; one runtime; awaiting push",
   note: "S81 (candidate index pages) open",
-  updated: "2026-10-27T00:52:02Z",
+  updated: "2026-10-27T00:58:04Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -233,6 +233,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-27T00:58:04Z", what: "Cleanup after the refactor: feed.js is Blob-only (the WebSocket/snapshot probe and ?feed= are gone), unused imports and exports dropped, the server-era ticker page, old homepage and config/featured.json removed, the lookbook's ticker embed points at the real ticker, root lockfile rebuilt without the server dependencies, spec carries a status note on the architecture as built. Verified by rendering the ticker, race, county, board and balance-of-power pages against npm start with a local store." },
   { t: "2026-10-27T00:52:02Z", what: "README: step-by-step laptop setup for a teammate (clone, npm install, .env with the AP key and a self-chosen password, npm start) and a table of every key, which ones are needed locally and what each does." },
   { t: "2026-10-27T00:50:11Z", what: "Old server retired: src/ and the Fastify/WebSocket process on port 3000 are gone; npm start in studio/ runs the same code as the deployment in one Node process, with Vercel Blob or a local STORE_DIR as the store. Verified: a full poll cycle wrote index, status, state, history and trend files to a local folder and the control room, ticker and graphics served from it. Follow-up S81: the candidate index and photo pages still expect the old server." },
   { t: "2026-10-27T00:37:32Z", what: "Correction: the project is not on Hobby; the cron runs every minute. The 21:28Z to 00:17Z gap was the window before CRON_SECRET and the other env vars were set on the new project." },

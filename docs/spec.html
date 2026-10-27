@@ -130,6 +130,7 @@
 
   <section>
     <h2>3. Architecture</h2>
+    <p><em>Status, 27 October 2026.</em> What was built differs from the design below in one respect: there is no long-running middleware process. The AP poller runs as a Vercel function on a one-minute cron and writes JSON files to Blob storage; the ticker, the control room and every graphic poll those files (15 s for results, 5 s for producer state). The same code runs on a laptop with <code>npm start</code> in <code>studio/</code>, which serves the pages, mounts the same functions and runs the poll loop in one Node process against a local folder. The WebSocket server, the 20-second cadence and the SQLite snapshot store described here were retired once the Blob model proved fast enough for air. Setup and the list of keys are in the <a href="https://github.com/eriktrautman/ap-ind#run-it-on-your-laptop">README</a>; what the control room does is in the <a href="#control-panel">control panel</a> section.</p>
     <figure>
       <div class="diagram">
       <svg viewBox="0 0 960 400" width="960" height="400" role="img" aria-label="Architecture: AP API feeds a poller, store, event engine and WebSocket server; clients are the control panel, graphics pages rendered to the Carbonite via a graphics PC, the studio wall, and the race browser.">
@@ -363,7 +364,7 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
     <h3>Studio wall</h3>
     <p>The <code>/wall</code> page shows one of the full-screen graphics or a composite (balance of power plus the independents board), chosen in the control panel. Larger type and a solid background. Same data socket.</p>
 
-    <h3>Control panel</h3>
+    <h3 id="control-panel">Control panel</h3>
     <p><em>Built, October 2026, as the control room at <code>/studio</code> on ap-ind.vercel.app</em> (plan and burndown: <a href="producer-plan.html">producer-plan</a>). Status bar with last refresh, AP data as of, results type, AP access, last publish and publish-to-air time, and a plain-English diagnosis for every known poller failure. One producer state with three sources: Default (shipped, read-only), Global (what air uses, published through a dialog that lists every change and warns of another operator's publish), Local (this browser only). Four sections: Ticker (races, order, manual items, idle text, AP Call highlight, example ticker), Race Detail (featured races, featured charts, a row of real thumbnails per race under an unmistakable race band), Movement Overview (the C and D graphics), Full Catalog (every race in the feed with filters, expanding to every per-race graphic, set or remove featured from there). Thumbnails are the real pages scaled into 16:9, at most twelve live at once.</p>
     <ul>
       <li>Status strip: AP connection, last poll time, poll interval, error count, server identity (studio or cloud), connected clients.</li>
