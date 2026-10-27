@@ -62,7 +62,7 @@ const cards = createCardManager({ maxLive: 12, getBg: () => $("bg").value, getSo
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (budget ${12})` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
-  try { status = await (await fetch(`/data/status.json?t=${Math.floor(Date.now() / 15_000)}`, { cache: "no-store" })).json(); } catch {}
+  try { const r = await fetch(`/data/status.json?t=${Math.floor(Date.now() / 15_000)}`, { cache: "no-store" }); const next = r.ok ? await r.json() : null; status = next?.generated ? next : null; } catch {}
   try { settings = await api("/api/settings"); } catch {}
   renderStatus();
   cards.setData({ status });
