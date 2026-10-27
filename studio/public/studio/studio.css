@@ -130,7 +130,8 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .preview { background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--sand); }
 .preview .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #fff; font-size: 12px; }
 .preview .gfoot .spacer { flex: 1; }
-.preview .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: var(--navy); color: #fff; padding: 3px 10px; border-radius: 6px; }
+.preview .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; }
+.preview .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
 .preview .frame.clickable { cursor: pointer; }
 .preview .frame.clickable:hover::after { content: "Open ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 .preview .frame { position: relative; width: 100%; aspect-ratio: 1920 / 1080; max-height: 180px; overflow: hidden; }
@@ -158,7 +159,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .gcard .ghead .menu { position: absolute; right: 6px; top: 100%; z-index: 6; background: #fff; border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 6px 20px #0002; padding: 4px; display: grid; min-width: 220px; }
 .gcard .ghead .menu button { border: 0; background: none; text-align: left; padding: 7px 10px; font-size: 13px; border-radius: 6px; }
 .gcard .ghead .menu button:hover { background: var(--cream); }
-.gcard .ghead .racetag { margin-left: auto; font-family: var(--mono); font-size: 11.5px; background: var(--navy); color: var(--gold); padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.gcard .ghead .racetag { margin-left: auto; font-family: var(--mono); font-size: 11.5px; background: var(--cream); color: var(--ink); border: 1px solid var(--sand); padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
 .gcard .thumb { position: relative; width: 100%; aspect-ratio: 1920 / 1080; background: #0b0f17; overflow: hidden; }
 .gcard .thumb iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; background: #000; }
 .gcard .thumb .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #9aa7bd; font-size: 12.5px; text-align: center; padding: 12px; }
@@ -167,8 +168,8 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .gcard.retired { opacity: .55; filter: grayscale(1); } .gcard .thumb .ph.retired { color: #9aa7bd; }
 .gcard .thumb .ph .num { font-size: 22px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .gcard .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
-.gcard .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: var(--navy); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 12px; }
-.gcard .gfoot a.openbtn:hover { background: #16305e; }
+.gcard .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; font-size: 12px; }
+.gcard .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
 .gcard .gfoot a.openbtn.muted { background: none; color: var(--muted); padding: 0; }
 .gcard .thumb.clickable { cursor: pointer; }
 .gcard .thumb.clickable:hover::after { content: "Open ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
