@@ -1,41 +1,21 @@
 # ap-ind
 
-Middleware between the AP Elections API and broadcast graphics for an election-night program about independent candidates: a live ticker, full-screen result graphics, a candidate index, and a control API.
+Election-night app for a broadcast about independent candidates: an AP poller, a producer control room, an on-air ticker and nineteen full-screen graphics, all on the AP Elections API. One codebase runs two ways, with the same code in both: deployed on Vercel (ap-ind.vercel.app) or as a single Node process on any machine.
 
-Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) (also published at https://ap-ind.vercel.app by the `studio/` deployment).
+Documents: [technical spec](docs/spec.html) · [graphics data options](docs/graphics-data-options.html) · [control room build plan](docs/producer-plan.html) (also published at https://ap-ind.vercel.app).
 
 ## Run
 
-Requires Node 24 or newer. No build step; no native dependencies.
+Requires Node 24 or newer. No native dependencies, no Vercel account.
 
 ```sh
-git clone https://github.com/eriktrautman/ap-ind.git && cd ap-ind
+git clone https://github.com/eriktrautman/ap-ind.git && cd ap-ind/studio
 npm install
-cp .env.example .env        # set AP_API_KEY
-npm run dev                 # http://127.0.0.1:3000
+cp .env.example .env        # set AP_API_KEY and STUDIO_PASSWORD; STORE_DIR=./data keeps everything local
+npm start                   # http://localhost:3000  control room /studio · ticker /ticker · graphics /g/
 ```
 
-`.env` options: `AP_RESULTS_TYPE` (`t` test data, `l` live), `AP_ELECTION_DATE`, `AP_POLL_INTERVAL_SECONDS` (default 20), `PORT`, `HOST`, `DB_PATH`.
-
-The server polls AP on the interval, stores every raw response and a normalized snapshot in `data/ap-ind.sqlite`, emits events from the diffs, and pushes updates to connected pages over WebSocket.
-
-## Pages
-
-| Path | Purpose |
-|---|---|
-| `/` | Status and links |
-| `/g/ticker.html` | Lower-third crawl, 1920×1080. Transparent background; add `?bg=black` or `?bg=green` for keying |
-| `/g/race.html?id=<raceID>` | Full-screen race result. Race ids from `/api/races` |
-| `/candidates.html` | Candidate index for the featured races: bios, verified photos, live numbers |
-| `/docs/` | Spec and graphics data options |
-
-Any graphic accepts `?demo=1` to run on an embedded sample snapshot without the server.
-
-## API
-
-`GET /api/status` · `GET /api/snapshot` · `GET /api/races` · `GET /api/races/:id` · `GET /api/events` · `GET /api/ticker` · `GET /api/candidates` · `GET /healthz` · WebSocket `/ws`
-
-Producer controls (no auth yet; bind to localhost or put behind a password): `PUT /api/producer` `{pinnedRaceIds, manualItems, eventWindowMinutes}` · `POST /api/producer/manual` `{text}` · `POST /api/poll`
+`npm start` builds the static site into `dist/`, serves it, mounts the four API functions from `api/`, and runs the poller every 60 s (`POLL_SECONDS` to change, `--no-poll` to skip). With `STORE_DIR` set, the poller writes its JSON files to that folder and nothing leaves the machine except AP requests. With `BLOB_READ_WRITE_TOKEN` set instead (and `STORE_DIR` unset), it writes to the deployment's Vercel Blob store, so a laptop can stand in for the cron. `npm run serve` skips the build.
 
 ## Control room, graphics and on-air ticker (ap-ind on Vercel)
 
@@ -139,8 +119,8 @@ The broadcast server serves photos from `public/photos/` so air does not depend 
 
 ## Secrets
 
-The AP key lives only in `.env` (gitignored) and is sent as a request header, so it never appears in URLs or logs. Never commit `.env`.
+The AP key, the Blob token and the studio password live only in `studio/.env` (gitignored) or the Vercel project's environment variables. The key is sent as a request header, so it never appears in URLs or logs. Never commit `.env`.
 
-## Docs site
+## Deploying
 
-`vercel deploy --prod` publishes `docs/` (plus a copy of `public/g` for the demo-mode graphics) to https://ap-ind.vercel.app. The live server does not run on Vercel.
+Pushing `main` deploys the ap-ind Vercel project (root directory `studio/`). `vercel build && vercel deploy --prebuilt` from the repo root makes a preview. The docs in `docs/` and the graphics in `public/g/` are copied into the build.

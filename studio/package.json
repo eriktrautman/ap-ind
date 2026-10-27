@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Broadcast studio: AP poller (writes JSON to Vercel Blob), producer panel, on-air ticker. Also serves the project docs.",
+  "description": "The ap-ind app: AP poller, producer control room, on-air ticker and graphics, plus the project docs. Deployed on Vercel; npm start runs the same code on one machine.",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -r ../docs/. dist/ && cp -r public/. dist/ && cp -r ../public/g dist/g && rm -f dist/g/control.js && cp lib/control.js dist/g/control.js && cp -r ../watch-party/public/geo dist/geo",
+    "start": "npm run build && node --env-file=.env scripts/serve.mjs",
+    "serve": "node --env-file=.env scripts/serve.mjs",
     "poll": "node --env-file=.env scripts/poll-local.mjs",
     "poll:once": "node --env-file=.env scripts/poll-local.mjs --once"
   },
