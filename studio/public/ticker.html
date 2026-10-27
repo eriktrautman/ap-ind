@@ -23,8 +23,10 @@
   .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
   .crawl { flex: 1; position: relative; overflow: hidden; }
   .track { position: absolute; top: 0; left: 0; white-space: nowrap; will-change: transform; }
-  .item { display: inline-block; padding: 0 48px; }
-  .item + .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin-right: 48px; vertical-align: middle; }
+  /* Every item carries its own separator, so an item's width never changes when the one before it
+     is dropped off the left edge (a width change there would make the crawl jump). */
+  .item { display: inline-block; padding: 0 48px 0 0; }
+  .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin: 0 48px; vertical-align: middle; }
   .item.emphasis { color: var(--call); font-weight: 700; }
   .item.manual { color: #fff; font-weight: 600; }
   .item.idle { color: var(--muted); }

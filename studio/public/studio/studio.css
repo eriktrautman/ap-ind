@@ -126,7 +126,12 @@ main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .chartpick label.unbuilt { color: var(--muted); } .chartpick label .soon { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--warn); }
 
 /* ---- preview (ticker) ---- */
-.preview { background: #000; border-radius: 8px; overflow: hidden; }
+.preview { background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--sand); }
+.preview .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #fff; font-size: 12px; }
+.preview .gfoot .spacer { flex: 1; }
+.preview .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: var(--navy); color: #fff; padding: 3px 10px; border-radius: 6px; }
+.preview .frame.clickable { cursor: pointer; }
+.preview .frame.clickable:hover::after { content: "Open ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 .preview .frame { position: relative; width: 100%; aspect-ratio: 1920 / 1080; max-height: 180px; overflow: hidden; }
 .preview iframe { position: absolute; left: 0; bottom: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 100%; pointer-events: none; }
 

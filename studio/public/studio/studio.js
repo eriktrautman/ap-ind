@@ -119,23 +119,23 @@ function renderStrip() {
   const host = prodHost();
   const st = $("ps-state");
   st.className = d ? "dirty" : "same";
-  st.textContent = !prod ? "Your copy" : d ? `Your copy · ${changes.length} change${changes.length === 1 ? "" : "s"} not sent` : "Your copy · in sync";
+  st.textContent = !prod ? "Your copy" : d ? `Your copy · ${changes.length} change${changes.length === 1 ? "" : "s"} not pushed` : "Your copy · in sync";
   $("ps-sub").textContent = "";
-  $("ps-work").title = `${readLocal()?.updatedAt ? `Saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}Nothing at ${host} changes until you send.${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
+  $("ps-work").title = `${readLocal()?.updatedAt ? `Saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}Nothing at ${host} changes until you push.${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
   const p = $("ps-prod");
   const r = runtime?.production;
-  const sent = prod?.updatedAt ? `sent ${ago(prod.updatedAt)}` : "nothing sent yet";
-  const since = otherOperator() ? " · changed since you last got it" : "";
+  const sent = prod?.updatedAt ? `pushed ${ago(prod.updatedAt)}` : "nothing pushed yet";
+  const since = otherOperator() ? " · changed since you last pulled" : "";
   let cls = "", text, tip;
-  if (runtime && r && !r.reachable) { cls = "bad"; text = `${host} · not answering`; tip = `${host} is not responding, so you can neither get its version nor send yours. ${r.reason ?? ""}`; }
+  if (runtime && r && !r.reachable) { cls = "bad"; text = `${host} · not answering`; tip = `${host} is not responding, so you can neither pull its version nor push yours. ${r.reason ?? ""}`; }
   else if (prodError) { cls = "bad"; text = `${host} · can't read`; tip = `The version at ${host} could not be read: ${prodError}`; }
-  else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · get only · ${sent}`; tip = `This laptop has no password for ${host}, so you can get its version but not send yours. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been sent there yet, so it shows the defaults."}`; }
-  else { text = `${host} · ${sent}${since}`; tip = `Everyone's version lives at ${host}: its ticker and graphics show whatever was last sent there.${prod?.updatedAt ? ` Last send ${fmtTime(prod.updatedAt)}.` : " Nothing has been sent yet, so it shows the defaults."}${since ? " Someone sent a version after you last got it." : ""}`; }
+  else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · pull only · ${sent}`; tip = `This laptop has no password for ${host}, so you can pull its version but not push yours. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been pushed there yet, so it shows the defaults."}`; }
+  else { text = `${host} · ${sent}${since}`; tip = `Everyone's version lives at ${host}: its ticker and graphics show whatever was last pushed there.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so it shows the defaults."}${since ? " Someone pushed a version after you last pulled." : ""}`; }
   p.className = cls; p.textContent = text; $("ps-prodsub").textContent = ""; $("ps-prod").title = tip;
   $("push").disabled = !canPush() || !d;
-  $("push").title = !canPush() ? (r?.reason ?? "sending is not possible from here") : !d ? `Your copy is already the same as ${host}` : `Send your copy to ${host} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  $("push").title = !canPush() ? (r?.reason ?? "pushing is not possible from here") : !d ? `Your copy is already the same as ${host}` : `Push your copy to ${host} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !prod;
-  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "getting is not possible right now") : `Replace your copy with the version at ${host}`;
+  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pulling is not possible right now") : `Replace your copy with the version at ${host}`;
 }
 
 async function pushToProduction() {
@@ -145,13 +145,13 @@ async function pushToProduction() {
   const changes = diffState(latest ?? DEFAULTS, draft);
   const someoneElse = latest && latest.updatedAt !== prodSeenAt;
   const ok = await ask({
-    title: `Send your copy to ${prodHost()}?`,
+    title: `Push your copy to ${prodHost()}?`,
     body: `<p>The ticker and every graphic at <b>${esc(prodHost())}</b> will change to what you have here: the ticker within 5 seconds, the graphics within 10.</p>
       ${changeList(changes)}
-      <p class="small muted">Last send to ${esc(prodHost())}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else sent a version to ${esc(prodHost())} at ${esc(fmtTime(latest.updatedAt))}, after you last got or sent one. Sending now replaces theirs. Press Cancel and Get if you want to see it first.</div>` : ""}
+      <p class="small muted">Last push to ${esc(prodHost())}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
+      ${someoneElse ? `<div class="warnline bad">Someone else pushed a version to ${esc(prodHost())} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now replaces theirs. Press Cancel and Pull if you want to see it first.</div>` : ""}
       ${!changes.length ? `<div class="warnline">Your copy is already the same as ${esc(prodHost())}.</div>` : ""}`,
-    ok: `Send to ${prodHost()}`, danger: true,
+    ok: `Push to ${prodHost()}`, danger: true,
   });
   if (!ok) return;
   try {
@@ -160,7 +160,7 @@ async function pushToProduction() {
     draft = saveLocal(structuredClone(saved));
     renderAll(); cards.broadcast(draft);
   } catch (e) {
-    await ask({ title: "Sending failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed at ${esc(prodHost())}. Your copy is still saved here.</p>`, ok: "OK" });
+    await ask({ title: "Push failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed at ${esc(prodHost())}. Your copy is still saved here.</p>`, ok: "OK" });
   }
 }
 async function pullFromProduction() {
@@ -169,9 +169,9 @@ async function pullFromProduction() {
   catch (e) { prodError = e.message; renderStrip(); await ask({ title: `Can't read ${prodHost()}`, body: `<div class="warnline bad">${esc(e.message)}</div><p>Your copy is unchanged.</p>`, ok: "OK" }); return; }
   const changes = diffState(draft, latest);
   const ok = await ask({
-    title: `Get the version at ${prodHost()}? Your copy is replaced.`,
-    body: `<p>What you have here is replaced by what is at <b>${esc(prodHost())}</b> (last sent ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so it is the defaults"}). Nothing at ${esc(prodHost())} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your copy is already the same as ${esc(prodHost())}.</div>` : ""}`,
-    ok: `Get from ${prodHost()}`, danger: changes.length > 0,
+    title: `Pull the version at ${prodHost()}? Your copy is replaced.`,
+    body: `<p>What you have here is replaced by what is at <b>${esc(prodHost())}</b> (last pushed ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so it is the defaults"}). Nothing at ${esc(prodHost())} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your copy is already the same as ${esc(prodHost())}.</div>` : ""}`,
+    ok: `Pull from ${prodHost()}`, danger: changes.length > 0,
   });
   if (!ok) return;
   prodSeenAt = latest.updatedAt;
@@ -180,7 +180,7 @@ async function pullFromProduction() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Reset your copy to the defaults?", body: `<p>What you have here is replaced by the defaults the app came with. Nothing at ${esc(prodHost())} changes until you send.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your copy is already the defaults.</div>` : ""}`, ok: "Reset to defaults", danger: changes.length > 0 });
+  const ok = await ask({ title: "Reset your copy to the defaults?", body: `<p>What you have here is replaced by the defaults the app came with. Nothing at ${esc(prodHost())} changes until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">Your copy is already the defaults.</div>` : ""}`, ok: "Reset to defaults", danger: changes.length > 0 });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   renderAll(); cards.broadcast(draft);
@@ -192,7 +192,7 @@ $("previewsel").querySelectorAll("button").forEach((b) => b.addEventListener("cl
   view = b.dataset.view;
   $("previewsel").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
   frame.contentWindow?.postMessage({ type: "producer-source", source: view }, "*");
-  if (view === "local") sendPreview();
+  if (view === "local") sendPreview(); else renderTickerOpen();
   cards.refreshSource();
   if (view === "local") cards.broadcast(draft);
 }));
@@ -213,7 +213,7 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#ff8a8a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-air", `<span class="k">A send reaches ${esc(prodHost())} in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
+    st("st-air", `<span class="k">A push reaches ${esc(prodHost())} in</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
   $("testbanner").hidden = rt !== "t";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
@@ -293,7 +293,7 @@ function raceBand(r, { featured, position = null }) {
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
-  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only your copy. Nothing at ${esc(prodHost())} changes until you send.</p>`, ok: title.replace(/\?$/, "") });
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only your copy. Nothing at ${esc(prodHost())} changes until you push.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
 }
 function toggleFeatured(id) {
@@ -358,13 +358,22 @@ $("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl")
 const frame = $("preview");
 function scalePreview() { frame.style.transform = `scale(${frame.parentElement.clientWidth / 1920})`; }
 function sendPreview() {
+  renderTickerOpen();
   if (view !== "local") return;
   frame.contentWindow?.postMessage({ type: "producer", state: draft }, "*");
   if (index) { const q = buildQueue(index.races, draft); $("previewnote").textContent = `${q.items.length} items · ${q.source === "idle" ? "idle crawl" : q.source === "default" ? "default races" : "your race list"}${q.missing.length ? ` · ${q.missing.length} not in feed` : ""}`; }
 }
 frame.addEventListener("load", sendPreview);
 window.addEventListener("resize", scalePreview);
-$("tickerurl").textContent = `${location.origin}/ticker`;
+$("tickerurl").textContent = `${location.host}/ticker`; $("tickerurl").href = "/ticker?bg=black";
+/** The ticker opens like any chart: at full size, showing whatever the previews show. */
+function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}`; }
+function renderTickerOpen() {
+  $("tickeropen").href = tickerOpenUrl();
+  $("previewwhich").textContent = view === "local" ? "Showing your copy" : `Showing the version at ${prodHost()}`;
+}
+$("previewframe").addEventListener("click", () => window.open(tickerOpenUrl(), "_blank", "noopener"));
+$("bg").addEventListener("change", renderTickerOpen);
 
 // ---------- Race Detail section ----------
 function renderDetail() {

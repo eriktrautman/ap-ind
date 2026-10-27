@@ -20,7 +20,7 @@
   </div>
   <div class="prodstrip" id="prodstrip" hidden>
     <span class="ps-work" id="ps-work"><b id="ps-state">…</b><span class="ps-sub" id="ps-sub"></span></span>
-    <span class="ps-actions"><button class="push" id="push" title="Send your copy to everyone's version"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Send</button><button class="pull" id="pull" title="Replace your copy with everyone's version"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Get</button><button id="defaults" title="Replace your copy with the defaults the app came with"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span>
+    <span class="ps-actions"><button class="push" id="push" title="Push your copy to everyone's version"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Push</button><button class="pull" id="pull" title="Replace your copy with everyone's version"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button><button id="defaults" title="Replace your copy with the defaults the app came with"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Defaults</button></span>
     <span class="ps-prod"><b id="ps-prod">…</b><span class="ps-sub" id="ps-prodsub"></span></span>
   </div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · AP's simulated election, not real results</div>
@@ -61,8 +61,9 @@
       <div class="actions"><label class="toggle"><input type="checkbox" id="callhl"> AP Call yellow highlight</label></div>
     </div>
     <h3>Example ticker <span class="muted" id="previewnote"></span></h3>
-    <div class="preview"><div class="frame"><iframe id="preview" title="Ticker preview"></iframe></div></div>
-    <p class="muted small">The ticker everyone uses is <code id="tickerurl"></code> (add <code>?bg=green</code> for the key). It shows whatever was last sent and re-reads it every 5 seconds.</p>
+    <div class="preview"><div class="frame clickable" id="previewframe" title="Open the ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker preview"></iframe></div>
+      <div class="gfoot"><span class="muted small" id="previewwhich"></span><span class="spacer"></span><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open the ticker at 1920×1080 in a new tab"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Open 1920×1080</a></div></div>
+    <p class="muted small">This is your local preview. The ticker everyone uses is <a id="tickerurl" target="_blank" rel="noopener"></a> (add <code>?bg=green</code> for the key); to change that one, Push your settings with the buttons above. It re-reads what was last pushed every 5 seconds.</p>
       <div class="cols">
       <div class="col">
         <h3>Ticker races <span class="muted" id="pincount"></span></h3>
