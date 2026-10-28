@@ -101,7 +101,7 @@ let prodSeenAt = null;        // updatedAt of the production copy this page last
 let prodError = null;         // why production is unreadable right now, or null
 let draft = normalize(DEFAULTS);   // the working copy: always Local (this browser), seeded from production on first use
 const view = "local";         // thumbnails and the example ticker always show the settings on this page
-const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getOpacity: () => $("opacity").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
+const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getOpacity: () => $("opacity").value, getOrigin: () => (onSite() ? location.origin : runtime?.production?.origin ?? location.origin), getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
@@ -431,7 +431,7 @@ function tickerUrl() {
   if (bg) p.set("bg", bg);
   if (o !== "100") p.set("opacity", o);
   p.set("races", draft.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(","));
-  if (draft.callHighlight === false) p.set("calls", "0");
+  p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
   for (const m of draft.manualItems) if (m.text) p.append("item", m.text);
   if (draft.idleText && draft.idleText !== DEFAULTS.idleText) p.set("idle", draft.idleText);
   const origin = onSite() ? location.origin : runtime?.production?.origin ?? location.origin;
@@ -441,7 +441,7 @@ function renderTickerUrl() {
   const u = tickerUrl();
   $("tickerurl").textContent = u; $("tickerurl").href = u;
 }
-$("tickercopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(tickerUrl()); $("tickercopy").textContent = "Copied"; setTimeout(() => ($("tickercopy").textContent = "Copy"), 1500); } catch {} });
+$("tickercopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(tickerUrl()); $("tickercopy").textContent = "Copied"; setTimeout(() => ($("tickercopy").textContent = "Copy URL"), 1500); } catch {} });
 function renderTickerOpen() {
   renderTickerNote();
   $("tickeropen").href = tickerOpenUrl();

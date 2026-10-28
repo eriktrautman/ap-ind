@@ -21,6 +21,7 @@
 </div>
 <script type="module">
   const q = new URLSearchParams(location.search);
+  if (window.self === window.top && !q.get("demo")) import("./control.js").then((m) => { const a = m.canonicalAddress(location.pathname, location.search); if (a) location.replace(a); });   // only /g/<chart id> is served at the top level
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   { const o = Number(q.get("opacity"));   // ?opacity=10..100: the panel colours at that opacity, as in control.js
     if (q.has("opacity") && o >= 0 && o < 100) for (const v of ["--panel", "--panel-edge"]) {

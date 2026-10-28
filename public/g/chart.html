@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="./g.css">
 <style>
   /* Only ever visible when the address cannot be resolved: a plain error card in the panel chrome. */
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
   body.bg-green { background: #00ff00; } body.bg-black { background: #000; }
   .panel { border: 4px solid var(--bad); display: none; }
   .panel.on { display: grid; }
@@ -32,7 +33,7 @@
 <script type="module">
   // Semantic address for every graphic:  /g/<chartID>?bg=black&opacity=60&race=NE-SEN
   // (also /g/chart?chart=B5&race=NE-SEN). Resolves the chart id through the registry and the race
-  // label through the live index, then replaces itself with the page that draws it. Display
+  // label through the live index, then draws the page in a full-size frame (the address stays /g/B5?...). Display
   // parameters (bg, opacity, fit, src, ...) stay first in the address; everything else is passed
   // through to the page unchanged. An address that does not fully specify its chart (unknown chart,
   // a race chart with no race, a race the feed does not have, a state chart with no state) never
@@ -98,17 +99,28 @@
   if (chart && race) for (const k of ["cand", "a", "b"]) if (q.has(k)) cands[k] = await resolveCand(race, q.get(k));
 
   if (!problems.length) {
-    // 3. the page address: display parameters first, then what identifies the data, then the rest
+    // 3. the page address: display parameters first, then what identifies the data, then the rest.
+    // The page is drawn in a full-size frame, so /g/B5?... stays the address on screen and in the switcher.
     const dest = new URL(chart.page, location.origin);
     const out = new URLSearchParams();
-    for (const k of DISPLAY) if (q.has(k)) out.set(k, q.get(k));
+    for (const k of DISPLAY) if (q.has(k) && k !== "fit") out.set(k, q.get(k));   // fit is applied here, to the frame
     for (const [k, v] of dest.searchParams) out.set(k, v);                        // e.g. reports.html?view=counts
     if (race) out.set("id", race.id);
     if (stateBased) out.set("st", state);
     for (const [k, v] of Object.entries(cands)) if (v) out.set(k, v);
     for (const [k, v] of q) if (!DISPLAY.includes(k) && !CONSUMED.has(k)) out.append(k, v);
-    dest.search = out.toString();
-    location.replace(dest.pathname + dest.search);
+    document.title = `${chart.id} ${chart.name}${race?.label ? " · " + race.label : stateBased ? " · " + state : ""}`;
+    const f = document.createElement("iframe");
+    f.id = "g"; f.title = document.title;
+    f.style.cssText = "position:absolute;left:0;top:0;width:1920px;height:1080px;border:0;background:transparent";
+    f.src = `${dest.pathname.replace(/\.html$/, "")}?${out.toString()}`;
+    document.body.appendChild(f);
+    // Messages pass through: the control room's feed/producer posts go down to the page, the page's reports go up.
+    window.addEventListener("message", (e) => { if (e.source === f.contentWindow) window.parent?.postMessage(e.data, "*"); else f.contentWindow?.postMessage(e.data, "*"); });
+    if (q.get("fit") === "1") {   // Preview from the control room: the 1920x1080 frame scaled to the window
+      const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.overflow = "hidden"; };
+      window.addEventListener("resize", fit); fit();
+    }
   } else {
     // The error card: what came in, what this chart needs, what is wrong, and a corrected example.
     const received = [["path", location.pathname], ...[...q.entries()]];

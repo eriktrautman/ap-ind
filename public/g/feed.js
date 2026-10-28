@@ -12,7 +12,16 @@
 //             message within 5 s falls back to polling on its own.
 // Usage: const feed = connectFeed({ onSnapshot, onUpdate, onStatus });
 
-import { FEATURED_RACES } from "./control.js";
+import { FEATURED_RACES, canonicalAddress } from "./control.js";
+
+// Only the chart-id address (/g/B5?race=NE-SEN) is served at the top level: a page opened directly
+// (an old-style /g/race.html?id=... saved somewhere) forwards itself there, so one address style
+// exists on air. Inside a frame (the router, the control room's thumbnails, the lookbook) the page
+// draws as it is; ?demo=1 (the lookbook's embedded sample) is left alone too.
+if (window.self === window.top && !new URLSearchParams(location.search).get("demo")) {
+  const a = canonicalAddress(location.pathname, location.search);
+  if (a) location.replace(a);
+}
 
 const FEATURED_CANDS = new Set(FEATURED_RACES.map((r) => r.cand));
 /** True for the curated independents, whatever party label AP gives them (NP, Ind, ...). */

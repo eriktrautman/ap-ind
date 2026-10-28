@@ -15,7 +15,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getBg = () => "black", getOpacity = () => "100", getSource = () => "global", getDraft = () => null } = {}) {
+export function createCardManager({ maxLive = 32, getBg = () => "black", getOpacity = () => "100", getOrigin = () => location.origin, getSource = () => "global", getDraft = () => null } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -33,6 +33,18 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
 
   /** Open/Show links are the semantic address (/g/B5?bg=black&opacity=60&src=global&race=NE-SEN): display
    *  parameters first, then the race by label. Thumbnails load the page directly (no redirect per frame). */
+  /** The address to hand a switcher or rundown: absolute, chart id and race id, display parameters first, no
+   *  preview-only parameters (src, fit, sample). A1 (the ticker) copies the ticker address instead. */
+  function copyUrl(c) {
+    const p = new URLSearchParams();
+    const bg = getBg(); if (bg) p.set("bg", bg);
+    if (getOpacity() !== "100") p.set("opacity", getOpacity());
+    if (c.race && c.chart.needsState) p.set("state", c.race.state);
+    else if (c.race) p.set("race", c.race.label);
+    for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
+    const s = p.toString();
+    return `${getOrigin()}/g/${c.chart.id}${s ? "?" + s : ""}`;
+  }
   function pageUrl(c, forOpen) {
     const semantic = forOpen && (c.chart.page ?? "").startsWith("/g/");
     const u = new URL(semantic ? `/g/${c.chart.id}` : c.chart.page, location.origin);
@@ -126,15 +138,17 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     el.innerHTML = `
       <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
-      <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span><a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
+      <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span>${chart.built && !chart.retired && chart.page ? `<button class="copybtn" type="button" title="Copy this graphic's address (chart id and race id, with the Global settings) for a switcher or rundown">Copy URL</button>` : ""}<a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
     const c = { el, chart, race, params, open, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
-      title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a") };
+      title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a"), copy: el.querySelector(".copybtn") };
     el._card = c; c.thumb._card = c;
     c.link.href = pageUrl(c, true);
     if (chart.retired) { el.classList.add("retired"); c.link.removeAttribute("href"); c.link.textContent = "retired"; c.link.classList.add("muted"); }
     else if (!chart.built) { c.link.removeAttribute("href"); c.link.textContent = "not built yet"; c.link.classList.add("muted"); }
     else { c.thumb.classList.add("clickable"); if (open === "show") el.classList.add("show"); c.thumb.title = open === "show" ? "Open this graphic at 1920×1080 in a new tab" : "Open this graphic in a new tab, scaled to fit the window"; }
+    if (c.copy) c.copy.dataset.url = copyUrl(c);
     el.addEventListener("click", (e) => {
+      if (e.target.closest(".copybtn")) { const b = e.target.closest(".copybtn"); navigator.clipboard?.writeText(copyUrl(c)).then(() => { b.textContent = "Copied"; setTimeout(() => (b.textContent = "Copy URL"), 1500); }).catch(() => { b.textContent = copyUrl(c); }); return; }
       if (e.target.closest(".kebab")) { const m = el.querySelector(".menu"); m.hidden = !m.hidden; return; }
       const mi = e.target.closest("[data-mi]"); if (mi) { el.querySelector(".menu").hidden = true; menu[Number(mi.dataset.mi)]?.onClick(); return; }
       if (e.target.closest(".loadbtn")) { c.static = false; c.priority = 0; c.visible = true; schedule(); return; }
@@ -177,7 +191,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
       if (c.frame) c.frame.contentWindow?.postMessage({ type: "producer-source", source: getSource() }, "*");
     }
   }
-  function refreshLinks() { for (const c of cards) if (c.chart.built) c.link.href = pageUrl(c, true); }
+  function refreshLinks() { for (const c of cards) if (c.chart.built) { c.link.href = pageUrl(c, true); if (c.copy) c.copy.dataset.url = copyUrl(c); } }
   setInterval(() => { for (const c of cards) renderFresh(c); reconcile(); }, 15_000);
   document.addEventListener("click", (e) => { if (!e.target.closest(".kebab, .menu")) for (const m of document.querySelectorAll(".gcard .menu")) m.hidden = true; });
   window.addEventListener("scroll", schedule, { passive: true });

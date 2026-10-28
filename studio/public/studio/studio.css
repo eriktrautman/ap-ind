@@ -199,6 +199,9 @@ main > section.card + section.card::before { content: ""; display: block; height
 .gcard.retired { opacity: .55; filter: grayscale(1); } .gcard .thumb .ph.retired { color: #9aa7bd; }
 .gcard .thumb .ph .num { font-size: 22px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
 .gcard .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
+button.copybtn { display: inline-flex; align-items: center; font: inherit; font-weight: 600; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+button.copybtn:hover { border-color: var(--navy); background: var(--cream); }
+.gcard.minicard .gfoot button.copybtn { padding: 2px 8px; font-size: 11.5px; }
 .gcard .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; font-size: 12px; }
 .gcard .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
 .gcard .gfoot a.openbtn.muted { background: none; color: var(--muted); padding: 0; }

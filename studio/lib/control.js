@@ -110,6 +110,27 @@ export const CHARTS = [
   { id: "F7",  kind: "other", name: "Party names from AP codes",    page: "/g/reports.html?view=parties",                built: true },
 ];
 
+/** The chart whose page is this URL (pathname plus any query the registry entry carries, e.g. reports.html?view=counts). */
+export function chartForPage(pathname, search = "") {
+  const path = pathname.replace(/\.html$/, ""), q = new URLSearchParams(search);
+  return CHARTS.find((c) => {
+    if (!c.page) return false;
+    const [p, pq] = c.page.split("?");
+    return p.replace(/\.html$/, "") === path && [...new URLSearchParams(pq ?? "")].every(([k, v]) => q.get(k) === v);
+  }) ?? null;
+}
+/** The chart-id address (/g/B5?...) for a page address, or null when the page is not a chart. The page's own
+ *  query (view=...) is dropped; everything else, including id=, is kept and resolved by the router. */
+export function canonicalAddress(pathname, search = "") {
+  const c = chartForPage(pathname, search);
+  if (!c || !c.page.startsWith("/g/")) return null;
+  const own = new URLSearchParams((c.page.split("?")[1]) ?? "");
+  const q = new URLSearchParams(search);
+  for (const k of own.keys()) q.delete(k);
+  const s = q.toString();
+  return `/g/${c.id}${s ? "?" + s : ""}`;
+}
+
 /** The shipped state. pinnedRaceIds is the ticker list (the name the ticker has always read). */
 export const DEFAULTS = Object.freeze({
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
