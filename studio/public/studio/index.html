@@ -66,11 +66,11 @@
     <div class="screenrow ticker">
       <div class="screen draft">
         <div class="frame clickable" id="previewframe" title="Open this ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker Builder preview"></iframe></div>
-        <div class="gfoot"><span class="muted small">Ticker Builder · draft on this page <span id="previewnote"></span></span><span class="spacer"></span><label class="pagebg">BG <select data-page="ticker"></select></label><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy Draft URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">Ticker Builder · draft on this page <span id="previewnote"></span></span><span class="spacer"></span><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy Draft URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <p class="tickerurl"><span class="k" title="A ticker built entirely from its address: the races below by race id, the AP Call highlight, the items and idle text. Change the builder and the address follows.">Address for this ticker</span> <a id="tickerurl" class="url" target="_blank" rel="noopener"></a></p>
         <p class="muted small inner">Use this ticker by its address, which carries every parameter and so never changes and needs no sign-in; or publish it to become the live ticker.</p>
         <div class="sform tform">
-          <p class="callhl"><label class="toggle">Highlight AP Calls Yellow: <input type="checkbox" id="callhl"></label></p>
+          <div class="callhl"><label class="toggle"><input type="checkbox" id="callhl"> Highlight AP Calls Yellow</label><label class="pagebg">Background <select data-page="ticker"></select></label></div>
           <h4>Manual items <span class="muted" id="manualcount"></span></h4>
           <form class="addmanual" id="addmanual"><input id="manualtext" placeholder="Text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add</button></form>
           <div class="list" id="manual"></div>
