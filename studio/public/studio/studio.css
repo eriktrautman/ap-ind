@@ -291,4 +291,4 @@ dialog::backdrop { background: #071222aa; }
   body { overflow-x: hidden; }
 }
 
-.builderhead { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--sand); }
+.builderhead { margin-top: 40px; }
