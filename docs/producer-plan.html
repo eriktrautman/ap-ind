@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; everything else done",
-  updated: "2026-10-28T21:34:57Z",
+  updated: "2026-10-28T21:35:22Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -260,6 +260,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T21:35:22Z", what: "Toolbar names: the box is Default Chart Settings and the button is Restore All Default Settings." },
   { t: "2026-10-28T21:34:57Z", what: "Toolbar: Restore defaults sits right beside the Global settings box, which has more padding; labels are Graphic Background and Chart Opacity." },
   { t: "2026-10-28T21:25:20Z", what: "Control room reorganised around one publish. Ticker section: the Live Global Ticker first (its own preview, fixed address with Copy URL and Show, a table of its live parameters, the note that only an authorized publish changes it), then the Ticker Builder (preview, address, Publish to Live Global Ticker and Pull from it, the lists). The push/pull strip is gone; Restore defaults sits by the Global settings with a warning that the live ticker is untouched. Only the four ticker fields are ever published; graphics take their race lists from races= or the shipped defaults, D6 its context line from context=, and watchState composes address + defaults + the live ticker (polling only for the ticker). README rewritten to match." },
   { t: "2026-10-28T21:50:00Z", what: "Rule: every time shown carries its zone, Eastern as ET by default. clock() and clockS() in public/g/feed.js replace every toLocaleTimeString in the 34 graphics pages (Updated stamps, call times, poll closings, AP report times; ?tz=CT etc. switches a page); the control room's two formatters say ET too. C5 shows eight rows and its footer is the featured-race dot alone. Mechanical one-line edits per page, kept small because a larger refactor is starting." },
