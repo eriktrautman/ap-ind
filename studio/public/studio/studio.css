@@ -77,7 +77,8 @@ main > section.card + section.card::before { content: ""; display: block; height
 .bgpick { color: var(--muted); }
 .defaultsbtn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-left: 4px; }
 .toolbar #thumbbudget { order: -1; }
-.pubrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; padding: 8px 12px; background: #fff; border: 1px solid var(--sand); border-radius: 6px; font-size: 12.5px; }
+.pubrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 12px; padding: 8px 12px; background: #fff; border: 2px solid var(--navy); border-radius: 6px; font-size: 12.5px; }
+.pubrow button.publish.noauth { background: #e9e6df; border-color: #d6d1c6; color: #8a8a8a; cursor: not-allowed; }
 .pubrow .spacer { flex: 1; }
 .pubrow button { font-size: 12px; padding: 3px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .pubrow button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .pubrow button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
