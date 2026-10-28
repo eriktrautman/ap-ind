@@ -218,7 +218,7 @@
     <li>Candidate bios, photos and photo rights (A2, B1, B2, B2 ✓; candidate index in progress)</li>
     <li>Sourced quotes (B11)</li>
     <li><s>Current Senate composition of the 65 seats not up this cycle</s> — now from the AP Trend report (F1)</li>
-    <li>History of independents in Congress and best independent results before 2020 (C4, C5)</li>
+    <li>History of independents in Congress (C4)</li>
     <li>Movement statistics: independent filings count (FEC), identification polling such as Gallup (C2, C3)</li>
     <li>AP VoteCast, a separate AP product not covered by the key (B12)</li>
     <li>Editorial context lines written by producers during the night (B4 targets, D6)</li>
@@ -610,18 +610,19 @@
     <div class="card">
       <div class="mock">
         <div class="safe">
-          <div class="sub">BEST INDEPENDENT SENATE RESULTS · MODERN ERA</div>
+          <div class="sub">TOP INDEPENDENT PERFORMERS TONIGHT</div>
           <div class="rows" style="margin-top:8px">
-            <div class="row ind" style="grid-template-columns:48% 1fr 12%"><span class="nm">King · ME 2018</span><div class="bar"><i style="width:100%"></i></div><span class="pc">54.3%</span></div>
-            <div class="row ind" style="grid-template-columns:48% 1fr 12%"><span class="nm">Osborn · NE 2024</span><div class="bar"><i style="width:86%"></i></div><span class="pc">46.5%</span></div>
-            <div class="row ind" style="grid-template-columns:48% 1fr 12%"><span class="nm">McMullin · UT 2022</span><div class="bar"><i style="width:79%"></i></div><span class="pc">42.8%</span></div>
-            <div class="row ind" style="grid-template-columns:48% 1fr 12%;opacity:.9"><span class="nm gl">Osborn · NE tonight</span><div class="bar"><i style="width:85%;opacity:.6"></i></div><span class="pc gl">46.0%</span></div>
+            <div class="row ind" style="grid-template-columns:8% 44% 1fr 12%;background:rgba(250,204,21,.18);outline:1px solid var(--gold);border-radius:3px"><span class="pc">1</span><span class="nm gl">Zabel · ID-1 <span style="background:var(--gold);color:#0b1020;font-size:5px;padding:0 3px;border-radius:2px;font-weight:800">WINNER</span></span><div class="bar"><i style="width:100%;background:var(--gold)"></i></div><span class="pc gl">44.1%</span></div>
+            <div class="row ind" style="grid-template-columns:8% 44% 1fr 12%"><span class="pc">2</span><span class="nm">Osborn · NE-SEN <span class="gl">●</span> 38% in</span><div class="bar"><i style="width:95%;opacity:.6"></i></div><span class="pc">42.0%</span></div>
+            <div class="row ind" style="grid-template-columns:8% 44% 1fr 12%"><span class="pc">3</span><span class="nm">Bengs · SD-SEN <span class="gl">●</span> 15% in</span><div class="bar"><i style="width:93%;opacity:.6"></i></div><span class="pc">41.4%</span></div>
+            <div class="row ind" style="grid-template-columns:8% 44% 1fr 12%"><span class="pc">4</span><span class="nm">Milleron · MA-1 · Ind</span><div class="bar"><i style="width:38%"></i></div><span class="pc">16.9%</span></div>
+            <div class="row ind" style="grid-template-columns:8% 44% 1fr 12%"><span class="pc">5</span><span class="nm">Mahoney · PA-3 · Ind</span><div class="bar"><i style="width:31%"></i></div><span class="pc">13.8%</span></div>
           </div>
         </div>
-        <div class="foot"><span>Non-incumbent independents, two-party races</span><span class="gl">tonight's rows update live</span></div>
+        <div class="foot"><span>Every independent on a federal ballot, by share so far · <span class="gl">●</span> featured race</span><span class="gl">winners highlighted</span></div>
       </div>
-      <div class="cap"><h3><span class="n">C5</span> Tonight against history <span class="tag both">both</span></h3>
-      <p>Where tonight's independent results land against the best independent performances on record. The historical rows are fixed; tonight's rows move.</p></div>
+      <div class="cap"><h3><span class="n">C5</span> Top independent performers tonight <span class="tag live">live</span></h3>
+      <p>Every independent and third-party candidate for Senate or House, ranked by share of the vote counted so far. All independents are drawn alike; a gold dot marks the featured races and a called winner is highlighted. Races under 5% in are held back. Replaces the historical leaderboard.</p></div>
     </div>
 
     <div class="card">
@@ -1289,7 +1290,7 @@
     "C2": ["mixed", "which states have an independent on the federal ballot comes from AP's candidate list; the 217 filings count is FEC"],
     "C3": ["ext", "Gallup identification share, current independents in the Senate: editorial facts to confirm"],
     "C4": ["ext", "historical membership must be compiled (Congress.gov / editorial)"],
-    "C5": ["mixed", "tonight from AP; 2020–2024 rows from AP's past feeds; older rows (King 2018) need an outside source"],
+    "C5": ["ap", "every independent candidate's votes and pct, eevp and call status, across all Senate and House races"],
     "C6": ["derived", "sum of non-Dem/GOP votes across every race; 2024 share from AP's 2024 feed"],
     "C7": ["mixed", "results from AP; poll numbers from the compiled polling dataset"],
     "C8": ["derived", "holdovers and current composition from the AP Trend report; the scenario arithmetic is the project's"],
@@ -1348,7 +1349,7 @@
     "C2": [[R, "candidates[].party per race (which states have a non-major candidate)"], ["FEC", "filings count"]],
     "C3": [["editorial", "Gallup identification share; current independents in the Senate (also in the Trend report as 'Others caucus with Dem')"]],
     "C4": [["editorial / Congress.gov", "historical membership"]],
-    "C5": [[R, "tonight"], [H24, "2020, 2022, 2024 rows"], ["editorial", "pre-2020 rows"]],
+    "C5": [[R, "voteCount, votePct, eevp, winner for every non-Dem/GOP candidate"], [RP("parties-partycodes-Live"), "which codes count as independent or third party"]],
     "C6": [[R, "sum of voteCount for non-Dem/GOP candidates across all races"], [H24, "2024 share"], [RP("parties-partycodes-Live"), "which codes count as independent or third party"]],
     "C7": [[R, "results"], ["compiled polling dataset", "final poll per race"]],
     "C8": [[RP("Trend-s-20261103-US-Live"), "Holdovers, Current, Won, Leading by party incl. 'Others caucus with Dem/GOP'"], [R, "calls in the featured races"]],
@@ -1396,7 +1397,7 @@
     "B14": "Before any votes the pair is a reading of one poll, not a forecast; say which poll. Once counting starts the pair is whoever leads, which can change early in the night. A third candidate is summarised as everyone else.",
     "B13": "Compares only areas with at least 10% of their expected vote in, and only against the same areas' 2024 totals; the number moves as areas report. Early in the night it reflects which areas reported first, not a trend. Alaska has no 2024 area-level baseline (statewide only).",
     "C1": EEVP + " " + CALL,
-    "C5": "Historical rows are context, not a like-for-like comparison: different years, opponents and turnout.",
+    "C5": "Shares are of the vote counted so far, so a race at 10% in sits beside one at 90%; the % in is on every row and races under 5% in are left out.",
     "C6": "A partial national sum is skewed toward whichever states have closed; the West Coast lands last.",
     "C8": "Scenario only. An independent winning does not mean an independent bloc: Bodnar has not committed on caucusing; Osborn, Bengs and Hill say neither party. Say \"could\", not \"will\".",
     "D1": CALL + " Hatched states are leading-but-uncalled; say \"leading\", not \"winning\".",

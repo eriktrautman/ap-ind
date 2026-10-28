@@ -83,7 +83,7 @@ export const CHARTS = [
   { id: "C2",  kind: "movement", name: "Independents across the map", page: "/g/ind-map.html",              built: true },
   { id: "C3",  kind: "movement", name: "Big-number stats",          page: "/g/big-numbers.html",                built: true },
   { id: "C4",  kind: "movement", name: "Independents in Congress, historically", page: "/g/history.html",   built: true },
-  { id: "C5",  kind: "movement", name: "Tonight against history",   page: "/g/vs-history.html",                built: true },
+  { id: "C5",  kind: "movement", name: "Top independent performers tonight", page: "/g/top-independents.html", built: true },
   { id: "C6",  kind: "movement", name: "National independent vote", page: "/g/ind-vote.html",  built: true },
   { id: "C7",  kind: "movement", name: "Poll vs result",            page: "/g/polls.html",     built: true },
   { id: "C8",  kind: "movement", name: "What if the featured candidates win", page: "/g/scenario.html",      built: true },

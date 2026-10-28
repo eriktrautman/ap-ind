@@ -2,52 +2,80 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Tonight Against History</title>
+<title>Top Independent Performers Tonight</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* C5: the best independent results on record (config/independents-results.json) with tonight's featured independents live among them. */
+  /* C5: every independent on a federal ballot tonight, ranked by share of the vote so far. Live from AP; no outside data.
+     All independents are drawn alike; a small dot marks the featured races; a called winner is highlighted heavily. */
   .body { min-height: 0; overflow: hidden; }
-  .rows { display: grid; gap: 12px; }
-  .row { display: grid; grid-template-columns: 420px 1fr 130px; align-items: center; gap: 18px; font-size: 30px; }
-  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .row .nm small { color: var(--muted); font-size: 22px; margin-left: 10px; }
-  .row .bar { height: 34px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; } .row .bar i { display: block; height: 100%; border-radius: 4px; background: var(--ind); }
-  .row .pc { text-align: right; font-weight: 700; }
-  .row.tonight .nm { color: #fde68a; font-weight: 700; } .row.tonight .bar i { background: var(--gold); } .row.tonight .pc { color: var(--gold); }
-  .row.tonight.counting .bar i { opacity: .55; }
-  .row.won .nm::after { content: " ✓"; color: var(--ok); }
+  .rows { display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 56px 640px 1fr 130px; align-items: center; gap: 18px; font-size: 30px; padding: 2px 14px; border-radius: 8px; }
+  .row .rk { color: var(--muted); font-size: 24px; text-align: right; font-variant-numeric: tabular-nums; }
+  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .nm small { color: var(--muted); font-size: 22px; margin-left: 10px; }
+  .row .nm .fd { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); margin-left: 10px; vertical-align: middle; position: relative; top: -2px; }
+  .row .bar { height: 32px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+  .row .bar i { display: block; height: 100%; border-radius: 4px; background: var(--ind); }
+  .row .pc { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row.counting .bar i { opacity: .6; }
+  .row.lost { opacity: .7; }
+  .row.won { background: rgba(250,204,21,.16); box-shadow: inset 0 0 0 2px var(--gold); }
+  .row.won .nm { color: var(--gold); font-weight: 700; } .row.won .nm small { font-weight: 400; color: #e9d48a; } .row.won .pc { color: var(--gold); } .row.won .bar i { background: var(--gold); opacity: 1; }
+  .row.won .win { display: inline-block; background: var(--gold); color: #0b1020; font-size: 20px; font-weight: 800; letter-spacing: .06em; padding: 2px 10px; border-radius: 4px; margin-right: 12px; vertical-align: middle; position: relative; top: -3px; }
+  .empty { color: var(--muted); font-size: 30px; padding: 40px 0; text-align: center; }
+  .foot .fd { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--gold); margin: 0 6px 0 2px; }
 </style>
 </head>
 <body>
 <div class="panel">
-  <div class="head"><div><div class="kicker">The independent movement</div><div class="title">Tonight against history</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="head"><div><div class="kicker">The independent movement</div><div class="title">Top independent performers tonight</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body"><div class="rows" id="rows"></div></div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Independent share of the vote in federal races · historical rows from the record (config/independents-results.json) · gold rows are tonight, faded while counting</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Independent and third-party candidates for Senate and House, ranked by share of the vote counted so far · <span class="fd"></span>featured race · faded while counting · highlighted when AP calls the race for them</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, partyKey, isFeaturedCand } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  let races = null, hist = null, featured = FEATURED_RACES.map((r) => r.id);
+  const N = Math.max(1, Math.min(14, Number(q.get("n")) || 10));        // rows shown
+  const MIN_IN = Number(q.get("min") ?? 5);                              // least share of the expected vote in before a race counts
+  let codes = {};                                                        // AP party code -> name, from party-codes.json (F7)
+  const partyName = (c) => (isFeaturedCand(c.id) || c.party === "NP") ? "Independent" : String(codes[c.party] ?? c.partyLabel ?? c.party ?? "").slice(0, 24);
+  let races = null, featured = new Set(FEATURED_RACES.map((r) => r.id));
   function render() {
-    if (!hist) return;
-    const rows = hist.map((h) => ({ ...h, tonight: false }));
-    for (const id of featured) {
-      const r = races?.get(id); if (!r || !r.totalVotes) continue;
-      const ind = r.candidates.find((c) => c.featured) ?? r.candidates.find((c) => isFeaturedCand(c.id)) ?? r.candidates.find((c) => c.independent); if (!ind) continue;
-      rows.push({ name: ind.name, race: r.label, year: "tonight", share: ind.pct, won: !!ind.winner, counting: !r.called, tonight: true, note: `${Math.round(r.eevp || r.precinctsPct)}% in` });
+    if (!races) return;
+    const rows = [];
+    let total = 0;
+    for (const r of races.values()) {
+      if (r.kind && r.kind !== "federal") continue;
+      if (!r.kind && !["S", "H", "USD"].includes(r.office)) continue;
+      const inPct = r.eevp || r.precinctsPct || 0;
+      for (const c of r.candidates ?? []) {
+        if (partyKey(c) !== "ind") continue;
+        total++;
+        if (!r.totalVotes || inPct < MIN_IN || !(c.votes > 0)) continue;
+        const won = r.called && !!c.winner, lost = r.called && !c.winner;
+        rows.push({ name: c.name, party: partyName(c), race: r.label, share: c.pct ?? (c.votes / r.totalVotes * 100), inPct, won, lost, counting: !r.called, featured: featured.has(r.id) });
+      }
     }
-    rows.sort((a, b) => b.share - a.share);
-    const max = Math.max(1, ...rows.map((r) => r.share));
-    $("rows").innerHTML = rows.slice(0, 11).map((r) => `<div class="row ${r.tonight ? "tonight" : ""} ${r.counting ? "counting" : ""} ${r.won ? "won" : ""}"><div class="nm">${esc(r.name)}<small>${esc(r.race)} ${esc(String(r.year))}${r.note ? " · " + esc(r.note) : ""}</small></div><div class="bar"><i style="width:${r.share / max * 100}%"></i></div><div class="pc">${Number(r.share).toFixed(1)}%</div></div>`).join("");
-    $("reporting").innerHTML = `<b>${rows.filter((r) => r.tonight).length}</b> of ${featured.length} tonight with results`;
+    rows.sort((a, b) => b.share - a.share || b.inPct - a.inPct);
+    const top = rows.slice(0, N);
+    const max = Math.max(1, ...top.map((r) => r.share));
+    $("rows").innerHTML = top.length ? top.map((r, i) => `<div class="row ${r.won ? "won" : ""} ${r.lost ? "lost" : ""} ${r.counting ? "counting" : ""}">
+      <div class="rk">${i + 1}</div>
+      <div class="nm">${r.won ? `<span class="win">WINNER</span>` : ""}${esc(r.name)}${r.featured ? `<span class="fd" title="Featured race"></span>` : ""}<small>${esc(r.party)} · ${esc(r.race)} · ${Math.round(r.inPct)}% in</small></div>
+      <div class="bar"><i style="width:${(r.share / max * 100).toFixed(1)}%"></i></div>
+      <div class="pc">${Number(r.share).toFixed(1)}%</div></div>`).join("")
+      : `<div class="empty">No votes counted yet for an independent on a federal ballot.</div>`;
+    const won = rows.filter((r) => r.won).length;
+    $("reporting").innerHTML = `<b>${rows.length}</b> of ${total} independents with votes in${won ? ` · <b>${won}</b> ${won === 1 ? "winner" : "winners"}` : ""}`;
     $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
   }
-  watchState({ onState: (s) => { featured = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
+  watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id)); render(); } });
   connectFeed({
-    onSnapshot: async (s) => { races = s.races; try { hist = (await (await fetch("./independents-results.json")).json()).rows; } catch { hist = []; } render(); },
+    onSnapshot: async (s) => { races = s.races; try { codes = (await (await fetch("./party-codes.json")).json()).codes ?? {}; } catch {} render(); },
     onUpdate: (s) => { races = s.races; render(); },
     onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
   });
