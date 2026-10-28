@@ -45,7 +45,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness } from "./feed.js";
+  import { connectFeed, freshness, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", demo = !!q.get("demo"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -89,7 +89,7 @@
     $("title").innerHTML = `${esc(cand.last)} vs the 2024 ${esc(ticketName)} vote <small>${esc(race.stateName)} · ${esc(office)}</small>`;
     $("th-now").textContent = `${cand.last} 2026`; $("th-then").textContent = `${ticketName} 2024`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
-    $("updated").textContent = demo ? "SAMPLE: 2024 Senate result standing in for tonight" : `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = demo ? "SAMPLE: 2024 Senate result standing in for tonight" : `Updated ${clockS(race.lastUpdated)}`;
     const color = cand.featured ? "#d4af37" : cand.party === "GOP" ? "#ef4444" : cand.party === "Dem" ? "#3b82f6" : "#a855f7";
     $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead of ${esc(ticketName)} 2024</span><span><i style="background:var(--behind)"></i>behind</span><span><i style="background:#1b2a4a"></i>under ${MIN_IN}% in</span>`;
 

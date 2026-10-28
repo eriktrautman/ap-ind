@@ -8,7 +8,7 @@
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const COUNTY_CHARTS = new Set(["B6", "B8", "B10", "B13"]);
-const fmtClock = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "—";
+const fmtClock = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET" : "—"; // rule: every time carries its zone, ET by default
 const ago = (iso) => {
   if (!iso) return "never";
   const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));

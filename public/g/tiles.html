@@ -26,7 +26,7 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, raceState, PARTY_COLOR, clockS } from "./feed.js";
   import { drawTileMap } from "./usmap.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
@@ -52,7 +52,7 @@
     $("reporting").innerHTML = `<b>${called}</b> called · <b>${leading}</b> leading · <b>${list.length - called - leading}</b> not yet`;
     $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.dem}"></i>Dem called <i style="background:${fade(PARTY_COLOR.dem)};margin-left:14px"></i>leading</span><span><i style="background:${PARTY_COLOR.gop}"></i>GOP called <i style="background:${fade(PARTY_COLOR.gop)};margin-left:14px"></i>leading</span><span><i style="background:${PARTY_COLOR.ind}"></i>Ind called <i style="background:${fade(PARTY_COLOR.ind)};margin-left:14px"></i>leading</span><span><i style="background:#2a3a5c"></i>counting / polls open</span><span><i style="background:#131c2e"></i>no race this year</span>`;
     $("n").textContent = `${list.length} races · leader's name on each tile`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
   connectFeed({

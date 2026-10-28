@@ -30,16 +30,16 @@
 <div class="panel">
   <div class="head"><div><div class="kicker">The independent movement</div><div class="title">Top independent performers tonight</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body"><div class="rows" id="rows"></div></div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Independent and third-party candidates for Senate and House, ranked by share of the vote counted so far · <span class="fd"></span>featured race · faded while counting · highlighted when AP calls the race for them</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span><span class="fd"></span>featured race</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, partyKey, isFeaturedCand, clockS } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const N = Math.max(1, Math.min(14, Number(q.get("n")) || 10));        // rows shown
+  const N = Math.max(1, Math.min(14, Number(q.get("n")) || 8));        // rows shown
   const MIN_IN = Number(q.get("min") ?? 5);                              // least share of the expected vote in before a race counts
   let codes = {};                                                        // AP party code -> name, from party-codes.json (F7)
   const partyName = (c) => (isFeaturedCand(c.id) || c.party === "NP") ? "Independent" : String(codes[c.party] ?? c.partyLabel ?? c.party ?? "").slice(0, 24);
@@ -71,7 +71,7 @@
       : `<div class="empty">No votes counted yet for an independent on a federal ballot.</div>`;
     const won = rows.filter((r) => r.won).length;
     $("reporting").innerHTML = `<b>${rows.length}</b> of ${total} independents with votes in${won ? ` · <b>${won}</b> ${won === 1 ? "winner" : "winners"}` : ""}`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id)); render(); } });
   connectFeed({

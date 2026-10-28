@@ -29,7 +29,7 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, isFeaturedCand, clockS } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -72,7 +72,7 @@
       svg.append("text").attr("class", "lbl").attr("x", x(pt.poll) + 18).attr("y", y(pt.result) + 9).text(`${pt.ind.last}${pt.done ? "" : " (counting)"}`);
     }
     if (!pts.length) svg.append("text").attr("class", "lbl dim").attr("x", W / 2).attr("y", H / 2).attr("text-anchor", "middle").text("Dots appear as results come in");
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { ids = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
   connectFeed({

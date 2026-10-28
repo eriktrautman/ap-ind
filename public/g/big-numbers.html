@@ -20,7 +20,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Sources on each figure</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness } from "./feed.js";
+  import { connectFeed, freshness, clockS } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -35,7 +35,7 @@
       onBallot !== null ? { big: String(onBallot), lab: "independent and third-party candidates for Congress", src: "AP candidate lists" } : null,
     ].filter(Boolean);
     $("stats").innerHTML = stats.map((s) => `<div class="stat"><div class="big">${s.big}</div><div class="lab">${s.lab}</div><div class="src">${s.src}</div></div>`).join("");
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { nFeatured = s.featuredRaceIds.length || FEATURED_RACES.length; render(); } });
   connectFeed({

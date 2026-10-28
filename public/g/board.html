@@ -24,7 +24,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · margin is the independent's share minus the leader's (or the runner-up's when leading)</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, raceState } from "./feed.js";
+  import { connectFeed, freshness, raceState, clockS } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -45,7 +45,7 @@
       const pill = st.status === "called" ? `<span class="pill call">AP CALL${st.cand?.id === ind.id ? " ✓" : ""}</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(r.eevp || r.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">POLLS CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
       return `<tr><td class="lab">${esc(r.label)}</td><td class="who">${esc(ind.last)}${ind.winner ? " ✓" : ""}<span class="vs">v ${esc(other?.last ?? "")}${other?.winner ? " ✓" : ""}</span></td><td class="r b">${r.totalVotes ? Number(ind.pct).toFixed(1) : "—"}</td><td class="r b ${margin === null ? "" : margin >= 0 ? "pos" : "neg"}">${margin === null ? "—" : (margin >= 0 ? "+" : "") + margin.toFixed(1)}</td><td class="r m">${r.totalVotes ? Math.round(r.eevp || r.precinctsPct) + "%" : "—"}</td><td>${pill}</td></tr>`;
     }).join("") || `<tr><td colspan="6" class="m">No featured races in the feed.</td></tr>`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { ids = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
   connectFeed({

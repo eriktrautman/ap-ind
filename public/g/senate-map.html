@@ -35,7 +35,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, raceState, PARTY_COLOR, clockS } from "./feed.js";
   import { drawStateMap, hatchDefs } from "./usmap.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
@@ -63,7 +63,7 @@
     $("called").innerHTML = row(called); $("leading").innerHTML = row(leading);
     $("notyet").innerHTML = `<b>${notyet}</b><span class="note" style="align-self:center">counting or polls open</span>`;
     $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.dem}"></i>Dem called</span><span><i style="background:${PARTY_COLOR.gop}"></i>GOP called</span><span><i style="background:${PARTY_COLOR.ind}"></i>Independent called</span><span><i style="background:repeating-linear-gradient(45deg,#2a3a5c 0 4px,#9aa7bd 4px 7px)"></i>leading, not called</span><span><i style="background:#2a3a5c"></i>polls open / nothing counted</span><span><i style="border:3px solid #facc15;box-sizing:border-box"></i>featured race</span>`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
   connectFeed({

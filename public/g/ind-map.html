@@ -25,7 +25,7 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness } from "./feed.js";
+  import { connectFeed, freshness, clockS } from "./feed.js";
   import { drawTileMap } from "./usmap.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
@@ -52,7 +52,7 @@
     $("reporting").innerHTML = `<b>${[...byState.values()].filter((s) => s.n).length}</b> states`;
     $("legend").innerHTML = `<span><i style="background:#facc15"></i>Featured race (${[...byState.values()].filter((s) => s.featured).length} states)</span><span><i style="background:#a855f7"></i>Independents on the federal ballot</span><span><i style="background:#7c3aed"></i>Four or more</span><span><i style="background:#1b2a4a"></i>None</span>`;
     $("big").innerHTML = `<b>${total}</b>independent and third-party candidates for Congress in ${racesWith} races`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
   connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s, msg) => { if (msg.changed.length) { races = s.races; render(); } }, onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; } });

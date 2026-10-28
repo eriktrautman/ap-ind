@@ -34,7 +34,7 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, partyClass, officeText } from "./feed.js";
+  import { connectFeed, freshness, partyClass, officeText, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -52,7 +52,7 @@
     const rival = cands.find((c) => c.id !== ind.id) ?? a;
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     const margin = race.totalVotes ? a.pct - (b?.pct ?? 0) : null;
     $("now").innerHTML = margin === null ? `<span class="note">No votes counted yet.</span>`
       : `<b style="color:${colorFor(a)}">${esc(a.last)} +${margin.toFixed(1)}</b><span class="lead">leads ${esc(b?.last ?? "")}</span><span class="note">${esc(a.last)} ${Number(a.pct).toFixed(1)}% · ${esc(b?.last ?? "")} ${Number(b?.pct ?? 0).toFixed(1)}%</span>`;

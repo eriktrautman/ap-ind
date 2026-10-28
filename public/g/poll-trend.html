@@ -27,7 +27,7 @@
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id");
@@ -62,7 +62,7 @@
       const last = s.pts[s.pts.length - 1];
       if (last) svg.append("text").attr("class", "lbl").attr("x", x(last.t) + 16).attr("y", y(last.v) + 9).attr("fill", color).text(`${s.c.last} ${last.v}`);
     }
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   connectFeed({
     onSnapshot: async (s) => { race = s.races.get(raceId); try { polls = (await (await fetch("./polls.json")).json()).races?.[raceId]?.polls ?? []; } catch { polls = []; } render(); },

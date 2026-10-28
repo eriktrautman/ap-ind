@@ -28,7 +28,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: campaign and public records (config/candidates.json) · numbers from AP</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, fmt } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, fmt, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), candId = q.get("cand");
@@ -55,7 +55,7 @@
     $("now").innerHTML = race.totalVotes
       ? `<span><b style="color:${PARTY_COLOR[partyKey(c)]}">${Number(c.pct).toFixed(1)}%</b> <span class="m">${fmt(c.votes)} votes</span></span>${rival ? `<span class="m">${esc(rival.last)} ${Number(rival.pct).toFixed(1)}%</span>` : ""}${pill}`
       : `<span class="m">Tonight: no results yet</span>${pill}`;
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   connectFeed({
     onSnapshot: async (s) => { race = s.races.get(raceId); await loadBios(); render(); },

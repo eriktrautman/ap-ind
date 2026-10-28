@@ -21,7 +21,7 @@
 <body>
 <div class="band" id="band"><div class="tag">AP CALL</div><div class="text"><div class="line1" id="l1"></div><div class="line2" id="l2"></div></div><div class="when" id="when"></div></div>
 <script type="module">
-  import { connectFeed, raceState, partyKey, PARTY_COLOR, officeText, fmt } from "./feed.js";
+  import { connectFeed, raceState, partyKey, PARTY_COLOR, officeText, fmt, clock } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -45,7 +45,7 @@
     const office = r.office === "S" ? "Senate" : r.label.endsWith("AL") ? "House seat" : `House ${r.seat.replace(/\D/g, "") ? "District " + r.seat.replace(/\D/g, "") : ""}`;
     $("l1").innerHTML = `<span class="lab">${esc(r.label)}</span><span style="color:${PARTY_COLOR[partyKey(w)]}">${esc(w.name)} (${tag(w)})</span> wins ${esc(r.stateName)} ${esc(office)}${r.flipped ? " · a flip" : ""}`;
     $("l2").innerHTML = loser ? `<b>${Number(w.pct).toFixed(1)}%</b> to <b>${Number(loser.pct).toFixed(1)}%</b> over ${esc(loser.name)} (${tag(loser)}) · ${fmt(w.votes - loser.votes)} votes · ${Math.round(r.eevp || r.precinctsPct)}% of expected vote in` : `${Number(w.pct).toFixed(1)}% · ${Math.round(r.eevp || r.precinctsPct)}% in`;
-    $("when").textContent = r.calledAt ? `Called ${new Date(r.calledAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : "";
+    $("when").textContent = r.calledAt ? `Called ${clock(r.calledAt)}` : "";
   }
   watchState({ onState: (s) => { if (s.featuredRaceIds.length) featured = s.featuredRaceIds; render(); } });
   connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s) => { races = s.races; render(); } });

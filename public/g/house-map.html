@@ -36,7 +36,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, raceState, PARTY_COLOR, clockS } from "./feed.js";
   import { drawStateMap, hatchDefs } from "./usmap.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -67,7 +67,7 @@
     $("called").innerHTML = row(tot); $("leading").innerHTML = row(lead);
     $("notyet").innerHTML = `<b>${notyet}</b><span class="note" style="align-self:center">counting or polls open</span>`;
     $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.dem}"></i>Dem most seats</span><span><i style="background:${PARTY_COLOR.gop}"></i>GOP most seats</span><span><i style="background:${PARTY_COLOR.ind}"></i>Independent most seats</span><span><i style="background:repeating-linear-gradient(45deg,#2a3a5c 0 4px,#9aa7bd 4px 7px)"></i>seats still open</span><span><i style="background:#2a3a5c"></i>nothing called yet</span>`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   connectFeed({
     onSnapshot: (s) => { races = s.races; render(); },

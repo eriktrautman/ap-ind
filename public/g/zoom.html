@@ -34,7 +34,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · status by house rule: called · too close (under 3 points, over 25% in) · counting · polls open</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, officeText, PARTY_COLOR, raceState, fmt } from "./feed.js";
+  import { connectFeed, freshness, partyKey, officeText, PARTY_COLOR, raceState, fmt, clockS } from "./feed.js";
   import { watchState } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -59,7 +59,7 @@
     $("h").textContent = head;
     $("ctx").className = `ctx ${context ? "" : "none"}`;
     $("ctx").textContent = context || "No context line set. Type one in the control room under Race Detail.";
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   watchState({ onState: (s) => { context = s.contextLines?.[raceId] ?? ""; render(); } });
   connectFeed({

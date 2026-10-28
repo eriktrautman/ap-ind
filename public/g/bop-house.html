@@ -31,7 +31,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP balance-of-power report and results feed · solid = won · faded = leading · grey = undecided · flips are seats called for a party other than the one holding them</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, raceState, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, raceState, PARTY_COLOR, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const SEATS = 435, CONTROL = 218;
@@ -60,7 +60,7 @@
     }
     $("flips").innerHTML = `<div class="chip" style="color:${PARTY_COLOR.dem}"><b>D ${flips.dem.length ? "+" + flips.dem.length : "0"}</b> flips</div><div class="chip" style="color:${PARTY_COLOR.gop}"><b>R ${flips.gop.length ? "+" + flips.gop.length : "0"}</b> flips</div><div class="chip" style="color:${PARTY_COLOR.ind}"><b>I ${flips.ind.length ? "+" + flips.ind.length : "0"}</b> flips${flips.ind.map((l) => `<span class="lab">${esc(l)}</span>`).join("")}</div>`;
     $("reporting").innerHTML = `<b>${dem.won + gop.won + ind.won}</b> of ${SEATS} called`;
-    $("updated").textContent = t?.timestamp ? `AP report ${new Date(t.timestamp).toLocaleTimeString("en-US")}` : "";
+    $("updated").textContent = t?.timestamp ? `AP report ${clockS(t.timestamp)}` : "";
   }
   const feed = connectFeed({
     onSnapshot: async (s) => { races = s.races; trend = await feed.trend(); render(); },

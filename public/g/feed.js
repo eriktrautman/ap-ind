@@ -208,6 +208,17 @@ export function fmt(n) {
   return n.toLocaleString("en-US");
 }
 
+/** RULE: every time shown on air carries its zone. Default Eastern, written "ET" (never EST/EDT); ?tz=CT|MT|PT|AKT|HT
+ *  switches a page. clock(when) -> "9:41 PM ET"; clockS(when) -> "9:41:05 PM ET" for Updated stamps. */
+const ZONES = { ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu" };
+const TZ = (() => { const t = String(new URLSearchParams(location.search).get("tz") ?? "ET").toUpperCase(); return ZONES[t] ? t : "ET"; })();
+export function clock(when = Date.now(), { seconds = false } = {}) {
+  const d = when instanceof Date ? when : new Date(when);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", ...(seconds ? { second: "2-digit" } : {}), timeZone: ZONES[TZ] }) + " " + TZ;
+}
+export const clockS = (when) => clock(when, { seconds: true });
+
 /** "U.S. Senate" / "U.S. House, District 6" / "Governor" for a race record. */
 export function officeText(race) {
   if (!race) return "";

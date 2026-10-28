@@ -27,7 +27,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · gold edge = featured race · the producer picks these eight in the control room</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, raceState, partyKey } from "./feed.js";
+  import { connectFeed, freshness, raceState, partyKey, clockS } from "./feed.js";
   import { watchState } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -45,7 +45,7 @@
       const pill = st.status === "called" ? `<span class="pill call">AP CALL</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(r.eevp || r.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
       return `<div class="kc ${featured.has(r.id) ? "featured" : ""}"><div class="lab">${esc(r.label)}<small>${esc(r.stateName)}</small></div><div class="cands">${cands.map((c) => `<div class="c ${partyKey(c)}"><span class="nm">${esc(c.last)}${c.winner ? " ✓" : ""}</span><span class="pc">${r.totalVotes ? Number(c.pct).toFixed(1) : ""}</span></div>`).join("")}</div>${pill}</div>`;
     }).join("") || `<div class="empty" style="grid-column:1/-1">No key races selected.</div>`;
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { ids = s.keyRaceIds.length ? s.keyRaceIds : s.pinnedRaceIds; featured = new Set(s.featuredRaceIds); render(); } });
   connectFeed({

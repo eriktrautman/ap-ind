@@ -25,7 +25,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · every candidate who is not a Democrat or Republican, summed across the races in the feed · 2024 from the same AP data</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness } from "./feed.js";
+  import { connectFeed, freshness, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const office = q.get("office") ?? "all";
@@ -58,7 +58,7 @@
     if (share !== null) arc(share, 172, "#facc15", 44);
     svg.append("text").attr("x", 200).attr("y", 215).attr("text-anchor", "middle").attr("font-size", 64).text(share === null ? "—" : `${share.toFixed(1)}%`);
     svg.append("text").attr("x", 200).attr("y", 260).attr("text-anchor", "middle").attr("font-size", 22).attr("fill", "#9aa7bd").attr("font-weight", 400).text("ring = share of 20%");
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   const feed = connectFeed({
     onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },

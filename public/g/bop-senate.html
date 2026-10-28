@@ -31,7 +31,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP balance-of-power report · solid = won or holdover · faded = leading · grey = undecided · independents in gold</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, PARTY_COLOR, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const OFFICE = (q.get("office") ?? (location.pathname.includes("house") ? "H" : "S")).toUpperCase();
@@ -57,7 +57,7 @@
     const row = (name, p, color) => `<tr><td class="p" style="color:${color}">${name}</td><td class="r">${p.won}</td><td class="r">${p.leading}</td><td class="r">${p.holdovers}</td><td class="r b">${p.winningTrend}</td><td class="r m">${p.current}</td><td class="r ${p.net > 0 ? "ahead" : p.net < 0 ? "behind" : ""}">${p.net > 0 ? "+" : ""}${p.net}</td></tr>`;
     $("rows").innerHTML = row("Democrats", dem, PARTY_COLOR.dem) + (cd.current || cd.won || cd.leading ? row("Independents with Dem", cd, PARTY_COLOR.ind) : "") + (cg.current || cg.won || cg.leading ? row("Independents with GOP", cg, PARTY_COLOR.ind) : "") + (oth.current || oth.won || oth.leading ? row("Other", oth, PARTY_COLOR.ind) : "") + row("Republicans", gop, PARTY_COLOR.gop);
     $("reporting").innerHTML = `<b>${dem.won + gop.won + cd.won + cg.won + oth.won}</b> called tonight`;
-    $("updated").textContent = t.timestamp ? `AP report ${new Date(t.timestamp).toLocaleTimeString("en-US")}` : "";
+    $("updated").textContent = t.timestamp ? `AP report ${clockS(t.timestamp)}` : "";
   }
   const feed = connectFeed({
     onSnapshot: async () => { trend = await feed.trend(); render(); },

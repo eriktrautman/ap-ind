@@ -36,7 +36,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Remaining = AP expected vote minus votes counted, by county · "needs" assumes the rest splits between the top two</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt, officeText } from "./feed.js";
+  import { connectFeed, freshness, partyClass, fmt, officeText, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -57,7 +57,7 @@
     const leader = cands[0];
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     $("th-cand").textContent = `${cand.last} so far`;
 
     const counted = race.totalVotes;

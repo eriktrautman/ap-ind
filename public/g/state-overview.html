@@ -21,7 +21,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · every federal race in the state · featured races in gold</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, raceState, partyKey, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, raceState, partyKey, PARTY_COLOR, clockS } from "./feed.js";
   import { watchState, FEATURED_RACES } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -45,7 +45,7 @@
       return `<tr class="${featured.has(r.id) ? "feat" : ""}"><td class="race">${esc(r.office === "S" ? "Senate" : r.label.endsWith("AL") ? "House, at large" : "House " + r.seat.replace(/\D/g, ""))}</td>${cell(c[0])}${cell(c[1])}<td>${pill}</td></tr>`;
     }).join("") || `<tr><td colspan="6" class="m">No federal races for ${esc(st || "(no state given: add ?st=XX)")}.</td></tr>`;
     if (list.length > 11) $("rows").insertAdjacentHTML("beforeend", `<tr><td colspan="6" class="m">+ ${list.length - 11} more districts</td></tr>`);
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   watchState({ onState: (s) => { featured = new Set(s.featuredRaceIds); render(); } });
   connectFeed({ onSnapshot: (s) => { races = s.races; render(); }, onUpdate: (s) => { races = s.races; render(); }, onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; } });

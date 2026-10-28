@@ -35,7 +35,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and the last contest for this seat · same-county comparison over counties with 10%+ of the expected vote in</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, officeText, normName, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, partyClass, officeText, normName, isFeaturedCand, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -63,7 +63,7 @@
     if (!race) { $("title").textContent = "Race not found"; return; }
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     const nowC = [...race.candidates].sort((a, b) => b.votes - a.votes);
     const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent);
     const main = nowC.find((c) => c.id !== ind?.id) ?? nowC[0];

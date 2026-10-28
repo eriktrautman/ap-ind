@@ -29,7 +29,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP (candidates, incumbency, poll close), AP results for the last contest, public polls (config/polls.json)</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand, clock, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id");
@@ -45,7 +45,7 @@
     if (!race) { $("title").textContent = "Race not found"; return; }
     const cands = [...race.candidates].sort((a, b) => (b.featured || isFeaturedCand(b.id)) - (a.featured || isFeaturedCand(a.id)) || b.votes - a.votes).slice(0, 4);
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
-    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : race.pollClose ? `Polls close ${new Date(race.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "";
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : race.pollClose ? `Polls close ${clock(race.pollClose)}` : "";
     $("cands").innerHTML = cands.map((c) => {
       const b = bios?.get(c.id) ?? {};
       const lab = b.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.party);
@@ -59,8 +59,8 @@
     $("side").innerHTML = `<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${inc ? ` · <span style="color:${PARTY_COLOR[partyKey(inc)]}">${esc(inc.last)}</span> running` : ""}</div>${race.rankedChoice ? `<div class="m">Ranked-choice voting</div>` : ""}</div>
       <div class="box"><div class="k">Last time</div>${last}</div>
       <div class="box"><div class="k">Latest poll</div>${poll}</div>
-      ${race.pollClose ? `<div class="box"><div class="k">Polls close</div><div class="v">${new Date(race.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}</div></div>` : ""}`;
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+      ${race.pollClose ? `<div class="box"><div class="k">Polls close</div><div class="v">${clock(race.pollClose)}</div></div>` : ""}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   connectFeed({
     onSnapshot: async (s) => { race = s.races.get(raceId); await loadStatic(); render(); },

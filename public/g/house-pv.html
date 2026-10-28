@@ -30,7 +30,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, sum of every House race in the feed · independent = every candidate who is not a Democrat or Republican · 2024 from the same AP data</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, PARTY_COLOR } from "./feed.js";
+  import { connectFeed, freshness, PARTY_COLOR, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -50,7 +50,7 @@
     $("stats").innerHTML = `<div class="stat"><div class="big" style="color:${PARTY_COLOR.dem}">${compact(dem)}</div><div class="lab">Democratic votes</div></div><div class="stat"><div class="big" style="color:${PARTY_COLOR.ind}">${compact(ind)}</div><div class="lab">Independent and third-party votes</div></div><div class="stat"><div class="big" style="color:${PARTY_COLOR.gop}">${compact(gop)}</div><div class="lab">Republican votes</div></div>`;
     const b = base?.national?.["2024"]?.H;
     $("cmp").innerHTML = b ? `2024, final: <b>D ${b.demPct.toFixed(1)}%</b> · <b style="color:${PARTY_COLOR.ind}">I ${b.otherPct.toFixed(1)}%</b> · <b>R ${b.gopPct.toFixed(1)}%</b> of ${compact(b.total)} votes<div class="seg"><i style="width:${b.demPct}%;background:${PARTY_COLOR.dem};opacity:.6"></i><i style="width:${b.otherPct}%;background:${PARTY_COLOR.ind};opacity:.6"></i><i style="width:${b.gopPct}%;background:${PARTY_COLOR.gop};opacity:.6"></i></div>` : "";
-    $("updated").textContent = `Updated ${new Date().toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS()}`;
   }
   const feed = connectFeed({
     onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },

@@ -69,7 +69,7 @@
   </div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt } from "./feed.js";
+  import { connectFeed, freshness, partyClass, fmt, clockS } from "./feed.js";
 
   const params = new URLSearchParams(location.search);
   const raceId = params.get("id");
@@ -89,7 +89,7 @@
       ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in`
       : "No results yet";
     $("rtype").textContent = race.rankedChoice ? "· ranked choice, first-round totals" : "";
-    $("updated").textContent = `Updated ${new Date(race.lastUpdated).toLocaleTimeString("en-US")}`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
 
     const max = Math.max(1, ...race.candidates.map((c) => c.pct));
     const rows = $("rows");
