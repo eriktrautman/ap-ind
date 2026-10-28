@@ -129,7 +129,7 @@ createServer(async (req, res) => {
     }
     const p = await resolve(url.pathname);
     if (!p) { res.writeHead(404, { "content-type": "text/plain" }); res.end("not found"); return; }
-    const noStore = /^\/(studio|ticker|ticker-queue)/.test(url.pathname);
+    const noStore = /^\/(studio|ticker|ticker-queue|live-screen)/.test(url.pathname);
     res.writeHead(200, { "content-type": TYPES[extname(p)] ?? "application/octet-stream", "cache-control": noStore ? "no-store" : "public, max-age=10" });
     res.end(await readFile(p));
   } catch (e) {

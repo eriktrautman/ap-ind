@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Live Screen A</title>
+<meta name="robots" content="noindex">
+<style>
+  /* Live Screen A: a fixed address that shows whatever chart was last published to it. ?bg=black|green, ?opacity=10..100. */
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; }
+  body.bg-green { background: #00ff00; } body.bg-black { background: #000; }
+  iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; background: transparent; opacity: 0; transition: opacity .35s ease; }
+  iframe.on { opacity: 1; }
+</style>
+</head>
+<body>
+<script type="module" src="/live-screen.js"></script>
+</body>
+</html>

@@ -144,8 +144,44 @@ export const DEFAULTS = Object.freeze({
   persistentCharts: [],      // A series elements in the Persistent Elements section (never A1, the ticker)
   persistentSettings: {},    // per element inputs: A2 {name, title}, A3 {raceId}, A4 {raceId}
   contextLines: {},          // D6: raceId -> one line the producer typed
+  // Live Screens: two fixed pages (/live-screen-a, /live-screen-b), each showing one published chart. chart is a
+  // chart id, race a race id (NE-SEN), state two letters for state charts, params the chart's extra address parameters.
+  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {} },
+  screenB: { chart: "C1", race: "", state: "", params: {} },
   updatedAt: null,
 });
+const SCREENS = ["screenA", "screenB"];
+/** One Live Screen definition, validated: a built chart id, a race id or AP id, a state, and up to 12 short parameters. */
+function screenDef(raw, dflt) {
+  if (!raw || typeof raw !== "object") return structuredClone(dflt);   // absent (older stored state): the shipped screen
+  const r = raw;
+  const id = String(r.chart ?? "").toUpperCase();
+  const chart = CHARTS.some((c) => c.id === id && c.built && !c.retired && c.page) ? id : dflt.chart;
+  const race = typeof r.race === "string" ? r.race.trim().toUpperCase().slice(0, 40) : "";
+  const state = /^[A-Za-z]{2}$/.test(r.state ?? "") ? r.state.toUpperCase() : "";
+  const params = {};
+  for (const [k, v] of Object.entries(r.params && typeof r.params === "object" ? r.params : {})) if (/^[a-zA-Z]{1,12}$/.test(k) && typeof v === "string" && v.trim()) params[k] = v.trim().slice(0, 200);
+  return { chart, race, state, params: Object.fromEntries(Object.entries(params).slice(0, 12)) };
+}
+/** The chart-id address a Live Screen shows: /g/<chart>?bg=..&opacity=..&race=..&<params>. display: {bg, opacity, sample, preview}. */
+export function screenAddress(s, display = {}) {
+  const chart = CHARTS.find((c) => c.id === s.chart);
+  const p = new URLSearchParams();
+  if (display.bg) p.set("bg", display.bg);
+  if (display.opacity && display.opacity !== "100") p.set("opacity", display.opacity);
+  if (s.race && (chart?.kind === "race" || chart?.needsRace || chart?.needsState)) p.set("race", s.race);
+  if (s.state && chart?.needsState) p.set("state", s.state);
+  for (const [k, v] of Object.entries(s.params ?? {})) if (v) p.set(k, v);
+  for (const [k, v] of Object.entries(display)) if (!["bg", "opacity"].includes(k) && v) p.set(k, v);
+  const q = p.toString();
+  return `/g/${s.chart}${q ? "?" + q : ""}`;
+}
+/** "B5 Live race result · NE-SEN · cand=Ricketts" for dialogs and the live parameters table. */
+export function describeScreen(s) {
+  const c = CHARTS.find((x) => x.id === s.chart);
+  const extra = Object.entries(s.params ?? {}).map(([k, v]) => `${k}=${v}`).join(" ");
+  return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""}`;
+}
 
 const LIMITS = { pins: 60, featured: 40, manual: 20, text: 240, key: 8, context: 120 };
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
@@ -184,6 +220,8 @@ export function normalize(raw) {
     persistentCharts: Array.isArray(r.persistentCharts) ? chartIds(r.persistentCharts, "other").filter((id) => id[0] === "A") : [],
     persistentSettings: (() => { const out = {}; const src = r.persistentSettings && typeof r.persistentSettings === "object" ? r.persistentSettings : {}; for (const [k, v] of Object.entries(src)) { if (!/^A\d+$/.test(k) || !v || typeof v !== "object") continue; const o = {}; for (const [f, x] of Object.entries(v)) if (/^[a-zA-Z]+$/.test(f) && typeof x === "string") o[f] = x.trim().slice(0, LIMITS.context); out[k] = o; } return out; })(),
     contextLines: context,
+    screenA: screenDef(r.screenA, DEFAULTS.screenA),
+    screenB: screenDef(r.screenB, DEFAULTS.screenB),
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null,
   };
 }
@@ -216,6 +254,7 @@ export function diffState(from, to) {
   list("movementCharts", "Movement charts", false);
   list("keyRaceIds", "Key races", true);
   list("persistentCharts", "Persistent elements", false);
+  for (const k of SCREENS) if (JSON.stringify(A[k]) !== JSON.stringify(B[k])) out.push({ field: k, text: `Live Screen ${k.slice(-1)}: ${describeScreen(B[k])} (was ${describeScreen(A[k])})` });
   for (const k of new Set([...Object.keys(A.persistentSettings), ...Object.keys(B.persistentSettings)])) {
     if (JSON.stringify(A.persistentSettings[k] ?? {}) !== JSON.stringify(B.persistentSettings[k] ?? {})) out.push({ field: "persistentSettings", text: `${k} settings: ${Object.entries(B.persistentSettings[k] ?? {}).map(([f, v]) => `${f} "${v}"`).join(", ") || "(cleared)"}` });
   }
@@ -262,6 +301,8 @@ export async function loadGlobal() {
 /** The fields the Live Global Ticker is made of: the only ones that are ever published. Everything else a page needs comes
  *  from its address or the shipped defaults. */
 export const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText"];
+/** Everything that is ever published: the ticker fields and the two Live Screens. */
+export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB"];
 
 /**
  * Resolve the state for a source once. Non-ticker fields are always the shipped defaults (a page's address
@@ -270,7 +311,7 @@ export const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "
  */
 async function loadState(requested = requestedSource(), { lastGlobal = null } = {}) {
   const base = normalize(DEFAULTS);
-  const withTicker = (s) => normalize({ ...base, ...Object.fromEntries(TICKER_FIELDS.map((k) => [k, s[k]])) });
+  const withTicker = (s) => normalize({ ...base, ...Object.fromEntries(PUBLISHED_FIELDS.map((k) => [k, s[k]])) });
   if (requested === "default") return { state: base, source: "default", requested, error: null };
   if (requested === "local") {
     const local = readLocal();

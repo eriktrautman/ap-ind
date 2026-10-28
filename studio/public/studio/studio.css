@@ -292,3 +292,36 @@ dialog::backdrop { background: #071222aa; }
 }
 
 .builderhead { margin-top: 40px; }
+
+/* ---------- Live Screens ---------- */
+.screenblock { margin: 10px 0 36px; }
+.screenhead { margin-top: 12px; }
+.screenrow { display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 20px; align-items: start; }
+.screen { border-radius: 8px; overflow: hidden; background: #000; }
+.screen.draft { border: 3px solid #d98a2b; box-shadow: 0 0 0 4px #fdf1dd; }
+.screen.onair { border: 3px solid var(--navy); box-shadow: 0 0 0 4px #e6ebf5; }
+.screen .frame { position: relative; width: 100%; aspect-ratio: 1920 / 1080; overflow: hidden; background: #000; }
+.screen .frame.clickable { cursor: pointer; }
+.screen .frame.clickable:hover::after { content: "Show ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.screen .frame::before { position: absolute; left: 8px; top: 8px; z-index: 2; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 2px 8px; border-radius: 4px; color: #fff; pointer-events: none; }
+.screen.draft .frame::before { content: "DRAFT · NOT ON AIR"; background: #d98a2b; color: #1a1200; }
+.screen.onair .frame::before { content: "ON AIR"; background: var(--navy); }
+.screen iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.screen .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
+.screen.draft .gfoot { background: #fdf6ea; } .screen.onair .gfoot { background: #eef2f9; }
+.screen .gfoot .spacer { flex: 1; }
+.screen .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; }
+.screen .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
+.screen .sform { display: grid; gap: 10px; padding: 12px 12px 14px; background: #fff; font-size: 12.5px; }
+.screen .sform label { display: grid; gap: 4px; color: var(--muted); }
+.screen .sform select, .screen .sform input { width: 100%; max-width: 100%; }
+.screen.onair .tickerurl { margin: 8px 12px 4px; } .screen.onair .liveparams { margin: 4px 12px 6px; } .screen.onair p.muted { margin: 4px 12px 12px; color: var(--muted); }
+.screen.onair { background: #fff; }
+.screenmid { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 18%; color: var(--navy); }
+.screenmid .arrow { color: #b5651d; }
+.screenmid button { width: 100%; justify-content: center; font-size: 12px; padding: 5px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+.screenmid button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .screenmid button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
+.screenmid button.publish.noauth, .screenmid button.publish.noauth:disabled { background: #e4e4e4; border-color: #c4c4c4; color: #8b1a1a; cursor: not-allowed; }
+.screenmid button.pull { background: var(--navy); color: #fff; border-color: var(--navy); } .screenmid button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
+.screenmid .pubstate { font-size: 11.5px; text-align: center; }
+@media (max-width: 900px) { .screenrow { grid-template-columns: 1fr; } .screenmid { flex-direction: row; flex-wrap: wrap; padding-top: 0; } .screenmid .arrow { transform: rotate(90deg); } .screenmid button { width: auto; } }

@@ -1,7 +1,7 @@
 // Control room: status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -124,8 +124,8 @@ async function loadIndex() {
     const states = [...new Set(index.races.map((r) => r.state))].sort();
     for (const id of ["cstate"]) { const sel = $(id); const cur = sel.value; sel.innerHTML = `<option value="">All states</option>${states.map((s) => `<option${s === cur ? " selected" : ""}>${s}</option>`).join("")}`; }
     cards.setData({ index });
-    renderAll();
-  } catch {}
+  } catch { return; }
+  renderAll();   // outside the try: a rendering bug must surface in the console, not vanish
 }
 /** Read the LIVE TICKER's parameters. On a laptop the runner answers from the deployment (or from itself when GLOBAL=self). */
 async function loadLive() {
@@ -183,6 +183,7 @@ function renderLive() {
     </table>`;
   }
   renderPublishState();
+  renderScreens();
 }
 function renderPublishState() {
   const changes = live ? tickerDiff(live, draft) : [];
@@ -442,6 +443,166 @@ $("previewframe").addEventListener("click", () => window.open(tickerUrl(), "_bla
 $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_blank", "noopener"));
 $("bg").addEventListener("change", renderTickerUrl); $("opacity").addEventListener("change", renderTickerUrl);
 
+// ---------- Live Screens ----------
+// Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
+// chart's own parameters, saved on this page), an arrow with Publish and Pull, and the on-air page on the right.
+const SCREEN_PARAMS = {
+  B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
+  B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
+  B13: [{ k: "who", label: "Who", options: [["ind", "the independent vs the 2024 Democratic vote"], ["main", "the Republican vs the 2024 Trump vote"]] }],
+  B11: [{ k: "quote", label: "Quote", ph: "empty = the curated quotes in turn" }, { k: "who", label: "Attribution", ph: "" }],
+  A2: [{ k: "name", label: "Name", ph: "" }, { k: "title", label: "Title", ph: "" }],
+  D6: [{ k: "context", label: "Context line", ph: "one line under the race" }],
+  C9: [{ k: "n", label: "Card number", ph: "0, 1, 2 …" }],
+};
+const SCREEN_IDS = { screenA: "a", screenB: "b" };
+const screenLetter = (key) => key.slice(-1);
+const screenPath = (key) => `/live-screen-${SCREEN_IDS[key]}`;
+/** The on-air page's address: fixed; only the display parameters vary. */
+function screenLiveUrl(key) { const s = displayParams().toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
+/** The draft's own address: the chart-id address with the Default Chart Settings, usable anywhere. */
+function screenDraftUrl(key) { const bg = $("bg").value, o = $("opacity").value; return origin() + screenAddress(draft[key], { bg, opacity: o }); }
+function raceOptions(selected) {
+  if (!index) return "";
+  const feat = draft.featuredRaceIds.map((id) => index.byId.get(id)).filter(Boolean);
+  const opt = (r) => `<option value="${esc(r.label)}" ${selected === r.label ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)} · ${esc(r.title)}</option>`;
+  return `<optgroup label="Featured races">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
+}
+function stateOptions(selected) {
+  const states = index ? [...new Set(index.races.map((r) => r.state))].sort() : FEATURED_RACES.map((r) => r.state);
+  return states.map((s) => `<option ${selected === s ? "selected" : ""}>${s}</option>`).join("");
+}
+function screenForm(key) {
+  const s = draft[key];
+  const chart = CHARTS.find((c) => c.id === s.chart);
+  const groups = [["A", "Persistent elements"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Broad races"], ["F", "AP reports"]];
+  const chartSel = `<label>Chart<select data-sk="${key}" data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${c.id} ${esc(c.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
+  const needsRace = chart && (chart.kind === "race" || chart.needsRace);
+  const raceSel = needsRace || chart?.needsState ? `<label>Race<select data-sk="${key}" data-f="race"><option value="">${chart?.needsState ? "(by state instead)" : "choose a race"}</option>${raceOptions(s.race)}</select></label>` : "";
+  const stateSel = chart?.needsState ? `<label>State<select data-sk="${key}" data-f="state"><option value="">from the race</option>${stateOptions(s.state)}</select></label>` : "";
+  const extra = (SCREEN_PARAMS[s.chart] ?? []).map((p) => p.options
+    ? `<label>${esc(p.label)}<select data-sk="${key}" data-p="${p.k}"><option value="">default</option>${p.options.map(([v, t]) => `<option value="${v}" ${s.params[p.k] === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`
+    : `<label>${esc(p.label)}<input data-sk="${key}" data-p="${p.k}" value="${esc(s.params[p.k] ?? "")}" placeholder="${esc(p.ph ?? "")}" maxlength="200"></label>`).join("");
+  return chartSel + raceSel + stateSel + extra;
+}
+function screenLiveTable(key) {
+  const s = live?.[key];
+  if (!s) return `<div class="warnline bad">${liveError ? `Cannot read the live screen: ${esc(liveError)}` : "Reading the live screen…"}</div>`;
+  const chart = CHARTS.find((c) => c.id === s.chart);
+  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is on air"]];
+  return `<table class="params">${rows.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>`;
+}
+function buildScreen(key) {
+  const letter = screenLetter(key).toUpperCase();
+  const box = $(key);
+  box.innerHTML = `
+    <h3 class="screenhead">Live Screen ${letter}</h3>
+    <div class="screenrow">
+      <div class="screen draft">
+        <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
+        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="sform"></div>
+      </div>
+      <div class="screenmid">
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <button class="publish" data-act="publish" title="Make this draft the on-air screen"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg><span>Publish</span></button>
+        <button class="pull" data-act="pull" title="Copy the on-air screen into the draft"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button>
+        <span class="pubstate"></span>
+      </div>
+      <div class="screen onair">
+        <div class="frame clickable" data-open="live" title="Open the on-air screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} on air"></iframe></div>
+        <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the on-air screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a class="url liveaddr" target="_blank" rel="noopener"></a></p>
+        <div class="liveparams"></div>
+        <p class="muted small">Changes within 5 seconds of a publish, cross-fading so nothing flashes. Only an authorized publish changes it.</p>
+      </div>
+    </div>`;
+  box.querySelector(".screen.onair iframe").src = `${screenPath(key)}?bg=black`;
+  box.dataset.built = "1";
+}
+function renderScreens() {
+  for (const key of Object.keys(SCREEN_IDS)) {
+    const box = $(key);
+    if (!box.dataset.built) buildScreen(key);
+    // the draft preview reloads only when its address changes; the on-air frame never reloads
+    const dFrame = box.querySelector(".screen.draft iframe");
+    const dAddr = screenAddress(draft[key], { bg: "black", sample: "auto" });
+    if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
+    const form = box.querySelector(".sform");
+    if (!form.contains(document.activeElement)) form.innerHTML = screenForm(key);
+    box.querySelector("a[data-open=draft]").href = screenDraftUrl(key);
+    box.querySelector("a[data-open=live]").href = screenLiveUrl(key);
+    const la = box.querySelector(".liveaddr"); la.textContent = screenLiveUrl(key); la.href = screenLiveUrl(key);
+    box.querySelector(".liveparams").innerHTML = screenLiveTable(key);
+    const changed = live ? JSON.stringify(live[key]) !== JSON.stringify(draft[key]) : false;
+    const st = box.querySelector(".pubstate");
+    st.className = `pubstate ${live && !changed ? "same" : "dirty"}`;
+    st.textContent = !live ? "On-air screen not read yet" : changed ? "Draft differs from on air" : "Draft matches on air";
+    const pub = box.querySelector("button[data-act=publish]"), pull = box.querySelector("button[data-act=pull]");
+    pub.disabled = !canPublish() || !changed; pub.classList.toggle("noauth", !canPublish());
+    pub.querySelector("span").textContent = canPublish() ? "Publish" : "[NOT AUTHORIZED]";
+    pub.title = !canPublish() ? "You are not authorized to publish from this computer. Publishing needs the live screens' password to be set up on this machine by the engineer." : !changed ? "Nothing to publish: the draft already matches the on-air screen" : `Make this draft the on-air screen (${describeScreen(draft[key])})`;
+    pull.disabled = !canPull() || !live;
+  }
+  scaleScreens();
+}
+function scaleScreens() { document.querySelectorAll(".screen .frame").forEach((fr) => { const f = fr.querySelector("iframe"); if (f) f.style.transform = `scale(${fr.clientWidth / 1920})`; }); }
+window.addEventListener("resize", scaleScreens);
+let screenTimer = null;
+document.addEventListener("input", (e) => {
+  const el = e.target.closest("[data-sk]"); if (!el) return;
+  const key = el.dataset.sk, s = draft[key];
+  if (el.dataset.f === "chart") { s.chart = el.value; s.params = {}; if (!(SCREEN_PARAMS[s.chart] ?? []).length) s.params = {}; }
+  else if (el.dataset.f === "race") s.race = el.value;
+  else if (el.dataset.f === "state") s.state = el.value;
+  else if (el.dataset.p) { if (el.value.trim()) s.params[el.dataset.p] = el.value; else delete s.params[el.dataset.p]; }
+  clearTimeout(screenTimer); screenTimer = setTimeout(commit, el.tagName === "SELECT" ? 0 : 500);
+});
+document.addEventListener("click", async (e) => {
+  const box = e.target.closest(".screenblock"); if (!box) return;
+  const key = box.id;
+  const copy = e.target.closest("[data-copy]");
+  if (copy) { const u = copy.dataset.copy === "live" ? screenLiveUrl(key) : screenDraftUrl(key); try { await navigator.clipboard.writeText(u); copy.textContent = "Copied"; setTimeout(() => (copy.textContent = "Copy URL"), 1500); } catch {} return; }
+  const fr = e.target.closest(".frame[data-open]");
+  if (fr) { window.open(fr.dataset.open === "live" ? screenLiveUrl(key) : screenDraftUrl(key), "_blank", "noopener"); return; }
+  const act = e.target.closest("button[data-act]")?.dataset.act;
+  if (act === "publish") publishScreen(key); else if (act === "pull") pullScreen(key);
+});
+async function publishScreen(key) {
+  if (!canPublish()) return;
+  const letter = screenLetter(key).toUpperCase();
+  let latest = live;
+  try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; } catch (e) { liveError = e.message; }
+  const same = latest && JSON.stringify(latest[key]) === JSON.stringify(draft[key]);
+  const someoneElse = latest && latest.updatedAt !== liveSeenAt;
+  const ok = await ask({
+    title: `Publish Live Screen ${letter}?`,
+    body: `<p><b>${esc(prodHost())}${screenPath(key)}</b> changes to <b>${esc(describeScreen(draft[key]))}</b>${latest ? ` (now ${esc(describeScreen(latest[key]))})` : ""}, within 5 seconds, cross-fading so nothing flashes. Nothing else is published.</p>
+      ${someoneElse ? `<div class="warnline bad">Someone else published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published.</div>` : ""}
+      ${same ? `<div class="warnline">The draft already matches the on-air screen.</div>` : ""}`,
+    ok: "Publish", danger: true,
+  });
+  if (!ok) return;
+  try {
+    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify({ [key]: draft[key] }) }));
+    live = saved; liveSeenAt = saved.updatedAt; liveError = null;
+    renderAll();
+  } catch (e) {
+    await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>The on-air screen is unchanged. The draft is still saved on this page.</p>`, ok: "OK" });
+  }
+}
+async function pullScreen(key) {
+  const letter = screenLetter(key).toUpperCase();
+  let latest;
+  try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
+  catch (e) { liveError = e.message; renderScreens(); await ask({ title: "Can't read the on-air screen", body: `<div class="warnline bad">${esc(e.message)}</div><p>The draft is unchanged.</p>`, ok: "OK" }); return; }
+  const ok = await ask({ title: `Pull Live Screen ${letter} into the draft?`, body: `<p>The draft becomes <b>${esc(describeScreen(latest[key]))}</b>, what is on air now${latest.updatedAt ? ` (published ${esc(ago(latest.updatedAt))})` : ""}. Nothing on air changes.</p>`, ok: "Pull into the draft", danger: false });
+  if (!ok) return;
+  liveSeenAt = latest.updatedAt;
+  draft = saveLocal({ ...draft, [key]: structuredClone(latest[key]) });
+  renderAll(); cards.broadcast(draft);
+}
+
 // ---------- Race Detail section ----------
 function renderDetail() {
   if (!index) return;
@@ -668,7 +829,7 @@ $("charts").addEventListener("click", (e) => { const fc = e.target.closest(".fea
 function renderAll() {
   renderStatus();
   renderLive();
-  renderPins(); renderManual(); sendPreview();
+  renderPins(); renderManual(); sendPreview(); renderScreens();
   renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }
@@ -676,7 +837,7 @@ function renderAll() {
 const secObs = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) document.querySelectorAll("#sectionnav a").forEach((a) => a.classList.toggle("here", a.getAttribute("href") === `#${e.target.id}`));
 }, { rootMargin: "-120px 0px -60% 0px" });
-for (const id of ["ticker", "detail", "broad", "movement", "persistent", "catalog", "charts"]) secObs.observe($(id));
+for (const id of ["ticker", "screens", "detail", "broad", "movement", "persistent", "catalog", "charts"]) secObs.observe($(id));
 
 // ---------- boot ----------
 let timers = [];
