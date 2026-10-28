@@ -1,4 +1,4 @@
-// Control room: status bar and poller controls, the Live Global Ticker and the Ticker Builder (the one thing that is
+// Control room: status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
 import { buildQueue } from "/ticker-queue.js";
 import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal } from "/g/control.js";
@@ -96,7 +96,7 @@ let loginKind = null;
 // ---------- data ----------
 let status = null, settings = null, index = null;
 let runtime = null;           // from /api/runtime on a laptop (npm start); null on the deployment, where the live ticker is this site's
-let live = null;              // the Live Global Ticker's parameters as last read (normalized), or null if never read
+let live = null;              // the LIVE TICKER's parameters as last read (normalized), or null if never read
 let liveSeenAt = null;        // updatedAt of the live ticker when this page last pulled or published
 let liveError = null;         // why the live ticker is unreadable right now, or null
 let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
@@ -127,7 +127,7 @@ async function loadIndex() {
     renderAll();
   } catch {}
 }
-/** Read the Live Global Ticker's parameters. On a laptop the runner answers from the deployment (or from itself when GLOBAL=self). */
+/** Read the LIVE TICKER's parameters. On a laptop the runner answers from the deployment (or from itself when GLOBAL=self). */
 async function loadLive() {
   try {
     const remote = normalize(await api("/api/producer"));
@@ -167,7 +167,7 @@ function renderHow() {
   $("howtext").innerHTML = `<b>Every chart is a link.</b> Show or Copy URL on any card gives you an address that carries the chart, the race and the display settings, so it always shows the same thing and can be shared with other authorized people. <b>Collect what you need.</b> Feature races and charts to keep them close in the sections above; see everything in the catalogs below. That organises your view only. <b>Build a ticker, then publish it.</b> The Ticker Builder makes a ticker from your races and items: use it by its link, or, if you are signed in with the password, publish it to the permanent ticker at <code>${esc(host)}/ticker</code>, which updates on air within seconds. Restore All Default Settings resets this page, never that ticker.`;
 }
 
-/** The Live Global Ticker block: what it is crawling right now and when that was published. */
+/** The LIVE TICKER block: what it is crawling right now and when that was published. */
 function renderLive() {
   renderHow();
   const box = $("liveparams");
@@ -206,7 +206,7 @@ async function publish() {
   const someoneElse = latest && latest.updatedAt !== liveSeenAt;
   const host = prodHost();
   const ok = await ask({
-    title: "Publish to the Live Global Ticker?",
+    title: "Publish to the LIVE TICKER?",
     body: `<p><b>${esc(host)}/ticker</b> takes ${BUILDER}. It changes within 5 seconds, at the next item boundary, without restarting the crawl. Nothing else on this page is published, and tickers built from an address are not affected.</p>
       ${changeList(changes)}
       <p class="small muted">Last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
@@ -229,7 +229,7 @@ async function pull() {
   catch (e) { liveError = e.message; renderLive(); await ask({ title: "Can't read the live ticker", body: `<div class="warnline bad">${esc(e.message)}</div><p>The builder is unchanged.</p>`, ok: "OK" }); return; }
   const changes = tickerDiff(draft, latest);
   const ok = await ask({
-    title: "Pull from the Live Global Ticker?",
+    title: "Pull from the LIVE TICKER?",
     body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing on air changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
     ok: "Pull into the builder", danger: changes.length > 0,
   });
@@ -240,7 +240,7 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, featured races and charts, overview charts, persistent elements and their inputs. This browser's saved settings are replaced.</div><p><b>The Live Global Ticker is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, featured races and charts, overview charts, persistent elements and their inputs. This browser's saved settings are replaced.</div><p><b>The LIVE TICKER is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   renderAll(); cards.broadcast(draft);
@@ -346,7 +346,7 @@ function raceBand(r, { featured, position = null }) {
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
-  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only this page. The Live Global Ticker changes only when you publish the builder.</p>`, ok: title.replace(/\?$/, "") });
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
 }
 function toggleFeatured(id) {
@@ -420,7 +420,7 @@ function sendPreview() {
 frame.addEventListener("load", sendPreview);
 window.addEventListener("resize", scalePreviews);
 function displayParams() { const bg = $("bg").value, o = $("opacity").value; const p = new URLSearchParams(); if (bg) p.set("bg", bg); if (o !== "100") p.set("opacity", o); return p; }
-/** The Live Global Ticker's address: fixed; only the display parameters vary. */
+/** The LIVE TICKER's address: fixed; only the display parameters vary. */
 function liveTickerUrl() { const s = displayParams().toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
 /** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {

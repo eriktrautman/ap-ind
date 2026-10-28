@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; everything else done",
-  updated: "2026-10-28T21:44:14Z",
+  updated: "2026-10-28T21:45:53Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -260,6 +260,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T21:45:53Z", what: "The live ticker is called LIVE TICKER everywhere in the control room (Live Ticker in the README); its parameters note follows the flicker sentence directly, above the table." },
   { t: "2026-10-28T21:44:14Z", what: "How changes reach the screen rewritten: three short points in larger text (every chart is a link; collect what you need; build a ticker, then publish it)." },
   { t: "2026-10-28T21:35:22Z", what: "Toolbar names: the box is Default Chart Settings and the button is Restore All Default Settings." },
   { t: "2026-10-28T21:34:57Z", what: "Toolbar: Restore defaults sits right beside the Global settings box, which has more padding; labels are Graphic Background and Chart Opacity." },
