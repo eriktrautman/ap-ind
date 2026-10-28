@@ -265,7 +265,8 @@ function renderStatus() {
   const paused = settings?.pollEnabled === false;
   const cls = paused ? "warn" : !s ? "bad" : age < 180 ? "ok" : age < 600 ? "warn" : "bad";
   const feedLabel = paused ? "Polling paused" : !s ? "No poller status yet" : age < 180 ? "AP feed live" : age < 600 ? `AP data ${Math.round(age / 60)} min old` : "AP feed stale";
-  const rt = settings?.resultsType ?? settings?.envResultsType ?? s?.resultsType ?? "t";
+  // Test vs Live shows what the poller is actually tracking (its last run), not this machine's settings file.
+  const rt = s?.resultsType ?? settings?.resultsType ?? settings?.envResultsType ?? "t";
   const apOk = s && !(s.lastError && (s.consecutiveFailures ?? 0) > 0);
   const st = (id, html) => `<span class="st" id="${id}">${html}</span>`;
   $("statusbar").innerHTML =
@@ -286,10 +287,10 @@ function renderStatus() {
 
   const problems = [];
   if (!index && runtime && !runtime.polling) problems.push({ warn: true, title: "No results on this laptop yet.", text: "The app was started with --no-poll and the local store holds no index. Start it without --no-poll, or run npm run poll, and the lists fill in within a minute." });
-  if (paused) problems.push({ warn: true, title: "Polling is paused.", text: "No new AP data is being fetched. Everything keeps showing the last data. Open AP poller and press Resume polling." });
-  else if (!s) problems.push({ title: "The poller has never written a status file.", text: "Open AP poller and press Poll now. If that fails, the error appears here in plain English." });
+  if (paused) problems.push({ warn: true, title: "Polling is paused.", text: "No new AP data is being fetched. Everything keeps showing the last data. Under Producer actions press Resume polling." });
+  else if (!s) problems.push({ title: "The poller has never written a status file.", text: "Under Producer actions press Poll now. If that fails, the error appears here in plain English." });
   else if (s.lastError && (s.consecutiveFailures ?? 0) > 0) problems.push({ title: `Last poll failed (${ago(s.lastError.at)}).`, text: s.lastError.text, fix: fixFor(s.lastError.code) });
-  else if (age >= 180) problems.push({ warn: age < 600, title: `No successful poll for ${Math.round(age / 60)} minutes.`, text: "The cron should run every minute. Open AP poller and press Poll now: if it succeeds, the cron is not firing (check the Vercel project's Cron Jobs tab). If it fails, the error appears here." });
+  else if (age >= 180) problems.push({ warn: age < 600, title: `No successful poll for ${Math.round(age / 60)} minutes.`, text: "The cron should run every minute. Under Producer actions press Poll now: if it succeeds, the cron is not firing (check the Vercel project's Cron Jobs tab). If it fails, the error appears here." });
   if (s?.errors?.length && !(s.lastError && (s.consecutiveFailures ?? 0) > 0)) problems.push({ warn: true, title: "Last run finished with warnings.", list: s.errors });
   const p = $("problem");
   p.hidden = problems.length === 0;
