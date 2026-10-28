@@ -531,6 +531,12 @@
       <div class="cap"><h3><span class="n">B13</span> Versus the 2024 presidential ticket, by area <span class="tag live">live</span></h3>
       <p>The candidate's share tonight against their 2024 presidential ticket in every county (or town or district), with the biggest areas tabulated and one headline number computed like-for-like over the areas reporting. Two views per race: the independent against the Harris vote (<code>who=ind</code>) and the Republican against the Trump vote (<code>who=main</code>; Pan in CA-6 maps to Harris). The sample above uses Osborn's real 2024 Senate result as a stand-in for tonight's count. Open the <a href="/g/swing.html?demo=1&amp;id=28594&amp;who=main&amp;bg=black" target="_blank" rel="noopener">Ricketts view</a>.</p></div>
     </div>
+
+    <div class="card half">
+      <div class="embed" data-src="/g/head-to-head.html?demo=1&amp;id=28594&amp;bg=black"><span class="live-tag">WORKING PAGE · SAMPLE DATA</span><a class="open" target="_blank" rel="noopener">Open full screen ↗</a></div>
+      <div class="cap"><h3><span class="n">B14</span> Head-to-head <span class="tag live">live</span></h3>
+      <p>The two candidates who matter, face to face with their photos. Before results: the featured independent and the opponent the latest poll puts closest (else the incumbent, else the seat holder's party), with that poll, the last result and poll-close time between them. Once votes are counted: the two leaders with live shares, the margin and the AP call. <code>?a=&amp;b=</code> fixes the pair.</p></div>
+    </div>
   </div>
 </section>
 
@@ -1039,7 +1045,7 @@
   <table class="t" style="font-size:14px;color:var(--ink)">
     <tr><th>Bible category</th><th>This page</th><th>Rule</th></tr>
     <tr><td><b>ID</b> graphics / lower thirds</td><td>A2, A3</td><td>Names and parties from AP; titles and photos from the candidate index.</td></tr>
-    <tr><td><b>Election</b> graphics</td><td>A4–A6, B5–B10, B13, C1, D1–D11</td><td>Interpretation of AP data; every card carries its data line and key note.</td></tr>
+    <tr><td><b>Election</b> graphics</td><td>A4–A6, B5–B10, B13, B14, C1, D1–D11</td><td>Interpretation of AP data; every card carries its data line and key note.</td></tr>
     <tr><td><b>Description</b> graphics</td><td>B1–B4, B11, B12, C2–C9</td><td>Any third-party data is sourced on screen.</td></tr>
     <tr><td><b>Data</b> graphics</td><td>A1</td><td>The real-time ticker.</td></tr>
     <tr><td><b>Show</b> graphics, <b>Credits</b></td><td>—</td><td>Outside this system.</td></tr>
@@ -1278,6 +1284,7 @@
     "B11": ["ext", "quotes must be sourced and cleared by editorial"],
     "B12": ["ext", "AP VoteCast is a separate AP product; not in the entitlement"],
     "B13": ["derived", "county units from the live feed (every state, every 10 minutes) against AP's 2024 presidential result by county; the like-for-like aggregate is computed by the project"],
+    "B14": ["ap", "the two leaders by voteCount with pct, winner flag and eevp; before results the pair comes from the latest public poll and incumbency"],
     "C1": ["ap", "votes, eevp, call status for the seven races"],
     "C2": ["mixed", "which states have an independent on the federal ballot comes from AP's candidate list; the 217 filings count is FEC"],
     "C3": ["ext", "Gallup identification share, current independents in the Senate: editorial facts to confirm"],
@@ -1336,6 +1343,7 @@
     "B11": [["editorial", "sourced quotes"]],
     "B12": [["AP VoteCast", "separate AP product; not in this key"]],
     "B13": [[RC, "per-area voteCount, eevp (featured states)"], ["GET /v3/elections/2024-11-05?officeID=P&statePostal=XX&level=ru", "2024 presidential by area, stored once in config/baseline-2024-pres.json"], ["/geo/<ST>.json", "area geometry matching AP's units"]],
+    "B14": [[R, "candidates[] voteCount, votePct, winner, incumbent; eevp"], ["config/candidates.json", "bios, party labels, photo credits"], ["config/polls.json", "latest public poll"], ["config/baseline-federal.json", "last result for the seat"]],
     "C1": [[R, "voteCount, eevp, raceCallStatus for the seven featured races"]],
     "C2": [[R, "candidates[].party per race (which states have a non-major candidate)"], ["FEC", "filings count"]],
     "C3": [["editorial", "Gallup identification share; current independents in the Senate (also in the Trend report as 'Others caucus with Dem')"]],
@@ -1385,6 +1393,7 @@
     "B8": "\"Still to count\" is derived from AP's expected-vote estimate (eevp) and will move as AP revises it; treat the \"needs X%\" figure as approximate and re-state it when it changes.",
     "B9": "Alaska and Maine tabulate ranked-choice rounds days after election night; on the night only first-choice totals exist. A first-round leader under 50% can lose. Do not call a winner from round one.",
     "B10": "Compares only counties that have reported; the swing figure can flip as more counties come in.",
+    "B14": "Before any votes the pair is a reading of one poll, not a forecast; say which poll. Once counting starts the pair is whoever leads, which can change early in the night. A third candidate is summarised as everyone else.",
     "B13": "Compares only areas with at least 10% of their expected vote in, and only against the same areas' 2024 totals; the number moves as areas report. Early in the night it reflects which areas reported first, not a trend. Alaska has no 2024 area-level baseline (statewide only).",
     "C1": EEVP + " " + CALL,
     "C5": "Historical rows are context, not a like-for-like comparison: different years, opponents and turnout.",

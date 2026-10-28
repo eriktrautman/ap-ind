@@ -77,6 +77,7 @@ export const CHARTS = [
   { id: "B11", kind: "race", name: "Quote card",                    page: "/g/quote.html",                built: true },
   { id: "B12", kind: "race", name: "Who voted for the independent", page: null,                built: false, unavailable: "needs an AP VoteCast licence" },
   { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
+  { id: "B14", kind: "race", name: "Head-to-head",                  page: "/g/head-to-head.html", built: true },
   // C: the independent movement
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: true },
   { id: "C2",  kind: "movement", name: "Independents across the map", page: "/g/ind-map.html",              built: true },
