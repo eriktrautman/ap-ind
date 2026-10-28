@@ -39,7 +39,8 @@ input[type=text]:focus, input:not([type]):focus, input[type=password]:focus, sel
 .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
 .howbox { margin: 10px 0 2px; padding: 12px 16px; border: 1px solid var(--sand); border-left: 3px solid var(--gold); border-radius: 6px; background: #fff; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
 .howbox summary { cursor: pointer; list-style: none; display: inline; } .howbox summary::-webkit-details-marker { display: none; }
-.howbox[open] summary::after { content: ". "; } .howbox:not([open]) summary::after { content: " ▸"; color: var(--gold); }
+.howbox[open] summary::after { content: " ▾"; color: var(--gold); } .howbox:not([open]) summary::after { content: " ▸"; color: var(--gold); }
+.howbox ul { margin: 8px 0 0; padding-left: 22px; } .howbox li { margin: 5px 0; }
 .howbox b { color: var(--ink); font-weight: 600; }
 .howbox code { font-family: var(--mono); font-size: 12px; }
 .howbox a { color: inherit; text-decoration: underline; }

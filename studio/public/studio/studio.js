@@ -167,10 +167,15 @@ function commit() {
 
 /** The box at the top of the page: two kinds of ticker, graphics as addresses, and what this page does and does not change. */
 function renderHow() {
-  // On a phone the box starts collapsed to its one-line heading.
-  if (!renderHow.sized) { renderHow.sized = true; if (window.innerWidth <= 700) $("howbox").open = false; }
   const host = prodHost();
-  $("howtext").innerHTML = `<b>Every chart is a link.</b> Show or Copy URL on any card gives you an address that carries the chart, the race and the display settings, so it always shows the same thing and can be shared with other authorized people. <b>Collect what you need.</b> Feature races and charts to keep them close in the sections above; see everything in the catalogs below. That organises your view only. <b>Build a ticker, then publish it.</b> The Ticker Builder makes a ticker from your races and items: use it by its link, or, if you are signed in with the password, publish it to the permanent ticker at <code>${esc(host)}/ticker</code>, which updates on air within seconds. Restore All Default Settings resets this page, never that ticker.`;
+  $("howtext").innerHTML = [
+    `<b>Every chart is a link.</b> Show or Copy URL on any card gives an address carrying the chart, the race and the display settings. It always shows the same thing and can be shared with other authorized people.`,
+    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a ticker in the Ticker Builder, use it by its own link, or publish it to become the live ticker; it updates on air within seconds.`,
+    `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the on-air screen on the right.`,
+    `<b>Collect what you need.</b> Feature races and charts to keep them close in the sections above the catalogs. This organises your view only and is never published.`,
+    `<b>Producer actions</b> (publish, poll, Test/Live) need the real password; the rehearsal password can look but not change anything on air.`,
+    `<b>Restore All Default Settings</b> resets this page, never the live ticker or screens.`,
+  ].map((x) => `<li>${x}</li>`).join("");
 }
 
 /** The LIVE TICKER block: what it is crawling right now and when that was published. */
