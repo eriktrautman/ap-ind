@@ -100,7 +100,7 @@ let live = null;              // the LIVE TICKER's parameters as last read (norm
 let liveSeenAt = null;        // updatedAt of the live ticker when this page last pulled or published
 let liveError = null;         // why the live ticker is unreadable right now, or null
 let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
-const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText"];
+const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
 const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
 /** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
@@ -120,7 +120,8 @@ function loadDisplay() {
 let display = loadDisplay();
 function saveDisplay() { try { localStorage.setItem("studio.display", JSON.stringify(display)); } catch {} }
 const secDisplay = (sec) => ({ ...display.top, ...(display.sections[sec] ?? {}) });
-const pageBg = (page) => display.pages[page]?.bg ?? secDisplay(page === "ticker" ? "ticker" : "screens").bg;
+/** A live draft's Background is part of the draft itself and goes on air with a publish; the address can still override it. */
+const pageBg = (page) => (page === "ticker" ? draft.tickerBg : draft[page]?.bg) ?? "black";
 const selectHtml = (attrs, options, value) => `<select ${attrs}>${options.map(([v, l]) => `<option value="${v}" ${v === value ? "selected" : ""}>${l}</option>`).join("")}</select>`;
 /** The two dropdowns on every section's title line and the BG on every live draft, showing the saved values. */
 function renderDisplayControls() {
@@ -146,14 +147,14 @@ document.addEventListener("change", (e) => {
   const sec = e.target.closest("select[data-sec]");
   if (sec) { display.sections[sec.dataset.sec] = { ...secDisplay(sec.dataset.sec), [sec.dataset.f]: sec.value }; saveDisplay(); applyDisplay(); return; }
   const pg = e.target.closest("select[data-page]");
-  if (pg) { display.pages[pg.dataset.page] = { bg: pg.value }; saveDisplay(); applyDisplay(); return; }
+  if (pg) { if (pg.dataset.page === "ticker") draft.tickerBg = pg.value; else draft[pg.dataset.page].bg = pg.value; commit(); applyDisplay(); return; }
   if (e.target.id === "topbg" || e.target.id === "topopacity") { display.top = { bg: $("topbg").value, opacity: $("topopacity").value }; saveDisplay(); }
 });
 $("applyall").addEventListener("click", async () => {
   const top = { bg: $("topbg").value, opacity: $("topopacity").value };
-  const ok = await ask({ title: "Apply to every section and live draft?", body: `<p>Every section's Background and Opacity, and every live draft's BG, become <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> at <b>${esc(top.opacity)}%</b>. Previews and links on this page change to match. Nothing on air changes.</p>`, ok: "Apply to All Charts" });
+  const ok = await ask({ title: "Apply to every section?", body: `<p>Every section's Background and Opacity become <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> at <b>${esc(top.opacity)}%</b>. Previews and links on this page change to match. Nothing on air changes.</p>`, ok: "Apply to All Charts" });
   if (!ok) return;
-  display.top = top; display.sections = {}; display.pages = {};
+  display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
 const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft });
@@ -246,6 +247,7 @@ function renderLive() {
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
       <tr><td class="k" title="item: manual items, one after every two races">item</td><td>${live.manualItems.length ? live.manualItems.map((m) => `<div>${esc(m.text)}</div>`).join("") : '<span class="muted">none</span>'}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
+      <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span></td></tr>
       <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped defaults are live"}</td></tr>
     </table>`;
   }
@@ -504,12 +506,13 @@ function renderTickerFrames() {
   if (frame.dataset.u !== b) { frame.dataset.u = b; frame.src = b; }
   frame.parentElement.classList.toggle("checker", !pageBg("ticker"));
   // The on-air preview shows what is published, on the same Background and Opacity as its Copy Live URL.
-  const l = `/ticker?${displayParams({ bg: pageBg("ticker"), opacity: sec.opacity }).toString()}`;
+  const l = `/ticker?${displayParams({ bg: "", opacity: sec.opacity }).toString()}`;   // no bg: the published one shows
   if (liveFrame.dataset.u !== l) { liveFrame.dataset.u = l; liveFrame.src = l; }
-  liveFrame.parentElement.classList.toggle("checker", !pageBg("ticker"));
+  liveFrame.parentElement.classList.toggle("checker", !(live?.tickerBg ?? "black"));
 }
 /** The LIVE TICKER's address: fixed; only the display parameters vary. */
-function liveTickerUrl() { const s = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity }).toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
+/** The permanent address: bare, since the background is published with the ticker; only an opacity other than 100% is added. */
+function liveTickerUrl() { const s = displayParams({ bg: "", opacity: secDisplay("ticker").opacity }).toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
 /** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {
   const p = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity });
@@ -543,7 +546,7 @@ const SCREEN_IDS = { screenA: "one", screenB: "two" };
 const screenLetter = (key) => (key === "screenA" ? "One" : "Two");
 const screenPath = (key) => `/live-screen-${SCREEN_IDS[key]}`;
 /** The on-air page's address: fixed; only the display parameters vary. */
-function screenLiveUrl(key) { const s = displayParams({ bg: pageBg(key), opacity: secDisplay("screens").opacity }).toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
+function screenLiveUrl(key) { const s = displayParams({ bg: "", opacity: secDisplay("screens").opacity }).toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
 /** The draft's own address: the chart-id address with the Default Chart Settings, usable anywhere. */
 function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity }); }
 function raceOptions(selected) {
@@ -574,7 +577,7 @@ function screenLiveTable(key) {
   const s = live?.[key];
   if (!s) return `<div class="warnline bad">${liveError ? `Cannot read the live screen: ${esc(liveError)}` : "Reading the live screen…"}</div>`;
   const chart = CHARTS.find((c) => c.id === s.chart);
-  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is on air"]];
+  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span>`], ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is on air"]];
   return `<table class="params">${rows.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>`;
 }
 function buildScreen(key) {
@@ -616,9 +619,9 @@ function renderScreens() {
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
     dFrame.parentElement.classList.toggle("checker", !pageBg(key));
     const oFrame = box.querySelector(".screen.onair iframe");
-    const oAddr = `${screenPath(key)}?${displayParams({ bg: pageBg(key), opacity: secDisplay("screens").opacity }).toString()}`;   // on air as published, on the same Background as its Copy Live URL
+    const oAddr = `${screenPath(key)}?${displayParams({ bg: "", opacity: secDisplay("screens").opacity }).toString()}`;   // no bg: the published one shows
     if (oFrame.dataset.addr !== oAddr) { oFrame.dataset.addr = oAddr; oFrame.src = oAddr; }
-    oFrame.parentElement.classList.toggle("checker", !pageBg(key));
+    oFrame.parentElement.classList.toggle("checker", !(live?.[key]?.bg ?? "black"));
     const form = box.querySelector(".sform");
     if (!form.contains(document.activeElement)) form.innerHTML = screenForm(key);
     box.querySelector("a[data-open=draft]").href = screenDraftUrl(key);

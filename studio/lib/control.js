@@ -137,6 +137,7 @@ export const DEFAULTS = Object.freeze({
   callHighlight: true,
   manualItems: [],
   idleText: "Welcome to the Independent Election Night coverage",
+  tickerBg: "black",          // the live ticker's background when its address names none ("" transparent, black, green)
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
   featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
   movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11"],
@@ -146,8 +147,8 @@ export const DEFAULTS = Object.freeze({
   contextLines: {},          // D6: raceId -> one line the producer typed
   // Live Screens: two fixed pages (/live-screen-one, /live-screen-two), each showing one published chart. chart is a
   // chart id, race a race id (NE-SEN), state two letters for state charts, params the chart's extra address parameters.
-  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {} },
-  screenB: { chart: "C1", race: "", state: "", params: {} },
+  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: "black" },
+  screenB: { chart: "C1", race: "", state: "", params: {}, bg: "black" },
   updatedAt: null,
 });
 const SCREENS = ["screenA", "screenB"];
@@ -161,7 +162,8 @@ function screenDef(raw, dflt) {
   const state = /^[A-Za-z]{2}$/.test(r.state ?? "") ? r.state.toUpperCase() : "";
   const params = {};
   for (const [k, v] of Object.entries(r.params && typeof r.params === "object" ? r.params : {})) if (/^[a-zA-Z]{1,12}$/.test(k) && typeof v === "string" && v.trim()) params[k] = v.trim().slice(0, 200);
-  return { chart, race, state, params: Object.fromEntries(Object.entries(params).slice(0, 12)) };
+  const bg = ["", "black", "green"].includes(r.bg) ? r.bg : dflt.bg;   // the screen's background when its address names none
+  return { chart, race, state, params: Object.fromEntries(Object.entries(params).slice(0, 12)), bg };
 }
 /** The chart-id address a Live Screen shows: /g/<chart>?bg=..&opacity=..&race=..&<params>. display: {bg, opacity, sample, preview}. */
 export function screenAddress(s, display = {}) {
@@ -180,7 +182,7 @@ export function screenAddress(s, display = {}) {
 export function describeScreen(s) {
   const c = CHARTS.find((x) => x.id === s.chart);
   const extra = Object.entries(s.params ?? {}).map(([k, v]) => `${k}=${v}`).join(" ");
-  return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""}`;
+  return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""} · on ${s.bg || "transparent"}`;
 }
 
 const LIMITS = { pins: 60, featured: 40, manual: 20, text: 240, key: 8, context: 120 };
@@ -213,6 +215,7 @@ export function normalize(raw) {
     callHighlight: typeof r.callHighlight === "boolean" ? r.callHighlight : DEFAULTS.callHighlight,
     manualItems: manual,
     idleText: typeof r.idleText === "string" ? r.idleText.trim().slice(0, LIMITS.text) : "",
+    tickerBg: ["", "black", "green"].includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
     featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
     featuredCharts: Array.isArray(r.featuredCharts) ? chartIds(r.featuredCharts, "race") : [...DEFAULTS.featuredCharts],
     movementCharts: Array.isArray(r.movementCharts) ? chartIds(r.movementCharts, "movement") : [...DEFAULTS.movementCharts],
@@ -260,6 +263,7 @@ export function diffState(from, to) {
   }
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
+  if (A.tickerBg !== B.tickerBg) out.push({ field: "tickerBg", text: `Ticker background: ${B.tickerBg || "transparent"}` });
   const am = A.manualItems.map((m) => m.text), bm = B.manualItems.map((m) => m.text);
   for (const t of bm.filter((t) => !am.includes(t))) out.push({ field: "manualItems", text: `Manual item added: "${t}"` });
   for (const t of am.filter((t) => !bm.includes(t))) out.push({ field: "manualItems", text: `Manual item removed: "${t}"` });
@@ -300,7 +304,7 @@ export async function loadGlobal() {
 
 /** The fields the Live Global Ticker is made of: the only ones that are ever published. Everything else a page needs comes
  *  from its address or the shipped defaults. */
-export const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText"];
+export const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 /** Everything that is ever published: the ticker fields and the two Live Screens. */
 export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB"];
 

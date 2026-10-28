@@ -7,7 +7,9 @@ import { watchState, screenAddress } from "/g/control.js";
 
 const which = /live-screen-(b|two)/.test(location.pathname) ? "screenB" : "screenA";
 const q = new URLSearchParams(location.search);
-if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+const setBg = (bg) => { document.body.classList.remove("bg-black", "bg-green"); if (bg === "black" || bg === "green") document.body.classList.add(`bg-${bg}`); };
+if (q.has("bg")) setBg(q.get("bg"));
+// Background: the address wins (?bg=black|green|transparent); otherwise the published screen's own.
 const display = { bg: q.get("bg") ?? "", opacity: q.get("opacity") ?? "", sample: q.get("sample") ?? "", src: q.get("src") ?? "" };
 if (q.get("fit") === "1") {   // Preview from the control room: the 1920x1080 page scaled to the window
   const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.overflow = "hidden"; };
@@ -30,4 +32,4 @@ function show(addr) {
     document.title = `Live Screen ${which === "screenB" ? "Two" : "One"} · ${addr.replace(/^\/g\//, "").split("?")[0]}`;
   }, 1500));
 }
-watchState({ intervalMs: 5_000, onState: (s) => { const def = s[which]; if (def) show(screenAddress(def, display)); } });
+watchState({ intervalMs: 5_000, onState: (s) => { const def = s[which]; if (!def) return; if (!q.has("bg")) { display.bg = def.bg ?? ""; setBg(display.bg); } show(screenAddress(def, display)); } });

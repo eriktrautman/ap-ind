@@ -44,8 +44,10 @@
   import { watchState, DEFAULTS } from "/g/control.js";
 
   const params = new URLSearchParams(location.search);
+  // Background: the address wins (?bg=black|green|transparent); otherwise the published one arrives with the state.
+  const setBg = (bg) => { document.body.classList.remove("bg-black", "bg-green"); if (bg === "black" || bg === "green") document.body.classList.add(`bg-${bg}`); };
   const bg = params.get("bg");
-  if (bg) document.body.classList.add(`bg-${bg}`);
+  if (params.has("bg")) setBg(bg);
   if (params.get("fit") === "1") {   // Preview from the control room: scale the 1920x1080 page to the window
     const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.background = getComputedStyle(document.body).backgroundColor; };
     window.addEventListener("resize", fit); fit();
@@ -156,6 +158,7 @@
     intervalMs: PRODUCER_MS, preview,
     onState: (state, info) => {
       producer = state; rebuild();
+      if (!params.has("bg")) setBg(state.tickerBg);
       window.parent?.postMessage({ type: "ticker-source", source: info.source, requested: info.requested, error: info.error }, "*");
     },
   });
