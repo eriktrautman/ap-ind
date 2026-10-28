@@ -25,7 +25,7 @@
     <div class="chart"><svg id="chart" viewBox="0 0 1060 560"></svg></div>
     <div><table><thead><tr><th>Race</th><th>Independent</th><th class="r">Poll</th><th class="r">Result</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table><div class="src" id="src"></div></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Dots above the line = running ahead of the final poll · hollow = still counting · poll = newest public poll per race, campaign-sponsored polls flagged</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Dots above the line = running ahead of the final poll · hollow = still counting · poll = newest public poll per race that was not campaign-sponsored</span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
@@ -40,7 +40,9 @@
   function finalPoll(raceId) {
     const list = polls?.races?.[raceId]?.polls ?? [];
     if (!list.length) return null;
-    return list.find((p) => p.final) ?? [...list].filter((p) => !p.average).sort((a, b) => String(b.dates).localeCompare(String(a.dates)))[0] ?? list[0];
+    // final=true wins; else the newest poll that is not campaign-sponsored; else the newest poll of any kind.
+    const newest = (xs) => [...xs].filter((p) => !p.average).sort((a, b) => String(b.dates).localeCompare(String(a.dates)))[0];
+    return list.find((p) => p.final) ?? newest(list.filter((p) => !p.sponsored)) ?? newest(list) ?? list[0];
   }
   function render() {
     if (!races) return;
@@ -54,7 +56,7 @@
       rows.push({ r, ind, p, poll, result: r.totalVotes ? ind.pct : null, done: r.called || (r.eevp || r.precinctsPct) >= 95 });
     }
     $("reporting").innerHTML = `<b>${rows.filter((x) => x.poll !== null).length}</b> of ${rows.length} races have a public poll`;
-    $("rows").innerHTML = rows.map(({ r, ind, p, poll, result }) => `<tr><td class="lab">${esc(r.label)}</td><td>${esc(ind.last)}</td><td class="r">${poll === null ? "<span class='m'>no poll</span>" : `${poll}%${p.sponsored ? "<span title='campaign-sponsored'>*</span>" : ""}`}</td><td class="r b">${result === null ? "—" : result.toFixed(1) + "%"}</td><td class="r b ${poll !== null && result !== null ? (result - poll >= 0 ? "pos" : "neg") : ""}">${poll !== null && result !== null ? (result - poll >= 0 ? "+" : "") + (result - poll).toFixed(1) : "—"}</td></tr>`).join("");
+    $("rows").innerHTML = rows.map(({ r, ind, p, poll, result }) => `<tr><td class="lab">${esc(r.label)}</td><td>${esc(ind.last)}</td><td class="r">${poll === null ? "<span class='m'>polling unavailable</span>" : `${poll}%${p.sponsored ? "<span title='campaign-sponsored'>*</span>" : ""}`}</td><td class="r b">${result === null ? "—" : result.toFixed(1) + "%"}</td><td class="r b ${poll !== null && result !== null ? (result - poll >= 0 ? "pos" : "neg") : ""}">${poll !== null && result !== null ? (result - poll >= 0 ? "+" : "") + (result - poll).toFixed(1) : "—"}</td></tr>`).join("");
     $("src").innerHTML = rows.filter((x) => x.p).map(({ r, p }) => `${esc(r.label)}: ${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${p.partisan})` : ""}, ${esc(p.dates)}`).join(" · ") + (rows.some((x) => x.p?.sponsored) ? " · * campaign-sponsored" : "");
     // scatter: x = poll, y = result
     const svg = d3.select("#chart"); svg.selectAll("*").remove();

@@ -85,7 +85,7 @@
     const pill = st.status === "called" && st.cand?.id === c.id ? `<span class="pill call">AP CALL · WINS</span>` : st.status === "leading" && st.cand?.id === c.id ? `<span class="pill lead">LEADING</span>` : "";
     const num = counting
       ? `<div class="num">${Number(c.pct).toFixed(1)}%<small>${fmt(c.votes)} votes</small></div>`
-      : pollNumber(p, c) != null ? `<div class="num">${pollNumber(p, c)}%<small>latest poll</small></div>` : `<div class="num" style="color:var(--muted)">—<small>no poll</small></div>`;
+      : pollNumber(p, c) != null ? `<div class="num">${pollNumber(p, c)}%<small>latest poll</small></div>` : `<div class="num" style="color:var(--muted)">—<small>polling unavailable</small></div>`;
     return `<div class="cand" style="--c:${col}">
       <div class="photo ${c.photo ? "" : "none"}" style="${c.photo ? `background-image:url('${esc(c.photo)}')` : ""}"></div>
       <div class="nm">${esc(c.name)}</div>
@@ -116,6 +116,7 @@
     } else {
       boxes.push(`<div class="vs">VS</div>`);
       if (p) boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v">${[a, b].filter(Boolean).map((c) => `${esc(c.last)} <b>${pollNumber(p, c) ?? "–"}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${esc(p.partisan)})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div></div>`);
+      else boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v m">Polling unavailable</div><div class="m">No public poll for this race is on file</div></div>`);
       if (prior) boxes.push(`<div class="box"><div class="k">Last time</div><div class="v">${prior.candidates.slice(0, 2).map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> ${c.pct}%`).join(" · ")}</div><div class="m">${esc(String(prior.date).slice(0, 4))}${prior.note ? " · " + esc(prior.note) : ""}</div></div>`);
       const holder = race.currentParty ? `${race.currentParty === "Dem" ? "Democratic" : race.currentParty === "GOP" ? "Republican" : race.currentParty}-held` : "Open seat";
       boxes.push(`<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${race.rankedChoice ? `</div><div class="m">Ranked-choice voting` : ""}</div></div>`);

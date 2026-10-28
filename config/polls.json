@@ -1,42 +1,800 @@
 {
-  "about": "Public pre-election polls for the featured races, compiled 2026-10-26 from the sources linked on each row. Numbers are per candidate by last name as AP lists them. sponsored=true marks polls paid for by a campaign or an aligned group; partisan marks the pollster's party alignment where trackers label it. C7 uses the newest poll per race unless a row has final=true.",
-  "gallup": { "independents": 45, "dem": 27, "gop": 27, "year": 2025, "released": "2026-01-12", "note": "Gallup party identification, 2025 aggregate of 13,000+ interviews; independents at a record 45%.", "source": "https://abc7chicago.com/post/gallup-poll-shows-more-americans-are-identify-political-independents/18391678/" },
-  "races": {
-    "28594": { "label": "NE-SEN", "polls": [
-      { "pollster": "GBAO", "partisan": "D", "sponsored": false, "dates": "2026-10-18/2026-10-22", "sample": null, "pop": "LV", "numbers": { "Osborn": 46, "Ricketts": 45 }, "source": "https://www.poliwave.com/us/ne/sen-fed" },
-      { "pollster": "Concord Public Opinion Partners", "partisan": null, "sponsored": false, "dates": "2026-10-15/2026-10-18", "sample": null, "pop": "LV", "numbers": { "Osborn": 48, "Ricketts": 41 }, "source": "https://www.poliwave.com/us/ne/sen-fed" },
-      { "pollster": "Impact Research", "partisan": "D", "sponsored": false, "dates": "2026-10", "sample": null, "pop": "LV", "numbers": { "Ricketts": 50, "Osborn": 48 }, "source": "https://www.poliwave.com/us/ne/sen-fed" },
-      { "pollster": "YouGov", "partisan": null, "sponsored": false, "dates": "2026-09-24/2026-10-03", "sample": null, "pop": "LV", "moe": 3.3, "numbers": { "Osborn": 48, "Ricketts": 47 }, "source": "https://politicalwire.com/2026/10/06/osborn-edges-ricketts-in-nebraska-senate-race/" }
-    ] },
-    "27607": { "label": "MT-SEN", "polls": [
-      { "pollster": "Quantus Insights", "partisan": "R", "sponsored": false, "dates": "2026-10-18", "sample": 667, "pop": "LV", "numbers": { "Alme": 47, "Bodnar": 31 }, "source": "https://www.poliwave.com/us/mt/sen-fed" },
-      { "pollster": "Concord Public Opinion Partners", "partisan": null, "sponsored": false, "dates": "2026-10-08", "sample": 405, "pop": "LV", "numbers": { "Bodnar": 37, "Alme": 35 }, "source": "https://www.poliwave.com/us/mt/sen-fed" },
-      { "pollster": "Poliwave average (10 polls)", "partisan": null, "sponsored": false, "dates": "2026-10", "sample": null, "pop": "avg", "numbers": { "Alme": 42.9, "Bodnar": 30.6, "Bankhead": 16.6 }, "average": true, "source": "https://www.poliwave.com/us/mt/sen-fed" }
-    ] },
-    "13252": { "label": "ID-SEN", "polls": [
-      { "pollster": "VoteNexus Research", "partisan": null, "sponsored": true, "sponsor": "Knock Every Door PAC and the Achilles campaign", "dates": "2026-10-21/2026-10-22", "sample": 700, "pop": "LV", "numbers": { "Risch": 49, "Achilles": 43 }, "source": "https://www.poliwave.com/us/id/sen-fed" },
-      { "pollster": "Peak Insights", "partisan": "R", "sponsored": false, "dates": "2026-09-28/2026-09-30", "sample": 500, "pop": "LV", "numbers": { "Risch": 49, "Achilles": 24 }, "source": "https://www.poliwave.com/us/id/sen-fed" },
-      { "pollster": "Advanced Targeting Research", "partisan": null, "sponsored": true, "sponsor": "Achilles-aligned", "dates": "2026-09-13/2026-09-16", "sample": null, "pop": "LV", "numbers": { "Achilles": 50, "Risch": 39 }, "source": "https://politicalwire.com/2026/09/18/risch-trails-in-idaho-senate-race/" }
-    ] },
-    "42003": { "label": "SD-SEN", "polls": [
-      { "pollster": "Mason-Dixon / South Dakota News Watch", "partisan": null, "sponsored": false, "dates": "2026-10", "sample": null, "pop": "LV", "moe": 4.5, "numbers": { "Rounds": 56, "Bengs": 37 }, "source": "https://www.dakotanewsnow.com/2026/10/24/poll-sen-rounds-leads-challenger-bengs-56-37/" },
-      { "pollster": "Emerson College / KELOLAND", "partisan": null, "sponsored": false, "dates": "2026-10", "sample": null, "pop": "LV", "numbers": { "Rounds": 50, "Bengs": 42 }, "note": "54-46 with leaners", "source": "https://emersoncollegepolling.com/south-dakota-2026-poll-republican-sen-rounds-leads-independent-bengs-50-to-42/" },
-      { "pollster": "Quantus Insights", "partisan": "R", "sponsored": false, "dates": "2026-10", "sample": null, "pop": "LV", "numbers": { "Rounds": 57, "Bengs": 36 }, "source": "https://www.poliwave.com/us/sd/sen-fed" },
-      { "pollster": "Concord Public Opinion Partners", "partisan": "D", "sponsored": false, "dates": "2026-10-01/2026-10-07", "sample": null, "pop": "LV", "numbers": { "Bengs": 43, "Rounds": 42 }, "source": "https://www.poliwave.com/us/sd/sen-fed" }
-    ] },
-    "5696": { "label": "CA-6", "polls": [
-      { "pollster": "Independent Leadership Council (pro-Kiley group)", "partisan": null, "sponsored": true, "sponsor": "group supporting Kiley", "dates": "2026-09-01/2026-09-10", "sample": 927, "pop": "LV", "numbers": { "Kiley": 37, "Pan": 37 }, "note": "about 26% undecided; the only public poll found", "source": "https://www.elkgrovenews.net/kiley-pan-ca06-poll-tie-election-forecasts/" }
-    ] },
-    "2015": { "label": "AK-AL", "polls": [
-      { "pollster": "Data for Progress", "partisan": "D", "sponsored": false, "dates": "2026-10-08/2026-10-16", "sample": 694, "pop": "LV", "numbers": { "Begich": 51, "Hill": 49 }, "note": "simulated final ranked-choice round", "source": "https://ivn.us/alaska-independent-bill-hill-has-caught-up-to-nick-begich-new-polls-say/" },
-      { "pollster": "Public Policy Polling", "partisan": "D", "sponsored": false, "dates": "2026-10-14/2026-10-15", "sample": 578, "pop": "RV", "numbers": { "Begich": 45, "Hill": 44 }, "note": "first choices", "final": true, "source": "https://ivn.us/alaska-independent-bill-hill-has-caught-up-to-nick-begich-new-polls-say/" },
-      { "pollster": "Alaska Survey Research", "partisan": null, "sponsored": false, "dates": "2026-10-06", "sample": null, "pop": "LV", "numbers": { "Begich": 50, "Hill": 40 }, "source": "https://www.270towin.com/2026-house-polls/alaska" },
-      { "pollster": "Siena College", "partisan": null, "sponsored": false, "dates": "2026-10-03", "sample": null, "pop": "LV", "numbers": { "Begich": 47, "Hill": 35 }, "source": "https://www.270towin.com/2026-house-polls/alaska" },
-      { "pollster": "GBAO", "partisan": "D", "sponsored": false, "dates": "2026-08", "sample": 500, "pop": "LV", "moe": 4.4, "numbers": { "Begich": 46, "Hill": 42 }, "note": "head to head", "source": "https://thealaskacurrent.com/2026/08/12/exclusive-poll-shows-independent-bill-hill-has-a-real-shot-at-winning-alaskas-us-house-seat/" }
-    ] },
-    "13253": { "label": "ID-1", "polls": [
-      { "pollster": "VoteNexus Research", "partisan": null, "sponsored": false, "dates": "2026-10-21/2026-10-22", "sample": null, "pop": "LV", "numbers": { "Fulcher": 52, "Peterson": 26, "Zabel": 5 }, "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_elections_in_Idaho" },
-      { "pollster": "SurveyUSA", "partisan": null, "sponsored": false, "dates": "2026-07-07/2026-07-14", "sample": 480, "pop": "LV", "moe": 4.9, "numbers": { "Zabel": 6 }, "note": "four-way ballot; a separate Zabel-v-Fulcher head-to-head in the same survey had Zabel 42, Fulcher 39", "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_elections_in_Idaho" }
-    ] }
+ "about": "Public pre-election polls for the featured races. First compiled 2026-10-26; swept again 2026-10-28 against Wikipedia's poll tables, 270toWin, Political Wire and the pollsters' releases. Numbers are per candidate by last name as AP lists them; Alaska rows are first choices (ranked-choice rounds in note). sponsored=true marks polls paid for by a campaign, an aligned group, or a news organisation (sponsor says which); partisan marks the pollster's party alignment where trackers label it. Rows are newest first. B2 and B14 show the newest poll; C7 grades against the newest poll that is not campaign-sponsored unless a row has final=true. A race with no rows is shown as polling unavailable on B2, B3, B14 and C7.",
+ "gaps": "2026-10-28: CA-6 has only two polls, both from pro-independent sponsors and none since September. ID-1 has no poll with Zabel above 6% in a three-way field. ID-SEN has no poll since mid-September that was not paid for by a campaign. Everything else has at least one independent poll from October.",
+ "gallup": {
+  "independents": 45,
+  "dem": 27,
+  "gop": 27,
+  "year": 2025,
+  "released": "2026-01-12",
+  "note": "Gallup party identification, 2025 aggregate of 13,000+ interviews; independents at a record 45%.",
+  "source": "https://abc7chicago.com/post/gallup-poll-shows-more-americans-are-identify-political-independents/18391678/"
+ },
+ "races": {
+  "2015": {
+   "label": "AK-AL",
+   "polls": [
+    {
+     "pollster": "Public Policy Polling",
+     "partisan": "D",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-14/2026-10-15",
+     "sample": 578,
+     "pop": "RV",
+     "numbers": {
+      "Begich": 45,
+      "Hill": 44
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska",
+     "note": "first choices"
+    },
+    {
+     "pollster": "Data for Progress",
+     "partisan": "D",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-08/2026-10-16",
+     "sample": 694,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 48,
+      "Hill": 42
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska",
+     "note": "first choices; ranked-choice final round 50-50"
+    },
+    {
+     "pollster": "Alaska Survey Research",
+     "partisan": null,
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-01/2026-10-03",
+     "sample": 1512,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 50,
+      "Hill": 40
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska",
+     "note": "first choices; ranked-choice final round 53-47"
+    },
+    {
+     "pollster": "NYT/Siena",
+     "partisan": null,
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-09-24/2026-10-01",
+     "sample": 504,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 47,
+      "Hill": 35
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska",
+     "note": "first choices; ranked-choice final round 53-47"
+    },
+    {
+     "pollster": "Fabrizio Ward / Impact Research",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "AARP",
+     "dates": "2026-09-08/2026-09-11",
+     "sample": 800,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 45,
+      "Hill": 31
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska",
+     "note": "first choices"
+    },
+    {
+     "pollster": "The Bullfinch Group",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Independent Leadership Council (pro-independent)",
+     "dates": "2026-09-01/2026-09-06",
+     "sample": 820,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 44,
+      "Hill": 37
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska",
+     "note": "first choices; ranked-choice final round 50-47"
+    },
+    {
+     "pollster": "Alaska Survey Research",
+     "partisan": null,
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-08-28",
+     "sample": 1872,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 51,
+      "Hill": 39
+     },
+     "source": "https://www.270towin.com/2026-house-polls/alaska"
+    },
+    {
+     "pollster": "GBAO",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Hill campaign",
+     "dates": "2026-08-03/2026-08-05",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 46,
+      "Hill": 42
+     },
+     "source": "https://thealaskacurrent.com/2026/08/12/exclusive-poll-shows-independent-bill-hill-has-a-real-shot-at-winning-alaskas-us-house-seat/"
+    },
+    {
+     "pollster": "Data for Progress",
+     "partisan": "D",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-07-28/2026-08-04",
+     "sample": 605,
+     "pop": "LV",
+     "numbers": {
+      "Begich": 47,
+      "Hill": 37
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_election_in_Alaska"
+    }
+   ]
+  },
+  "5696": {
+   "label": "CA-6",
+   "polls": [
+    {
+     "pollster": "Independent Leadership Council poll",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Independent Leadership Council (pro-Kiley)",
+     "dates": "2026-09-01/2026-09-10",
+     "sample": 927,
+     "pop": "LV",
+     "numbers": {
+      "Kiley": 37,
+      "Pan": 37
+     },
+     "source": "https://www.elkgrovenews.net/kiley-pan-ca06-poll-tie-election-forecasts/"
+    },
+    {
+     "pollster": "The Bullfinch Group",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "memo circulated by the Independent Center (pro-independent)",
+     "dates": "2026-07-13/2026-07-16",
+     "sample": 546,
+     "pop": "LV",
+     "numbers": {
+      "Pan": 39,
+      "Kiley": 35
+     },
+     "source": "https://uspollingdata.com/races/house/ca-06/"
+    }
+   ]
+  },
+  "13252": {
+   "label": "ID-SEN",
+   "polls": [
+    {
+     "pollster": "VoteNexus Research",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Knock Every Door PAC and Achilles campaign",
+     "dates": "2026-10-21/2026-10-22",
+     "sample": 700,
+     "pop": "LV",
+     "numbers": {
+      "Risch": 49,
+      "Achilles": 43
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Idaho"
+    },
+    {
+     "pollster": "Peak Insights",
+     "partisan": "R",
+     "sponsored": true,
+     "sponsor": "Risch campaign",
+     "dates": "2026-09-28/2026-09-30",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Risch": 49,
+      "Achilles": 24
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Idaho"
+    },
+    {
+     "pollster": "Advanced Targeting Research",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "not disclosed; reported as an internal poll",
+     "dates": "2026-09-13/2026-09-16",
+     "sample": 700,
+     "pop": "RV",
+     "numbers": {
+      "Achilles": 50,
+      "Risch": 39
+     },
+     "source": "https://politicalwire.com/2026/09/18/risch-trails-in-idaho-senate-race/"
+    },
+    {
+     "pollster": "Peak Insights",
+     "partisan": "R",
+     "sponsored": true,
+     "sponsor": "Risch campaign",
+     "dates": "2026-08-11/2026-08-13",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Risch": 52,
+      "Achilles": 18
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Idaho"
+    },
+    {
+     "pollster": "The Bullfinch Group",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Knock Every Door PAC and Achilles campaign",
+     "dates": "2026-08-04/2026-08-07",
+     "sample": 608,
+     "pop": "LV",
+     "numbers": {
+      "Achilles": 38,
+      "Risch": 33
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Idaho"
+    },
+    {
+     "pollster": "Change Research",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Stegner campaign (independent for governor)",
+     "dates": "2026-07-28/2026-07-30",
+     "sample": 1213,
+     "pop": "LV",
+     "numbers": {
+      "Risch": 45,
+      "Achilles": 21
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Idaho"
+    },
+    {
+     "pollster": "The Bullfinch Group",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Achilles campaign",
+     "dates": "2026-05-29/2026-06-01",
+     "sample": 774,
+     "pop": "RV",
+     "numbers": {
+      "Risch": 40,
+      "Achilles": 36
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Idaho"
+    }
+   ]
+  },
+  "13253": {
+   "label": "ID-1",
+   "polls": [
+    {
+     "pollster": "VoteNexus Research",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Knock Every Door PAC and Achilles campaign",
+     "dates": "2026-10-21/2026-10-22",
+     "sample": null,
+     "pop": "LV",
+     "numbers": {
+      "Fulcher": 52,
+      "Peterson": 26,
+      "Zabel": 5
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_elections_in_Idaho"
+    },
+    {
+     "pollster": "Change Research",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Stegner campaign (independent for governor)",
+     "dates": "2026-07-28/2026-07-30",
+     "sample": 606,
+     "pop": "LV",
+     "numbers": {
+      "Fulcher": 48,
+      "Peterson": 27,
+      "Zabel": 5
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_elections_in_Idaho"
+    },
+    {
+     "pollster": "SurveyUSA",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Zabel campaign",
+     "dates": "2026-07-07/2026-07-14",
+     "sample": 480,
+     "pop": "LV",
+     "numbers": {
+      "Fulcher": 45,
+      "Peterson": 35,
+      "Zabel": 6
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_House_of_Representatives_elections_in_Idaho",
+     "note": "hypothetical two-way Zabel 42, Fulcher 39"
+    }
+   ]
+  },
+  "27607": {
+   "label": "MT-SEN",
+   "polls": [
+    {
+     "pollster": "Quantus Insights",
+     "partisan": "R",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-15/2026-10-18",
+     "sample": 667,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 44,
+      "Bodnar": 28,
+      "Bankhead": 21
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana",
+     "note": "46-29-21 with leaners"
+    },
+    {
+     "pollster": "Peak Insights",
+     "partisan": "R",
+     "sponsored": true,
+     "sponsor": "Alme campaign",
+     "dates": "2026-10-07/2026-10-12",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 44,
+      "Bodnar": 29,
+      "Bankhead": 12
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "Concord Public Opinion Partners",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Bodnar campaign",
+     "dates": "2026-10-06/2026-10-08",
+     "sample": 405,
+     "pop": "LV",
+     "numbers": {
+      "Bodnar": 37,
+      "Alme": 35,
+      "Bankhead": 13
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "American Pulse Research",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "KULR-TV (news organisation)",
+     "dates": "2026-09-19/2026-09-24",
+     "sample": 604,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 45,
+      "Bodnar": 26,
+      "Bankhead": 19
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "Quantus Insights",
+     "partisan": "R",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-09-14/2026-09-15",
+     "sample": 625,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 44,
+      "Bodnar": 24,
+      "Bankhead": 23
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "Aspect Strategic",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Montana Freedom PAC (pro-Bodnar)",
+     "dates": "2026-09-07/2026-09-15",
+     "sample": 715,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 44,
+      "Bodnar": 32,
+      "Bankhead": 14
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "Rutgers-Eagleton",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Montana Free Press (news organisation)",
+     "dates": "2026-08-27/2026-09-07",
+     "sample": 845,
+     "pop": "RV",
+     "numbers": {
+      "Alme": 38,
+      "Bodnar": 30,
+      "Bankhead": 16
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "Hart Research",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Forward Montana (pro-Bodnar)",
+     "dates": "2026-08-01/2026-08-04",
+     "sample": 800,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 45,
+      "Bodnar": 30,
+      "Bankhead": 15
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    },
+    {
+     "pollster": "Tavern Research",
+     "partisan": "D",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-07-23/2026-07-27",
+     "sample": 517,
+     "pop": "LV",
+     "numbers": {
+      "Alme": 49,
+      "Bodnar": 25,
+      "Bankhead": 24
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Montana"
+    }
+   ]
+  },
+  "28594": {
+   "label": "NE-SEN",
+   "polls": [
+    {
+     "pollster": "Echelon Insights",
+     "partisan": "R",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-16/2026-10-23",
+     "sample": 407,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 46,
+      "Ricketts": 47
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "GBAO",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Working Class Majority PAC (pro-Osborn)",
+     "dates": "2026-10-18/2026-10-22",
+     "sample": 800,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 46,
+      "Ricketts": 45
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "Impact Research",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Osborn campaign",
+     "dates": "2026-10-14/2026-10-20",
+     "sample": 600,
+     "pop": "LV",
+     "numbers": {
+      "Ricketts": 49,
+      "Osborn": 47
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska",
+     "note": "50-48 with leaners"
+    },
+    {
+     "pollster": "National Public Affairs",
+     "partisan": "R",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-15/2026-10-18",
+     "sample": 598,
+     "pop": "LV",
+     "numbers": {
+      "Ricketts": 46,
+      "Osborn": 43
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "Concord Public Opinion Partners",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Education Reform Now Advocacy",
+     "dates": "2026-10-15/2026-10-18",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 48,
+      "Ricketts": 41
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "National Public Affairs",
+     "partisan": "R",
+     "sponsored": true,
+     "sponsor": "NetChoice",
+     "dates": "2026-10-02/2026-10-05",
+     "sample": 800,
+     "pop": "LV",
+     "numbers": {
+      "Ricketts": 46,
+      "Osborn": 43
+     },
+     "source": "https://politicalwire.com/2026/10/12/ricketts-leads-osborn-in-nebraska-senate-race/"
+    },
+    {
+     "pollster": "YouGov",
+     "partisan": null,
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-09-24/2026-10-03",
+     "sample": 1809,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 48,
+      "Ricketts": 47
+     },
+     "source": "https://politicalwire.com/2026/10/06/osborn-edges-ricketts-in-nebraska-senate-race/"
+    },
+    {
+     "pollster": "co/efficient",
+     "partisan": "R",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-09-28/2026-09-30",
+     "sample": 1113,
+     "pop": "LV",
+     "numbers": {
+      "Ricketts": 45,
+      "Osborn": 40
+     },
+     "source": "https://www.270towin.com/2026-senate-polls/nebraska"
+    },
+    {
+     "pollster": "SurveyUSA",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Grant Forbes, LLC",
+     "dates": "2026-09-08/2026-09-13",
+     "sample": 503,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 46,
+      "Ricketts": 42
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "GBAO",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Working Class Majority PAC (pro-Osborn)",
+     "dates": "2026-09-03/2026-09-08",
+     "sample": 800,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 47,
+      "Ricketts": 46
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "Impact Research",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Osborn campaign",
+     "dates": "2026-08-09/2026-08-13",
+     "sample": 600,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 47,
+      "Ricketts": 47
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Nebraska"
+    },
+    {
+     "pollster": "Tavern Research",
+     "partisan": "D",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-05-08/2026-05-11",
+     "sample": 1165,
+     "pop": "LV",
+     "numbers": {
+      "Osborn": 47,
+      "Ricketts": 42
+     },
+     "source": "https://www.270towin.com/2026-senate-polls/nebraska"
+    }
+   ]
+  },
+  "42003": {
+   "label": "SD-SEN",
+   "polls": [
+    {
+     "pollster": "Emerson College",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "KELOLAND (news organisation)",
+     "dates": "2026-10-19/2026-10-20",
+     "sample": 803,
+     "pop": "LV",
+     "numbers": {
+      "Rounds": 50,
+      "Bengs": 42
+     },
+     "source": "https://emersoncollegepolling.com/south-dakota-2026-poll-republican-sen-rounds-leads-independent-bengs-50-to-42/"
+    },
+    {
+     "pollster": "Quantus Insights",
+     "partisan": "R",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-10-17/2026-10-19",
+     "sample": 633,
+     "pop": "LV",
+     "numbers": {
+      "Rounds": 57,
+      "Bengs": 37
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota",
+     "note": "59-37 with leaners"
+    },
+    {
+     "pollster": "Public Opinion Strategies",
+     "partisan": "R",
+     "sponsored": true,
+     "sponsor": "Rounds campaign",
+     "dates": "2026-10-12/2026-10-16",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Rounds": 54,
+      "Bengs": 37
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    },
+    {
+     "pollster": "Mason-Dixon",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "South Dakota News Watch and University of South Dakota (news organisation)",
+     "dates": "2026-10-12/2026-10-14",
+     "sample": 500,
+     "pop": "RV",
+     "numbers": {
+      "Rounds": 56,
+      "Bengs": 37
+     },
+     "source": "https://www.dakotanewsnow.com/2026/10/24/poll-sen-rounds-leads-challenger-bengs-56-37/"
+    },
+    {
+     "pollster": "Concord Public Opinion Partners",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Democrats for Education Reform",
+     "dates": "2026-10-06/2026-10-08",
+     "sample": 400,
+     "pop": "LV",
+     "numbers": {
+      "Bengs": 43,
+      "Rounds": 42
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    },
+    {
+     "pollster": "Zenith Research",
+     "partisan": null,
+     "sponsored": true,
+     "sponsor": "Bengs campaign",
+     "dates": "2026-09-24/2026-09-27",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Rounds": 44,
+      "Bengs": 38
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    },
+    {
+     "pollster": "Public Policy Polling",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Bengs campaign",
+     "dates": "2026-09-08/2026-09-09",
+     "sample": 629,
+     "pop": "RV",
+     "numbers": {
+      "Rounds": 45,
+      "Bengs": 42
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    },
+    {
+     "pollster": "Lake Research Partners",
+     "partisan": "D",
+     "sponsored": false,
+     "sponsor": null,
+     "dates": "2026-08-26/2026-08-30",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Bengs": 51,
+      "Rounds": 44
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    },
+    {
+     "pollster": "Impact Research",
+     "partisan": "D",
+     "sponsored": true,
+     "sponsor": "Bengs campaign",
+     "dates": "2026-08-13/2026-08-17",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Rounds": 44,
+      "Bengs": 44
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    },
+    {
+     "pollster": "Public Opinion Strategies",
+     "partisan": "R",
+     "sponsored": true,
+     "sponsor": "NRSC",
+     "dates": "2026-07-06/2026-07-09",
+     "sample": 500,
+     "pop": "LV",
+     "numbers": {
+      "Rounds": 56,
+      "Bengs": 33
+     },
+     "source": "https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_South_Dakota"
+    }
+   ]
   }
+ }
 }

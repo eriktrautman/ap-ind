@@ -5,6 +5,7 @@
 <title>Polling Trend</title>
 <link rel="stylesheet" href="./g.css">
 <style>
+  .body.unavail { display: flex; align-items: center; justify-content: center; } .body.unavail > :not(.empty) { display: none; }
   /* B3: every public poll for the race on a timeline, one line per candidate, from config/polls.json. ?id=<raceID> */
   .body { display: grid; grid-template-columns: 1fr 520px; gap: 48px; min-height: 0; }
   .chart svg { width: 100%; height: 100%; display: block; }
@@ -12,7 +13,9 @@
   .axis line { stroke: #2a3a5c; }
   .ln { fill: none; stroke-width: 4; opacity: .8; }
   .lbl { font-size: 26px; font-weight: 700; font-family: var(--font); }
-  table { font-size: 22px; } th { font-size: 18px; } td { padding: 6px 6px; }
+  table { font-size: 22px; width: 100%; table-layout: fixed; } th { font-size: 18px; } td { padding: 6px 6px; }
+  th:first-child, td:first-child { width: 40%; } th:nth-child(2), td:nth-child(2) { width: 24%; } th.r, td.r { width: 18%; }
+  td:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .src { font-size: 18px; color: var(--muted); margin-top: 8px; }
 </style>
 </head>
@@ -21,6 +24,7 @@
   <div class="head"><div><div class="kicker">Polling trend</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="chart"><svg id="chart" viewBox="0 0 1040 560"></svg></div>
+    <div class="empty" id="none" hidden>Polling unavailable<br><small style="font-size:26px">No public poll for this race is on file</small></div>
     <div><table><thead><tr><th>Poll</th><th>Dates</th><th class="r" id="th-a">A</th><th class="r" id="th-b">B</th></tr></thead><tbody id="rows"></tbody></table><div class="src" id="src"></div></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Public polls, newest first · * campaign-sponsored · (D)/(R) partisan pollster · a dot per poll, line through them</span><span id="updated"></span></div>
@@ -34,17 +38,22 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   let race = null, polls = null;
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  /** "2026-10-16/2026-10-23" -> "Oct 16–23"; "2026-09-24/2026-10-03" -> "Sep 24–Oct 3"; "2026-10" -> "Oct". */
+  const fmtDates = (d) => { const f = (x) => { const [, m, dd] = String(x).split("-"); return dd ? `${MON[+m - 1]} ${+dd}` : MON[+m - 1]; }; const [a, b] = String(d).split("/"); if (!b) return f(a); const [, ma] = a.split("-"), [, mb, db] = b.split("-"); return ma === mb && db ? `${f(a)}–${+db}` : `${f(a)}–${f(b)}`; };
   const endDate = (d) => { const s = String(d); const last = s.includes("/") ? s.split("/")[1] : s; return new Date(last.length === 7 ? last + "-15" : last); };
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
     const list = (polls ?? []).filter((p) => !p.average).map((p) => ({ ...p, t: endDate(p.dates) })).filter((p) => !isNaN(p.t)).sort((a, b) => a.t - b.t);
-    $("reporting").innerHTML = `<b>${list.length}</b> public poll${list.length === 1 ? "" : "s"}`;
+    $("reporting").innerHTML = list.length ? `<b>${list.length}</b> public poll${list.length === 1 ? "" : "s"}` : "";
+    document.querySelector(".body").classList.toggle("unavail", !list.length); $("none").hidden = !!list.length;
+    $("updated").textContent = `Updated ${clockS()}`;
     const cands = [...race.candidates].sort((a, b) => (b.featured || isFeaturedCand(b.id)) - (a.featured || isFeaturedCand(a.id)) || b.votes - a.votes).slice(0, 2);
     const key = (c) => Object.keys(list[0]?.numbers ?? {}).find((k) => k === c.last || c.name.includes(k)) ?? c.last;
     const series = cands.map((c) => ({ c, k: key(c), pts: list.map((p) => ({ t: p.t, v: p.numbers[key(c)] ?? null, p })).filter((x) => x.v !== null) }));
     $("th-a").textContent = cands[0]?.last ?? ""; $("th-b").textContent = cands[1]?.last ?? "";
-    $("rows").innerHTML = [...list].reverse().slice(0, 9).map((p) => `<tr><td>${esc(p.pollster)}${p.sponsored ? "*" : p.partisan ? ` (${p.partisan})` : ""}</td><td class="m">${esc(p.dates)}</td><td class="r b">${p.numbers[series[0]?.k] ?? "—"}</td><td class="r b">${p.numbers[series[1]?.k] ?? "—"}</td></tr>`).join("") || `<tr><td colspan="4" class="m">No public polls on file for this race.</td></tr>`;
+    $("rows").innerHTML = [...list].reverse().slice(0, 9).map((p) => `<tr><td>${esc(p.pollster)}${p.sponsored ? "*" : p.partisan ? ` (${p.partisan})` : ""}</td><td class="m">${esc(fmtDates(p.dates))}</td><td class="r b">${p.numbers[series[0]?.k] ?? "—"}</td><td class="r b">${p.numbers[series[1]?.k] ?? "—"}</td></tr>`).join("") || `<tr><td colspan="4" class="m">No public polls on file for this race.</td></tr>`;
     $("src").textContent = list.length ? "Sources on every row in config/polls.json." : "";
     const svg = d3.select("#chart"); svg.selectAll("*").remove();
     if (!list.length) return;
@@ -62,7 +71,6 @@
       const last = s.pts[s.pts.length - 1];
       if (last) svg.append("text").attr("class", "lbl").attr("x", x(last.t) + 16).attr("y", y(last.v) + 9).attr("fill", color).text(`${s.c.last} ${last.v}`);
     }
-    $("updated").textContent = `Updated ${clockS()}`;
   }
   connectFeed({
     onSnapshot: async (s) => { race = s.races.get(raceId); try { polls = (await (await fetch("./polls.json")).json()).races?.[raceId]?.polls ?? []; } catch { polls = []; } render(); },

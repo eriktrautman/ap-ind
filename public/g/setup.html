@@ -55,7 +55,7 @@
     const inc = race.candidates.find((c) => c.incumbent);
     const last = prior ? `<div class="v">${prior.candidates.slice(0, 2).map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> ${c.pct}%`).join(" · ")}</div><div class="m">${prior.date.slice(0, 4)} · ${esc(prior.raceType ?? "")}${prior.note ? " · " + esc(prior.note) : ""}</div>` : `<div class="v m">No prior result on file.</div>`;
     const p = polls?.filter((x) => !x.average).sort((a, b) => String(b.dates).localeCompare(String(a.dates)))[0];
-    const poll = p ? `<div class="v">${Object.entries(p.numbers).map(([k, v]) => `${esc(k)} <b>${v}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${p.partisan})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div>` : `<div class="v m">No public poll on file.</div>`;
+    const poll = p ? `<div class="v">${Object.entries(p.numbers).map(([k, v]) => `${esc(k)} <b>${v}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${p.partisan})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div>` : `<div class="v m">Polling unavailable</div><div class="m">No public poll for this race is on file</div>`;
     $("side").innerHTML = `<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${inc ? ` · <span style="color:${PARTY_COLOR[partyKey(inc)]}">${esc(inc.last)}</span> running` : ""}</div>${race.rankedChoice ? `<div class="m">Ranked-choice voting</div>` : ""}</div>
       <div class="box"><div class="k">Last time</div>${last}</div>
       <div class="box"><div class="k">Latest poll</div>${poll}</div>
