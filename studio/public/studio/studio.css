@@ -32,7 +32,7 @@ input[type=text], input:not([type]), input[type=password], select { font: inheri
 .statusbar .st .k { color: #8a98b5; }
 .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; }
 .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
-.howbox { margin: 10px 0 2px; padding: 8px 12px; border: 1px solid var(--sand); border-left: 3px solid var(--gold); border-radius: 6px; background: #fff; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.howbox { margin: 10px 0 2px; padding: 12px 16px; border: 1px solid var(--sand); border-left: 3px solid var(--gold); border-radius: 6px; background: #fff; font-size: 14.5px; line-height: 1.55; color: var(--ink); }
 .howbox summary { cursor: pointer; list-style: none; display: inline; } .howbox summary::-webkit-details-marker { display: none; }
 .howbox[open] summary::after { content: ". "; } .howbox:not([open]) summary::after { content: " ▸"; color: var(--gold); }
 .howbox b { color: var(--ink); font-weight: 600; }
@@ -266,7 +266,7 @@ dialog::backdrop { background: #071222aa; }
   .pollstrip .pl-actions { gap: 4px; }
   .testbanner { font-size: 11px; padding: 3px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .testbanner .wide { display: none; }
-  .howbox { font-size: 12px; padding: 6px 10px; }
+  .howbox { font-size: 13px; padding: 8px 12px; }
   .toolbar { margin-top: 8px; }
   main > section.card { margin: 22px 0; padding: 10px 12px 14px; }
   .cardhead h2 { font-size: 19px; }
