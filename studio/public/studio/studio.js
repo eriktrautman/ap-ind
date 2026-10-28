@@ -567,7 +567,8 @@ function screenForm(key) {
   const extra = (SCREEN_PARAMS[s.chart] ?? []).map((p) => p.options
     ? `<label>${esc(p.label)}<select data-sk="${key}" data-p="${p.k}"><option value="">default</option>${p.options.map(([v, t]) => `<option value="${v}" ${s.params[p.k] === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`
     : `<label>${esc(p.label)}<input data-sk="${key}" data-p="${p.k}" value="${esc(s.params[p.k] ?? "")}" placeholder="${esc(p.ph ?? "")}" maxlength="200"></label>`).join("");
-  return chartSel + raceSel + stateSel + extra;
+  const bgSel = `<label>Background${selectHtml(`data-page="${key}"`, BG_OPTIONS, pageBg(key))}</label>`;
+  return chartSel + raceSel + stateSel + extra + bgSel;
 }
 function screenLiveTable(key) {
   const s = live?.[key];
@@ -584,7 +585,7 @@ function buildScreen(key) {
     <div class="screenrow">
       <div class="screen draft">
         <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
-        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><label class="pagebg">BG <select data-page="${key}"></select></label><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <div class="sform"></div>
       </div>
       <div class="screenmid">
@@ -604,7 +605,6 @@ function buildScreen(key) {
       </div>
     </div>`;
   box.dataset.built = "1";
-  const sel = box.querySelector("select[data-page]"); sel.innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}" ${v === pageBg(key) ? "selected" : ""}>${l}</option>`).join("");
 }
 function renderScreens() {
   for (const key of Object.keys(SCREEN_IDS)) {
