@@ -37,6 +37,7 @@ for (const name of ["login", "poll", "producer", "settings"]) handlers[name] = (
 
 async function file(p) { try { const s = await stat(p); return s.isFile() ? p : null; } catch { return null; } }
 async function resolve(pathname) {
+  if (/^\/g\/[A-Za-z]\d{1,2}\/?$/.test(pathname)) pathname = "/g/chart.html";   // /g/B5: the chart router (vercel.json has the same rewrite)
   const base = join(DIST, decodeURIComponent(pathname));
   if (pathname.endsWith("/")) return file(join(base, "index.html"));
   return (await file(base)) ?? (await file(base + ".html")) ?? (await file(join(base, "index.html")));

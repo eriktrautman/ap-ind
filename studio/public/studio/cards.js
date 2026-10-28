@@ -31,19 +31,24 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
   }
   function schedule() { if (scheduled) return; scheduled = true; setTimeout(() => { scheduled = false; reconcile(); }, 50); }
 
+  /** Open/Show links are the semantic address (/g/B5?bg=black&opacity=60&src=global&race=NE-SEN): display
+   *  parameters first, then the race by label. Thumbnails load the page directly (no redirect per frame). */
   function pageUrl(c, forOpen) {
-    const u = new URL(c.chart.page, location.origin);
-    if (c.race && c.chart.needsState) u.searchParams.set("st", c.race.state);
-    else if (c.race) u.searchParams.set("id", c.race.id);
-    for (const [k, v] of Object.entries(c.params ?? {})) if (v) u.searchParams.set(k, v);
-    u.searchParams.set("src", getSource());
+    const semantic = forOpen && (c.chart.page ?? "").startsWith("/g/");
+    const u = new URL(semantic ? `/g/${c.chart.id}` : c.chart.page, location.origin);
+    const p = new URLSearchParams();
     const bg = forOpen ? getBg() : "black";
-    if (bg) u.searchParams.set("bg", bg);
-    if (forOpen && getOpacity() !== "100") u.searchParams.set("opacity", getOpacity());   // chart panel opacity; previews stay solid
-    if (forOpen && c.open === "preview") u.searchParams.set("fit", "1");   // "show": the real page at full size
-    if (!forOpen) u.searchParams.set("preview", "1");
-    u.searchParams.set("sample", "auto");   // fabricated results until the count starts
-    return u.pathname + u.search;
+    if (bg) p.set("bg", bg);
+    if (forOpen && getOpacity() !== "100") p.set("opacity", getOpacity());   // chart panel opacity; previews stay solid
+    if (forOpen && c.open === "preview") p.set("fit", "1");   // "show": the real page at full size
+    p.set("src", getSource());
+    for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts
+    if (c.race && c.chart.needsState) p.set(semantic ? "state" : "st", c.race.state);
+    else if (c.race) { if (semantic) p.set("race", c.race.label); else p.set("id", c.race.id); }
+    for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
+    if (!forOpen) p.set("preview", "1");
+    p.set("sample", "auto");   // fabricated results until the count starts
+    return u.pathname + "?" + p.toString();
   }
 
   function reconcile() {
@@ -119,7 +124,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     el.className = "gcard";
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
     el.innerHTML = `
-      <div class="ghead"><span class="cid">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
+      <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
       <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span><a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
     const c = { el, chart, race, params, open, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,

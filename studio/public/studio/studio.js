@@ -163,7 +163,7 @@ function renderHow() {
   if (!renderHow.sized) { renderHow.sized = true; if (window.innerWidth <= 700) $("howbox").open = false; }
   const host = prodHost();
   const where = onSite() ? "this site" : host;
-  $("howtext").innerHTML = `Anyone with the link can open the ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`}; the links are public and they only display. What they show is whatever was last pushed. Nothing on them changes until someone signs in to a control room with the shared password and presses <b>Push</b>${onSite() ? "" : ` (from this laptop, push also needs ${esc(host)}'s password in <code>.env</code>)`}. The switcher operator should open graphics only from the <b>Show</b> buttons on this page, never from a link someone else sends. Every graphic is a plain URL: <code>/g/&lt;page&gt;?id=&lt;AP raceID&gt;</code> with optional <code>bg=black|green</code>, <code>opacity=10..100</code> and <code>src=global|local|default</code>, so any chart can be generated straight from its address (by a rundown, a switcher preset or another system) without this page; the <b>Show</b> buttons only build those URLs, with the Global settings below applied.`;
+  $("howtext").innerHTML = `Anyone with the link can open the ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`}; the links are public and they only display. What they show is whatever was last pushed. Nothing on them changes until someone signs in to a control room with the shared password and presses <b>Push</b>${onSite() ? "" : ` (from this laptop, push also needs ${esc(host)}'s password in <code>.env</code>)`}. The switcher operator should open graphics only from the <b>Show</b> buttons on this page, never from a link someone else sends. Every graphic is a plain address: <code>/g/&lt;chart id&gt;?bg=black&amp;opacity=60&amp;race=&lt;race id&gt;</code>, for example <code>/g/B5?bg=black&amp;race=NE-SEN</code>. The chart ids (B5, D4) and race ids (NE-SEN, CA-6) are the ones shown on every card and row here (hover one for its id). Display parameters come first; a missing race falls back to the first featured race and an unknown chart to B5, so a half-written address still puts something sensible on air. The ticker too: its address below rebuilds it from the races and items on this page without any push. The <b>Show</b> buttons only build these addresses, with the Global settings applied.`;
 }
 
 function renderStrip() {
@@ -334,10 +334,10 @@ const cands = (r) => r.candidates.slice(0, 3).map((c) => `${esc(c.last ?? c.name
 const indName = (r) => FEATURED_RACES.find((f) => f.id === r.id)?.who ?? r.candidates.find((c) => c.featured)?.name ?? r.candidates.find((c) => c.independent)?.name ?? null;
 const ICON_FEAT = '<span class="sic feat" title="Featured race"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3 .8 4.4L8 11.5l-3.9 2.1.8-4.4-3.2-3 4.4-.6z" fill="currentColor"/></svg></span>';
 const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M1 4h14v8H1z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 8h6M11 8h1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
-const raceLine = (r) => `<span class="lab">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.featuredRaceIds.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
+const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.featuredRaceIds.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
 function raceBand(r, { featured, position = null }) {
   const who = indName(r);
-  return `<div class="raceband">${position ? `<span class="pos" title="Position ${position} in the Featured races list">${position}</span>` : ""}<span class="lab">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
+  return `<div class="raceband">${position ? `<span class="pos" title="Position ${position} in the Featured races list">${position}</span>` : ""}<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
     <span class="meta">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results yet"}${r.called ? " · AP CALL" : ""}${r.rankedChoice ? " · ranked choice" : ""}</span>
     <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
 }
@@ -423,7 +423,25 @@ function renderTickerNote() {
     : `This is a local preview. The ticker everyone uses is <a href="${esc(runtime?.production?.origin ?? "")}/ticker?bg=black" target="_blank" rel="noopener">${esc(prodHost())}/ticker</a> (add <code>?bg=green</code> for the key); to change that one, Push with the buttons above. It re-reads what was last pushed every 5 seconds.`;
 }
 /** The ticker opens like any chart: at full size, showing whatever the previews show. */
-function tickerOpenUrl() { const bg = $("bg").value, o = $("opacity").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}${o !== "100" ? `&opacity=${o}` : ""}`; }
+function tickerOpenUrl() { const bg = $("bg").value, o = $("opacity").value; return `/ticker?${bg ? `bg=${bg}&` : ""}${o !== "100" ? `opacity=${o}&` : ""}src=${view}`; }
+/** The address that reproduces the ticker on this page with no pushed state: display parameters, then races by label, then items. */
+function tickerUrl() {
+  const bg = $("bg").value, o = $("opacity").value;
+  const p = new URLSearchParams();
+  if (bg) p.set("bg", bg);
+  if (o !== "100") p.set("opacity", o);
+  p.set("races", draft.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(","));
+  if (draft.callHighlight === false) p.set("calls", "0");
+  for (const m of draft.manualItems) if (m.text) p.append("item", m.text);
+  if (draft.idleText && draft.idleText !== DEFAULTS.idleText) p.set("idle", draft.idleText);
+  const origin = onSite() ? location.origin : runtime?.production?.origin ?? location.origin;
+  return `${origin}/ticker?${p.toString()}`;
+}
+function renderTickerUrl() {
+  const u = tickerUrl();
+  $("tickerurl").textContent = u; $("tickerurl").href = u;
+}
+$("tickercopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(tickerUrl()); $("tickercopy").textContent = "Copied"; setTimeout(() => ($("tickercopy").textContent = "Copy"), 1500); } catch {} });
 function renderTickerOpen() {
   renderTickerNote();
   $("tickeropen").href = tickerOpenUrl();
@@ -431,6 +449,7 @@ function renderTickerOpen() {
 $("previewframe").addEventListener("click", () => window.open(tickerOpenUrl(), "_blank", "noopener"));
 $("bg").addEventListener("change", renderTickerOpen);
 $("opacity").addEventListener("change", renderTickerOpen);
+$("bg").addEventListener("change", renderTickerUrl); $("opacity").addEventListener("change", renderTickerUrl);
 
 // ---------- Race Detail section ----------
 function renderDetail() {
@@ -482,7 +501,7 @@ $("featcharts").addEventListener("click", (e) => { const row = e.target.closest(
     let rows = CHARTS.filter((c) => c.kind === "race" && !c.retired && !draft.featuredCharts.includes(c.id));
     if (q) rows = rows.filter((c) => `${c.id} ${c.name}`.toLowerCase().includes(q));
     box.hidden = false;
-    box.innerHTML = rows.length ? rows.map((c) => `<div class="row" data-id="${c.id}"><div><div class="nm"><span class="lab">${esc(c.id)}</span>${esc(c.name)}${c.built ? "" : ' <span class="muted small">not built yet</span>'}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") : `<div class="empty">${q ? "No charts match." : "Every per-race chart is already featured."}</div>`;
+    box.innerHTML = rows.length ? rows.map((c) => `<div class="row" data-id="${c.id}"><div><div class="nm"><span class="lab" title="Chart id ${esc(c.id)}">${esc(c.id)}</span>${esc(c.name)}${c.built ? "" : ' <span class="muted small">not built yet</span>'}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") : `<div class="empty">${q ? "No charts match." : "Every per-race chart is already featured."}</div>`;
   };
   input.addEventListener("input", render); input.addEventListener("focus", render);
   box.addEventListener("mousedown", (e) => { const row = e.target.closest(".row"); if (!row) return; e.preventDefault(); toggleChart(row.dataset.id); input.value = ""; box.hidden = true; });
@@ -657,7 +676,7 @@ $("charts").addEventListener("click", (e) => { const fc = e.target.closest(".fea
 function renderAll() {
   renderStatus();
   renderStrip();
-  renderPins(); renderManual(); sendPreview();
+  renderPins(); renderManual(); renderTickerUrl(); sendPreview();
   renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }

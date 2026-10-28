@@ -94,7 +94,7 @@ export const CHARTS = [
   { id: "D3",  kind: "movement", name: "Balance of power, Senate",  page: "/g/bop-senate.html", built: true },
   { id: "D4",  kind: "movement", name: "Balance of power, House",   page: "/g/bop-house.html",  built: true },
   { id: "D5",  kind: "movement", name: "Key races grid",            page: "/g/key-races.html",  built: true },
-  { id: "D6",  kind: "movement", name: "Race zoom-in",              page: "/g/zoom.html",       built: true },
+  { id: "D6",  kind: "movement", name: "Race zoom-in",              page: "/g/zoom.html",       built: true, needsRace: true },
   { id: "D7",  kind: "movement", name: "Status map",                page: "/g/tiles.html",      built: true },
   { id: "D8",  kind: "movement", name: "Calls timeline",            page: "/g/calls-timeline.html",                 built: true },
   { id: "D9",  kind: "movement", name: "State overview",            page: "/g/state-overview.html", built: true, needsState: true },

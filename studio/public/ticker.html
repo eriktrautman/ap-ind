@@ -41,7 +41,7 @@
 </div>
 <script type="module">
   import { buildQueue } from "/ticker-queue.js";
-  import { watchState } from "/g/control.js";
+  import { watchState, DEFAULTS } from "/g/control.js";
 
   const params = new URLSearchParams(location.search);
   const bg = params.get("bg");
@@ -51,6 +51,17 @@
     window.addEventListener("resize", fit); fit();
   }
   const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
+  // A ticker built entirely from its address, no pushed state involved:
+  //   /ticker?bg=black&opacity=60&races=NE-SEN,MT-SEN,ID-SEN&calls=1&item=Polls close at 7&item=...&idle=Welcome
+  // races: labels (NE-SEN, CA-6) or AP ids, in crawl order; empty or missing means the featured races.
+  // calls=0 turns the yellow AP Call highlight off. Any of the four present switches this mode on.
+  const URL_MODE = ["races", "item", "idle", "calls"].some((k) => params.has(k));
+  const urlState = URL_MODE ? {
+    pinnedKeys: (params.get("races") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+    callHighlight: params.get("calls") !== "0",
+    manualItems: params.getAll("item").map((text, i) => ({ id: `url${i}`, text: text.trim() })).filter((m) => m.text),
+    idleText: params.get("idle") || DEFAULTS.idleText,
+  } : null;
   // Producer state source: ?src=default|global|local, else the selector saved by /studio in this
   // browser, else Global. The deployed /ticker has no parameter, so it always reads production.
   const PX_PER_SEC = Number(params.get("speed") ?? 170);
@@ -120,6 +131,10 @@
   let lastGood = 0;
 
   function rebuild() {
+    if (URL_MODE) {   // resolve the address's race keys against the feed: a label or an AP id
+      const byLabel = new Map(races.map((r) => [r.label, r.id])), byId = new Set(races.map((r) => r.id));
+      producer = { ...urlState, pinnedRaceIds: urlState.pinnedKeys.map((k) => byId.has(k) ? k : byLabel.get(k.toUpperCase())).filter(Boolean) };
+    }
     const q = buildQueue(races, producer);
     setQueue(q.items);
     window.parent?.postMessage({ type: "ticker-queue", source: q.source, missing: q.missing, count: q.items.length }, "*");
@@ -136,7 +151,8 @@
       document.getElementById("test").hidden = d.resultsType !== "t";
     } catch {}
   }
-  const control = watchState({
+  if (URL_MODE) window.parent?.postMessage({ type: "ticker-source", source: "url", requested: "url", error: null }, "*");
+  else watchState({
     intervalMs: PRODUCER_MS, preview,
     onState: (state, info) => {
       producer = state; rebuild();

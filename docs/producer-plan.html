@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12, plus B14",
   note: "S109 (B12) blocked on the AP VoteCast licence; everything else done",
-  updated: "2026-10-28T20:31:58Z",
+  updated: "2026-10-28T20:44:15Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -242,6 +242,7 @@ const STORIES = [
   { id: "S107", epic: "E7", pts: 1, status: "done", title: "A2 name and title lower third: template with ?name= and ?title=", doneAt: "2026-10-27T03:08:23Z" },
   { id: "S108", epic: "E7", pts: 1, status: "done", title: "B11 quote card: template fed by config/quotes.json (editorial)", doneAt: "2026-10-27T03:08:23Z" },
   { id: "S110", epic: "E7", pts: 3, status: "done", title: "B14 Head-to-head: the two candidates who matter with their photos; before results the featured independent and the closest poll rival with the poll, last result and seat; once counted the two leaders with live shares, margin and AP call", note: "New id at the end of the B series (B12 stays blocked). Registered in control.js, lookbook card and data notes, README.", deps: "S01", doneAt: "2026-10-28T20:05:02Z" },
+  { id: "S111", epic: "E6", pts: 5, status: "done", title: "Semantic addresses: /g/<chart id>?bg=&opacity=&race=<race id> for every graphic (chart.html router, rewrites on Vercel and locally), race and chart ids with hover titles on every card and row, defaults for a half-written address, the ticker built entirely from its address (races, calls, item, idle) with the address shown and copyable in the control room", note: "Display parameters first; the page addresses behind the ids still work. Checked: ten addresses including lowercase, unknown chart, unknown race, state charts, candidate by last name, the ticker in URL mode, and the signed-in control room.", deps: "S05", doneAt: "2026-10-28T20:44:15Z" },
   { id: "S109", epic: "E7", pts: 0, status: "blocked", title: "B12 who voted for the independent: needs an AP VoteCast licence; listed as unavailable in the catalog", note: "Not buildable without the licence." },
   { id: "S72", epic: "E6", pts: 1, status: "done", title: "Old panel code removed from studio/public/studio once every control it offered exists in the control room; README studio section rewritten", deps: "S71", doneAt: "2026-10-27T00:03:08Z" },
 ];
@@ -257,6 +258,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T20:44:15Z", what: "Semantic addresses. /g/B5?bg=black&opacity=60&race=NE-SEN (chart id, then race id) resolves through /g/chart.html to the page; /g/D9?state=MT for state charts; cand=, a=, b= take last names. Missing or unknown chart falls back to B5, race to NE-SEN, state to the race's. Show buttons emit these addresses with display parameters first. The ticker takes races=, calls=, item=, idle= and then ignores pushed state; the control room shows the address for its ticker with Copy. Race ids and chart ids carry hover titles everywhere." },
   { t: "2026-10-28T20:31:58Z", what: "Toolbar: Open graphics on and Chart panel opacity sit in their own Global settings box (replacing the GLOBAL chip). How changes reach the screen now says every graphic is a plain URL with id, bg, opacity and src parameters, so any chart can be generated from its address without the page." },
   { t: "2026-10-28T20:26:38Z", what: "Toolbar: a GLOBAL chip in front of Open graphics on and Chart panel opacity, with a tooltip saying they apply to every graphic and the ticker opened from the page, are remembered per browser and are not pushed." },
   { t: "2026-10-28T20:12:09Z", what: "Toolbar label is Chart panel opacity." },

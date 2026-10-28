@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Chart</title>
+<meta name="robots" content="noindex">
+<style>html, body { margin: 0; background: transparent; }</style>
+</head>
+<body>
+<script type="module">
+  // Semantic address for every graphic:  /g/<chartID>?bg=black&opacity=60&race=NE-SEN
+  // (also /g/chart?chart=B5&race=NE-SEN). Resolves the chart id through the registry and the race
+  // label through the live index, then replaces itself with the page that draws it. Anything
+  // missing or unknown falls back to something that works on air: the chart to B5, the race to
+  // the first featured race, a state to that race's state. Display parameters (bg, opacity, fit,
+  // src, ...) stay first in the address; everything else is passed through to the page unchanged.
+  import { CHARTS, FEATURED_RACES } from "./control.js";
+
+  const q = new URLSearchParams(location.search);
+  const DISPLAY = ["bg", "opacity", "fit", "src", "preview", "sample", "demo", "speed"];   // the order they appear in
+  const CONSUMED = new Set(["chart", "race", "id", "state", "st", "cand", "a", "b"]);
+  const DEFAULT_CHART = "B5";
+  const DEFAULT_RACE = FEATURED_RACES[0];
+  const warn = (m) => console.warn(`[chart] ${m}`);
+
+  // 1. the chart: ?chart=B5, else the path (/g/B5)
+  const want = (q.get("chart") ?? (location.pathname.match(/\/g\/([A-Za-z]\d{1,2})\/?$/) ?? [])[1] ?? "").toUpperCase();
+  let chart = CHARTS.find((c) => c.id === want && c.built && !c.retired && c.page);
+  if (!chart) { warn(`${want ? `unknown or unavailable chart ${want}` : "no chart given"}; showing ${DEFAULT_CHART}`); chart = CHARTS.find((c) => c.id === DEFAULT_CHART); }
+  const raceBased = chart.kind === "race" || chart.needsRace;
+
+  // 2. the race: a label (NE-SEN, CA-6, AK-GOV) or an AP race id; a state for state charts
+  const raceKey = (q.get("race") ?? q.get("id") ?? "").trim();
+  const stateKey = (q.get("state") ?? q.get("st") ?? "").trim().toUpperCase();
+  let index = null;
+  async function loadIndex() {
+    if (index || q.get("demo")) return index;
+    try { index = (await (await fetch("/data/index.json", { cache: "no-store", signal: AbortSignal.timeout(6000) })).json()).races ?? null; } catch { index = null; }
+    return index;
+  }
+  function featuredByKey(k) { const K = k.toUpperCase(); return FEATURED_RACES.find((r) => r.id === k || r.label === K) ?? null; }
+  async function resolveRace(k) {
+    if (!k) return null;
+    const f = featuredByKey(k); if (f) return { id: f.id, state: f.state, label: f.label };
+    if (/^\d{1,12}$/.test(k)) return { id: k, state: null, label: null };            // an AP id: pass it through
+    const list = await loadIndex();
+    const r = list?.find((x) => x.label === k.toUpperCase());
+    return r ? { id: r.id, state: r.state, label: r.label } : null;
+  }
+  async function resolveCand(race, k) {
+    if (!k || /^\d{1,12}$/.test(k) || !race) return k || null;                  // an AP candidate id or nothing
+    const list = await loadIndex();
+    const r = list?.find((x) => x.id === race.id);
+    const c = r?.candidates.find((x) => (x.last ?? "").toLowerCase() === k.toLowerCase()) ?? r?.candidates.find((x) => x.name.toLowerCase().includes(k.toLowerCase()));
+    if (!c) warn(`no candidate "${k}" in ${race.label ?? race.id}; the page picks its own`);
+    return c?.id ?? null;
+  }
+
+  let race = await resolveRace(raceKey);
+  if (raceKey && !race) warn(`no race "${raceKey}" in the feed`);
+  if (!race && (raceBased || q.has("race") || q.has("id"))) { warn(`showing ${DEFAULT_RACE.label}`); race = { id: DEFAULT_RACE.id, state: DEFAULT_RACE.state, label: DEFAULT_RACE.label }; }
+  let state = stateKey || race?.state || (chart.needsState ? DEFAULT_RACE.state : "");
+  if (chart.needsState && !/^[A-Z]{2}$/.test(state)) { warn(`no state; showing ${DEFAULT_RACE.state}`); state = DEFAULT_RACE.state; }
+
+  // 3. the page address: display parameters first, then what identifies the data, then the rest
+  const dest = new URL(chart.page, location.origin);
+  const out = new URLSearchParams();
+  for (const k of DISPLAY) if (q.has(k)) out.set(k, q.get(k));
+  for (const [k, v] of dest.searchParams) out.set(k, v);                        // e.g. reports.html?view=counts
+  if (race) out.set("id", race.id);
+  if (chart.needsState) out.set("st", state);
+  for (const k of ["cand", "a", "b"]) if (q.has(k)) { const id = await resolveCand(race, q.get(k)); if (id) out.set(k, id); }
+  for (const [k, v] of q) if (!DISPLAY.includes(k) && !CONSUMED.has(k)) out.append(k, v);
+  dest.search = out.toString();
+  location.replace(dest.pathname + dest.search);
+</script>
+</body>
+</html>

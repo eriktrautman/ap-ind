@@ -87,6 +87,9 @@ main > section.card + section.card::before { content: ""; display: block; height
 .gset { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding: 6px 12px 8px; border: 1px solid var(--sand); border-radius: 6px; background: #fff; }
 .gset legend { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); padding: 0 6px; }
 .bgpick { color: var(--muted); }
+.tickerurl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0 10px; font-size: 12.5px; }
+.tickerurl .k { color: var(--muted); cursor: help; }
+.tickerurl .url { font-family: var(--mono); font-size: 11.5px; color: var(--navy); word-break: break-all; }
 .pollstrip .pl-k { font-family: var(--serif); color: var(--navy); font-size: 14px; }
 .pollstrip .pl-sum { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .pollstrip .pl-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
