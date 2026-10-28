@@ -19,10 +19,14 @@ input[type=text]:focus, input:not([type]):focus, input[type=password]:focus, sel
 
 /* ---- sticky header: brand, section nav, state selector, status bar ---- */
 .top { position: sticky; top: 0; z-index: 20; background: var(--navy-deep); color: #fff; box-shadow: 0 2px 8px #0003; }
-.brandrow { display: flex; align-items: center; gap: 14px; padding: 8px 16px; font-size: 13px; flex-wrap: wrap; }
+.brandrow { display: flex; align-items: center; gap: 14px; padding: 8px 16px; font-size: 13px; flex-wrap: nowrap; }
+.brandrow b, .subbrand, #logout { flex: none; }
+#logout { margin-left: auto; }
 .brandrow b { font-family: var(--serif); color: var(--gold); font-size: 17px; font-weight: 400; }
 .subbrand { font-family: var(--serif); color: #fff; font-size: 15px; padding-left: 10px; margin-left: -6px; border-left: 1px solid #3a4f7a; }
-.sections { display: flex; gap: 2px; margin-left: 10px; }
+.sections { display: flex; gap: 2px; margin-left: 10px; flex: 1 1 auto; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.sections::-webkit-scrollbar { display: none; }
+.sections a { flex: none; }
 .sections a { color: #c7cfdf; text-decoration: none; padding: 4px 10px; border-radius: 5px; }
 .sections a:hover, .sections a.here { background: #16305e; color: #fff; }
 .top .link { margin-left: auto; background: none; border: 1px solid #3a4f7a; color: #c7cfdf; font-size: 12px; padding: 3px 8px; }
