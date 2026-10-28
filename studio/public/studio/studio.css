@@ -92,7 +92,13 @@ main > section.card + section.card::before { content: ""; display: block; height
 .liveparams .params td.k { font-family: var(--mono); color: var(--muted); width: 90px; cursor: help; }
 .liveparams .params .lab { display: inline-block; font-family: var(--mono); font-size: 11.5px; background: var(--cream); border: 1px solid var(--sand); border-radius: 4px; padding: 0 6px; margin: 1px 2px 1px 0; }
 .liveparams .warnline { background: #fdf0f1; border-left: 4px solid var(--bad); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
-.preview.live { border-color: var(--navy); }
+/* The two ticker previews must never be confused: the live one has a solid navy frame and tag, the builder a hatched orange one. */
+.preview.live { border: 3px solid var(--navy); }
+.preview.builder { border: 3px dashed #b5651d; }
+.preview .frame::before { position: absolute; left: 8px; top: 8px; z-index: 2; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 2px 8px; border-radius: 4px; color: #fff; pointer-events: none; }
+.preview.live .frame::before { content: "LIVE TICKER · ON AIR"; background: var(--navy); }
+.preview.builder .frame::before { content: "BUILDER · NOT ON AIR"; background: #b5651d; }
+.preview.builder .gfoot { background: #fdf6ea; } .preview.live .gfoot { background: #eef2f9; }
 .tickerurl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0 10px; font-size: 12.5px; }
 .tickerurl .k { color: var(--muted); cursor: help; }
 .tickerurl .url { font-family: var(--mono); font-size: 11.5px; color: var(--navy); word-break: break-all; }
