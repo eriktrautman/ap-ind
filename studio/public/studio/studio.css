@@ -372,3 +372,7 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 
 /* Section subtext sits on its own line under the title; the title line keeps the dropdowns on the right. */
 .cardhead > .muted.small { flex-basis: 100%; order: 10; margin-top: 2px; }
+
+/* Live Screen numbering: the same bubble as a featured race's position, on the section's title line. */
+.screenhead { display: flex; align-items: center; gap: 10px; }
+.screenhead .pos.big { font-family: var(--mono); font-size: 16px; font-weight: 700; color: #fff; background: var(--navy); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; flex: none; }

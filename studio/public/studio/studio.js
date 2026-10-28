@@ -584,7 +584,7 @@ function buildScreen(key) {
   const letter = screenLetter(key);
   const box = $(key);
   box.innerHTML = `
-    <h3 class="screenhead">Live Screen ${letter}</h3>
+    <h3 class="screenhead"><span class="pos big" title="Live Screen ${letter}">${key === "screenA" ? 1 : 2}</span>Live Screen ${letter}</h3>
     <div class="screenrow">
       <div class="screen draft">
         <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
