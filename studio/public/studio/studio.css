@@ -369,3 +369,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 
 /* A transparent background shows as a checkerboard behind the preview, the way image editors do. */
 .gcard .thumb.checker, .screen .frame.checker { background-color: #d9d9d9; background-image: repeating-conic-gradient(#bdbdbd 0 25%, transparent 0 50%); background-size: 24px 24px; }
+
+/* Section subtext sits on its own line under the title; the title line keeps the dropdowns on the right. */
+.cardhead > .muted.small { flex-basis: 100%; order: 10; margin-top: 2px; }
