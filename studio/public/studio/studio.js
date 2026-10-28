@@ -459,7 +459,7 @@ function renderTickerUrl() {
   const u = tickerUrl(); $("tickerurl").textContent = u; $("tickerurl").href = u; $("tickeropen").href = u;
   const l = liveTickerUrl(); $("liveurl").textContent = l; $("liveurl").href = l; $("liveopen").href = l;
 }
-for (const [btn, fn] of [["tickercopy", tickerUrl], ["livecopy", liveTickerUrl]]) $(btn).addEventListener("click", async () => { try { await navigator.clipboard.writeText(fn()); $(btn).textContent = "Copied"; setTimeout(() => ($(btn).textContent = "Copy URL"), 1500); } catch {} });
+for (const [btn, fn, label] of [["tickercopy", tickerUrl, "Copy Draft URL"], ["livecopy", liveTickerUrl, "Copy Live URL"]]) $(btn).addEventListener("click", async () => { try { await navigator.clipboard.writeText(fn()); $(btn).textContent = "Copied"; setTimeout(() => ($(btn).textContent = label), 1500); } catch {} });
 $("previewframe").addEventListener("click", () => window.open(tickerUrl(), "_blank", "noopener"));
 $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_blank", "noopener"));
 $("bg").addEventListener("change", renderTickerUrl); $("opacity").addEventListener("change", renderTickerUrl);
@@ -521,7 +521,7 @@ function buildScreen(key) {
     <div class="screenrow">
       <div class="screen draft">
         <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
-        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <div class="sform"></div>
       </div>
       <div class="screenmid">
@@ -534,7 +534,7 @@ function buildScreen(key) {
       </div>
       <div class="screen onair">
         <div class="frame clickable" data-open="live" title="Open the on-air screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} on air"></iframe></div>
-        <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the on-air screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy Live URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the on-air screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a class="url liveaddr" target="_blank" rel="noopener"></a></p>
         <div class="liveparams"></div>
         <p class="muted small">Changes within 5 seconds of a publish, cross-fading so nothing flashes. Only an authorized publish changes it.</p>
@@ -586,7 +586,7 @@ document.addEventListener("click", async (e) => {
   const box = e.target.closest(".screenblock"); if (!box) return;
   const key = box.id;
   const copy = e.target.closest("[data-copy]");
-  if (copy) { const u = copy.dataset.copy === "live" ? screenLiveUrl(key) : screenDraftUrl(key); try { await navigator.clipboard.writeText(u); copy.textContent = "Copied"; setTimeout(() => (copy.textContent = "Copy URL"), 1500); } catch {} return; }
+  if (copy) { const u = copy.dataset.copy === "live" ? screenLiveUrl(key) : screenDraftUrl(key); const label = copy.textContent; try { await navigator.clipboard.writeText(u); copy.textContent = "Copied"; setTimeout(() => (copy.textContent = label), 1500); } catch {} return; }
   const fr = e.target.closest(".frame[data-open]");
   if (fr) { window.open(fr.dataset.open === "live" ? screenLiveUrl(key) : screenDraftUrl(key), "_blank", "noopener"); return; }
   const act = e.target.closest("button[data-act]")?.dataset.act;
