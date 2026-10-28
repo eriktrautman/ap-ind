@@ -15,7 +15,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getBg = () => "black", getOpacity = () => "100", getOrigin = () => location.origin, getRaces = () => null, getDraft = () => null } = {}) {
+export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "black", opacity: "100" }), getOrigin = () => location.origin, getRaces = () => null, getDraft = () => null } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -37,8 +37,9 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
    *  preview-only parameters (src, fit, sample). A1 (the ticker) copies the ticker address instead. */
   function copyUrl(c) {
     const p = new URLSearchParams();
-    const bg = getBg(); if (bg) p.set("bg", bg);
-    if (getOpacity() !== "100") p.set("opacity", getOpacity());
+    const d = getDisplay(c.section);
+    if (d.bg) p.set("bg", d.bg);
+    if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
     if (c.race && c.chart.needsState) p.set("state", c.race.state);
     else if (c.race) p.set("race", c.race.label);
     racesParam(c, p);
@@ -53,9 +54,9 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     const semantic = forOpen && (c.chart.page ?? "").startsWith("/g/");
     const u = new URL(semantic ? `/g/${c.chart.id}` : c.chart.page, location.origin);
     const p = new URLSearchParams();
-    const bg = forOpen ? getBg() : "black";
-    if (bg) p.set("bg", bg);
-    if (forOpen && getOpacity() !== "100") p.set("opacity", getOpacity());   // chart panel opacity; previews stay solid
+    const d = getDisplay(c.section);   // the section's Background and Opacity: previews and links alike
+    if (d.bg) p.set("bg", d.bg);
+    if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
     if (forOpen && c.open === "preview") p.set("fit", "1");   // "show": the real page at full size
     for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts
     if (c.race && c.chart.needsState) p.set(semantic ? "state" : "st", c.race.state);
@@ -82,7 +83,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     const f = document.createElement("iframe");
     f.title = c.title;
     f.loading = "eager";
-    f.src = pageUrl(c, false);
+    f.src = pageUrl(c, false); f.dataset.u = f.src;
     f.addEventListener("load", () => { feedFrame(f); const d = getDraft(); if (d) f.contentWindow?.postMessage({ type: "producer", state: d }, "*"); });
     c.thumb.querySelector(".ph")?.remove();
     c.thumb.appendChild(f);
@@ -135,7 +136,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     c.bubble.title = f.title;
   }
 
-  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null, open = "preview" }) {
+  function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null, open = "preview", section = "charts" }) {
     const el = document.createElement("div");
     el.className = "gcard";
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
@@ -143,7 +144,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
       <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}">${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
       <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span>${chart.built && !chart.retired && chart.page ? `<button class="copybtn" type="button" title="Copy this graphic's address (chart id and race id, with the Global settings) for a switcher or rundown">Copy URL</button>` : ""}<a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
-    const c = { el, chart, race, params, open, priority, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
+    const c = { el, chart, race, params, open, priority, section, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
       title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a"), copy: el.querySelector(".copybtn") };
     el._card = c; c.thumb._card = c;
     c.link.href = pageUrl(c, true);
@@ -196,9 +197,11 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     }
   }
   function refreshLinks() { for (const c of cards) if (c.chart.built) { c.link.href = pageUrl(c, true); if (c.copy) c.copy.dataset.url = copyUrl(c); } }
+  /** Display settings changed: live previews whose address changed reload. */
+  function refreshFrames() { for (const c of cards) if (c.frame) { const u = pageUrl(c, false); if (c.frame.dataset.u !== u) { c.frame.dataset.u = u; c.frame.src = u; } } }
   setInterval(() => { for (const c of cards) renderFresh(c); reconcile(); }, 15_000);
   document.addEventListener("click", (e) => { if (!e.target.closest(".kebab, .menu")) for (const m of document.querySelectorAll(".gcard .menu")) m.hidden = true; });
   window.addEventListener("scroll", schedule, { passive: true });
 
-  return { card, prune, setData, broadcast, refreshSource, refreshLinks, onBudget: (fn) => { onBudget = fn; }, get count() { return cards.size; } };
+  return { card, prune, setData, broadcast, refreshSource, refreshFrames, refreshLinks, onBudget: (fn) => { onBudget = fn; }, get count() { return cards.size; } };
 }

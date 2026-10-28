@@ -105,7 +105,61 @@ const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, struct
 const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
 /** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
 const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredRaceIds.join() ? null : draft.featuredRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
-const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getOpacity: () => $("opacity").value, getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft });
+// ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
+const BG_OPTIONS = [["", "transparent"], ["black", "black"], ["green", "green key"]];
+const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
+const SECTIONS = ["ticker", "screens", "detail", "broad", "movement", "persistent", "catalog", "charts"];
+const PAGES = ["ticker", "screenA", "screenB"];
+function loadDisplay() {
+  let d = null;
+  try { d = JSON.parse(localStorage.getItem("studio.display") ?? "null"); } catch {}
+  if (!d) {   // first run: carry over the old single pair, if any
+    let bg = "black", opacity = "100";
+    try { bg = localStorage.getItem("studio.bg") ?? "black"; opacity = localStorage.getItem("studio.opacity") ?? "100"; } catch {}
+    d = { top: { bg, opacity }, sections: {}, pages: {} };
+  }
+  d.top ??= { bg: "black", opacity: "100" }; d.sections ??= {}; d.pages ??= {};
+  return d;
+}
+let display = loadDisplay();
+function saveDisplay() { try { localStorage.setItem("studio.display", JSON.stringify(display)); } catch {} }
+const secDisplay = (sec) => ({ ...display.top, ...(display.sections[sec] ?? {}) });
+const pageBg = (page) => display.pages[page]?.bg ?? secDisplay(page === "ticker" ? "ticker" : "screens").bg;
+const selectHtml = (attrs, options, value) => `<select ${attrs}>${options.map(([v, l]) => `<option value="${v}" ${v === value ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+/** The two dropdowns on every section's title line and the BG on every live draft, showing the saved values. */
+function renderDisplayControls() {
+  for (const sec of SECTIONS) {
+    const d = secDisplay(sec);
+    const box = document.querySelector(`.cardhead[data-sec="${sec}"] .secdisp`); if (!box) continue;
+    box.innerHTML = `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label><label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%"]), d.opacity)}</label>`;
+  }
+  for (const page of PAGES) {
+    const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
+    sel.innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}" ${v === pageBg(page) ? "selected" : ""}>${l}</option>`).join("");
+  }
+  $("topbg").value = display.top.bg; $("topopacity").value = display.top.opacity;
+}
+/** Anything that shows a background or opacity follows the saved values. */
+function applyDisplay() {
+  renderDisplayControls();
+  cards.refreshLinks(); cards.refreshFrames();
+  renderTickerUrl(); renderTickerFrames(); renderScreens();
+}
+document.addEventListener("change", (e) => {
+  const sec = e.target.closest("select[data-sec]");
+  if (sec) { display.sections[sec.dataset.sec] = { ...secDisplay(sec.dataset.sec), [sec.dataset.f]: sec.value }; saveDisplay(); applyDisplay(); return; }
+  const pg = e.target.closest("select[data-page]");
+  if (pg) { display.pages[pg.dataset.page] = { bg: pg.value }; saveDisplay(); applyDisplay(); return; }
+  if (e.target.id === "topbg" || e.target.id === "topopacity") { display.top = { bg: $("topbg").value, opacity: $("topopacity").value }; saveDisplay(); }
+});
+$("applyall").addEventListener("click", async () => {
+  const top = { bg: $("topbg").value, opacity: $("topopacity").value };
+  const ok = await ask({ title: "Apply to every section and live draft?", body: `<p>Every section's Background and Opacity, and every live draft's BG, become <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> at <b>${esc(top.opacity)}%</b>. Previews and links on this page change to match. Nothing on air changes.</p>`, ok: "Apply to All Charts" });
+  if (!ok) return;
+  display.top = top; display.sections = {}; display.pages = {};
+  saveDisplay(); applyDisplay();
+});
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
@@ -214,6 +268,7 @@ function renderPublishState() {
   $("publish").innerHTML = `${canPublish() ? "" : LOCK}Publish to Live`;
   $("pubwhy").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
   $("publish").title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  document.querySelector("#liveframe .lockmark").hidden = canPublish();
   $("pull").disabled = !canPull() || !live;
   $("pull").title = !canPull() ? (r?.reason ?? liveError ?? "pulling is not possible right now") : "Replace the builder's races, items, idle text and highlight with the live ticker's";
 }
@@ -443,12 +498,20 @@ function sendPreview() {
 }
 frame.addEventListener("load", sendPreview);
 window.addEventListener("resize", scalePreviews);
-function displayParams() { const bg = $("bg").value, o = $("opacity").value; const p = new URLSearchParams(); if (bg) p.set("bg", bg); if (o !== "100") p.set("opacity", o); return p; }
+function displayParams(d = secDisplay("ticker")) { const p = new URLSearchParams(); if (d.bg) p.set("bg", d.bg); if (d.opacity !== "100") p.set("opacity", d.opacity); return p; }
+/** The two ticker frames: the builder with its own BG, the live one with the section's pair; reload only when the address changes. */
+function renderTickerFrames() {
+  const sec = secDisplay("ticker");
+  const b = `/ticker?preview=1&bg=${pageBg("ticker")}${sec.opacity !== "100" ? `&opacity=${sec.opacity}` : ""}&src=local`;
+  if (frame.dataset.u !== b) { frame.dataset.u = b; frame.src = b; }
+  const l = `/ticker?${displayParams(sec).toString()}`;
+  if (liveFrame.dataset.u !== l) { liveFrame.dataset.u = l; liveFrame.src = l; }
+}
 /** The LIVE TICKER's address: fixed; only the display parameters vary. */
 function liveTickerUrl() { const s = displayParams().toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
 /** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {
-  const p = displayParams();
+  const p = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity });
   p.set("races", draft.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(","));
   p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
   for (const m of draft.manualItems) if (m.text) p.append("item", m.text);
@@ -462,7 +525,6 @@ function renderTickerUrl() {
 for (const [btn, fn, label] of [["tickercopy", tickerUrl, "Copy Draft URL"], ["livecopy", liveTickerUrl, "Copy Live URL"]]) $(btn).addEventListener("click", async () => { try { await navigator.clipboard.writeText(fn()); $(btn).textContent = "Copied"; setTimeout(() => ($(btn).textContent = label), 1500); } catch {} });
 $("previewframe").addEventListener("click", () => window.open(tickerUrl(), "_blank", "noopener"));
 $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_blank", "noopener"));
-$("bg").addEventListener("change", renderTickerUrl); $("opacity").addEventListener("change", renderTickerUrl);
 
 // ---------- Live Screens ----------
 // Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
@@ -480,9 +542,9 @@ const SCREEN_IDS = { screenA: "one", screenB: "two" };
 const screenLetter = (key) => (key === "screenA" ? "One" : "Two");
 const screenPath = (key) => `/live-screen-${SCREEN_IDS[key]}`;
 /** The on-air page's address: fixed; only the display parameters vary. */
-function screenLiveUrl(key) { const s = displayParams().toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
+function screenLiveUrl(key) { const s = displayParams(secDisplay("screens")).toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
 /** The draft's own address: the chart-id address with the Default Chart Settings, usable anywhere. */
-function screenDraftUrl(key) { const bg = $("bg").value, o = $("opacity").value; return origin() + screenAddress(draft[key], { bg, opacity: o }); }
+function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity }); }
 function raceOptions(selected) {
   if (!index) return "";
   const feat = draft.featuredRaceIds.map((id) => index.byId.get(id)).filter(Boolean);
@@ -521,7 +583,7 @@ function buildScreen(key) {
     <div class="screenrow">
       <div class="screen draft">
         <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
-        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><label class="pagebg">BG <select data-page="${key}"></select></label><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <div class="sform"></div>
       </div>
       <div class="screenmid">
@@ -533,15 +595,15 @@ function buildScreen(key) {
         <span class="pubstate"></span>
       </div>
       <div class="screen onair">
-        <div class="frame clickable" data-open="live" title="Open the on-air screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} on air"></iframe></div>
+        <div class="frame clickable" data-open="live" title="Open the on-air screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} on air"></iframe><span class="lockmark" hidden title="You cannot change what is on air from this sign-in">${LOCK.replace('width="11" height="11"', 'width="14" height="14"')}</span></div>
         <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy Live URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the on-air screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a class="url liveaddr" target="_blank" rel="noopener"></a></p>
         <div class="liveparams"></div>
         <p class="muted small">Changes within 5 seconds of a publish, cross-fading so nothing flashes. Only an authorized publish changes it.</p>
       </div>
     </div>`;
-  box.querySelector(".screen.onair iframe").src = `${screenPath(key)}?bg=black`;
   box.dataset.built = "1";
+  const sel = box.querySelector("select[data-page]"); sel.innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}" ${v === pageBg(key) ? "selected" : ""}>${l}</option>`).join("");
 }
 function renderScreens() {
   for (const key of Object.keys(SCREEN_IDS)) {
@@ -549,8 +611,11 @@ function renderScreens() {
     if (!box.dataset.built) buildScreen(key);
     // the draft preview reloads only when its address changes; the on-air frame never reloads
     const dFrame = box.querySelector(".screen.draft iframe");
-    const dAddr = screenAddress(draft[key], { bg: "black", sample: "auto" });
+    const dAddr = screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity, sample: "auto" });
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
+    const oFrame = box.querySelector(".screen.onair iframe");
+    const oAddr = `${screenPath(key)}?${displayParams(secDisplay("screens")).toString()}`;
+    if (oFrame.dataset.addr !== oAddr) { oFrame.dataset.addr = oAddr; oFrame.src = oAddr; }
     const form = box.querySelector(".sform");
     if (!form.contains(document.activeElement)) form.innerHTML = screenForm(key);
     box.querySelector("a[data-open=draft]").href = screenDraftUrl(key);
@@ -567,6 +632,7 @@ function renderScreens() {
     box.querySelector(".whynot").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
     pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the on-air screen" : `Make this draft the on-air screen (${describeScreen(draft[key])})`;
     pull.disabled = !canPull() || !live;
+    box.querySelector(".lockmark").hidden = canPublish();
   }
   scaleScreens();
 }
@@ -653,7 +719,7 @@ function renderDetail() {
     for (const cid of draft.featuredCharts) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
       if (chart.only && !chart.only(r)) continue;
-      cg.appendChild(cards.card({ chart, race: r, priority: i === 0 ? 1 : 2, open: "show", menu: [{ label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
+      cg.appendChild(cards.card({ chart, race: r, section: "detail", priority: i === 0 ? 1 : 2, open: "show", menu: [{ label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
     }
     if (!cg.children.length) cg.innerHTML = `<div class="empty">No featured charts selected.</div>`;
     row.appendChild(cg); grid.appendChild(row);
@@ -720,7 +786,7 @@ function renderMovement() {
     for (const cid of draft.movementCharts.filter((id) => seriesOf(id) === series)) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
       const params = chart.id === "D5" && draft.keyRaceIds.length ? { races: draft.keyRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(",") } : null;
-      grid.appendChild(cards.card({ chart, params, priority: 3, open: "show", menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
+      grid.appendChild(cards.card({ chart, params, section: series === "D" ? "broad" : "movement", priority: 3, open: "show", menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
     }
     if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add ${series} charts from the Chart Catalog below.</div>`;
   }
@@ -765,7 +831,7 @@ function catalogBody(r, featured) {
   const cg = document.createElement("div"); cg.className = "cardgrid";
   for (const chart of CHARTS.filter((c) => c.kind === "race")) {
     if (chart.only && !chart.only(r)) continue;
-    const el = cards.card({ chart, race: r, priority: 9, isStatic: true, open: "show" });
+    const el = cards.card({ chart, race: r, section: "catalog", priority: 9, isStatic: true, open: "show" });
     const on = draft.featuredCharts.includes(chart.id);
     el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="featchart" data-chart="${chart.id}" title="Featured charts apply to every featured race">${on ? "★ Featured chart" : "☆ Make featured chart"}</button>`);
     cg.appendChild(el);
@@ -786,11 +852,6 @@ for (const id of ["cq", "cstate", "coffice"]) $(id).addEventListener(id === "cq"
 document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventListener("click", () => {
   const f = c.dataset.cf; cfilters.has(f) ? cfilters.delete(f) : cfilters.add(f); c.classList.toggle("on", cfilters.has(f)); renderCatalog(); cards.prune();
 }));
-$("bg").addEventListener("change", () => { try { localStorage.setItem("studio.bg", $("bg").value); } catch {} cards.refreshLinks(); });
-try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").value = bg; } catch {}
-// Chart Opacity (10% steps) for opened graphics and the ticker; per browser, like the background colour.
-$("opacity").addEventListener("change", () => { try { localStorage.setItem("studio.opacity", $("opacity").value); } catch {} cards.refreshLinks(); });
-try { const o = localStorage.getItem("studio.opacity"); if (o !== null && [...$("opacity").options].some((x) => x.value === o)) $("opacity").value = o; } catch {}
 
 // ---------- Persistent Elements (A series, except the ticker) ----------
 // Each element's inputs live in draft.persistentSettings[id] and go into its preview and open URLs.
@@ -805,7 +866,7 @@ function renderPersistent() {
     const chart = CHARTS.find((c) => c.id === id); if (!chart) continue;
     const st = draft.persistentSettings[id] ?? {};
     const race = st.raceId ? index?.byId?.get(st.raceId) ?? null : null;
-    const el = cards.card({ chart, race, params: id === "A2" ? { name: st.name, title: st.title } : null, priority: 4, showRace: !!race, open: "show", menu: [{ label: "Remove from Persistent Elements…", onClick: () => toggleChart(chart.id) }] });
+    const el = cards.card({ chart, race, params: id === "A2" ? { name: st.name, title: st.title } : null, section: "persistent", priority: 4, showRace: !!race, open: "show", menu: [{ label: "Remove from Persistent Elements…", onClick: () => toggleChart(chart.id) }] });
     const inputs = PERSIST_INPUTS[id] ?? [];
     if (inputs.length) {
       const form = document.createElement("div"); form.className = "pform";
@@ -834,7 +895,7 @@ function renderChartCatalog() {
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : kind === "other" ? "persistentCharts" : "movementCharts";
       const on = draft[key].includes(chart.id);
-      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, priority: 6, showRace: false });
+      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, section: "charts", priority: 6, showRace: false });
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
@@ -868,8 +929,7 @@ let timers = [];
 async function boot() {
   timers.forEach(clearInterval);
   draft = readLocal() ?? normalize(DEFAULTS);
-  frame.src = `/ticker?preview=1&bg=black&src=local`;   // the builder: fed by postMessage
-  liveFrame.src = `/ticker?bg=black`;                   // the live ticker itself, reading what is published
+  renderDisplayControls(); renderTickerFrames();   // the builder frame is fed by postMessage; the live one reads what is published
   scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();

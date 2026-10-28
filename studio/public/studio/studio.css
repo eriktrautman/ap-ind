@@ -77,12 +77,8 @@ main > section.card + section.card::before { content: ""; display: block; height
 .cardhead h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--navy); margin: 0; }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .callhl { margin: 4px 0 10px; font-size: 13.5px; } .callhl input { vertical-align: -2px; margin-left: 4px; }
-.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 12px 0 0; font-size: 13px; }
-.gset { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 10px 18px 12px; border: 1px solid var(--sand); border-radius: 6px; background: #fff; }
-.gset legend { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); padding: 0 6px; }
 .bgpick { color: var(--muted); }
 .defaultsbtn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-left: 4px; }
-.toolbar #thumbbudget { order: -1; }
 .pubrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 12px; padding: 8px 12px; background: #fff; border: 2px solid var(--navy); border-radius: 6px; font-size: 12.5px; }
 .pubrow .spacer { flex: 1; }
 .pubrow button { font-size: 12px; padding: 3px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
@@ -276,8 +272,7 @@ dialog::backdrop { background: #071222aa; }
   .testbanner { font-size: 11px; padding: 3px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .testbanner .wide { display: none; }
   .howbox { font-size: 13px; padding: 8px 12px; }
-  .toolbar { margin-top: 8px; }
-  main > section.card { margin: 22px 0; padding: 10px 12px 14px; }
+    main > section.card { margin: 22px 0; padding: 10px 12px 14px; }
   .cardhead h2 { font-size: 19px; }
   /* Nothing may push past the right edge: two-column layouts stack, list rows put their buttons on a second line. */
   .cols { grid-template-columns: 1fr; gap: 14px; }
@@ -288,8 +283,7 @@ dialog::backdrop { background: #071222aa; }
   .raceband { gap: 8px; padding: 7px 10px; } .raceband .lab { font-size: 15px; } .raceband .ttl { font-size: 14px; }
   .filters { gap: 5px; }
   .racegrid, .chartsgrid, .persistgrid { grid-template-columns: 1fr; }
-  .toolbar { font-size: 12.5px; }
-  body { overflow-x: hidden; }
+    body { overflow-x: hidden; }
 }
 
 .builderhead { margin-top: 40px; }
@@ -303,7 +297,7 @@ dialog::backdrop { background: #071222aa; }
 .screen.onair { border: 3px solid var(--navy); box-shadow: 0 0 0 4px #e6ebf5; }
 .screen .frame { position: relative; width: 100%; aspect-ratio: 1920 / 1080; overflow: hidden; background: #000; }
 .screen .frame.clickable { cursor: pointer; }
-.screen .frame.clickable:hover::after { content: "Show ↗"; position: absolute; right: 8px; top: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.screen .frame.clickable:hover::after { content: "Show ↗"; position: absolute; right: 8px; bottom: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 .screen .frame::before { position: absolute; left: 8px; top: 8px; z-index: 2; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 2px 8px; border-radius: 4px; color: #fff; pointer-events: none; }
 .screen.draft .frame::before { content: "DRAFT · NOT ON AIR"; background: #d98a2b; color: #1a1200; }
 .screen.onair .frame::before { content: "ON AIR"; background: var(--navy) radial-gradient(circle at 10px 50%, #22c55e 3.5px, transparent 4.2px) no-repeat; padding-left: 20px; }
@@ -337,3 +331,23 @@ button.noauth, button.noauth:disabled, .pubrow button.publish.noauth:disabled, .
 .screenrow.ticker .screen.draft { background: #fff; }
 .screen.draft .tickerurl { margin: 8px 12px 4px; } .screen.draft p.inner { margin: 4px 12px 12px; color: var(--muted); }
 .builderhead { margin-top: 28px; }
+
+/* ---------- display settings ---------- */
+.card.display .disprow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; font-size: 13px; color: var(--muted); }
+.card.display .disprow .spacer { flex: 1; }
+.card.display .warnline { background: #fdf6ea; border-left: 4px solid var(--warn); padding: 8px 12px; border-radius: 6px; margin: 12px 0 6px; font-size: 13px; color: var(--ink); }
+.cardhead .secdisp { margin-left: auto; display: inline-flex; gap: 14px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.cardhead .secdisp select, .pagebg select { font-size: 12px; padding: 2px 6px; }
+.pagebg { font-size: 11.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; }
+@media (max-width: 700px) { .cardhead .secdisp { margin-left: 0; flex-basis: 100%; } }
+/* ---------- footer ---------- */
+footer.built { margin: 48px 0 0; padding: 36px 24px; background: var(--navy); color: var(--gold); font-family: var(--serif); font-size: 26px; text-align: center; letter-spacing: .02em; }
+
+.screen .frame .lockmark { position: absolute; right: 8px; top: 8px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; background: #000b; color: #fff; cursor: help; }
+.screen .frame .lockmark .lock { margin: 0; }
+.tform h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 16px 0 6px; font-weight: 700; }
+.tform .callhl { margin: 0 0 4px; }
+.tform .list .row { background: #fff; }
+
+/* Dropdowns: our own chevron with room on the right, so the arrow is not jammed against the border. */
+select { appearance: none; -webkit-appearance: none; padding-right: 26px !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%236b7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; }

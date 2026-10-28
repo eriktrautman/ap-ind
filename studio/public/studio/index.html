@@ -48,24 +48,39 @@
 
   <details class="howbox" id="howbox"><summary><b>How to Use This Site</b></summary><ul id="howtext"></ul></details>
 
-  <div class="toolbar">
-    <fieldset class="gset" title="These apply to every graphic and the ticker opened from this page, whichever section or card. Remembered in this browser; never published.">
-      <legend>Default Chart Settings</legend>
-      <label class="bgpick">Graphic Background: <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>
-      <label class="bgpick opick">Chart Opacity: <select id="opacity" title="Opacity of the chart panel (the dark card), for layering over video; 100% is solid"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
-    </fieldset>
-    <button id="defaults" class="defaultsbtn" title="Reset everything on this page to the shipped defaults. The LIVE TICKER is not touched."><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Restore All Default Settings</button>
-    <span class="muted small" id="thumbbudget"></span>
-  </div>
+  <section class="card display" id="displayset">
+    <div class="cardhead"><h2>Chart Display Settings</h2><span class="muted small">The background and chart opacity to start from. Each section below has its own pair on its title line, and each live draft its own BG.</span></div>
+    <div class="disprow">
+      <label>Background <select id="topbg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>
+      <label>Opacity <select id="topopacity"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
+      <button id="applyall" class="primary">Apply to All Charts</button>
+      <span class="spacer"></span>
+      <button id="defaults" class="defaultsbtn"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Restore All Default Settings</button>
+    </div>
+    <div class="warnline">Apply to All Charts sets the Background and Opacity dropdowns of every section, and the BG of every live draft, to these values. Each of those dropdowns keeps working on its own afterwards. Nothing on air changes.</div>
+    <div class="muted small" id="thumbbudget"></div>
+  </section>
 
   <section class="card" id="ticker">
-    <div class="cardhead"><h2>Live Ticker</h2></div>
+    <div class="cardhead" data-sec="ticker"><h2>Live Ticker</h2><span class="secdisp"></span></div>
     <div class="screenrow ticker">
       <div class="screen draft">
         <div class="frame clickable" id="previewframe" title="Open this ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker Builder preview"></iframe></div>
-        <div class="gfoot"><span class="muted small">Ticker Builder · draft on this page</span><span class="spacer"></span><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy Draft URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">Ticker Builder · draft on this page <span id="previewnote"></span></span><span class="spacer"></span><label class="pagebg">BG <select data-page="ticker"></select></label><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy Draft URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <p class="tickerurl"><span class="k" title="A ticker built entirely from its address: the races below by race id, the AP Call highlight, the items and idle text. Change the builder and the address follows.">Address for this ticker</span> <a id="tickerurl" class="url" target="_blank" rel="noopener"></a></p>
         <p class="muted small inner">Use this ticker by its address, which carries every parameter and so never changes and needs no sign-in; or publish it to become the live ticker.</p>
+        <div class="sform tform">
+          <p class="callhl"><label class="toggle">Highlight AP Calls Yellow: <input type="checkbox" id="callhl"></label></p>
+          <h4>Manual items <span class="muted" id="manualcount"></span></h4>
+          <form class="addmanual" id="addmanual"><input id="manualtext" placeholder="Text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add</button></form>
+          <div class="list" id="manual"></div>
+          <h4>Idle text</h4>
+          <input id="idletext" placeholder="Welcome to the Independent Election Night coverage" maxlength="240">
+          <h4>Ticker races <span class="muted" id="pincount"></span></h4>
+          <div class="filters addfeat"><input id="pinq" placeholder="Add a race to the ticker: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
+          <div class="list pins" id="pins"></div>
+          <p class="muted small">Or add races from the <a href="#catalog">Race Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
+        </div>
       </div>
       <div class="screenmid">
         <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -76,40 +91,23 @@
         <span class="pubstate" id="pubstate">…</span>
       </div>
       <div class="screen onair">
-        <div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="Live ticker"></iframe></div>
+        <div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="Live ticker"></iframe><span class="lockmark" hidden title="You cannot change what is on air from this sign-in"><svg class="lock" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span></div>
         <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" id="livecopy" type="button" title="Copy the live ticker's address">Copy Live URL</button><a class="openbtn" id="liveopen" target="_blank" rel="noopener" title="Open the live ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a id="liveurl" class="url" target="_blank" rel="noopener"></a></p>
         <div class="liveparams" id="liveparams"></div>
         <p class="muted small">Picks up a publish within 5 seconds at the next item boundary, without restarting the crawl. Only an authorized publish changes it.</p>
       </div>
     </div>
-    <h3 class="builderhead">Ticker Builder settings <span class="muted" id="previewnote"></span></h3>
-    <p class="callhl"><label class="toggle">Highlight AP Calls Yellow: <input type="checkbox" id="callhl"></label></p>
-      <div class="cols">
-      <div class="col">
-        <h3>Ticker races <span class="muted" id="pincount"></span></h3>
-        <div class="filters addfeat"><input id="pinq" placeholder="Add a race to the ticker: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
-        <div class="list pins" id="pins"></div>
-        <p class="muted small">Or add races from the <a href="#catalog">Race Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
-      </div>
-      <div class="col">
-        <h3>Manual items <span class="muted" id="manualcount"></span></h3>
-        <form class="addmanual" id="addmanual"><input id="manualtext" placeholder="Text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add</button></form>
-        <div class="list" id="manual"></div>
-        <h3>Idle text</h3>
-        <input id="idletext" placeholder="Welcome to the Independent Election Night coverage" maxlength="240">
-      </div>
-    </div>
 </section>
 
   <section class="card" id="screens">
-    <div class="cardhead"><h2>Live Screens</h2><span class="muted small">Two fixed addresses for full-screen charts. Build the draft on the left; publish it to the on-air screen on the right.</span></div>
+    <div class="cardhead" data-sec="screens"><h2>Live Screens</h2><span class="muted small">Two fixed addresses for full-screen charts. Build the draft on the left; publish it to the on-air screen on the right.</span><span class="secdisp"></span></div>
     <div class="screenblock" id="screenA"></div>
     <div class="screenblock" id="screenB"></div>
   </section>
 
   <section class="card" id="detail">
-    <div class="cardhead"><h2>Featured Races</h2><span class="muted small">Featuring a race only makes its charts easy to grab here, one row per race. It changes nothing in the ticker or graphics.</span></div>
+    <div class="cardhead" data-sec="detail"><h2>Featured Races</h2><span class="muted small">Featuring a race only makes its charts easy to grab here, one row per race. It changes nothing in the ticker or graphics.</span><span class="secdisp"></span></div>
     <div class="cols">
       <div class="col">
         <h3>Featured races <span class="muted" id="featcount"></span></h3>
@@ -128,22 +126,22 @@
   </section>
 
   <section class="card" id="broad">
-    <div class="cardhead"><h2>Races Overview</h2><span class="muted small">Where the charts for election-night coverage of many races at once live: Senate and House maps, balance of power, key races, zoom-ins, the popular vote, too close to call (the D series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
+    <div class="cardhead" data-sec="broad"><h2>Races Overview</h2><span class="muted small">Where the charts for election-night coverage of many races at once live: Senate and House maps, balance of power, key races, zoom-ins, the popular vote, too close to call (the D series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span><span class="secdisp"></span></div>
     <div class="cardgrid" id="broadgrid"></div>
   </section>
 
   <section class="card" id="movement">
-    <div class="cardhead"><h2>Movement Overview</h2><span class="muted small">The independent movement as a whole rather than any one race: the featured-races board, the national independent vote, polls against results (the C series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
+    <div class="cardhead" data-sec="movement"><h2>Movement Overview</h2><span class="muted small">The independent movement as a whole rather than any one race: the featured-races board, the national independent vote, polls against results (the C series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span><span class="secdisp"></span></div>
     <div class="cardgrid" id="movegrid"></div>
   </section>
 
   <section class="card" id="persistent">
-    <div class="cardhead"><h2>Persistent Elements</h2><span class="muted small">Lower thirds and strips (the A series). Add from the <a href="#charts">Chart Catalog</a>; each one takes its inputs here; remove from a card's ⋯ menu. The live ticker has its own <a href="#ticker">Live Ticker</a> section.</span></div>
+    <div class="cardhead" data-sec="persistent"><h2>Persistent Elements</h2><span class="muted small">Lower thirds and strips (the A series). Add from the <a href="#charts">Chart Catalog</a>; each one takes its inputs here; remove from a card's ⋯ menu. The live ticker has its own <a href="#ticker">Live Ticker</a> section.</span><span class="secdisp"></span></div>
     <div class="cardgrid" id="persistgrid"></div>
   </section>
 
   <section class="card" id="catalog">
-    <div class="cardhead"><h2>Race Catalog</h2><span class="muted small">Every race in the AP feed. Add any to the ticker or feature it; expand a race for all of its graphics.</span></div>
+    <div class="cardhead" data-sec="catalog"><h2>Race Catalog</h2><span class="muted small">Every race in the AP feed. Add any to the ticker or feature it; expand a race for all of its graphics.</span><span class="secdisp"></span></div>
     <div class="filters">
       <input id="cq" placeholder="Search label, state, office, candidate" size="30">
       <select id="cstate"><option value="">All states</option></select>
@@ -158,7 +156,7 @@
     <div class="catalog" id="catalogList"></div>
   </section>
   <section class="card" id="charts">
-    <div class="cardhead"><h2>Chart Catalog</h2><span class="muted small">Every chart in the lookbook, built or not. Per-race charts go into the Featured Races set (one set for every featured race); C charts into the Movement Overview; D charts into the Broad Races Overview.</span></div>
+    <div class="cardhead" data-sec="charts"><h2>Chart Catalog</h2><span class="muted small">Every chart in the lookbook, built or not. Per-race charts go into the Featured Races set (one set for every featured race); C charts into the Movement Overview; D charts into the Broad Races Overview.</span><span class="secdisp"></span></div>
     <h3>Persistent elements (A series) · always on, no section</h3>
     <div class="cardgrid dense" id="chartsA"></div>
     <h3>Per-race charts (B series) · go into Featured Races</h3>
@@ -171,6 +169,8 @@
     <div class="cardgrid dense" id="chartsF"></div>
   </section>
 </main>
+
+<footer class="built">Built by Erik Trautman</footer>
 
 <dialog id="dlg">
   <form method="dialog" class="dlgform">
