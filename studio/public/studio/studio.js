@@ -160,10 +160,15 @@ $("applyall").addEventListener("click", async () => {
 const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
+/** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
+const switchPending = () => { const want = settings?.resultsType ?? settings?.envResultsType ?? null, have = status?.resultsType ?? null; return !!want && !!have && want !== have; };
 async function loadStatus() {
-  try { const r = await fetch(`/data/status.json?t=${Math.floor(Date.now() / 15_000)}`, { cache: "no-store" }); const next = r.ok ? await r.json() : null; status = next?.generated ? next : null; } catch {}
   try { settings = await api("/api/settings"); } catch {}
+  // While a Test/Live switch waits for the poller to confirm it, every read goes past the CDN's 15 s copy.
+  const bucket = switchPending() ? Date.now() : Math.floor(Date.now() / 15_000);
+  try { const r = await fetch(`/data/status.json?t=${bucket}`, { cache: "no-store" }); const next = r.ok ? await r.json() : null; status = next?.generated ? next : null; } catch {}
   renderStatus();
+  if (switchPending()) { clearTimeout(loadStatus.again); loadStatus.again = setTimeout(loadStatus, 3_000); }
   cards.setData({ status });
 }
 async function loadIndex() {
@@ -331,8 +336,11 @@ function renderStatus() {
   const paused = settings?.pollEnabled === false;
   const cls = paused ? "warn" : !s ? "bad" : age < 180 ? "ok" : age < 600 ? "warn" : "bad";
   const feedLabel = paused ? "Polling paused" : !s ? "No poller status yet" : age < 180 ? "AP feed live" : age < 600 ? `AP data ${Math.round(age / 60)} min old` : "AP feed stale";
-  // Test vs Live shows what the poller is actually tracking (its last run), not this machine's settings file.
-  const rt = s?.resultsType ?? settings?.resultsType ?? settings?.envResultsType ?? "t";
+  // Test vs Live shows what the poller is actually tracking (its last run). Between a switch and the poll that
+  // confirms it, the bar says so instead of flipping back and forth with the CDN's older copies.
+  const have = s?.resultsType ?? null, want = settings?.resultsType ?? settings?.envResultsType ?? null;
+  const pending = switchPending();
+  const rt = have ?? want ?? "t";
   const apOk = s && !(s.lastError && (s.consecutiveFailures ?? 0) > 0);
   const st = (id, html) => `<span class="st" id="${id}">${html}</span>`;
   const countyLatest = s?.countyFreshness ? Object.values(s.countyFreshness).sort().at(-1) ?? null : null;
@@ -340,7 +348,7 @@ function renderStatus() {
     st("st-feed", `<span class="dot ${cls === "ok" ? "" : cls}"></span><b>${esc(feedLabel)}</b>`) +
     st("st-refresh", `<span class="k">Last Refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
     st("st-asof", `<span class="k">Data As Of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
-    st("st-rt", `<span class="k">Data Stream</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
+    st("st-rt", `<span class="k">Data Stream</span>${pending ? `<b style="color:#ffd166;font-weight:700" title="Switched; waiting for the next poll to confirm. The outputs follow within about a minute.">${rt === "l" ? "LIVE" : "TEST"} → ${want === "l" ? "LIVE" : "TEST"} ⏳</b>` : `<b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`}`) +
     st("st-api", `<span class="k">AP Access</span><span class="dot ${!s ? "off" : apOk ? "" : "bad"}"></span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     st("st-county", `<span class="k">County Data</span><b title="Each state's county units refresh every 10 minutes in rotation; this is the most recent one">${esc(countyLatest ? `every 10 min · last ${ago(countyLatest)}` : "every 10 min")}</b>`) +
     st("st-charts", `<span class="k">Chart Refresh</span><b title="Every graphic re-reads the results every 15 seconds">≤ 15 s</b>`) +
@@ -348,7 +356,7 @@ function renderStatus() {
   $("testbanner").hidden = rt !== "t";
   $("loginbanner").hidden = loginKind !== "test";
 
-  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt; b.classList.toggle("on", on); b.textContent = `${on ? (b.dataset.rt === "t" ? "🔧 " : "✓ ") : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer(); b.title = !isProducer() ? NOT_PRODUCER : on ? "Current results" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
+  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt, target = pending && b.dataset.rt === want; b.classList.toggle("on", on); b.classList.toggle("pending", target); b.textContent = `${target ? "⏳ " : on ? (b.dataset.rt === "t" ? "🔧 " : "✓ ") : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer() || pending; b.title = !isProducer() ? NOT_PRODUCER : target ? "Switching: waiting for the next poll to confirm" : on ? "Current data stream" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
   // One lock on the group's label, not one per button; the selected side keeps its colour so the choice stays obvious.
   { const lbl = $("rtype").querySelector(".lbl"); const has = !!lbl.querySelector(".lock"); if (!isProducer() && !has) lbl.insertAdjacentHTML("afterbegin", LOCK); else if (isProducer() && has) lbl.querySelector(".lock").remove(); }
   $("pause").querySelector(".lbl").textContent = paused ? "Resume polling" : "Pause polling";
@@ -410,7 +418,8 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
   const body = rt === "l" ? `<p>The ticker, every graphic and the public watch party at ${esc(location.host)} show real AP results from the next poll.</p>` : "<p>Real results are replaced by AP's practice simulation on the next poll.</p>";
   if (!(await ask({ title: rt === "l" ? "Switch to LIVE results?" : "Switch to AP TEST data?", body, ok: rt === "l" ? "Go live" : "Use test data", danger: rt === "l" }))) return;
   settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, resultsType: rt }) });
-  renderStatus(); runPoll(false);
+  renderStatus(); $("pollmsg").textContent = `Switching to ${rt === "l" ? "LIVE" : "TEST"}: polling now; the bar confirms when the poller has run on the new stream.`;
+  await runPoll(false); loadStatus();
 }));
 
 // ---------- shared race rendering ----------

@@ -376,3 +376,7 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 /* Live Screen numbering: the same bubble as a featured race's position, on the section's title line. */
 .screenhead { display: flex; align-items: center; gap: 10px; }
 .screenhead .pos.big { font-family: var(--mono); font-size: 16px; font-weight: 700; color: #fff; background: var(--navy); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+
+/* A Data Stream switch waiting for the poller: the target side pulses amber. */
+.seg button.pending, .seg button.pending:disabled { background: #fdf3e3; color: #7a5b0a; border-color: var(--warn); animation: pend 1.2s ease-in-out infinite; }
+@keyframes pend { 50% { opacity: .55; } }
