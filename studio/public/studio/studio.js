@@ -150,7 +150,11 @@ const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-
 const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs the real password.";
 const NOT_CONFIGURED = "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker.";
 /** Grey out a producer-only control for the current sign-in. */
-function producerOnly(el) { el.disabled = !isProducer(); el.classList.toggle("noauth", !isProducer()); if (!isProducer()) el.title = NOT_PRODUCER; }
+function producerOnly(el) {
+  el.disabled = !isProducer(); el.classList.toggle("noauth", !isProducer()); if (!isProducer()) el.title = NOT_PRODUCER;
+  const has = !!el.querySelector(".lock");
+  if (!isProducer() && !has) el.insertAdjacentHTML("afterbegin", LOCK); else if (isProducer() && has) el.querySelector(".lock").remove();
+}
 const canPull = () => runtime ? !!runtime.production?.canPull : !liveError;
 // The live ticker is always named by its web address: on the website that is this site; on a laptop it is
 // the website it points at, or the laptop itself (GLOBAL=self).
