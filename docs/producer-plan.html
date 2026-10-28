@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12, plus B14",
   note: "S109 (B12) blocked on the AP VoteCast licence; everything else done",
-  updated: "2026-10-28T20:05:02Z",
+  updated: "2026-10-28T20:12:09Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -257,6 +257,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T20:12:09Z", what: "Toolbar label is Chart panel opacity." },
   { t: "2026-10-28T20:05:02Z", what: "New B14 Head-to-head graphic (/g/head-to-head.html): two photo cards face to face. Pair is the two vote leaders once counting starts, else the featured independent and whoever the latest poll puts closest (then incumbent, then the seat holder's party); ?a=&b= fixes it. Centre shows margin and everyone-else share live, or the poll, last result and seat before. Checked live (NE-SEN), pre-results (AK-AL), demo mode and the registry." },
   { t: "2026-10-28T20:00:40Z", what: "Chart panel opacity: a dropdown in the control room toolbar (Chart panel at 100% to 10%, next to the background choice, remembered per browser) adds ?opacity=NN to every opened graphic and the ticker; the page rewrites the panel colour variables as rgba, so the dark card goes translucent while text and bars stay solid. Checked on race, swing, lower third, explainer, quote and the ticker." },
   { t: "2026-10-28T19:50:39Z", what: "Poller sends half as many AP requests: county units for a tenth of the states each run (every state every ten minutes) instead of a fifth, so a run is 6 or 7 requests against AP's 10 a minute instead of 11 or 12. Checked: AP's quota counter is not moving on this key, so nothing had failed, but the burst would have tripped an enforced limit on the night. README request budget corrected." },
