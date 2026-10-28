@@ -105,7 +105,8 @@ main > section.card + section.card::before { content: ""; display: block; height
 .tickerurl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0 10px; font-size: 12.5px; }
 .tickerurl .k { color: var(--muted); cursor: help; }
 .tickerurl .url { font-family: var(--mono); font-size: 11.5px; color: var(--navy); word-break: break-all; }
-.pollstrip .pl-k { font-family: var(--serif); color: var(--navy); font-size: 14px; cursor: help; }
+.pollstrip .pl-k { font-weight: 700; letter-spacing: .08em; color: var(--navy); font-size: 12px; cursor: help; }
+.pollstrip .readonly { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #eee; color: #666; border: 1px solid #d4d4d4; }
 .pollstrip .pl-sum { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .pollstrip .pl-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 .pollstrip .note { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
@@ -273,7 +274,7 @@ dialog::backdrop { background: #071222aa; }
   .pollstrip { padding: 3px 10px; font-size: 12px; }
   .pollstrip button { padding: 2px 7px; font-size: 11.5px; }
   .pollstrip { gap: 8px; }
-  .pollstrip .pl-sum, .pollstrip .note, .pollstrip #pollfresh, .pollstrip .seg .lbl { display: none; }
+  .pollstrip .note, .pollstrip #pollfresh, .pollstrip .seg .lbl { display: none; }
   .pollstrip .pl-actions { gap: 4px; }
   .testbanner { font-size: 11px; padding: 3px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .testbanner .wide { display: none; }

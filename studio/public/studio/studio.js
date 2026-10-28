@@ -283,7 +283,7 @@ function renderStatus() {
   for (const el of [$("pollnow"), $("pollfresh"), $("pause"), ...$("rtype").querySelectorAll("button")]) producerOnly(el);
   $("pause").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
-  $("pollersummary").textContent = s ? `${s.raceCount ?? "?"} races · ${s.called ?? "?"} called · last run ${ago(s.generated)} (${s.durationMs ?? "?"} ms)${(s.consecutiveFailures ?? 0) > 0 ? ` · ${s.consecutiveFailures} failures in a row` : ""}` : "no status yet";
+  $("readonly").hidden = isProducer();
 
   const problems = [];
   if (!index && runtime && !runtime.polling) problems.push({ warn: true, title: "No results on this laptop yet.", text: "The app was started with --no-poll and the local store holds no index. Start it without --no-poll, or run npm run poll, and the lists fill in within a minute." });
