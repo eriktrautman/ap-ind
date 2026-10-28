@@ -358,3 +358,7 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 
 .tform .tgrid { display: grid; grid-template-columns: 160px 200px; gap: 8px 12px; align-items: center; margin: 0 0 8px; font-size: 13px; color: var(--ink); }
 .tform .tgrid select { width: 100%; }
+
+/* An empty list draws nothing (not a collapsed bordered box), and the last row does not double the list border. */
+.list:empty { display: none; }
+.list .row:last-child { border-bottom: 0; }
