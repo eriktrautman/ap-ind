@@ -364,3 +364,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 .list .row:last-child { border-bottom: 0; }
 
 .tform .hint { margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* A transparent background shows as a checkerboard behind the preview, the way image editors do. */
+.gcard .thumb.checker, .screen .frame.checker { background-color: #d9d9d9; background-image: repeating-conic-gradient(#bdbdbd 0 25%, transparent 0 50%); background-size: 24px 24px; }

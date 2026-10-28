@@ -84,6 +84,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "bla
     f.title = c.title;
     f.loading = "eager";
     f.src = pageUrl(c, false); f.dataset.u = f.src;
+    c.thumb.classList.toggle("checker", !getDisplay(c.section).bg);   // transparent background: a checkerboard behind the preview
     f.addEventListener("load", () => { feedFrame(f); const d = getDraft(); if (d) f.contentWindow?.postMessage({ type: "producer", state: d }, "*"); });
     c.thumb.querySelector(".ph")?.remove();
     c.thumb.appendChild(f);
@@ -198,7 +199,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "bla
   }
   function refreshLinks() { for (const c of cards) if (c.chart.built) { c.link.href = pageUrl(c, true); if (c.copy) c.copy.dataset.url = copyUrl(c); } }
   /** Display settings changed: live previews whose address changed reload. */
-  function refreshFrames() { for (const c of cards) if (c.frame) { const u = pageUrl(c, false); if (c.frame.dataset.u !== u) { c.frame.dataset.u = u; c.frame.src = u; } } }
+  function refreshFrames() { for (const c of cards) { c.thumb.classList.toggle("checker", !getDisplay(c.section).bg); if (c.frame) { const u = pageUrl(c, false); if (c.frame.dataset.u !== u) { c.frame.dataset.u = u; c.frame.src = u; } } } }
   setInterval(() => { for (const c of cards) renderFresh(c); reconcile(); }, 15_000);
   document.addEventListener("click", (e) => { if (!e.target.closest(".kebab, .menu")) for (const m of document.querySelectorAll(".gcard .menu")) m.hidden = true; });
   window.addEventListener("scroll", schedule, { passive: true });
