@@ -113,11 +113,7 @@ const PAGES = ["ticker", "screenA", "screenB"];
 function loadDisplay() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem("studio.display") ?? "null"); } catch {}
-  if (!d) {   // first run: carry over the old single pair, if any
-    let bg = "black", opacity = "100";
-    try { bg = localStorage.getItem("studio.bg") ?? "black"; opacity = localStorage.getItem("studio.opacity") ?? "100"; } catch {}
-    d = { top: { bg, opacity }, sections: {}, pages: {} };
-  }
+  if (!d) d = { top: { bg: "black", opacity: "100" }, sections: {}, pages: {} };   // the defaults: Black at 100%
   d.top ??= { bg: "black", opacity: "100" }; d.sections ??= {}; d.pages ??= {};
   return d;
 }
@@ -316,9 +312,10 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, featured races and charts, overview charts, persistent elements and their inputs. This browser's saved settings are replaced.</div><p><b>The LIVE TICKER is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, featured races and charts, overview charts, persistent elements and their inputs, and every Background and Opacity dropdown (Black at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
+  display = { top: { bg: "black", opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: Black at 100%
   renderAll(); cards.broadcast(draft);
 }
 $("publish").addEventListener("click", publish);
