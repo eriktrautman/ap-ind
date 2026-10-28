@@ -1,6 +1,6 @@
 // Poller settings the studio can change without a redeploy: results type (t = AP test data,
 // l = live) and a pause switch. The poller reads this file at the start of every run.
-import { requireStudio, readBody } from "../lib/auth.js";
+import { requireProducer, readBody } from "../lib/auth.js";
 import { readJson, writeJson, defaultSettings } from "../lib/store.js";
 
 export default async function handler(req, res) {
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     return;
   }
   if (req.method === "PUT") {
-    if (!(await requireStudio(req, res))) return;
+    if (!(await requireProducer(req, res))) return;
     const b = readBody(req);
     const next = {
       resultsType: b.resultsType === "l" || b.resultsType === "t" ? b.resultsType : null,

@@ -4,7 +4,7 @@
 // The body may carry any subset of the fields in lib/control.js; fields it leaves out keep
 // their stored value, so an older panel that sends only the ticker fields cannot wipe the
 // featured races or chart lists. Every field is validated and capped by normalize().
-import { requireStudio, readBody } from "../lib/auth.js";
+import { requireProducer, readBody } from "../lib/auth.js";
 import { readJson, writeJson, defaultProducer } from "../lib/store.js";
 import { normalize, DEFAULTS } from "../lib/control.js";
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return;
   }
   if (req.method === "PUT") {
-    if (!(await requireStudio(req, res))) return;
+    if (!(await requireProducer(req, res))) return;
     try {
       const body = readBody(req);
       const prev = normalize((await readJson("producer.json")) ?? DEFAULTS);

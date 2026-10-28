@@ -1,11 +1,11 @@
-// A Live Screen: /live-screen-a or /live-screen-b. Reads the published screen definition (chart id, race,
+// A Live Screen: /live-screen-one or /live-screen-two. Reads the published screen definition (chart id, race,
 // state, parameters) every 5 seconds and shows that chart through its chart-id address (/g/B5?race=...), so
 // the switcher points at one address forever and the producer changes what it shows by publishing.
 // A change cross-fades: the new chart loads in a second frame underneath, and only once it has had time to
 // draw does it fade in and the old frame go, so nothing flashes on air.
 import { watchState, screenAddress } from "/g/control.js";
 
-const which = /live-screen-b/.test(location.pathname) ? "screenB" : "screenA";
+const which = /live-screen-(b|two)/.test(location.pathname) ? "screenB" : "screenA";
 const q = new URLSearchParams(location.search);
 if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
 const display = { bg: q.get("bg") ?? "", opacity: q.get("opacity") ?? "", sample: q.get("sample") ?? "", src: q.get("src") ?? "" };
@@ -27,7 +27,7 @@ function show(addr) {
     f.classList.add("on");
     const old = current; current = f; currentAddr = addr; pending = null;
     if (old) { old.classList.remove("on"); setTimeout(() => old.remove(), 400); }
-    document.title = `Live Screen ${which.slice(-1)} · ${addr.replace(/^\/g\//, "").split("?")[0]}`;
+    document.title = `Live Screen ${which === "screenB" ? "Two" : "One"} · ${addr.replace(/^\/g\//, "").split("?")[0]}`;
   }, 1500));
 }
 watchState({ intervalMs: 5_000, onState: (s) => { const def = s[which]; if (def) show(screenAddress(def, display)); } });

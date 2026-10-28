@@ -97,6 +97,15 @@ export async function requireStudio(req, res) {
   return false;
 }
 
+/** Producer-only actions (publish, poll, settings): the real password's cookie; the rehearsal cookie gets a 403. */
+export async function requireProducer(req, res) {
+  const kind = await authKind(req);
+  if (kind === "prod") return true;
+  if (kind === false) { res.status(401).json({ error: "not signed in" }); return false; }
+  res.status(403).json({ error: "producer only: this needs the real password, not the rehearsal one" });
+  return false;
+}
+
 export function readBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
   try { return JSON.parse(req.body || "{}"); } catch { return {}; }

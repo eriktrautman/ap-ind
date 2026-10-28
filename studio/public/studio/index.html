@@ -11,7 +11,7 @@
   <div class="brandrow">
     <b>IND Election Night</b><span class="subbrand">Control room</span>
     <nav class="sections" id="sectionnav">
-      <a href="#ticker">Ticker</a><a href="#screens">Live Screens</a><a href="#detail">Featured Races</a><a href="#broad">Broad Races Overview</a><a href="#movement">Movement Overview</a><a href="#persistent">Persistent</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
+      <a href="#ticker">Live Ticker</a><a href="#screens">Live Screens</a><a href="#detail">Featured Races</a><a href="#broad">Races Overview</a><a href="#movement">Movement Overview</a><a href="#persistent">Persistent</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
     </nav>
     <button class="link" id="logout" hidden>Sign out</button>
   </div>
@@ -19,7 +19,7 @@
     <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
   </div>
   <div class="pollstrip" id="poller" hidden>
-    <span class="pl-k">AP poller</span><span class="pl-sum" id="pollersummary"></span>
+    <span class="pl-k">AP poller</span><span class="ponly" title="Producer only: these change what every output shows. They need the real password; the rehearsal password cannot use them.">PRODUCER ONLY</span><span class="pl-sum" id="pollersummary"></span>
     <span class="pl-actions">
       <button id="pollnow">Poll now</button>
       <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">+ reset caches</button>
@@ -59,7 +59,7 @@
   </div>
 
   <section class="card" id="ticker">
-    <div class="cardhead"><h2>Ticker</h2></div>
+    <div class="cardhead"><h2>Live Ticker</h2></div>
 
     <h3>LIVE TICKER <span class="muted small">· the single ticker at a fixed address</span></h3>
     <div class="preview live"><div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="LIVE TICKER"></iframe></div>
@@ -71,7 +71,7 @@
     <h3 class="builderhead">Ticker Builder <span class="muted" id="previewnote"></span></h3>
     <div class="preview builder"><div class="frame clickable" id="previewframe" title="Open this ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker Builder preview"></iframe></div>
       <div class="gfoot"><span class="muted small">Preview of the builder on this page</span><span class="spacer"></span><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Show 1920×1080</a></div></div>
-    <div class="pubrow"><span class="pubstate" id="pubstate">…</span><span class="spacer"></span><button class="pull" id="pull" title="Copy the live ticker's parameters into the builder"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull from LIVE TICKER</button><button class="publish" id="publish" title="Make this builder the LIVE TICKER"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg>Publish to LIVE TICKER</button></div>
+    <div class="pubrow"><span class="pubstate" id="pubstate">…</span><span class="spacer"></span><button class="pull" id="pull" title="Copy the live ticker's parameters into the builder">Pull from Live</button><button class="publish" id="publish" title="Make this builder the live ticker">Publish to Live</button></div>
     <p class="muted small">The builder constructs a ticker from the races and items below. Use it two ways: by its <b>address</b>, which carries every parameter and so never changes and needs no sign-in; or, if you have access, <b>publish</b> it to become the LIVE TICKER above. <b>Pull</b> copies the live ticker's parameters into the builder.</p>
     <p class="tickerurl"><span class="k" title="A ticker built entirely from its address: the races on this page by race id, the AP Call highlight, the items and idle text. Change the builder and the address follows.">Address for this ticker</span> <a id="tickerurl" class="url" target="_blank" rel="noopener"></a></p>
     <p class="callhl"><label class="toggle">Highlight AP Calls Yellow: <input type="checkbox" id="callhl"></label></p>
@@ -118,7 +118,7 @@
   </section>
 
   <section class="card" id="broad">
-    <div class="cardhead"><h2>Broad Races Overview</h2><span class="muted small">Where the charts for election-night coverage of many races at once live: Senate and House maps, balance of power, key races, zoom-ins, the popular vote, too close to call (the D series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
+    <div class="cardhead"><h2>Races Overview</h2><span class="muted small">Where the charts for election-night coverage of many races at once live: Senate and House maps, balance of power, key races, zoom-ins, the popular vote, too close to call (the D series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span></div>
     <div class="cardgrid" id="broadgrid"></div>
   </section>
 
@@ -128,7 +128,7 @@
   </section>
 
   <section class="card" id="persistent">
-    <div class="cardhead"><h2>Persistent Elements</h2><span class="muted small">Lower thirds and strips (the A series). Add from the <a href="#charts">Chart Catalog</a>; each one takes its inputs here; remove from a card's ⋯ menu. The live ticker has its own <a href="#ticker">Ticker</a> section.</span></div>
+    <div class="cardhead"><h2>Persistent Elements</h2><span class="muted small">Lower thirds and strips (the A series). Add from the <a href="#charts">Chart Catalog</a>; each one takes its inputs here; remove from a card's ⋯ menu. The live ticker has its own <a href="#ticker">Live Ticker</a> section.</span></div>
     <div class="cardgrid" id="persistgrid"></div>
   </section>
 
@@ -155,7 +155,7 @@
     <div class="cardgrid dense" id="chartsRace"></div>
     <h3>Independent movement charts (C series) · go into Movement Overview</h3>
     <div class="cardgrid dense" id="chartsMove"></div>
-    <h3>Broad races charts (D series) · go into Broad Races Overview</h3>
+    <h3>Broad races charts (D series) · go into Races Overview</h3>
     <div class="cardgrid dense" id="chartsBroad"></div>
     <h3>From the AP reports feed (F series) · reference tables, no section</h3>
     <div class="cardgrid dense" id="chartsF"></div>

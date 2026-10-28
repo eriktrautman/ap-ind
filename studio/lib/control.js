@@ -144,7 +144,7 @@ export const DEFAULTS = Object.freeze({
   persistentCharts: [],      // A series elements in the Persistent Elements section (never A1, the ticker)
   persistentSettings: {},    // per element inputs: A2 {name, title}, A3 {raceId}, A4 {raceId}
   contextLines: {},          // D6: raceId -> one line the producer typed
-  // Live Screens: two fixed pages (/live-screen-a, /live-screen-b), each showing one published chart. chart is a
+  // Live Screens: two fixed pages (/live-screen-one, /live-screen-two), each showing one published chart. chart is a
   // chart id, race a race id (NE-SEN), state two letters for state charts, params the chart's extra address parameters.
   screenA: { chart: "B5", race: "NE-SEN", state: "", params: {} },
   screenB: { chart: "C1", race: "", state: "", params: {} },
@@ -254,7 +254,7 @@ export function diffState(from, to) {
   list("movementCharts", "Movement charts", false);
   list("keyRaceIds", "Key races", true);
   list("persistentCharts", "Persistent elements", false);
-  for (const k of SCREENS) if (JSON.stringify(A[k]) !== JSON.stringify(B[k])) out.push({ field: k, text: `Live Screen ${k.slice(-1)}: ${describeScreen(B[k])} (was ${describeScreen(A[k])})` });
+  for (const k of SCREENS) if (JSON.stringify(A[k]) !== JSON.stringify(B[k])) out.push({ field: k, text: `Live Screen ${k === "screenA" ? "One" : "Two"}: ${describeScreen(B[k])} (was ${describeScreen(A[k])})` });
   for (const k of new Set([...Object.keys(A.persistentSettings), ...Object.keys(B.persistentSettings)])) {
     if (JSON.stringify(A.persistentSettings[k] ?? {}) !== JSON.stringify(B.persistentSettings[k] ?? {})) out.push({ field: "persistentSettings", text: `${k} settings: ${Object.entries(B.persistentSettings[k] ?? {}).map(([f, v]) => `${f} "${v}"`).join(", ") || "(cleared)"}` });
   }

@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 access control: S115 and S116 open",
-  updated: "2026-10-28T22:55:33Z",
+  updated: "2026-10-28T23:00:42Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -266,6 +266,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T23:00:42Z", what: "Producer-only actions: the AP poller strip carries a PRODUCER ONLY chip and its buttons (Poll now, reset caches, pause, Test/Live) grey out for the rehearsal sign-in with the same look as an unauthorized Publish; the server refuses the rehearsal cookie on poll, settings and publish (403). Live screens are /live-screen-one and /live-screen-two (Live Screen One, Two); the middle column has a right arrow over Publish to Live and a left arrow over Pull from Live, no icons; the ticker buttons match. Sections renamed Live Ticker and Races Overview." },
   { t: "2026-10-28T23:05:00Z", what: "Firewall rules published (S114 live). README: how to see what a rate-limit rule is catching, how to switch one off without a deploy, and why Attack Mode blanks the switcher's inputs." },
   { t: "2026-10-28T22:55:33Z", what: "Live Screens: /live-screen-a and /live-screen-b are fixed addresses that show the published chart (chart id, race or state, parameters) through the chart-id router and cross-fade when a new one is published. The control room section has, per screen, a DRAFT panel with selectors (chart grouped by series, race, state when needed, the chart's own inputs such as candidate names or a context line), an arrow with Publish and Pull, and the ON AIR panel with its permanent address, Copy URL, Show and a live parameters table. Publishing a screen sends only that screen." },
   { t: "2026-10-28T22:45:00Z", what: "Access control decided and the DoS defense built (E8). No second login system: the password cookie already gates every write and the address is the read-only share. The ticker and graphics now read the published parameters as the CDN-cached /data/producer.json in 5 s buckets instead of calling GET /api/producer (the one public function that scaled with viewers; yesterday's peak was 31.6k requests an hour with nobody attacking). Vercel Firewall rate limits added on POST /api/login and /api/ per IP. Left in the plan: per-person passwords for attribution (S115) and settings gated to a senior password (S116)." },

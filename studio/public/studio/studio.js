@@ -143,7 +143,13 @@ async function loadLive() {
 
 // ---------- state model: this page is a workbench; only the ticker builder is published, to the one live ticker ----------
 const otherOperator = () => live && liveSeenAt !== live.updatedAt;
-const canPublish = () => runtime ? !!runtime.production?.canPush : true;
+/** Producer actions (publish, poll, pause, Test/Live) need the real password; the rehearsal sign-in only looks. */
+const isProducer = () => loginKind === "prod";
+const canPublish = () => isProducer() && (runtime ? !!runtime.production?.canPush : true);
+const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs the real password.";
+const NOT_CONFIGURED = "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker.";
+/** Grey out a producer-only control for the current sign-in. */
+function producerOnly(el) { el.disabled = !isProducer(); el.classList.toggle("noauth", !isProducer()); if (!isProducer()) el.title = NOT_PRODUCER; }
 const canPull = () => runtime ? !!runtime.production?.canPull : !liveError;
 // The live ticker is always named by its web address: on the website that is this site; on a laptop it is
 // the website it points at, or the laptop itself (GLOBAL=self).
@@ -195,8 +201,8 @@ function renderPublishState() {
   const r = runtime?.production;
   $("publish").disabled = !canPublish() || !changes.length;
   $("publish").classList.toggle("noauth", !canPublish());
-  $("publish").lastChild.textContent = canPublish() ? "Publish to LIVE TICKER" : "Publish [NOT AUTHORIZED]";
-  $("publish").title = !canPublish() ? "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker." : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  $("publish").textContent = canPublish() ? "Publish to Live" : "Publish [NOT AUTHORIZED]";
+  $("publish").title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !live;
   $("pull").title = !canPull() ? (r?.reason ?? liveError ?? "pulling is not possible right now") : "Replace the builder's races, items, idle text and highlight with the live ticker's";
 }
@@ -273,6 +279,7 @@ function renderStatus() {
   $("loginbanner").hidden = loginKind !== "test";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
+  for (const el of [$("pollnow"), $("pollfresh"), $("pause"), ...$("rtype").querySelectorAll("button")]) producerOnly(el);
   $("pause").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
   $("pollersummary").textContent = s ? `${s.raceCount ?? "?"} races · ${s.called ?? "?"} called · last run ${ago(s.generated)} (${s.durationMs ?? "?"} ms)${(s.consecutiveFailures ?? 0) > 0 ? ` · ${s.consecutiveFailures} failures in a row` : ""}` : "no status yet";
@@ -455,8 +462,8 @@ const SCREEN_PARAMS = {
   D6: [{ k: "context", label: "Context line", ph: "one line under the race" }],
   C9: [{ k: "n", label: "Card number", ph: "0, 1, 2 …" }],
 };
-const SCREEN_IDS = { screenA: "a", screenB: "b" };
-const screenLetter = (key) => key.slice(-1);
+const SCREEN_IDS = { screenA: "one", screenB: "two" };
+const screenLetter = (key) => (key === "screenA" ? "One" : "Two");
 const screenPath = (key) => `/live-screen-${SCREEN_IDS[key]}`;
 /** The on-air page's address: fixed; only the display parameters vary. */
 function screenLiveUrl(key) { const s = displayParams().toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
@@ -493,7 +500,7 @@ function screenLiveTable(key) {
   return `<table class="params">${rows.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>`;
 }
 function buildScreen(key) {
-  const letter = screenLetter(key).toUpperCase();
+  const letter = screenLetter(key);
   const box = $(key);
   box.innerHTML = `
     <h3 class="screenhead">Live Screen ${letter}</h3>
@@ -505,8 +512,9 @@ function buildScreen(key) {
       </div>
       <div class="screenmid">
         <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <button class="publish" data-act="publish" title="Make this draft the on-air screen"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 2.5l4 4H9.5V10h-3V6.5H4z M3 12h10v1.5H3z" fill="currentColor"/></svg><span>Publish</span></button>
-        <button class="pull" data-act="pull" title="Copy the on-air screen into the draft"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 10.5l-4-4h2.5V3h3v3.5H12z M3 12h10v1.5H3z" fill="currentColor"/></svg>Pull</button>
+        <button class="publish" data-act="publish" title="Make this draft the on-air screen">Publish to Live</button>
+        <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <button class="pull" data-act="pull" title="Copy the on-air screen into the draft">Pull from Live</button>
         <span class="pubstate"></span>
       </div>
       <div class="screen onair">
@@ -540,8 +548,8 @@ function renderScreens() {
     st.textContent = !live ? "On-air screen not read yet" : changed ? "Draft differs from on air" : "Draft matches on air";
     const pub = box.querySelector("button[data-act=publish]"), pull = box.querySelector("button[data-act=pull]");
     pub.disabled = !canPublish() || !changed; pub.classList.toggle("noauth", !canPublish());
-    pub.querySelector("span").textContent = canPublish() ? "Publish" : "[NOT AUTHORIZED]";
-    pub.title = !canPublish() ? "You are not authorized to publish from this computer. Publishing needs the live screens' password to be set up on this machine by the engineer." : !changed ? "Nothing to publish: the draft already matches the on-air screen" : `Make this draft the on-air screen (${describeScreen(draft[key])})`;
+    pub.textContent = canPublish() ? "Publish to Live" : "Publish [NOT AUTHORIZED]";
+    pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the on-air screen" : `Make this draft the on-air screen (${describeScreen(draft[key])})`;
     pull.disabled = !canPull() || !live;
   }
   scaleScreens();
@@ -570,7 +578,7 @@ document.addEventListener("click", async (e) => {
 });
 async function publishScreen(key) {
   if (!canPublish()) return;
-  const letter = screenLetter(key).toUpperCase();
+  const letter = screenLetter(key);
   let latest = live;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; } catch (e) { liveError = e.message; }
   const same = latest && JSON.stringify(latest[key]) === JSON.stringify(draft[key]);
@@ -592,7 +600,7 @@ async function publishScreen(key) {
   }
 }
 async function pullScreen(key) {
-  const letter = screenLetter(key).toUpperCase();
+  const letter = screenLetter(key);
   let latest;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
   catch (e) { liveError = e.message; renderScreens(); await ask({ title: "Can't read the on-air screen", body: `<div class="warnline bad">${esc(e.message)}</div><p>The draft is unchanged.</p>`, ok: "OK" }); return; }
@@ -689,7 +697,7 @@ document.addEventListener("click", (e) => { const b = e.target.closest("[data-pi
 // ---------- Movement Overview ----------
 // movementCharts holds both series; the C charts render in Movement Overview, the D charts in Broad Races Overview.
 const seriesOf = (id) => id[0];
-const overviewName = (chart) => (seriesOf(chart.id) === "D" ? "Broad Races Overview" : "Movement Overview");
+const overviewName = (chart) => (seriesOf(chart.id) === "D" ? "Races Overview" : "Movement Overview");
 function renderMovement() {
   for (const [gridId, series] of [["movegrid", "C"], ["broadgrid", "D"]]) {
     const grid = $(gridId); grid.className = "cardgrid"; grid.innerHTML = "";

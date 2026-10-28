@@ -79,7 +79,6 @@ main > section.card + section.card::before { content: ""; display: block; height
 .defaultsbtn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-left: 4px; }
 .toolbar #thumbbudget { order: -1; }
 .pubrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 12px; padding: 8px 12px; background: #fff; border: 2px solid var(--navy); border-radius: 6px; font-size: 12.5px; }
-.pubrow button.publish.noauth, .pubrow button.publish.noauth:disabled { background: #e4e4e4; border-color: #c4c4c4; color: #8b1a1a; cursor: not-allowed; opacity: 1; }
 .pubrow .spacer { flex: 1; }
 .pubrow button { font-size: 12px; padding: 3px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .pubrow button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .pubrow button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
@@ -321,7 +320,11 @@ dialog::backdrop { background: #071222aa; }
 .screenmid .arrow { color: #b5651d; }
 .screenmid button { width: 100%; justify-content: center; font-size: 12px; padding: 5px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .screenmid button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .screenmid button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
-.screenmid button.publish.noauth, .screenmid button.publish.noauth:disabled { background: #e4e4e4; border-color: #c4c4c4; color: #8b1a1a; cursor: not-allowed; }
 .screenmid button.pull { background: var(--navy); color: #fff; border-color: var(--navy); } .screenmid button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
 .screenmid .pubstate { font-size: 11.5px; text-align: center; }
 @media (max-width: 900px) { .screenrow { grid-template-columns: 1fr; } .screenmid { flex-direction: row; flex-wrap: wrap; padding-top: 0; } .screenmid .arrow { transform: rotate(90deg); } .screenmid button { width: auto; } }
+
+/* Producer-only controls for a sign-in that is not the producer: one look everywhere. */
+button.noauth, button.noauth:disabled, .seg button.noauth.on { background: #e4e4e4; border-color: #c4c4c4; color: #8b1a1a; cursor: not-allowed; opacity: 1; }
+.ponly { font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 2px 7px; border-radius: 4px; background: #8b1a1a; color: #fff; cursor: help; }
+.screenmid .arrow.back { margin-top: 14px; color: var(--navy); }
