@@ -6,7 +6,7 @@ html { color-scheme: light; scroll-padding-top: var(--top-h, 120px); } /* --top-
 body { margin: 0; background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
 a { color: var(--navy); }
 code { font-size: 12px; background: var(--cream); padding: 1px 5px; border-radius: 4px; }
-h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 14px 0 6px; font-weight: 700; }
+h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 26px 0 10px; font-weight: 700; }
 .muted { color: var(--muted); font-weight: 400; } .small { font-size: 12.5px; }
 button { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--sand); border-radius: 6px; background: #fff; color: var(--ink); cursor: pointer; }
 button:hover { border-color: var(--navy); }
@@ -64,11 +64,11 @@ input[type=text]:focus, input:not([type]):focus, input[type=password]:focus, sel
 
 /* ---- layout ---- */
 main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
-.card { background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 14px 18px 18px; margin: 14px 0; }
+.card { background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 18px 22px 24px; margin: 32px 0; }
 /* Nav-level sections: a wide gap and a navy top edge so they read as separate chapters when scrolling. */
 main > section.card { margin: 40px 0; border-top: 5px solid var(--navy); border-radius: 6px 6px 10px 10px; scroll-margin-top: 12px; }
 main > section.card + section.card::before { content: ""; display: block; height: 0; }
-.cardhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.cardhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
 .cardhead h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--navy); margin: 0; }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .callhl { margin: 4px 0 10px; font-size: 13.5px; } .callhl input { vertical-align: -2px; margin-left: 4px; }
