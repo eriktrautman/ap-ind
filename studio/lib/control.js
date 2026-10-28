@@ -11,6 +11,25 @@
 //   watchState({ onState: (state, info) => render(state) });   // info: {source, requested, error, preview}
 
 export const SOURCES = ["default", "global", "local"];
+
+// ?opacity=10..100: the chart panel at that opacity, for layering a graphic over video. Panels,
+// strips, bugs and the ticker band all paint with the --panel/--panel-edge (ticker: --band/--band-edge)
+// colours, so those variables are rewritten as rgba on <html>, which beats every stylesheet value.
+// 100 (or no parameter) leaves the solid colours. Node imports this module too, hence the guard.
+export function applyPanelOpacity(search = typeof location === "undefined" ? "" : location.search) {
+  if (typeof document === "undefined") return;
+  const o = Number(new URLSearchParams(search).get("opacity"));
+  if (!new URLSearchParams(search).has("opacity") || !Number.isFinite(o) || o < 0 || o >= 100) return;
+  const apply = () => {
+    const cs = getComputedStyle(document.documentElement);
+    for (const v of ["--panel", "--panel-edge", "--band", "--band-edge"]) {
+      const m = /^#([0-9a-f]{6})$/i.exec(cs.getPropertyValue(v).trim());
+      if (m) document.documentElement.style.setProperty(v, `rgba(${parseInt(m[1].slice(0, 2), 16)},${parseInt(m[1].slice(2, 4), 16)},${parseInt(m[1].slice(4, 6), 16)},${o / 100})`);
+    }
+  };
+  document.body ? apply() : document.addEventListener("DOMContentLoaded", apply);
+}
+applyPanelOpacity();
 const LS_LOCAL = "studio.local";
 const LS_SOURCE = "studio.source";
 

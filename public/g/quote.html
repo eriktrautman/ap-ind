@@ -22,6 +22,11 @@
 <script type="module">
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  { const o = Number(q.get("opacity"));   // ?opacity=10..100: the panel colours at that opacity, as in control.js
+    if (q.has("opacity") && o >= 0 && o < 100) for (const v of ["--panel", "--panel-edge"]) {
+      const m = /^#([0-9a-f]{6})$/i.exec(getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+      if (m) document.documentElement.style.setProperty(v, `rgba(${parseInt(m[1].slice(0, 2), 16)},${parseInt(m[1].slice(2, 4), 16)},${parseInt(m[1].slice(4, 6), 16)},${o / 100})`);
+    } }
   const $ = (id) => document.getElementById(id);
   const show = (x) => { $("q").textContent = x.quote; $("who").textContent = x.who; $("src").textContent = x.source ?? ""; };
   if (q.get("quote")) show({ quote: q.get("quote"), who: q.get("who") ?? "", source: q.get("source") ?? "" });

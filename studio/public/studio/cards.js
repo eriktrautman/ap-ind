@@ -15,7 +15,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getBg = () => "black", getSource = () => "global", getDraft = () => null } = {}) {
+export function createCardManager({ maxLive = 32, getBg = () => "black", getOpacity = () => "100", getSource = () => "global", getDraft = () => null } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -39,6 +39,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getSour
     u.searchParams.set("src", getSource());
     const bg = forOpen ? getBg() : "black";
     if (bg) u.searchParams.set("bg", bg);
+    if (forOpen && getOpacity() !== "100") u.searchParams.set("opacity", getOpacity());   // chart panel opacity; previews stay solid
     if (forOpen && c.open === "preview") u.searchParams.set("fit", "1");   // "show": the real page at full size
     if (!forOpen) u.searchParams.set("preview", "1");
     u.searchParams.set("sample", "auto");   // fabricated results until the count starts

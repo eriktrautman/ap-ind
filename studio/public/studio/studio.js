@@ -101,7 +101,7 @@ let prodSeenAt = null;        // updatedAt of the production copy this page last
 let prodError = null;         // why production is unreadable right now, or null
 let draft = normalize(DEFAULTS);   // the working copy: always Local (this browser), seeded from production on first use
 const view = "local";         // thumbnails and the example ticker always show the settings on this page
-const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
+const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getOpacity: () => $("opacity").value, getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
@@ -423,13 +423,14 @@ function renderTickerNote() {
     : `This is a local preview. The ticker everyone uses is <a href="${esc(runtime?.production?.origin ?? "")}/ticker?bg=black" target="_blank" rel="noopener">${esc(prodHost())}/ticker</a> (add <code>?bg=green</code> for the key); to change that one, Push with the buttons above. It re-reads what was last pushed every 5 seconds.`;
 }
 /** The ticker opens like any chart: at full size, showing whatever the previews show. */
-function tickerOpenUrl() { const bg = $("bg").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}`; }
+function tickerOpenUrl() { const bg = $("bg").value, o = $("opacity").value; return `/ticker?src=${view}${bg ? `&bg=${bg}` : ""}${o !== "100" ? `&opacity=${o}` : ""}`; }
 function renderTickerOpen() {
   renderTickerNote();
   $("tickeropen").href = tickerOpenUrl();
 }
 $("previewframe").addEventListener("click", () => window.open(tickerOpenUrl(), "_blank", "noopener"));
 $("bg").addEventListener("change", renderTickerOpen);
+$("opacity").addEventListener("change", renderTickerOpen);
 
 // ---------- Race Detail section ----------
 function renderDetail() {
@@ -591,6 +592,9 @@ document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventLi
 }));
 $("bg").addEventListener("change", () => { try { localStorage.setItem("studio.bg", $("bg").value); } catch {} cards.refreshLinks(); });
 try { const bg = localStorage.getItem("studio.bg"); if (bg !== null) $("bg").value = bg; } catch {}
+// Chart panel opacity (10% steps) for opened graphics and the ticker; per browser, like the background colour.
+$("opacity").addEventListener("change", () => { try { localStorage.setItem("studio.opacity", $("opacity").value); } catch {} cards.refreshLinks(); });
+try { const o = localStorage.getItem("studio.opacity"); if (o !== null && [...$("opacity").options].some((x) => x.value === o)) $("opacity").value = o; } catch {}
 
 // ---------- Persistent Elements (A series, except the ticker) ----------
 // Each element's inputs live in draft.persistentSettings[id] and go into its preview and open URLs.
