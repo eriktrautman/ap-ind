@@ -335,5 +335,8 @@ dialog::backdrop { background: #071222aa; }
 
 /* Producer-only controls for a sign-in that is not the producer: one look everywhere. */
 /* An unauthorized producer control is simply a disabled button: grey, dimmed, no colour. */
-button.noauth, button.noauth:disabled, .seg button.noauth.on, .pubrow button.publish.noauth:disabled, .screenmid button.publish.noauth:disabled { background: #f0f0f0; border-color: #d4d4d4; color: #777; opacity: .6; cursor: default; }
+button.noauth, button.noauth:disabled, .pubrow button.publish.noauth:disabled, .screenmid button.publish.noauth:disabled { background: #f0f0f0; border-color: #d4d4d4; color: #777; opacity: .6; cursor: default; }
+/* Results: the selected side keeps its colour even when the switch is locked; the other side is plain. */
+.seg button.on { font-weight: 700; } .seg button:disabled { opacity: 1; cursor: default; } .seg button:disabled:not(.on) { color: var(--muted); background: #f6f6f6; }
+.seg .lbl .lock { margin-right: 4px; vertical-align: -1px; }
 .screenmid .arrow.back { margin-top: 14px; color: var(--navy); }

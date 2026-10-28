@@ -290,10 +290,12 @@ function renderStatus() {
   $("testbanner").hidden = rt !== "t";
   $("loginbanner").hidden = loginKind !== "test";
 
-  $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
-  $("pause").textContent = paused ? "Resume polling" : "Pause polling";
+  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt; b.classList.toggle("on", on); b.textContent = `${on ? "✓ " : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer(); b.title = !isProducer() ? NOT_PRODUCER : on ? "Current results" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
+  // One lock on the group's label, not one per button; the selected side keeps its colour so the choice stays obvious.
+  { const lbl = $("rtype").querySelector(".lbl"); const has = !!lbl.querySelector(".lock"); if (!isProducer() && !has) lbl.insertAdjacentHTML("afterbegin", LOCK); else if (isProducer() && has) lbl.querySelector(".lock").remove(); }
+  $("pause").querySelector(".lbl").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
-  for (const el of [$("pollnow"), $("pollfresh"), $("pause"), ...$("rtype").querySelectorAll("button")]) producerOnly(el);
+  for (const el of [$("pollnow"), $("pollfresh"), $("pause")]) producerOnly(el);
   $("readonly").hidden = isProducer();
 
   const problems = [];
