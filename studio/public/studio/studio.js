@@ -339,7 +339,7 @@ function renderStatus() {
     st("st-feed", `<span class="dot ${cls === "ok" ? "" : cls}"></span><b>${esc(feedLabel)}</b>`) +
     st("st-refresh", `<span class="k">Last Refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
     st("st-asof", `<span class="k">Data As Of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
-    st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
+    st("st-rt", `<span class="k">Data Stream</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP Access</span><span class="dot ${!s ? "off" : apOk ? "" : "bad"}"></span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     st("st-air", `<span class="k">Data-to-Ticker Speed</span><b>≤ 5 s</b>`);
   $("testbanner").hidden = rt !== "t";
