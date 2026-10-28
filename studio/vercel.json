@@ -11,7 +11,7 @@
   ],
   "rewrites": [
     {
-      "source": "/g/:chart([A-Za-z][0-9]{1,2})",
+      "source": "/g/:chart",
       "destination": "/g/chart.html"
     },
     {
