@@ -505,9 +505,8 @@ function renderTickerFrames() {
   const b = `/ticker?preview=1&bg=${pageBg("ticker")}${sec.opacity !== "100" ? `&opacity=${sec.opacity}` : ""}&src=local`;
   if (frame.dataset.u !== b) { frame.dataset.u = b; frame.src = b; }
   frame.parentElement.classList.toggle("checker", !pageBg("ticker"));
-  const l = `/ticker?${displayParams(sec).toString()}`;
+  const l = "/ticker?bg=black";   // the on-air preview is what is published, on a plain black; the dropdowns only shape the draft and the links
   if (liveFrame.dataset.u !== l) { liveFrame.dataset.u = l; liveFrame.src = l; }
-  liveFrame.parentElement.classList.toggle("checker", !sec.bg);
 }
 /** The LIVE TICKER's address: fixed; only the display parameters vary. */
 function liveTickerUrl() { const s = displayParams().toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
@@ -617,9 +616,8 @@ function renderScreens() {
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
     dFrame.parentElement.classList.toggle("checker", !pageBg(key));
     const oFrame = box.querySelector(".screen.onair iframe");
-    const oAddr = `${screenPath(key)}?${displayParams(secDisplay("screens")).toString()}`;
+    const oAddr = `${screenPath(key)}?bg=black`;   // on air as published, on a plain black; the dropdowns shape the draft and the links
     if (oFrame.dataset.addr !== oAddr) { oFrame.dataset.addr = oAddr; oFrame.src = oAddr; }
-    oFrame.parentElement.classList.toggle("checker", !secDisplay("screens").bg);
     const form = box.querySelector(".sform");
     if (!form.contains(document.activeElement)) form.innerHTML = screenForm(key);
     box.querySelector("a[data-open=draft]").href = screenDraftUrl(key);
