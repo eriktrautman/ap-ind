@@ -380,3 +380,5 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 /* A Data Stream switch waiting for the poller: the target side pulses amber. */
 .seg button.pending, .seg button.pending:disabled { background: #fdf3e3; color: #7a5b0a; border-color: var(--warn); animation: pend 1.2s ease-in-out infinite; }
 @keyframes pend { 50% { opacity: .55; } }
+
+.seg button .wrench { vertical-align: -1px; margin-right: 1px; }

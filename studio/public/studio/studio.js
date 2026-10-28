@@ -161,7 +161,7 @@ const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(s
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
-const switchPending = () => { const want = settings?.resultsType ?? settings?.envResultsType ?? null, have = status?.resultsType ?? null; return !!want && !!have && want !== have; };
+const switchPending = () => { const want = settings?.resultsType ?? null, have = status?.resultsType ?? null; return !!want && !!have && want !== have; };   // only an explicit setting counts; a laptop's env fallback must not look like a switch
 async function loadStatus() {
   try { settings = await api("/api/settings"); } catch {}
   // While a Test/Live switch waits for the poller to confirm it, every read goes past the CDN's 15 s copy.
@@ -203,6 +203,7 @@ const otherOperator = () => live && liveSeenAt !== live.updatedAt;
 /** Producer actions (publish, poll, pause, Test/Live) need the real password; the rehearsal sign-in only looks. */
 const isProducer = () => loginKind === "prod";
 const canPublish = () => isProducer() && (runtime ? !!runtime.production?.canPush : true);
+const WRENCH = '<svg class="wrench" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M13.6 4.6a3.6 3.6 0 0 1-4.7 4.3L4 13.8a1.5 1.5 0 0 1-2.1-2.1l4.9-4.9a3.6 3.6 0 0 1 4.3-4.7L8.9 4.3l2.8 2.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> ';
 const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs the real password.";
 const NOT_CONFIGURED = "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker.";
@@ -356,7 +357,7 @@ function renderStatus() {
   $("testbanner").hidden = rt !== "t";
   $("loginbanner").hidden = loginKind !== "test";
 
-  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt, target = pending && b.dataset.rt === want; b.classList.toggle("on", on); b.classList.toggle("pending", target); b.textContent = `${target ? "⏳ " : on ? (b.dataset.rt === "t" ? "🔧 " : "✓ ") : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer() || pending; b.title = !isProducer() ? NOT_PRODUCER : target ? "Switching: waiting for the next poll to confirm" : on ? "Current data stream" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
+  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt, target = pending && b.dataset.rt === want; b.classList.toggle("on", on); b.classList.toggle("pending", target); b.innerHTML = `${target ? "⏳ " : on ? (b.dataset.rt === "t" ? WRENCH : "✓ ") : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer() || pending; b.title = !isProducer() ? NOT_PRODUCER : target ? "Switching: waiting for the next poll to confirm" : on ? "Current data stream" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
   // One lock on the group's label, not one per button; the selected side keeps its colour so the choice stays obvious.
   { const lbl = $("rtype").querySelector(".lbl"); const has = !!lbl.querySelector(".lock"); if (!isProducer() && !has) lbl.insertAdjacentHTML("afterbegin", LOCK); else if (isProducer() && has) lbl.querySelector(".lock").remove(); }
   $("pause").querySelector(".lbl").textContent = paused ? "Resume polling" : "Pause polling";
