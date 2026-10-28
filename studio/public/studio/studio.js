@@ -131,8 +131,8 @@ function renderDisplayControls() {
   for (const sec of SECTIONS) {
     const d = secDisplay(sec);
     const box = document.querySelector(`.cardhead[data-sec="${sec}"] .secdisp`); if (!box) continue;
-    // The Live Ticker section has no Background of its own: the draft's Background covers both its addresses.
-    box.innerHTML = `${sec === "ticker" ? "" : `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%"]), d.opacity)}</label>`;
+    // The Live Ticker and Live Screens sections have no Background of their own: each draft's Background covers both its addresses.
+    box.innerHTML = `${sec === "ticker" || sec === "screens" ? "" : `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%"]), d.opacity)}</label>`;
   }
   for (const page of PAGES) {
     const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
@@ -544,7 +544,7 @@ const SCREEN_IDS = { screenA: "one", screenB: "two" };
 const screenLetter = (key) => (key === "screenA" ? "One" : "Two");
 const screenPath = (key) => `/live-screen-${SCREEN_IDS[key]}`;
 /** The on-air page's address: fixed; only the display parameters vary. */
-function screenLiveUrl(key) { const s = displayParams(secDisplay("screens")).toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
+function screenLiveUrl(key) { const s = displayParams({ bg: pageBg(key), opacity: secDisplay("screens").opacity }).toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
 /** The draft's own address: the chart-id address with the Default Chart Settings, usable anywhere. */
 function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity }); }
 function raceOptions(selected) {
