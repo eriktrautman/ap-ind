@@ -465,7 +465,7 @@ function renderManual() {
   $("manualcount").textContent = `${draft.manualItems.length}`;
   $("manual").innerHTML = draft.manualItems.length ? draft.manualItems.map((m) => `<div class="row manual" data-id="${esc(m.id)}"><div class="nm">${esc(m.text)}</div><div class="btns"><button class="rm">✕</button></div></div>`).join("") : "";
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
-  $("callhl").checked = draft.callHighlight;
+  $("callhl").value = draft.callHighlight ? "1" : "0";
 }
 $("pins").addEventListener("click", (e) => {
   const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!row || !b) return;
@@ -487,7 +487,7 @@ $("addmanual").addEventListener("submit", (e) => {
 });
 let idleTimer = null;
 $("idletext").addEventListener("input", () => { draft.idleText = $("idletext").value; clearTimeout(idleTimer); idleTimer = setTimeout(commit, 400); });
-$("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl").checked; commit(); });
+$("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl").value === "1"; commit(); });
 const frame = $("preview"), liveFrame = $("livepreview");
 function scalePreviews() { scaleScreens(); }   // the two ticker frames use the Live Screens layout
 /** The builder's preview frame gets the builder's four fields by postMessage, so it shows the page, not what is published. */

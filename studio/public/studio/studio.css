@@ -355,3 +355,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 .tform .callhl { display: flex; align-items: center; gap: 22px; justify-content: flex-start; text-align: left; margin: 0 0 6px; font-size: 13px; }
 .tform .callhl .toggle { display: inline-flex; align-items: center; gap: 6px; }
 .tform .callhl .pagebg { font-size: 13px; color: var(--muted); margin: 0; }
+
+.tform .tgrid { display: grid; grid-template-columns: 160px 200px; gap: 8px 12px; align-items: center; margin: 0 0 8px; font-size: 13px; color: var(--ink); }
+.tform .tgrid select { width: 100%; }
