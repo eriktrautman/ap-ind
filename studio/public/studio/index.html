@@ -60,20 +60,30 @@
 
   <section class="card" id="ticker">
     <div class="cardhead"><h2>Live Ticker</h2></div>
-
-    <h3>LIVE TICKER <span class="muted small">· the single ticker at a fixed address</span></h3>
-    <div class="preview live"><div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="LIVE TICKER"></iframe></div>
-      <div class="gfoot"><span class="muted small">What is on air now</span><span class="spacer"></span><button class="copybtn" id="livecopy" type="button" title="Copy the live ticker's address">Copy URL</button><a class="openbtn" id="liveopen" target="_blank" rel="noopener" title="Open the live ticker at 1920×1080 in a new tab"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Show 1920×1080</a></div></div>
-    <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a id="liveurl" class="url" target="_blank" rel="noopener"></a></p>
-    <p class="muted small">This is the single ticker that stays at the same address. It never needs re-pointing: within 5 seconds of someone publishing new parameters to it, it picks them up at the next item boundary, without restarting the crawl or flickering. These are its live parameters. They can only be changed by an authorized party signing in here and <b>publishing</b> from the Ticker Builder below; nothing else changes them.</p>
-    <div class="liveparams" id="liveparams"></div>
-
-    <h3 class="builderhead">Ticker Builder <span class="muted" id="previewnote"></span></h3>
-    <div class="preview builder"><div class="frame clickable" id="previewframe" title="Open this ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker Builder preview"></iframe></div>
-      <div class="gfoot"><span class="muted small">Preview of the builder on this page</span><span class="spacer"></span><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Show 1920×1080</a></div></div>
-    <div class="pubrow"><span class="pubstate" id="pubstate">…</span><span class="spacer"></span><button class="pull" id="pull" title="Copy the live ticker's parameters into the builder">Pull from Live</button><span class="whynot" id="pubwhy"></span><button class="publish" id="publish" title="Make this builder the live ticker">Publish to Live</button></div>
-    <p class="muted small">The builder constructs a ticker from the races and items below. Use it two ways: by its <b>address</b>, which carries every parameter and so never changes and needs no sign-in; or, if you have access, <b>publish</b> it to become the LIVE TICKER above. <b>Pull</b> copies the live ticker's parameters into the builder.</p>
-    <p class="tickerurl"><span class="k" title="A ticker built entirely from its address: the races on this page by race id, the AP Call highlight, the items and idle text. Change the builder and the address follows.">Address for this ticker</span> <a id="tickerurl" class="url" target="_blank" rel="noopener"></a></p>
+    <div class="screenrow ticker">
+      <div class="screen draft">
+        <div class="frame clickable" id="previewframe" title="Open this ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker Builder preview"></iframe></div>
+        <div class="gfoot"><span class="muted small">Ticker Builder · draft on this page</span><span class="spacer"></span><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <p class="tickerurl"><span class="k" title="A ticker built entirely from its address: the races below by race id, the AP Call highlight, the items and idle text. Change the builder and the address follows.">Address for this ticker</span> <a id="tickerurl" class="url" target="_blank" rel="noopener"></a></p>
+        <p class="muted small inner">Use this ticker by its address, which carries every parameter and so never changes and needs no sign-in; or publish it to become the live ticker.</p>
+      </div>
+      <div class="screenmid">
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <button class="publish" id="publish" title="Make this builder the live ticker">Publish to Live</button>
+        <span class="whynot" id="pubwhy"></span>
+        <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <button class="pull" id="pull" title="Copy the live ticker's parameters into the builder">Pull from Live</button>
+        <span class="pubstate" id="pubstate">…</span>
+      </div>
+      <div class="screen onair">
+        <div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="Live ticker"></iframe></div>
+        <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" id="livecopy" type="button" title="Copy the live ticker's address">Copy URL</button><a class="openbtn" id="liveopen" target="_blank" rel="noopener" title="Open the live ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a id="liveurl" class="url" target="_blank" rel="noopener"></a></p>
+        <div class="liveparams" id="liveparams"></div>
+        <p class="muted small">Picks up a publish within 5 seconds at the next item boundary, without restarting the crawl. Only an authorized publish changes it.</p>
+      </div>
+    </div>
+    <h3 class="builderhead">Ticker Builder settings <span class="muted" id="previewnote"></span></h3>
     <p class="callhl"><label class="toggle">Highlight AP Calls Yellow: <input type="checkbox" id="callhl"></label></p>
       <div class="cols">
       <div class="col">

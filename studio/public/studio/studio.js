@@ -434,7 +434,7 @@ let idleTimer = null;
 $("idletext").addEventListener("input", () => { draft.idleText = $("idletext").value; clearTimeout(idleTimer); idleTimer = setTimeout(commit, 400); });
 $("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl").checked; commit(); });
 const frame = $("preview"), liveFrame = $("livepreview");
-function scalePreviews() { for (const f of [frame, liveFrame]) f.style.transform = `scale(${f.parentElement.clientWidth / 1920})`; }
+function scalePreviews() { scaleScreens(); }   // the two ticker frames use the Live Screens layout
 /** The builder's preview frame gets the builder's four fields by postMessage, so it shows the page, not what is published. */
 function sendPreview() {
   renderTickerUrl();

@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 access control: S115 and S116 open",
-  updated: "2026-10-28T23:03:09Z",
+  updated: "2026-10-28T23:15:00Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -266,6 +266,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T23:15:00Z", what: "Live Ticker section in the Live Screens layout: draft (Ticker Builder) on the left with its address, the arrows with Publish to Live and Pull from Live in the middle, the on-air ticker on the right with its permanent address and live parameters; both frames cropped to the lower third; the builder's settings (highlight, races, items, idle text) below. The on-air tag is the same green-dot ON AIR as the screens." },
   { t: "2026-10-28T23:03:09Z", what: "The strip is Producer actions (no chip); unauthorized producer controls look like any disabled button; Test vs Live reflects what the poller last tracked (status.json) before this machine's settings file." },
   { t: "2026-10-28T23:00:42Z", what: "Producer-only actions: the AP poller strip carries a PRODUCER ONLY chip and its buttons (Poll now, reset caches, pause, Test/Live) grey out for the rehearsal sign-in with the same look as an unauthorized Publish; the server refuses the rehearsal cookie on poll, settings and publish (403). Live screens are /live-screen-one and /live-screen-two (Live Screen One, Two); the middle column has a right arrow over Publish to Live and a left arrow over Pull from Live, no icons; the ticker buttons match. Sections renamed Live Ticker and Races Overview." },
   { t: "2026-10-28T23:05:00Z", what: "Firewall rules published (S114 live). README: how to see what a rate-limit rule is catching, how to switch one off without a deploy, and why Attack Mode blanks the switcher's inputs." },
