@@ -146,6 +146,7 @@ const otherOperator = () => live && liveSeenAt !== live.updatedAt;
 /** Producer actions (publish, poll, pause, Test/Live) need the real password; the rehearsal sign-in only looks. */
 const isProducer = () => loginKind === "prod";
 const canPublish = () => isProducer() && (runtime ? !!runtime.production?.canPush : true);
+const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
 const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs the real password.";
 const NOT_CONFIGURED = "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker.";
 /** Grey out a producer-only control for the current sign-in. */
@@ -206,7 +207,8 @@ function renderPublishState() {
   const r = runtime?.production;
   $("publish").disabled = !canPublish() || !changes.length;
   $("publish").classList.toggle("noauth", !canPublish());
-  $("publish").textContent = canPublish() ? "Publish to Live" : "Publish [NOT AUTHORIZED]";
+  $("publish").innerHTML = `${canPublish() ? "" : LOCK}Publish to Live`;
+  $("pubwhy").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
   $("publish").title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !live;
   $("pull").title = !canPull() ? (r?.reason ?? liveError ?? "pulling is not possible right now") : "Replace the builder's races, items, idle text and highlight with the live ticker's";
@@ -519,6 +521,7 @@ function buildScreen(key) {
       <div class="screenmid">
         <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <button class="publish" data-act="publish" title="Make this draft the on-air screen">Publish to Live</button>
+        <span class="whynot"></span>
         <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <button class="pull" data-act="pull" title="Copy the on-air screen into the draft">Pull from Live</button>
         <span class="pubstate"></span>
@@ -554,7 +557,8 @@ function renderScreens() {
     st.textContent = !live ? "On-air screen not read yet" : changed ? "Draft differs from on air" : "Draft matches on air";
     const pub = box.querySelector("button[data-act=publish]"), pull = box.querySelector("button[data-act=pull]");
     pub.disabled = !canPublish() || !changed; pub.classList.toggle("noauth", !canPublish());
-    pub.textContent = canPublish() ? "Publish to Live" : "Publish [NOT AUTHORIZED]";
+    pub.innerHTML = `${canPublish() ? "" : LOCK}Publish to Live`;
+    box.querySelector(".whynot").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
     pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the on-air screen" : `Make this draft the on-air screen (${describeScreen(draft[key])})`;
     pull.disabled = !canPull() || !live;
   }

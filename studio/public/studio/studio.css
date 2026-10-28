@@ -88,6 +88,9 @@ main > section.card + section.card::before { content: ""; display: block; height
 .pubrow button { font-size: 12px; padding: 3px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .pubrow button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .pubrow button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
 .pubrow button.pull { background: var(--navy); color: #fff; border-color: var(--navy); } .pubrow button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
+.whynot { font-size: 11px; color: #8b1a1a; } .whynot:empty { display: none; }
+.screenmid .whynot { margin-top: -6px; text-align: center; }
+button .lock { margin-right: 5px; vertical-align: -1px; }
 .pubstate { cursor: help; } .pubstate.dirty { color: #b5651d; font-weight: 600; } .pubstate.same { color: var(--ok); font-weight: 600; }
 .liveparams { margin: 6px 0 8px; }
 .liveparams .params { border-collapse: collapse; font-size: 12.5px; background: #fff; border: 1px solid var(--sand); border-radius: 6px; width: 100%; }
