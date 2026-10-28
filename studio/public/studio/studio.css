@@ -282,3 +282,5 @@ dialog::backdrop { background: #071222aa; }
   .toolbar { font-size: 12.5px; }
   body { overflow-x: hidden; }
 }
+
+.builderhead { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--sand); }
