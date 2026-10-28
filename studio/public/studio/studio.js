@@ -515,7 +515,7 @@ function tickerUrl() {
   p.set("races", draft.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(","));
   p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
   for (const m of draft.manualItems) if (m.text) p.append("item", m.text);
-  if (draft.idleText && draft.idleText !== DEFAULTS.idleText) p.set("idle", draft.idleText);
+  p.set("idle", draft.idleText || DEFAULTS.idleText);   // always spelled out, like calls
   return `${origin()}/ticker?${p.toString()}`;
 }
 function renderTickerUrl() {

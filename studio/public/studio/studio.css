@@ -362,3 +362,5 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 /* An empty list draws nothing (not a collapsed bordered box), and the last row does not double the list border. */
 .list:empty { display: none; }
 .list .row:last-child { border-bottom: 0; }
+
+.tform .hint { margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
