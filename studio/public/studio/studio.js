@@ -194,7 +194,7 @@ function renderPublishState() {
   const r = runtime?.production;
   $("publish").disabled = !canPublish() || !changes.length;
   $("publish").classList.toggle("noauth", !canPublish());
-  $("publish").lastChild.textContent = canPublish() ? "Publish to LIVE TICKER" : "Publish Not Authorized";
+  $("publish").lastChild.textContent = canPublish() ? "Publish to LIVE TICKER" : "Publish NOT AUTHORIZED";
   $("publish").title = !canPublish() ? (r?.reason ?? "publishing is not possible from here") : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   $("pull").disabled = !canPull() || !live;
   $("pull").title = !canPull() ? (r?.reason ?? liveError ?? "pulling is not possible right now") : "Replace the builder's races, items, idle text and highlight with the live ticker's";
