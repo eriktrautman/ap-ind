@@ -52,8 +52,11 @@
   <details class="howbox" id="howbox" open><summary><b>How changes reach the screen</b></summary><span id="howtext"></span></details>
 
   <div class="toolbar">
-    <span class="scope" title="These two apply to every graphic and the ticker opened from this page, whichever section or card. They are remembered in this browser and are not part of a Push.">GLOBAL</span>
-    <label class="bgpick">Open graphics on <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label> <label class="bgpick opick">Chart panel opacity <select id="opacity" title="Opacity of the chart panel (the dark card), for layering over video; 100% is solid"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
+    <fieldset class="gset" title="These apply to every graphic and the ticker opened from this page, whichever section or card. Remembered in this browser; not part of a Push.">
+      <legend>Global settings</legend>
+      <label class="bgpick">Open graphics on <select id="bg"><option value="">transparent</option><option value="black" selected>black</option><option value="green">green key</option></select></label>
+      <label class="bgpick opick">Chart panel opacity <select id="opacity" title="Opacity of the chart panel (the dark card), for layering over video; 100% is solid"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
+    </fieldset>
     <span class="muted small" id="thumbbudget"></span>
   </div>
 
