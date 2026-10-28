@@ -79,7 +79,7 @@ main > section.card + section.card::before { content: ""; display: block; height
 .defaultsbtn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-left: 4px; }
 .toolbar #thumbbudget { order: -1; }
 .pubrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 12px; padding: 8px 12px; background: #fff; border: 2px solid var(--navy); border-radius: 6px; font-size: 12.5px; }
-.pubrow button.publish.noauth, .pubrow button.publish.noauth:disabled { background: #d9d9d9; border-color: #c4c4c4; color: #6b6b6b; cursor: not-allowed; opacity: 1; text-decoration: line-through; text-decoration-color: #9a9a9a; }
+.pubrow button.publish.noauth, .pubrow button.publish.noauth:disabled { background: #e4e4e4; border-color: #c4c4c4; color: #8b1a1a; cursor: not-allowed; opacity: 1; }
 .pubrow .spacer { flex: 1; }
 .pubrow button { font-size: 12px; padding: 3px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .pubrow button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .pubrow button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
