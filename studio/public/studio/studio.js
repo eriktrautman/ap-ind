@@ -106,7 +106,7 @@ const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS
 /** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
 const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredRaceIds.join() ? null : draft.featuredRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
-const BG_OPTIONS = [["", "transparent"], ["black", "black"], ["green", "green key"]];
+const BG_OPTIONS = [["", "Transparent"], ["black", "Black"], ["green", "Green Key"]];
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
 const SECTIONS = ["ticker", "screens", "detail", "broad", "movement", "persistent", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
