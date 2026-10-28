@@ -291,9 +291,9 @@ function renderStatus() {
   $("loginbanner").hidden = loginKind !== "test";
 
   $("rtype").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.rt === rt));
-  for (const el of [$("pollnow"), $("pollfresh"), $("pause"), ...$("rtype").querySelectorAll("button")]) producerOnly(el);
   $("pause").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
+  for (const el of [$("pollnow"), $("pollfresh"), $("pause"), ...$("rtype").querySelectorAll("button")]) producerOnly(el);
   $("readonly").hidden = isProducer();
 
   const problems = [];
