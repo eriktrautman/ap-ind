@@ -334,10 +334,6 @@ button.noauth, button.noauth:disabled, .pubrow button.publish.noauth:disabled, .
 .seg .lbl .lock { margin-right: 4px; vertical-align: -1px; }
 .screenmid .arrow.back { margin-top: 14px; color: var(--navy); }
 
-/* The Live Ticker row uses the Live Screens layout, cropped to the lower third where the ticker lives. */
-.screenrow.ticker .screen .frame { aspect-ratio: 1920 / 300; }
-.screenrow.ticker .screen iframe { top: auto; bottom: 0; transform-origin: 0 100%; }
 .screenrow.ticker .screen.draft { background: #fff; }
 .screen.draft .tickerurl { margin: 8px 12px 4px; } .screen.draft p.inner { margin: 4px 12px 12px; color: var(--muted); }
-.screenrow.ticker .screenmid { padding-top: 6px; }
 .builderhead { margin-top: 28px; }
