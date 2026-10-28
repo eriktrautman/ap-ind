@@ -12,7 +12,7 @@
   "rewrites": [
     {
       "source": "/g/:chart",
-      "destination": "/g/chart.html"
+      "destination": "/g/chart"
     },
     {
       "source": "/data/:path*",
