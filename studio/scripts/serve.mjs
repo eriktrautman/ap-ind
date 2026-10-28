@@ -1,5 +1,5 @@
 // The whole app on one laptop: the same code Vercel runs, in one Node process.
-//   - static files from dist/ (cleanUrls, /data/* from the store, no-store for /studio and /ticker)
+//   - static files from dist/ (cleanUrls, /data/* from the store, producer.json from production when connected, no-store for /studio and /ticker)
 //   - the four API functions from api/, mounted with a small req/res shim
 //   - the poller loop in place of Vercel Cron (every POLL_SECONDS, default 60; --no-poll to skip)
 //
@@ -111,6 +111,12 @@ createServer(async (req, res) => {
     }
     if (url.pathname.startsWith("/data/")) {
       const rel = url.pathname.slice(6);
+      if (rel === "producer.json" && CONNECTED) {
+        // Production's ticker parameters live on the deployment; this machine's ticker and graphics read them from there.
+        try { const r = await fetch(`${GLOBAL}/data/producer.json${url.search}`, { cache: "no-store", signal: AbortSignal.timeout(8000) }); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(Buffer.from(await r.arrayBuffer())); }
+        catch (e) { res.writeHead(502, { "content-type": "application/json", "cache-control": "no-store" }); res.end(JSON.stringify({ error: `production unreachable: ${e.message}` })); }
+        return;
+      }
       if (isLocalStore()) {
         const p = await file(localPath(rel));
         if (!p) { res.writeHead(404, { "content-type": "application/json" }); res.end("{}"); return; }

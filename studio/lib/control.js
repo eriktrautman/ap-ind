@@ -1,7 +1,7 @@
 // Producer control state shared by the control room (/studio), the ticker and every
 // graphic. One schema, three sources:
 //   default  the shipped values in this file
-//   global   producer.json in the store, read through /api/producer (production: what the deployed ticker and graphics read)
+//   global   producer.json in the store, read as /data/producer.json (production: what the deployed ticker and graphics read)
 //   local    this browser's localStorage; never written to Blob
 // A page picks its source with ?src=default|global|local, else the selector the control room
 // saved in this browser, else global. A local source with nothing saved falls back to global.
@@ -247,8 +247,14 @@ function requestedSource(search = location.search) {
   return SOURCES.includes(q) ? q : getSavedSource();
 }
 
+// Production is read as a static file through the CDN, never through a function: every open ticker and graphic
+// asks for the same address within each 5 s bucket, so the CDN answers all of them from one copy and a flood of
+// readers (ours or anyone's) costs no invocations. The control room's Pull and conflict check still use
+// GET /api/producer, which is uncached and authoritative. A store that has never been published to is a 404: the defaults.
+export const GLOBAL_BUCKET_MS = 5_000;
 export async function loadGlobal() {
-  const res = await fetch("/api/producer", { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  const res = await fetch(`/data/producer.json?t=${Math.floor(Date.now() / GLOBAL_BUCKET_MS)}`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  if (res.status === 404) return normalize(DEFAULTS);
   if (!res.ok) throw new Error(`producer: ${res.status}`);
   return normalize(await res.json());
 }
