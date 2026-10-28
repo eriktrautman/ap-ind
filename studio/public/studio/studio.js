@@ -1,7 +1,7 @@
-// Control room: status bar and poller controls, the Default / Global / Local state model,
-// and the four sections (Ticker, Race Detail, Movement Overview, Full Catalog).
+// Control room: status bar and poller controls, the Live Global Ticker and the Ticker Builder (the one thing that is
+// published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, sameState, diffState, readLocal, saveLocal } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -74,7 +74,7 @@ async function loginHint(wasTest, me = null) {
     ? "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with the real password to continue."
     : "Results are <b>Live</b>, so the rehearsal password is switched off. Only the real password signs in.";
 }
-function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; $("poller").hidden = true; $("prodstrip").hidden = true; }
+function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; $("poller").hidden = true; }
 function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; $("poller").hidden = false; }
 $("loginform").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -87,7 +87,7 @@ $("loginform").addEventListener("submit", async (e) => {
   } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; loginHint(false); }
 });
 $("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; showLogin(); });
-// The sticky header's height changes with the push/pull strip and the banners; anchor jumps from the
+// The sticky header's height changes with the banners; anchor jumps from the
 // section nav must clear it, so its measured height drives scroll-padding-top on <html>.
 new ResizeObserver(() => document.documentElement.style.setProperty("--top-h", `${document.querySelector("header.top").offsetHeight + 8}px`)).observe(document.querySelector("header.top"));
 // Which password signed in: "prod" or "test". A test sign-in is flagged in the banner row.
@@ -95,13 +95,17 @@ let loginKind = null;
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
-let runtime = null;           // from /api/runtime on a laptop (npm start); null on the deployment, where production is this site
-let prod = null;              // production state as last read (normalized), or null if never read
-let prodSeenAt = null;        // updatedAt of the production copy this page last pulled or pushed
-let prodError = null;         // why production is unreadable right now, or null
-let draft = normalize(DEFAULTS);   // the working copy: always Local (this browser), seeded from production on first use
-const view = "local";         // thumbnails and the example ticker always show the settings on this page
-const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getOpacity: () => $("opacity").value, getOrigin: () => (onSite() ? location.origin : runtime?.production?.origin ?? location.origin), getSource: () => view, getDraft: () => (view === "local" ? draft : null) });
+let runtime = null;           // from /api/runtime on a laptop (npm start); null on the deployment, where the live ticker is this site's
+let live = null;              // the Live Global Ticker's parameters as last read (normalized), or null if never read
+let liveSeenAt = null;        // updatedAt of the live ticker when this page last pulled or published
+let liveError = null;         // why the live ticker is unreadable right now, or null
+let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
+const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText"];
+const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
+const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
+/** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
+const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredRaceIds.join() ? null : draft.featuredRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
+const cards = createCardManager({ maxLive: 32, getBg: () => $("bg").value, getOpacity: () => $("opacity").value, getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 async function loadStatus() {
@@ -123,128 +127,126 @@ async function loadIndex() {
     renderAll();
   } catch {}
 }
-/** Read production. On a laptop the runner answers from the deployment (or from itself when GLOBAL=self). */
-async function loadProd() {
+/** Read the Live Global Ticker's parameters. On a laptop the runner answers from the deployment (or from itself when GLOBAL=self). */
+async function loadLive() {
   try {
     const remote = normalize(await api("/api/producer"));
-    prodError = null;
-    const first = !prod;
-    prod = remote;
-    if (first && !readLocal()) { prodSeenAt = remote.updatedAt; draft = saveLocal(structuredClone(remote)); renderAll(); cards.broadcast(draft); }
-    else renderStrip();
-  } catch (e) { prodError = e.message; renderStrip(); }
+    liveError = null;
+    const first = !live;
+    live = remote;
+    // A browser that has never used this page starts its builder from what is live, so Publish begins as a no-op.
+    if (first && !readLocal()) { liveSeenAt = remote.updatedAt; draft = saveLocal({ ...normalize(DEFAULTS), ...tickerPart(remote) }); renderAll(); cards.broadcast(draft); }
+    else renderLive();
+  } catch (e) { liveError = e.message; renderLive(); }
   renderStatus();
 }
 
-// ---------- state model: the working copy is Local; production is pushed to or pulled from ----------
-const dirty = () => !prod || !sameState(draft, prod);
-const otherOperator = () => prod && prodSeenAt !== prod.updatedAt;
-const canPush = () => runtime ? !!runtime.production?.canPush : true;
-const canPull = () => runtime ? !!runtime.production?.canPull : !prodError;
-// The shared version is always named by its web address, never by a word like "production": on the
-// website that is this site; on a laptop it is the website it points at, or the laptop itself (GLOBAL=self).
+// ---------- state model: this page is a workbench; only the ticker builder is published, to the one live ticker ----------
+const otherOperator = () => live && liveSeenAt !== live.updatedAt;
+const canPublish = () => runtime ? !!runtime.production?.canPush : true;
+const canPull = () => runtime ? !!runtime.production?.canPull : !liveError;
+// The live ticker is always named by its web address: on the website that is this site; on a laptop it is
+// the website it points at, or the laptop itself (GLOBAL=self).
 const prodHost = () => runtime ? (runtime.production?.where === "self" ? `${location.host} (this laptop)` : runtime.production?.origin?.replace(/^https?:\/\//, "") ?? "the website") : location.host;
-// Wording: on the website itself the pushed settings are "live"; from a laptop they are "the settings at <host>".
-// What is edited here is "the settings on this page" (saved in this browser), never "your settings".
 const onSite = () => !runtime;
-const LIVE = () => (onSite() ? "the live settings" : `the settings at ${prodHost()}`);
-const SETTINGS = "the settings on this page (ticker races and order, manual items, idle text, featured races and charts, overview charts)";
+const origin = () => (onSite() ? location.origin : runtime?.production?.origin ?? location.origin);
+const BUILDER = "the builder's races and order, AP Call highlight, manual items and idle text";
 
-/** Every edit comes through here: the working copy saves to this browser at once. */
+/** Every edit comes through here: the page saves to this browser at once. Nothing is published by an edit. */
 function commit() {
   draft = saveLocal(normalize(draft));
   renderAll();
   cards.broadcast(draft);
 }
 
-/** The box at the top of the page: public links only display; only a push, after sign-in, changes them. */
+/** The box at the top of the page: two kinds of ticker, graphics as addresses, and what this page does and does not change. */
 function renderHow() {
   // On a phone the box starts collapsed to its one-line heading.
   if (!renderHow.sized) { renderHow.sized = true; if (window.innerWidth <= 700) $("howbox").open = false; }
   const host = prodHost();
-  const where = onSite() ? "this site" : host;
-  $("howtext").innerHTML = `Anyone with the link can open the ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`}; the links are public and they only display. What they show is whatever was last pushed. Nothing on them changes until someone signs in to a control room with the shared password and presses <b>Push</b>${onSite() ? "" : ` (from this laptop, push also needs ${esc(host)}'s password in <code>.env</code>)`}. The switcher operator should open graphics only from the <b>Show</b> buttons on this page, never from a link someone else sends. Every graphic is a plain address: <code>/g/&lt;chart id&gt;?bg=black&amp;opacity=60&amp;race=&lt;race id&gt;</code>, for example <code>/g/B5?bg=black&amp;race=NE-SEN</code>. The chart ids (B5, D4) and race ids (NE-SEN, CA-6) are the ones shown on every card and row here (hover one for its id). Display parameters come first. An address that does not fully specify its chart (unknown chart, a race chart with no race, a race the feed does not have) shows a red error card listing what it received and what is missing instead of a graphic, so a bad address is never mistaken for data. The ticker too: its address below rebuilds it from the races and items on this page without any push. The <b>Show</b> buttons only build these addresses, with the Global settings applied.`;
+  $("howtext").innerHTML = `Anyone with a link can open the ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`}; the links are public and they only display. <b>Two kinds of ticker.</b> The <b>Live Global Ticker</b> is one fixed address, <code>${esc(host)}/ticker</code>, that updates within 5 seconds, at the next item boundary and without restarting the crawl, whenever someone signed in here <b>publishes</b> new parameters to it. A <b>ticker built from an address</b> (the Ticker Builder's Copy URL) carries its races and items in the address itself, so it never changes and needs no sign-in. <b>Every graphic is an address</b> too: <code>/g/&lt;chart id&gt;?bg=black&amp;opacity=60&amp;race=&lt;race id&gt;</code>, for example <code>/g/B5?bg=black&amp;race=NE-SEN</code>; the chart ids (B5, D4) and race ids (NE-SEN, CA-6) are shown on every card and row (hover one for its id), display parameters come first, and an address that does not fully specify its chart shows a red error card instead of a graphic. The <b>Show</b> and <b>Copy URL</b> buttons only build these addresses, with the Global settings applied. Everything else on this page (featured races, chart lists, persistent elements) organises this browser's view and is never published; <b>Restore defaults</b> resets this page, never the live ticker.`;
 }
 
-function renderStrip() {
-  $("prodstrip").hidden = false;
+/** The Live Global Ticker block: what it is crawling right now and when that was published. */
+function renderLive() {
   renderHow();
-  const d = dirty();
-  const changes = prod ? diffState(prod, draft) : [];
-  const host = prodHost();
-  const st = $("ps-state");
-  st.className = d ? "dirty" : "same";
-  st.textContent = !prod ? "Not pushed" : d ? `${changes.length} change${changes.length === 1 ? "" : "s"} on this page not pushed` : `Same as ${onSite() ? "live" : host}`;
-  $("ps-work").title = `${readLocal()?.updatedAt ? `The settings on this page were saved in this browser ${ago(readLocal().updatedAt)}. ` : ""}${onSite() ? "Nothing goes live until you push." : `Nothing at ${host} changes until you push.`}${changes.length ? "\n\n" + changes.map((c) => "• " + withLabels(c.text)).join("\n") : ""}`;
-  const p = $("ps-prod");
+  const box = $("liveparams");
+  if (!live) box.innerHTML = `<div class="warnline bad">${liveError ? `Cannot read the live ticker: ${esc(liveError)}` : "Reading the live ticker…"}</div>`;
+  else {
+    const labels = live.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
+    box.innerHTML = `<table class="params">
+      <tr><td class="k" title="races: race ids in crawl order">races</td><td>${labels.map((l) => `<span class="lab">${esc(l)}</span>`).join(" ")}</td></tr>
+      <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
+      <tr><td class="k" title="item: manual items, one after every two races">item</td><td>${live.manualItems.length ? live.manualItems.map((m) => `<div>${esc(m.text)}</div>`).join("") : '<span class="muted">none</span>'}</td></tr>
+      <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
+      <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped defaults are live"}</td></tr>
+    </table>`;
+  }
+  renderPublishState();
+}
+function renderPublishState() {
+  const changes = live ? tickerDiff(live, draft) : [];
+  const same = live && !changes.length;
+  const st = $("pubstate");
+  st.className = `pubstate ${same ? "same" : "dirty"}`;
+  st.textContent = !live ? "Live ticker not read yet" : same ? "Builder matches the live ticker" : `Builder differs from the live ticker: ${changes.length} change${changes.length === 1 ? "" : "s"}`;
+  st.title = changes.length ? changes.map((c) => "• " + withLabels(c.text)).join("\n") : "The live ticker is crawling exactly what this builder has.";
   const r = runtime?.production;
-  const sent = prod?.updatedAt ? `pushed ${ago(prod.updatedAt)}` : "nothing pushed yet";
-  const since = otherOperator() ? " · changed since you last pulled" : "";
-  let cls = "", text, tip;
-  if (runtime && r && !r.reachable) { cls = "bad"; text = `${host} · not answering`; tip = `${host} is not responding, so you can neither pull its settings nor push. ${r.reason ?? ""}`; }
-  else if (prodError) { cls = "bad"; text = `${onSite() ? "Live settings" : host} · can't read`; tip = `${onSite() ? "The live settings" : `The settings at ${host}`} could not be read: ${prodError}`; }
-  else if (runtime && r && !r.canPush) { cls = "warn"; text = `${host} · pull only · ${sent}`; tip = `This laptop has no password for ${host}, so you can pull its settings but not push. ${r.reason ?? ""}${prod?.updatedAt ? "" : "\n\nNothing has been pushed there yet, so it shows the defaults."}`; }
-  else if (onSite()) { text = `Live on this site · ${sent}${since}`; tip = `The live settings are what this site's ticker and graphics show: whatever was last pushed, by anyone.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so the defaults are live."}${since ? " Someone pushed after you last pulled." : ""}`; }
-  else { text = `${host} · ${sent}${since}`; tip = `${host} is the site everyone uses: its ticker and graphics show whatever was last pushed there, by anyone.${prod?.updatedAt ? ` Last push ${fmtTime(prod.updatedAt)}.` : " Nothing has been pushed yet, so it shows the defaults."}${since ? " Someone pushed after you last pulled." : ""}`; }
-  p.className = `ps-info ${cls}`; p.dataset.tip = `${text}\n\n${tip}`;
-  $("push").disabled = !canPush() || !d;
-  $("push").title = !canPush() ? (r?.reason ?? "pushing is not possible from here") : !d ? `Nothing to push: this page already matches ${onSite() ? "live" : host}` : `${onSite() ? "Push the settings on this page live" : `Push the settings on this page to ${host}`} (${changes.length} change${changes.length === 1 ? "" : "s"})`;
-  $("pull").disabled = !canPull() || !prod;
-  $("pull").title = !canPull() ? (r?.reason ?? prodError ?? "pulling is not possible right now") : `Replace the settings on this page with ${LIVE()}`;
+  $("publish").disabled = !canPublish() || !changes.length;
+  $("publish").title = !canPublish() ? (r?.reason ?? "publishing is not possible from here") : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  $("pull").disabled = !canPull() || !live;
+  $("pull").title = !canPull() ? (r?.reason ?? liveError ?? "pulling is not possible right now") : "Replace the builder's races, items, idle text and highlight with the live ticker's";
 }
 
-async function pushToProduction() {
-  if (!canPush()) return;
-  let latest = prod;
-  try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; } catch (e) { prodError = e.message; }
-  const changes = diffState(latest ?? DEFAULTS, draft);
-  const someoneElse = latest && latest.updatedAt !== prodSeenAt;
+async function publish() {
+  if (!canPublish()) return;
+  let latest = live;
+  try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; } catch (e) { liveError = e.message; }
+  const changes = tickerDiff(latest ?? DEFAULTS, draft);
+  const someoneElse = latest && latest.updatedAt !== liveSeenAt;
   const host = prodHost();
   const ok = await ask({
-    title: onSite() ? "Push live?" : `Push to ${host}?`,
-    body: `<p><b>All</b> of ${SETTINGS} replace <b>${esc(LIVE())}</b>, including anything someone else set. The ${onSite() ? "live" : ""} ticker and every graphic ${onSite() ? "on this site" : `at ${esc(host)}`} change to match: the ticker within 5 seconds, the graphics within 10.</p>
+    title: "Publish to the Live Global Ticker?",
+    body: `<p><b>${esc(host)}/ticker</b> takes ${BUILDER}. It changes within 5 seconds, at the next item boundary, without restarting the crawl. Nothing else on this page is published, and tickers built from an address are not affected.</p>
       ${changeList(changes)}
-      <p class="small muted">Last push${onSite() ? "" : ` to ${esc(host)}`}: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "none yet"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else pushed${onSite() ? "" : ` to ${esc(host)}`} at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or pushed. Pushing now throws their settings away. Press Cancel and Pull if you want to see them first.</div>` : ""}
-      ${!changes.length ? `<div class="warnline">This page already matches ${onSite() ? "live" : esc(host)}.</div>` : ""}
-      <p class="small muted">Push is the only way the public ticker and graphics change. Anyone can open them by link, but only a signed-in control room can push.</p>`,
-    ok: onSite() ? "Push live" : `Push to ${host}`, danger: true,
+      <p class="small muted">Last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
+      ${someoneElse ? `<div class="warnline bad">Someone else published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published. Publishing now replaces their ticker. Press Cancel and Pull if you want to see it first.</div>` : ""}
+      ${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
+    ok: "Publish", danger: true,
   });
   if (!ok) return;
   try {
-    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(draft) }));
-    prod = saved; prodSeenAt = saved.updatedAt; prodError = null;
-    draft = saveLocal(structuredClone(saved));
-    renderAll(); cards.broadcast(draft);
+    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(tickerPart(draft)) }));
+    live = saved; liveSeenAt = saved.updatedAt; liveError = null;
+    renderAll();
   } catch (e) {
-    await ask({ title: "Push failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>Nothing changed ${onSite() ? "live" : `at ${esc(host)}`}. The settings on this page are still saved here.</p>`, ok: "OK" });
+    await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>The live ticker is unchanged. The builder is still saved on this page.</p>`, ok: "OK" });
   }
 }
-async function pullFromProduction() {
+async function pull() {
   let latest;
-  const host = prodHost();
-  try { latest = normalize(await api("/api/producer")); prod = latest; prodError = null; }
-  catch (e) { prodError = e.message; renderStrip(); await ask({ title: onSite() ? "Can't read the live settings" : `Can't read ${host}`, body: `<div class="warnline bad">${esc(e.message)}</div><p>The settings on this page are unchanged.</p>`, ok: "OK" }); return; }
-  const changes = diffState(draft, latest);
+  try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
+  catch (e) { liveError = e.message; renderLive(); await ask({ title: "Can't read the live ticker", body: `<div class="warnline bad">${esc(e.message)}</div><p>The builder is unchanged.</p>`, ok: "OK" }); return; }
+  const changes = tickerDiff(draft, latest);
   const ok = await ask({
-    title: onSite() ? "Pull the live settings onto this page?" : `Pull from ${host} onto this page?`,
-    body: `<p><b>All</b> of ${SETTINGS} are replaced by <b>${esc(LIVE())}</b> (last pushed ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing ${onSite() ? "live" : `at ${esc(host)}`} changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page already matches ${onSite() ? "live" : esc(host)}.</div>` : ""}`,
-    ok: onSite() ? "Pull the live settings" : `Pull from ${host}`, danger: changes.length > 0,
+    title: "Pull from the Live Global Ticker?",
+    body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing on air changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
+    ok: "Pull into the builder", danger: changes.length > 0,
   });
   if (!ok) return;
-  prodSeenAt = latest.updatedAt;
-  draft = saveLocal(structuredClone(latest));
+  liveSeenAt = latest.updatedAt;
+  draft = saveLocal({ ...draft, ...tickerPart(latest) });
   renderAll(); cards.broadcast(draft);
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Reset this page to the defaults?", body: `<p><b>All</b> of ${SETTINGS} are replaced by the defaults the app came with. Nothing ${onSite() ? "goes live" : `at ${esc(prodHost())} changes`} until you push.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Reset to defaults", danger: changes.length > 0 });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, featured races and charts, overview charts, persistent elements and their inputs. This browser's saved settings are replaced.</div><p><b>The Live Global Ticker is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   renderAll(); cards.broadcast(draft);
 }
-$("push").addEventListener("click", pushToProduction);
-$("pull").addEventListener("click", pullFromProduction);
+$("publish").addEventListener("click", publish);
+$("pull").addEventListener("click", pull);
 $("defaults").addEventListener("click", restoreDefaults);
 
 // ---------- status bar + poller ----------
@@ -263,7 +265,7 @@ function renderStatus() {
     st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
     st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-air", `<span class="k">A push ${onSite() ? "goes live in" : `reaches ${esc(prodHost())} in`}</span><b>≤ 5 s ticker · ≤ 10 s graphics</b>`);
+    st("st-air", `<span class="k">A publish reaches ${onSite() ? "the live ticker" : esc(prodHost()) + "/ticker"} in</span><b>≤ 5 s</b>`);
   $("testbanner").hidden = rt !== "t";
   $("loginbanner").hidden = loginKind !== "test";
 
@@ -344,7 +346,7 @@ function raceBand(r, { featured, position = null }) {
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
-  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only this page. Nothing ${onSite() ? "goes live" : `at ${esc(prodHost())} changes`} until you push.</p>`, ok: title.replace(/\?$/, "") });
+  const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only this page. The Live Global Ticker changes only when you publish the builder.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
 }
 function toggleFeatured(id) {
@@ -407,48 +409,35 @@ $("addmanual").addEventListener("submit", (e) => {
 let idleTimer = null;
 $("idletext").addEventListener("input", () => { draft.idleText = $("idletext").value; clearTimeout(idleTimer); idleTimer = setTimeout(commit, 400); });
 $("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl").checked; commit(); });
-const frame = $("preview");
-function scalePreview() { frame.style.transform = `scale(${frame.parentElement.clientWidth / 1920})`; }
+const frame = $("preview"), liveFrame = $("livepreview");
+function scalePreviews() { for (const f of [frame, liveFrame]) f.style.transform = `scale(${f.parentElement.clientWidth / 1920})`; }
+/** The builder's preview frame gets the builder's four fields by postMessage, so it shows the page, not what is published. */
 function sendPreview() {
-  renderTickerOpen();
-  if (view !== "local") return;
+  renderTickerUrl();
   frame.contentWindow?.postMessage({ type: "producer", state: draft }, "*");
   if (index) { const q = buildQueue(index.races, draft); $("previewnote").textContent = `${q.items.length} item${q.items.length === 1 ? "" : "s"}${q.missing.length ? ` · ${q.missing.length} not in the AP feed, skipped` : ""}`; }
 }
 frame.addEventListener("load", sendPreview);
-window.addEventListener("resize", scalePreview);
-function renderTickerNote() {
-  $("tickernote").innerHTML = onSite()
-    ? `This is a preview. The live ticker is <a href="/ticker?bg=black" target="_blank" rel="noopener">${esc(location.host)}/ticker</a> (add <code>?bg=green</code> for the key); to change it, Push with the buttons above. It re-reads the live settings every 5 seconds.`
-    : `This is a local preview. The ticker everyone uses is <a href="${esc(runtime?.production?.origin ?? "")}/ticker?bg=black" target="_blank" rel="noopener">${esc(prodHost())}/ticker</a> (add <code>?bg=green</code> for the key); to change that one, Push with the buttons above. It re-reads what was last pushed every 5 seconds.`;
-}
-/** The ticker opens like any chart: at full size, showing whatever the previews show. */
-function tickerOpenUrl() { const bg = $("bg").value, o = $("opacity").value; return `/ticker?${bg ? `bg=${bg}&` : ""}${o !== "100" ? `opacity=${o}&` : ""}src=${view}`; }
-/** The address that reproduces the ticker on this page with no pushed state: display parameters, then races by label, then items. */
+window.addEventListener("resize", scalePreviews);
+function displayParams() { const bg = $("bg").value, o = $("opacity").value; const p = new URLSearchParams(); if (bg) p.set("bg", bg); if (o !== "100") p.set("opacity", o); return p; }
+/** The Live Global Ticker's address: fixed; only the display parameters vary. */
+function liveTickerUrl() { const s = displayParams().toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
+/** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {
-  const bg = $("bg").value, o = $("opacity").value;
-  const p = new URLSearchParams();
-  if (bg) p.set("bg", bg);
-  if (o !== "100") p.set("opacity", o);
+  const p = displayParams();
   p.set("races", draft.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(","));
   p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
   for (const m of draft.manualItems) if (m.text) p.append("item", m.text);
   if (draft.idleText && draft.idleText !== DEFAULTS.idleText) p.set("idle", draft.idleText);
-  const origin = onSite() ? location.origin : runtime?.production?.origin ?? location.origin;
-  return `${origin}/ticker?${p.toString()}`;
+  return `${origin()}/ticker?${p.toString()}`;
 }
 function renderTickerUrl() {
-  const u = tickerUrl();
-  $("tickerurl").textContent = u; $("tickerurl").href = u;
+  const u = tickerUrl(); $("tickerurl").textContent = u; $("tickerurl").href = u; $("tickeropen").href = u;
+  const l = liveTickerUrl(); $("liveurl").textContent = l; $("liveurl").href = l; $("liveopen").href = l;
 }
-$("tickercopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(tickerUrl()); $("tickercopy").textContent = "Copied"; setTimeout(() => ($("tickercopy").textContent = "Copy URL"), 1500); } catch {} });
-function renderTickerOpen() {
-  renderTickerNote();
-  $("tickeropen").href = tickerOpenUrl();
-}
-$("previewframe").addEventListener("click", () => window.open(tickerOpenUrl(), "_blank", "noopener"));
-$("bg").addEventListener("change", renderTickerOpen);
-$("opacity").addEventListener("change", renderTickerOpen);
+for (const [btn, fn] of [["tickercopy", tickerUrl], ["livecopy", liveTickerUrl]]) $(btn).addEventListener("click", async () => { try { await navigator.clipboard.writeText(fn()); $(btn).textContent = "Copied"; setTimeout(() => ($(btn).textContent = "Copy URL"), 1500); } catch {} });
+$("previewframe").addEventListener("click", () => window.open(tickerUrl(), "_blank", "noopener"));
+$("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_blank", "noopener"));
 $("bg").addEventListener("change", renderTickerUrl); $("opacity").addEventListener("change", renderTickerUrl);
 
 // ---------- Race Detail section ----------
@@ -543,7 +532,8 @@ function renderMovement() {
     const grid = $(gridId); grid.className = "cardgrid"; grid.innerHTML = "";
     for (const cid of draft.movementCharts.filter((id) => seriesOf(id) === series)) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
-      grid.appendChild(cards.card({ chart, priority: 3, open: "show", menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
+      const params = chart.id === "D5" && draft.keyRaceIds.length ? { races: draft.keyRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(",") } : null;
+      grid.appendChild(cards.card({ chart, params, priority: 3, open: "show", menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
     }
     if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add ${series} charts from the Chart Catalog below.</div>`;
   }
@@ -645,7 +635,7 @@ let pformTimer = null;
 $("persistgrid").addEventListener("input", (e) => {
   const i = e.target.closest("[data-pid]"); if (!i) return;
   const id = i.dataset.pid; draft.persistentSettings[id] = { ...(draft.persistentSettings[id] ?? {}), [i.dataset.f]: i.value };
-  clearTimeout(pformTimer); pformTimer = setTimeout(() => { draft = saveLocal(normalize(draft)); renderStrip(); renderPersistent(); cards.prune(); cards.broadcast(draft); }, i.tagName === "SELECT" ? 0 : 600);
+  clearTimeout(pformTimer); pformTimer = setTimeout(() => { draft = saveLocal(normalize(draft)); renderPersistent(); cards.prune(); cards.broadcast(draft); }, i.tagName === "SELECT" ? 0 : 600);
 });
 $("persistgrid").addEventListener("change", (e) => { const i = e.target.closest("select[data-pid]"); if (i) i.dispatchEvent(new Event("input", { bubbles: true })); });
 
@@ -675,8 +665,8 @@ $("charts").addEventListener("click", (e) => { const fc = e.target.closest(".fea
 // ---------- render everything ----------
 function renderAll() {
   renderStatus();
-  renderStrip();
-  renderPins(); renderManual(); renderTickerUrl(); sendPreview();
+  renderLive();
+  renderPins(); renderManual(); sendPreview();
   renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }
@@ -691,13 +681,14 @@ let timers = [];
 async function boot() {
   timers.forEach(clearInterval);
   draft = readLocal() ?? normalize(DEFAULTS);
-  frame.src = `/ticker?preview=1&bg=black&src=local`;
-  scalePreview();
+  frame.src = `/ticker?preview=1&bg=black&src=local`;   // the builder: fed by postMessage
+  liveFrame.src = `/ticker?bg=black`;                   // the live ticker itself, reading what is published
+  scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();
-  await Promise.all([loadStatus(), loadIndex(), loadProd()]);
+  await Promise.all([loadStatus(), loadIndex(), loadLive()]);
   renderAll();
-  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadProd, 20_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderStrip(); }, 10_000)];
+  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

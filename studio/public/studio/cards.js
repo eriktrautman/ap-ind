@@ -15,7 +15,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getBg = () => "black", getOpacity = () => "100", getOrigin = () => location.origin, getSource = () => "global", getDraft = () => null } = {}) {
+export function createCardManager({ maxLive = 32, getBg = () => "black", getOpacity = () => "100", getOrigin = () => location.origin, getRaces = () => null, getDraft = () => null } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -41,10 +41,14 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     if (getOpacity() !== "100") p.set("opacity", getOpacity());
     if (c.race && c.chart.needsState) p.set("state", c.race.state);
     else if (c.race) p.set("race", c.race.label);
+    racesParam(c, p);
     for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
     const s = p.toString();
     return `${getOrigin()}/g/${c.chart.id}${s ? "?" + s : ""}`;
   }
+  /** Charts that draw a list of races (the C, D and A series) carry the page's featured races as races=
+   *  when those differ from the shipped set; with the shipped set the address stays short and the page uses it. */
+  function racesParam(c, p) { if (c.chart.kind !== "race") { const r = getRaces(); if (r) p.set("races", r.join(",")); } }
   function pageUrl(c, forOpen) {
     const semantic = forOpen && (c.chart.page ?? "").startsWith("/g/");
     const u = new URL(semantic ? `/g/${c.chart.id}` : c.chart.page, location.origin);
@@ -53,10 +57,10 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
     if (bg) p.set("bg", bg);
     if (forOpen && getOpacity() !== "100") p.set("opacity", getOpacity());   // chart panel opacity; previews stay solid
     if (forOpen && c.open === "preview") p.set("fit", "1");   // "show": the real page at full size
-    p.set("src", getSource());
     for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts
     if (c.race && c.chart.needsState) p.set(semantic ? "state" : "st", c.race.state);
     else if (c.race) { if (semantic) p.set("race", c.race.label); else p.set("id", c.race.id); }
+    racesParam(c, p);
     for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
     if (!forOpen) p.set("preview", "1");
     p.set("sample", "auto");   // fabricated results until the count starts
@@ -188,7 +192,7 @@ export function createCardManager({ maxLive = 32, getBg = () => "black", getOpac
   function refreshSource() {
     for (const c of cards) {
       if (c.chart.built) c.link.href = pageUrl(c, true);
-      if (c.frame) c.frame.contentWindow?.postMessage({ type: "producer-source", source: getSource() }, "*");
+      if (c.frame) c.frame.contentWindow?.postMessage({ type: "producer-source", source: "local" }, "*");
     }
   }
   function refreshLinks() { for (const c of cards) if (c.chart.built) { c.link.href = pageUrl(c, true); if (c.copy) c.copy.dataset.url = copyUrl(c); } }

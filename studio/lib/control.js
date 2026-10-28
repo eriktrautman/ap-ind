@@ -253,42 +253,69 @@ export async function loadGlobal() {
   return normalize(await res.json());
 }
 
+/** The fields the Live Global Ticker is made of: the only ones that are ever published. Everything else a page needs comes
+ *  from its address or the shipped defaults. */
+export const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText"];
+
 /**
- * Resolve the state for a source once. Returns {state, source, requested, error}: `source` is
- * what actually fed the state (local with nothing saved falls back to global; global
- * unreachable falls back to the last copy given, else default).
+ * Resolve the state for a source once. Non-ticker fields are always the shipped defaults (a page's address
+ * overrides them, see urlOverrides); the ticker fields come from the live ticker (global), this browser's
+ * saved builder (local) or the defaults. Returns {state, source, requested, error}.
  */
 async function loadState(requested = requestedSource(), { lastGlobal = null } = {}) {
-  if (requested === "default") return { state: normalize(DEFAULTS), source: "default", requested, error: null };
+  const base = normalize(DEFAULTS);
+  const withTicker = (s) => normalize({ ...base, ...Object.fromEntries(TICKER_FIELDS.map((k) => [k, s[k]])) });
+  if (requested === "default") return { state: base, source: "default", requested, error: null };
   if (requested === "local") {
     const local = readLocal();
     if (local) return { state: local, source: "local", requested, error: null };
   }
   try {
-    return { state: await loadGlobal(), source: "global", requested, error: null };
+    return { state: withTicker(await loadGlobal()), source: "global", requested, error: null };
   } catch (e) {
     if (lastGlobal) return { state: lastGlobal, source: "global", requested, error: e.message };
-    return { state: normalize(DEFAULTS), source: "default", requested, error: e.message };
+    return { state: base, source: "default", requested, error: e.message };
   }
 }
 
-/**
- * Keep a page's state current. Global is re-read every `intervalMs`; local changes made in
- * another tab of this browser arrive through the storage event; the control room can push a
- * draft with postMessage {type:"producer", state} (preview mode), which overrides everything.
- * onState(state, info) fires on every change; info = {source, requested, error, preview}.
- */
-export function watchState({ source = requestedSource(), intervalMs = 10_000, onState, preview = new URLSearchParams(location.search).get("preview") === "1" } = {}) {
+// ---------- a page's address has the final say ----------
+// ?races=NE-SEN,MT-SEN  the race list a chart draws or highlights (featured, key and ticker lists alike); race ids or AP ids
+// ?context=<text>       the D6 context line for the race in ?id=
+// Race ids are resolved against the live index, fetched once per page; the featured races resolve without it.
+let indexRaces = null;
+async function resolveRaceKeys(keys) {
+  const feat = FEATURED_RACES.map((r) => ({ label: r.label, id: r.id }));
+  const need = keys.some((k) => !/^\d{1,12}$/.test(k) && !feat.some((f) => f.label === k.toUpperCase()));
+  if (need && indexRaces === null && !new URLSearchParams(location.search).get("demo")) {
+    try { indexRaces = (await (await fetch("/data/index.json", { cache: "no-store", signal: AbortSignal.timeout(6000) })).json()).races ?? []; } catch { indexRaces = []; }
+  }
+  const list = [...feat, ...(indexRaces ?? [])];
+  return keys.map((k) => (/^\d{1,12}$/.test(k) ? k : list.find((r) => r.label === k.toUpperCase())?.id ?? null)).filter(Boolean);
+}
+async function urlOverrides(search = location.search) {
+  const q = new URLSearchParams(search);
+  const o = {};
+  if (q.has("races")) { const ids = await resolveRaceKeys(q.get("races").split(",").map((s) => s.trim()).filter(Boolean)); o.featuredRaceIds = ids; o.keyRaceIds = ids; if (ids.length) o.pinnedRaceIds = ids; }
+  if (q.has("context") && q.get("id")) o.contextLines = { [q.get("id")]: q.get("context") };
+  return o;
+}
+
+export function watchState({ source = requestedSource(), intervalMs = 0, onState, preview = new URLSearchParams(location.search).get("preview") === "1" } = {}) {
+  // intervalMs > 0 re-reads the live ticker on a timer (the ticker itself does; graphics read once). Local changes
+  // made in another tab of this browser arrive through the storage event; the control room can post a draft with
+  // postMessage {type:"producer", state} (preview mode). The address's own parameters sit on top of all of it.
   let requested = source;
   let lastGlobal = null;
   let current = null;
   let pushed = null;
   let timer = null;
-  const emit = (state, info) => {
-    const key = JSON.stringify(state);
+  const overrides = urlOverrides();
+  const emit = async (state, info) => {
+    const merged = normalize({ ...state, ...(await overrides) });
+    const key = JSON.stringify(merged);
     if (current === key) return;
     current = key;
-    onState?.(state, info);
+    onState?.(merged, info);
   };
   async function tick() {
     if (pushed) return;
@@ -304,7 +331,7 @@ export function watchState({ source = requestedSource(), intervalMs = 10_000, on
   window.addEventListener("storage", onStorage);
   if (preview) window.addEventListener("message", onMessage);
   tick();
-  timer = setInterval(tick, intervalMs);
+  if (intervalMs > 0) timer = setInterval(tick, intervalMs);
   return {
     get state() { return current ? JSON.parse(current) : null; },
     setSource(src) { if (SOURCES.includes(src)) { requested = src; tick(); } },

@@ -6,7 +6,7 @@
 //   npm start                  build, then serve on http://localhost:3000
 //   node scripts/serve.mjs --port 4000 --no-poll
 //
-// Production state (what the control room pushes to and pulls from) is chosen by GLOBAL in .env:
+// Production (the Live Global Ticker the control room publishes to and pulls from) is chosen by GLOBAL in .env:
 //   GLOBAL=https://ap-ind.vercel.app   the deployment is production. Pull needs nothing more; push
 //                                       needs GLOBAL_PASSWORD (the deployment's studio password).
 //   GLOBAL=self                         this machine is production: its own outputs read its own
@@ -55,7 +55,7 @@ async function upstreamLogin() {
 /** GET or PUT the deployment's producer state. PUT logs in with GLOBAL_PASSWORD first (once per process). */
 async function upstreamProducer(method, body) {
   if (method === "PUT") {
-    if (!GLOBAL_PASSWORD) throw Object.assign(new Error("push not configured: set GLOBAL_PASSWORD in studio/.env to the deployment's studio password"), { status: 403 });
+    if (!GLOBAL_PASSWORD) throw Object.assign(new Error("publish not configured: set GLOBAL_PASSWORD in studio/.env to the deployment's studio password"), { status: 403 });
     if (!upstreamCookie) await upstreamLogin();
   }
   let r = await fetch(`${GLOBAL}/api/producer`, { method, headers: { "content-type": "application/json", ...(method === "PUT" ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) });
@@ -83,7 +83,7 @@ createServer(async (req, res) => {
       res.end(JSON.stringify({
         local: true, store: isLocalStore() ? "files" : "blob", polling: !NO_POLL,
         production: CONNECTED
-          ? { where: "deployment", origin: GLOBAL, reachable: up, canPull: up, canPush: up && !!GLOBAL_PASSWORD, reason: !up ? `${GLOBAL} is not answering` : !GLOBAL_PASSWORD ? "push not configured: add GLOBAL_PASSWORD (the deployment's studio password) to studio/.env and restart" : null }
+          ? { where: "deployment", origin: GLOBAL, reachable: up, canPull: up, canPush: up && !!GLOBAL_PASSWORD, reason: !up ? `${GLOBAL} is not answering` : !GLOBAL_PASSWORD ? "publish not configured: add GLOBAL_PASSWORD (the deployment's studio password) to studio/.env and restart" : null }
           : { where: "self", origin: `http://localhost:${PORT}`, reachable: true, canPull: true, canPush: true, reason: null },
       }));
       return;
