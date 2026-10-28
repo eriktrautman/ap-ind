@@ -271,11 +271,11 @@ function renderStatus() {
   const st = (id, html) => `<span class="st" id="${id}">${html}</span>`;
   $("statusbar").innerHTML =
     st("st-feed", `<span class="dot ${cls === "ok" ? "" : cls}"></span><b>${esc(feedLabel)}</b>`) +
-    st("st-refresh", `<span class="k">Last refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
-    st("st-asof", `<span class="k">AP data as of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
-    st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"}">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
-    st("st-api", `<span class="k">AP access</span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
-    st("st-air", `<span class="k">A publish reaches ${onSite() ? "the live ticker" : esc(prodHost()) + "/ticker"} in</span><b>≤ 5 s</b>`);
+    st("st-refresh", `<span class="k">Last Refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
+    st("st-asof", `<span class="k">Data As Of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
+    st("st-rt", `<span class="k">Results</span><b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`) +
+    st("st-api", `<span class="k">AP Access</span><span class="dot ${!s ? "off" : apOk ? "" : "bad"}"></span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
+    st("st-air", `<span class="k">Ticker speed:</span><b>≤ 5 s</b>`);
   $("testbanner").hidden = rt !== "t";
   $("loginbanner").hidden = loginKind !== "test";
 
