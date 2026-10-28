@@ -16,7 +16,10 @@ import { writeJson, readJson, defaultSettings } from "./store.js";
 
 const CANDIDATE_INDEX = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/config/candidates.json";
 const PHOTO_MANIFEST = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/config/photos.json";
-const COUNTY_SLOTS = 5; // each state's counties refresh every 5 runs
+// Each state's counties refresh every COUNTY_SLOTS runs. With 51 states that is 1 national call plus
+// 5 or 6 county calls a run (6 or 7 a minute), well under AP's 10 a minute and leaving room for a
+// laptop or the history fetcher on the same key. At 5 slots a run was 11 or 12 requests, over the limit.
+const COUNTY_SLOTS = 10;
 
 let curatedCache = null;
 let photoCache = null;

@@ -42,7 +42,7 @@ What you will be sent, and what it is for:
 
 | Key | Needed to run locally? | What it does |
 |---|---|---|
-| `AP_API_KEY` | **Yes** | Reads results from the AP Elections API. Without it nothing polls. AP allows ten requests a minute per key, and a local run uses about two, so several laptops can share one key. |
+| `AP_API_KEY` | **Yes** | Reads results from the AP Elections API. Without it nothing polls. AP allows ten requests a minute per key. A polling run (deployment or laptop) uses 6 or 7 a minute: the national feed plus a tenth of the states' counties, each state every ten minutes. The deployment already polls, so a laptop that only needs the pages should serve without polling (`node --env-file=.env scripts/serve.mjs --no-poll`) and read the shared store; two pollers on one key exceed the limit. |
 | `STUDIO_PASSWORD` | You choose it yourself | Password for `/studio` on your machine only. Not a shared secret. |
 | `STUDIO_TEST_PASSWORD` | Optional | A second, easy password for rehearsals (`test1234` until the night). Signing in with it shows a purple TEST LOGIN banner. |
 | `BLOB_READ_WRITE_TOKEN` | No | Only if your laptop should write into the production data store (standing in for the Vercel cron). Then also delete the `STORE_DIR` line. Ask before using it: pause, test/live and every push would then change production. |
@@ -111,7 +111,7 @@ What has to be true before starting:
 
 - Node 24 or newer. The script uses only built-in modules (`node:sqlite`, `node:zlib`), so no `npm install` is needed for it.
 - `studio/.env` exists with `AP_API_KEY=` filled in (the same key the app uses; copy `studio/.env.example` if the file is missing). The script reads nothing else from the file.
-- Nothing else is hammering the key. AP allows 10 requests a minute per key, shared by everything using it. The script sends one every 10 seconds and the deployed poller uses about one a minute, so both can run together; a second copy of the script on another machine with the same key would make both pause on the quota.
+- Nothing else is hammering the key. AP allows 10 requests a minute per key, shared by everything using it. The script sends one every 10 seconds (6 a minute) and the deployed poller uses 6 or 7 a minute, so together they sit at the limit; add nothing else on the key while it runs, and never run a second copy of the script or a polling laptop at the same time.
 - About 300 MB free under `data/` (219 MB database plus SQLite's journal).
 
 The run, from the repo root:

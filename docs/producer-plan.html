@@ -113,7 +113,7 @@
     <div class="card"><h3>Working broadcast pages</h3><p>Three. The on-air ticker (Blob-fed, deployed). The race result (B5) and the versus-2024 map (B13), which only run against the local WebSocket server; on Vercel they work in sample-data mode only.</p></div>
     <div class="card"><h3>The C and D charts</h3><p>C1–C9 and D1–D11 exist as 16:9 sketches on the <a href="graphics-data-options.html">Graphics Data Options</a> page, with hand-typed sample numbers. None is a page that can be put on air. The Movement Overview defaults name twelve of them, so twelve new graphics are in this plan.</p></div>
     <div class="card"><h3>Producer state</h3><p>One Blob file, <code>producer.json</code>: pinned race ids, manual items, idle text. Written by <code>/studio</code> with the shared password, read by the ticker every 5 s. No notion of defaults versus local edits yet.</p></div>
-    <div class="card"><h3>Data in Blob</h3><p>Every race with top candidates once a minute, county units per state every five minutes, poller status with plain-English diagnoses. Missing for the defaults: the AP Trend reports (D3, D4), a polling dataset (C7), 2024 shares (C6, D10), ranked-choice rounds (B9), per-race history (B7).</p></div>
+    <div class="card"><h3>Data in Blob</h3><p>Every race with top candidates once a minute, county units per state every ten minutes, poller status with plain-English diagnoses. Missing for the defaults: the AP Trend reports (D3, D4), a polling dataset (C7), 2024 shares (C6, D10), ranked-choice rounds (B9), per-race history (B7).</p></div>
   </div>
 </section>
 
@@ -161,7 +161,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; all lookbook charts except B12",
   note: "S109 (B12) blocked on the AP VoteCast licence; everything else done",
-  updated: "2026-10-27T21:52:17Z",
+  updated: "2026-10-28T19:50:39Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -256,6 +256,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-28T19:50:39Z", what: "Poller sends half as many AP requests: county units for a tenth of the states each run (every state every ten minutes) instead of a fifth, so a run is 6 or 7 requests against AP's 10 a minute instead of 11 or 12. Checked: AP's quota counter is not moving on this key, so nothing had failed, but the burst would have tripped an enforced limit on the night. README request budget corrected." },
   { t: "2026-10-27T21:52:17Z", what: "README: a TL;DR for a new machine at the top and a step-by-step guide to regenerating the historical results database (prerequisites, the one command, size and duration, restart behaviour, how to verify); the history commands now point at studio/.env, which is where the key is." },
   { t: "2026-10-27T17:16:41Z", what: "Candidate index (/candidates) and photo review (/photos) pages back in the app: moved into the studio build, reading the static candidates.json and photos.json, live shares from index.json, every image from the CDN manifest. Checked in headless Chrome: 25 candidates with live numbers, 1295 photo cards, no console errors." },
   { t: "2026-10-27T13:27:38Z", what: "Ticker: the AP Call highlight checkbox sits under the example ticker, labelled Highlight AP Calls Yellow." },
