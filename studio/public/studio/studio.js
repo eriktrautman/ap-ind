@@ -131,7 +131,8 @@ function renderDisplayControls() {
   for (const sec of SECTIONS) {
     const d = secDisplay(sec);
     const box = document.querySelector(`.cardhead[data-sec="${sec}"] .secdisp`); if (!box) continue;
-    box.innerHTML = `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label><label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%"]), d.opacity)}</label>`;
+    // The Live Ticker section has no Background of its own: the draft's Background covers both its addresses.
+    box.innerHTML = `${sec === "ticker" ? "" : `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%"]), d.opacity)}</label>`;
   }
   for (const page of PAGES) {
     const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
@@ -509,7 +510,7 @@ function renderTickerFrames() {
   if (liveFrame.dataset.u !== l) { liveFrame.dataset.u = l; liveFrame.src = l; }
 }
 /** The LIVE TICKER's address: fixed; only the display parameters vary. */
-function liveTickerUrl() { const s = displayParams().toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
+function liveTickerUrl() { const s = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity }).toString(); return `${origin()}/ticker${s ? "?" + s : ""}`; }
 /** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {
   const p = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity });
