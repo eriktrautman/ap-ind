@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Election Producer</title>
-<meta name="description" content="Election Producer: live, API-driven charts for every federal race and major ballot initiative, and a live broadcast ticker, on the AP Elections API.">
+<meta name="description" content="Election Producer turns the live AP count into broadcast graphics: a live ticker and full-screen charts for every federal race and major ballot initiative.">
 <style>
   :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
   * { box-sizing: border-box; }
@@ -51,24 +51,23 @@
 <body>
 <header><span class="brand">Election Producer</span><span class="sub">Studio</span></header>
 <main>
-  <div class="hero" aria-label="A sample of the live broadcast ticker">
+  <div class="hero" aria-label="The live ticker">
     <div class="sample">
       <div class="brand"><span class="dot"></span>Independents</div>
       <div class="crawl"><div class="track" id="track"></div><div class="tag">SAMPLE</div></div>
     </div>
-    <p class="cap">The ticker, as it crawls on air. This one is a sample with made-up numbers; the real one reads the AP count once a minute.</p>
   </div>
   <div class="copy">
-  <h1>Live results for the broadcast about <b>independent candidates</b>.</h1>
-  <p>This site reads the AP Elections API once a minute and produces two things: <b>dynamic, API-driven charts</b> for every federal race and major ballot initiative, full-screen at 1920×1080, and a <b>live broadcast ticker</b>. Each is a fixed web address that updates itself as the count comes in.</p>
-  <p><b>Studio</b> is where producers decide what goes out: which races the ticker follows and the lines it crawls, the chart on each live screen, and the featured races and charts for the show. Every publish is signed with the producer's name and is live within five seconds.</p>
+  <h1>Live election coverage, <b>ready for air</b>.</h1>
+  <p>Election Producer turns the AP's live count into broadcast graphics: a live ticker and full-screen charts for every federal race and major ballot initiative, updating automatically through the night.</p>
+  <p><b>Studio</b> is the producer's desk. Choose the races the ticker follows, write the lines it crawls, put a chart on each live screen, and feature the races and charts the show needs. Publish, and it is on air in seconds.</p>
   <a class="cta" href="/studio">Sign in to Studio<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-  <p class="small">A password is needed. Each person has their own, with producer, publisher or read-only rights; ask the producer for yours.</p>
+  <p class="small">For production teams with an account.</p>
   </div>
   <div class="parts">
-    <div class="part"><b>Charts</b><span>Every federal race and major ballot initiative, drawn live from the AP count. One address per chart: the chart, the race, the look.</span></div>
-    <div class="part"><b>Ticker</b><span>The live broadcast crawl at 1920×1080, transparent, at one fixed address.</span></div>
-    <div class="part"><b>Live screens</b><span>Two fixed pages that show whatever chart was last published to them.</span></div>
+    <div class="part"><b>Charts</b><span>Every federal race and major ballot initiative, drawn live from the count and styled for broadcast.</span></div>
+    <div class="part"><b>Ticker</b><span>A live crawl of results, race calls and the producer's own lines.</span></div>
+    <div class="part"><b>Live screens</b><span>Two always-on pages that show whatever chart the producer last published.</span></div>
   </div>
 </main>
 <footer>
@@ -87,7 +86,7 @@
     ["manual", "Polls close in the West at 11 PM ET"],
     ["", "ID-SEN · Republican 52.1% · Independent 41.7% · 38% in"],
     ["", "CA-6 · Democrat 44.0% · Independent 43.6% · 27% in"],
-    ["idle", "Results update once a minute from the AP Elections API"],
+    ["idle", "Live results through the night"],
   ];
   const html = items.map(([cls, text]) => `<span class="item ${cls}">${text}</span>`).join("");
   document.getElementById("track").innerHTML = html + html;
