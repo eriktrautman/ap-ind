@@ -89,7 +89,7 @@
     }).filter(Boolean);
     const n = { lead: rows.filter((x) => x.leading || x.won).length, record: rows.filter((x) => x.record).length, counting: rows.filter((x) => !x.r.called).length, decided: rows.filter((x) => x.r.called).length };
     $("stats").innerHTML = [["lead", "In the lead"], ["record", "Records set"], ["counting", "Still counting"], ["decided", "Decided"]].map(([k, label]) => `<div class="stat"><span class="n">${n[k]}</span><span class="k">${label}</span></div>`).join("");
-    $("reporting").innerHTML = `<b>${rows.length}</b> races · ET · AP data`;
+    $("reporting").innerHTML = `<b>${rows.length}</b> races · <b>${n.decided}</b> called`;
     $("rows").innerHTML = rows.map(({ r, ind, b, share, inPct, won, lost, pill }) => {
       const scale = Math.max(SCALE, share ?? 0, b?.pct ?? 0);
       const w = share === null ? 0 : share / scale * 100;
