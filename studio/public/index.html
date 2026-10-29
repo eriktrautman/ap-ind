@@ -27,7 +27,7 @@
   .cta:hover { background: #e4c04a; }
   .cta svg { flex: none; }
   .small { font-size: 14px; color: var(--muted); }
-  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin: 0; }
+  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin: 56px 0 0; }
   .part { background: #fff; border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; }
   .part .txt { padding: 12px 16px 14px; }
   .part b { display: block; color: var(--navy); font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
@@ -63,8 +63,10 @@
   footer .gh { display: inline-flex; align-items: center; opacity: .75; } footer .gh:hover { opacity: 1; text-decoration: none; }
   footer .by { margin-left: auto; color: var(--gold); font-family: var(--serif); font-size: 15px; }
   /* Sample ticker: the real band's look (ticker.html), scaled, crawling stubbed items on a CSS loop. */
-  .hero { margin: 56px 0 18px; }
-  .sample { position: relative; height: 54px; display: flex; align-items: stretch; background: linear-gradient(90deg, #0e1420, #1c2b47); color: #f4f6fa; font-size: 23px; line-height: 54px; font-variant-numeric: tabular-nums; border-radius: 6px; overflow: hidden; box-shadow: 0 10px 30px rgba(11, 31, 68, .18); }
+  /* The band is docked to the bottom of the viewport, a lower third over the page. */
+  .hero { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; margin: 0; }
+  body { padding-bottom: 54px; }
+  .sample { position: relative; height: 54px; display: flex; align-items: stretch; background: linear-gradient(90deg, #0e1420, #1c2b47); color: #f4f6fa; font-size: 23px; line-height: 54px; font-variant-numeric: tabular-nums; border-radius: 0; overflow: hidden; box-shadow: 0 -8px 28px rgba(11, 31, 68, .22); }
   .sample .brand { flex: none; padding: 0 18px; background: #a855f7; color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; display: flex; align-items: center; gap: 9px; }
   .sample .dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; }
   .sample .crawl { flex: 1; position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
