@@ -82,8 +82,8 @@ main > section.card + section.card::before { content: ""; display: block; height
 .pubrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 12px; padding: 8px 12px; background: #fff; border: 2px solid var(--navy); border-radius: 6px; font-size: 12.5px; }
 .pubrow .spacer { flex: 1; }
 .pubrow button { font-size: 12px; padding: 3px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-.pubrow button.publish { background: #1f9d55; color: #fff; border-color: #1f9d55; } .pubrow button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
-.pubrow button.pull { background: #d98a2b; color: #1a1200; border-color: #d98a2b; } .pubrow button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
+.pubrow button.publish { background: #4a9a6a; color: #fff; border-color: #4a9a6a; } .pubrow button.publish:disabled { background: #fff; border-color: #4a9a6a; color: var(--muted); opacity: .7; }
+.pubrow button.pull { background: #d98a2b; color: #1a1200; border-color: #d98a2b; } .pubrow button.pull:disabled { background: #fff; border-color: #d98a2b; color: var(--muted); opacity: .7; }
 .whynot { font-size: 11px; color: #8b1a1a; } .whynot:empty { display: none; }
 .screenmid .whynot { margin-top: -6px; text-align: center; }
 button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
@@ -313,10 +313,10 @@ dialog::backdrop { background: #071222aa; }
 .screen.onair .tickerurl { margin: 8px 12px 4px; } .screen.onair .liveparams { margin: 4px 12px 6px; } .screen.onair p.muted { margin: 4px 12px 12px; color: var(--muted); }
 .screen.onair { background: #fff; }
 .screenmid { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 18%; color: var(--navy); }
-.screenmid .arrow { color: #1f9d55; }   /* publish: green, toward the published panel */
+.screenmid .arrow { color: #4a9a6a; }   /* publish: green, toward the published panel */
 .screenmid button { width: 100%; justify-content: center; font-size: 12px; padding: 5px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-.screenmid button.publish { background: #1f9d55; color: #fff; border-color: #1f9d55; } .screenmid button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
-.screenmid button.pull { background: #d98a2b; color: #1a1200; border-color: #d98a2b; } .screenmid button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
+.screenmid button.publish { background: #4a9a6a; color: #fff; border-color: #4a9a6a; } .screenmid button.publish:disabled { background: #fff; border-color: #4a9a6a; color: var(--muted); opacity: .7; }
+.screenmid button.pull { background: #d98a2b; color: #1a1200; border-color: #d98a2b; } .screenmid button.pull:disabled { background: #fff; border-color: #d98a2b; color: var(--muted); opacity: .7; }
 .screenmid .pubstate { font-size: 11.5px; text-align: center; }
 /* Stacked (narrow): published on top, then the strip, then the draft. The arrows stay together in the middle, publish pointing up and pull pointing down; Publish on the left, Pull on the right. */
 @media (max-width: 900px) {
@@ -333,7 +333,8 @@ dialog::backdrop { background: #071222aa; }
 
 /* Producer-only controls for a sign-in that is not the producer: one look everywhere. */
 /* An unauthorized producer control is simply a disabled button: grey, dimmed, no colour. */
-button.noauth, button.noauth:disabled, .pubrow button.publish.noauth:disabled, .screenmid button.publish.noauth:disabled { background: #f0f0f0; border-color: #d4d4d4; color: #777; opacity: .6; cursor: default; }
+button.noauth, button.noauth:disabled { background: #f0f0f0; border-color: #d4d4d4; color: #777; opacity: .6; cursor: default; }
+.pubrow button.publish.noauth:disabled, .screenmid button.publish.noauth:disabled { background: #f0f0f0; border-color: #4a9a6a; color: #777; opacity: .6; cursor: default; }   /* a greyed Publish keeps its green edge */
 /* Results: the selected side keeps its colour even when the switch is locked; the other side is plain. */
 .seg button.on { font-weight: 700; } .seg button:disabled { opacity: 1; cursor: default; } .seg button:disabled:not(.on) { color: var(--muted); background: #f6f6f6; }
 .seg .lbl .lock { margin-right: 4px; vertical-align: -1px; }
