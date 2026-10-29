@@ -463,5 +463,3 @@ main > section.card.display { margin: 10px 0 28px; padding: 8px 14px; border-wid
 .display #thumbbudget { margin: 0 4px 0 0; white-space: nowrap; }
 .display .disprow label { display: inline-flex; align-items: center; gap: 6px; line-height: 1; }
 .display .disprow select, .display .disprow button { vertical-align: middle; }
-/* a quiet button: the primary's proportions in greys, for minor controls */
-.display button.quiet { background: #eceae4; color: #4b5563; border-color: #d9d4c8; font-weight: 600; } .display button.quiet:hover { background: #e3e0d7; color: var(--ink); border-color: #c9c3b4; }
