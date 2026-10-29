@@ -1,0 +1,29 @@
+# The test suite (studio/test/README.md): the unit and local smoke tests on every push, and the smoke test against
+# production after each production deployment that Vercel reports to GitHub.
+name: test
+on:
+  push:
+  pull_request:
+  deployment_status:
+jobs:
+  unit-and-local-smoke:
+    if: github.event_name != 'deployment_status'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: studio } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: studio/package-lock.json }
+      - run: npm ci
+      - run: npm test
+  production-smoke:
+    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: studio } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm run test:smoke
+        env:
+          SMOKE_URL: ${{ github.event.deployment_status.environment_url }}

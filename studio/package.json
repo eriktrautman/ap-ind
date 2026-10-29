@@ -12,7 +12,10 @@
     "start": "npm run build && node --env-file=.env scripts/serve.mjs",
     "serve": "node --env-file=.env scripts/serve.mjs",
     "poll": "node --env-file=.env scripts/poll-local.mjs",
-    "poll:once": "node --env-file=.env scripts/poll-local.mjs --once"
+    "poll:once": "node --env-file=.env scripts/poll-local.mjs --once",
+    "test": "npm run build && node --test test/",
+    "test:unit": "node --test test/unit.test.mjs test/budget.test.mjs",
+    "test:smoke": "node --test test/routes.test.mjs test/budget.test.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^1.1.1",

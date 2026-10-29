@@ -260,3 +260,15 @@ The AP key, the Blob token and the studio password live only in `studio/.env` (g
 ## Deploying
 
 Pushing `main` deploys the ap-ind Vercel project (root directory `studio/`). `vercel build && vercel deploy --prebuilt` from the repo root makes a preview. The docs in `docs/` and the graphics in `public/g/` are copied into the build.
+
+## Tests
+
+A small suite under `studio/test/`, run with Node's own test runner and no extra dependencies. It covers the routes a producer depends on rather than internals: the public outputs and data files, signing in (the gate, wrong passwords, roles, the rehearsal password shut out at Live), publishing the ticker and a live screen, and the two failovers (a poll that cannot reach AP keeps every file and says so; a standby laptop that cannot reach the deployment keeps serving its copy and Promote makes it production from that copy).
+
+    cd studio
+    npm test                                                 build, then everything against a local server it starts itself
+    npm run test:unit                                        the library checks only
+    SMOKE_URL=https://electionproducer.com npm run test:smoke   the route checks against a deployment, read-only
+    SMOKE_URL=... SMOKE_PASSWORD=... npm run test:smoke      also signs in there and checks the Studio is served to that cookie
+
+The suite never writes to a deployment: the publish and role checks run only against the local server. **It is capped at 100 tests for its whole life**; `budget.test.mjs` fails above that, so a new check replaces an old one rather than adding to the pile. `.github/workflows/test.yml` runs `npm test` on every push and the read-only route checks against production after each production deployment Vercel reports.

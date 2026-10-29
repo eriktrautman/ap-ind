@@ -1,7 +1,8 @@
 // AP Elections API v3 client for the watch-party poller. Mirrors the broadcast server's
 // ap.ts/model.ts in plain JS so the serverless bundle has no TypeScript or JSON-import needs.
 
-const BASE = "https://api.ap.org/v3";
+// AP_API_BASE exists for the test suite, which points it at a port nobody answers to rehearse a lost AP.
+const base = () => process.env.AP_API_BASE ?? "https://api.ap.org/v3";
 
 // Runtime overrides (from settings.json in Blob) win over the environment, so the studio
 // can switch test/live without a redeploy.
@@ -20,7 +21,7 @@ export function cfg() {
 
 export async function fetchAp(path, params) {
   const { key } = cfg();
-  const u = new URL(`${BASE}${path}`);
+  const u = new URL(`${base()}${path}`);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
   u.searchParams.set("format", "json");
   const res = await fetch(u, { headers: { "x-api-key": key, "Accept-Encoding": "gzip", Accept: "application/json" }, signal: AbortSignal.timeout(25_000) });
