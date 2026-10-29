@@ -762,7 +762,7 @@ function buildScreen(key) {
     <div class="screenrow">
       <div class="screen draft">
         <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
-        <div class="gfoot"><span class="muted small">Draft on this page</span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="gfoot"><span class="muted small">Draft on this page<span class="samplenote" title="The preview carries sample=auto: while no race in the feed has any votes, it draws made-up numbers so the layout can be seen. Show, Copy Draft URL and the live address read the real feed, which is empty until the count starts."></span></span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <div class="sform"></div>
       </div>
       <div class="screenmid">
@@ -793,6 +793,7 @@ function renderScreens() {
     const dAddr = screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity, sample: "auto" });
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
     dFrame.parentElement.classList.toggle("checker", !pageBg(key));
+    box.querySelector(".samplenote").textContent = index && !index.races.some((r) => r.totalVotes > 0) ? " · sample numbers until the count starts (Show and the live address show the real, empty feed)" : "";
     const oFrame = box.querySelector(".screen.onair iframe");
     const oAddr = `${screenPath(key)}?${displayParams({ bg: "", opacity: secDisplay("screens").opacity }).toString()}`;   // no bg: the published one shows
     if (oFrame.dataset.addr !== oAddr) { oFrame.dataset.addr = oAddr; oFrame.src = oAddr; }
