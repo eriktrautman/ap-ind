@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IND Election Night</title>
-<meta name="description" content="The broadcast app for IND Election Night: a producer's Studio, a live ticker and full-screen graphics on the AP Elections API.">
+<meta name="description" content="IND Election Night: live, API-driven charts for every federal race and major ballot initiative, and a live broadcast ticker, on the AP Elections API.">
 <style>
   :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
   * { box-sizing: border-box; }
@@ -35,14 +35,14 @@
 <header><span class="brand">IND Election Night</span><span class="sub">Broadcast app</span></header>
 <main>
   <h1>Live results for the broadcast about <b>independent candidates</b>.</h1>
-  <p>This site runs the night's data: it reads the AP Elections API once a minute and turns it into a crawling ticker and full-screen graphics that the switcher takes as browser inputs. Every output is a fixed address, so once it is on the switcher it never has to be touched again.</p>
-  <p>The <b>Studio</b> is where producers set what those outputs show: which races the ticker follows, the manual lines it crawls, the chart on each live screen, and the featured races and charts for the show. Every publish is signed with the producer's name and reaches the screens within five seconds.</p>
+  <p>This site reads the AP Elections API once a minute and produces two things: <b>dynamic, API-driven charts</b> for every federal race and major ballot initiative, full-screen at 1920×1080, and a <b>live broadcast ticker</b>. Each is a fixed web address that updates itself as the count comes in.</p>
+  <p>The <b>Studio</b> is where producers decide what goes out: which races the ticker follows and the lines it crawls, the chart on each live screen, and the featured races and charts for the show. Every publish is signed with the producer's name and is live within five seconds.</p>
   <a class="cta" href="/studio">Sign in to the Studio<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   <p class="small">A password is needed. Each person has their own, with producer, publisher or read-only rights; ask the producer for yours.</p>
   <div class="parts">
-    <div class="part"><b>Ticker</b><span>The live crawl at 1920×1080, transparent, at one fixed address.</span></div>
+    <div class="part"><b>Charts</b><span>Every federal race and major ballot initiative, drawn live from the AP count. One address per chart: the chart, the race, the look.</span></div>
+    <div class="part"><b>Ticker</b><span>The live broadcast crawl at 1920×1080, transparent, at one fixed address.</span></div>
     <div class="part"><b>Live screens</b><span>Two fixed pages that show whatever chart was last published to them.</span></div>
-    <div class="part"><b>Graphics</b><span>Every chart is one address: the chart, the race, the look.</span></div>
   </div>
 </main>
 <footer>
