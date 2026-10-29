@@ -76,7 +76,7 @@ async function loginHint(wasTest, me = null) {
     : "Results are <b>Live</b>, so the rehearsal password is switched off. Only named passwords sign in.";
 }
 function showLogin() { $("login").hidden = false; $("app").hidden = true; $("account").hidden = true; $("poller").hidden = true; }
-function showApp() { $("login").hidden = true; $("app").hidden = false; $("account").hidden = false; $("poller").hidden = false; }
+function showApp() { $("login").hidden = true; $("app").hidden = false; $("account").hidden = false; }   // the poller strip waits for /api/runtime (renderStatus), so a laptop never flashes it
 $("loginform").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("loginerr").textContent = "";
@@ -133,7 +133,7 @@ const byWhom = (s) => s?.updatedBy ? ` by ${esc(s.updatedBy)}` : "";
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
-let runtime = null;           // from /api/runtime on a laptop (npm start); null on the deployment, where the live ticker is this site's
+let runtime = undefined;      // from /api/runtime: undefined until asked, null on the website (no such route), an object on a laptop (npm start)
 let live = null;              // the LIVE TICKER's parameters as last read (normalized), or null if never read
 let liveSeenAt = null;        // updatedAt of the live ticker when this page last pulled or published
 let liveError = null;         // why the live ticker is unreadable right now, or null
@@ -411,7 +411,7 @@ function renderStatus() {
   $("pause").querySelector(".lbl").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
   for (const el of [$("pollnow"), $("pollfresh"), $("pause")]) producerOnly(el);
-  $("poller").hidden = !!runtime && runtime.mode !== "poll";   // a standby has no poller of its own to control
+  $("poller").hidden = runtime === undefined || (!!runtime && runtime.mode !== "poll");   // unknown yet, or a standby with no poller of its own
   if ($("poller").hidden) { $("pollinfo").hidden = true; $("pollinfobtn").setAttribute("aria-expanded", "false"); }
   $("readonly").hidden = isProducer();
   $("readonlytxt").textContent = loginRole === "publisher" ? "Publisher · Publishes Only · These Need a Producer" : "Not Authorized · This Account is Read Only";
