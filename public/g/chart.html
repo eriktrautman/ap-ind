@@ -9,6 +9,9 @@
   /* Only ever visible when the address cannot be resolved: a plain error card in the panel chrome. */
   html, body { width: 1920px; height: 1080px; overflow: hidden; }
   body.bg-green { background: #00ff00; } body.bg-black { background: #000; }
+  body.bg-capitol { background: #000 url(/g/bg/capitol.jpg) center / 1920px 1080px no-repeat; }
+  body.bg-flag { background: #000 url(/g/bg/flag.jpg) center / 1920px 1080px no-repeat; }
+  body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px no-repeat; }
   .panel { border: 4px solid var(--bad); display: none; }
   .panel.on { display: grid; }
   .err { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 48px; min-height: 0; overflow: hidden; font-size: 26px; }
@@ -131,7 +134,7 @@
       ...(chart.id === "B14" ? ["a=&b=<last name or AP id>  optional; default: the two leaders"] : []),
       ...(chart.id === "B13" ? ["who=ind|main  optional"] : []),
       ...(raceBased || stateBased ? [] : ["nothing beyond the chart id"]),
-      "display, optional and first: bg=black|green, opacity=10..100, src=global|local|default",
+      "display, optional and first: bg=black|green|capitol|flag|panels, opacity=10..100, src=global|local|default",
     ];
     const ex = chart ? `/g/${chart.id}?bg=black${raceBased ? `&race=${race?.label ?? FEATURED_RACES[0].label}` : stateBased ? `&state=${/^[A-Z]{2}$/.test(state) ? state : FEATURED_RACES[0].state}` : ""}` : `/g/B5?bg=black&race=${FEATURED_RACES[0].label}`;
     const bySeries = {}; for (const c of CHARTS) if (c.built && !c.retired && c.page) (bySeries[c.id[0]] ??= []).push(c.id);

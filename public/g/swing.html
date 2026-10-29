@@ -9,6 +9,9 @@
   :root { --panel: #0e1420; --panel-edge: #16213a; --fg: #f4f6fa; --muted: #9aa7bd; --rule: #2a3a5c; --dem: #3b82f6; --gop: #ef4444; --ind: #a855f7; --gold: #facc15; --ok: #2ecc71; --behind: #5c6b85; --font: "Helvetica Neue", Helvetica, Arial, sans-serif; }
   html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; font-family: var(--font); color: var(--fg); font-variant-numeric: tabular-nums; }
   body.bg-green { background: #00ff00; } body.bg-black { background: #000; }
+  body.bg-capitol { background: #000 url(/g/bg/capitol.jpg) center / 1920px 1080px no-repeat; }
+  body.bg-flag { background: #000 url(/g/bg/flag.jpg) center / 1920px 1080px no-repeat; }
+  body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px no-repeat; }
   .panel { position: absolute; left: 96px; top: 80px; width: 1728px; height: 920px; background: linear-gradient(160deg, var(--panel), var(--panel-edge)); border-radius: 8px; padding: 52px 72px; box-sizing: border-box; display: grid; grid-template-rows: auto auto 1fr auto; gap: 28px; }
   .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--rule); padding-bottom: 20px; }
   .title { font-size: 56px; font-weight: 700; letter-spacing: -0.01em; }

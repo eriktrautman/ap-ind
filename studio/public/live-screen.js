@@ -3,13 +3,13 @@
 // the switcher points at one address forever and the producer changes what it shows by publishing.
 // A change cross-fades: the new chart loads in a second frame underneath, and only once it has had time to
 // draw does it fade in and the old frame go, so nothing flashes on air.
-import { watchState, screenAddress } from "/g/control.js";
+import { watchState, screenAddress, BG_IDS } from "/g/control.js";
 
 const which = /live-screen-(b|two)/.test(location.pathname) ? "screenB" : "screenA";
 const q = new URLSearchParams(location.search);
-const setBg = (bg) => { document.body.classList.remove("bg-black", "bg-green"); if (bg === "black" || bg === "green") document.body.classList.add(`bg-${bg}`); };
+const setBg = (bg) => { document.body.className = document.body.className.replace(/\bbg-\S+/g, "").trim(); if (bg && BG_IDS.includes(bg)) document.body.classList.add(`bg-${bg}`); };
 if (q.has("bg")) setBg(q.get("bg"));
-// Background: the address wins (?bg=black|green|transparent); otherwise the published screen's own.
+// Background: the address wins (?bg=black|green|capitol|flag|panels|transparent); otherwise the published screen's own.
 const display = { bg: q.get("bg") ?? "", opacity: q.get("opacity") ?? "", sample: q.get("sample") ?? "", src: q.get("src") ?? "" };
 if (q.get("fit") === "1") {   // Preview from the Studio: the 1920x1080 page scaled to the window
   const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.overflow = "hidden"; };

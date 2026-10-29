@@ -13,6 +13,9 @@
   html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; font-family: var(--font); }
   body.bg-green { background: #00ff00; }
   body.bg-black { background: #000; }
+  body.bg-capitol { background: #000 url(/g/bg/capitol.jpg) center / 1920px 1080px no-repeat; }
+  body.bg-flag { background: #000 url(/g/bg/flag.jpg) center / 1920px 1080px no-repeat; }
+  body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px no-repeat; }
   .ticker {
     position: absolute; left: 0; right: 0; bottom: 60px; height: 72px; display: flex; align-items: stretch;
     background: linear-gradient(90deg, var(--band), var(--band-edge));
@@ -41,11 +44,11 @@
 </div>
 <script type="module">
   import { buildQueue } from "/ticker-queue.js";
-  import { watchState, DEFAULTS } from "/g/control.js";
+  import { watchState, DEFAULTS, BG_IDS } from "/g/control.js";
 
   const params = new URLSearchParams(location.search);
-  // Background: the address wins (?bg=black|green|transparent); otherwise the published one arrives with the state.
-  const setBg = (bg) => { document.body.classList.remove("bg-black", "bg-green"); if (bg === "black" || bg === "green") document.body.classList.add(`bg-${bg}`); };
+  // Background: the address wins (?bg=black|green|capitol|flag|panels|transparent); otherwise the published one arrives with the state.
+  const setBg = (bg) => { document.body.className = document.body.className.replace(/\bbg-\S+/g, "").trim(); if (bg && BG_IDS.includes(bg)) document.body.classList.add(`bg-${bg}`); };
   const bg = params.get("bg");
   if (params.has("bg")) setBg(bg);
   if (params.get("fit") === "1") {   // Preview from the Studio: scale the 1920x1080 page to the window

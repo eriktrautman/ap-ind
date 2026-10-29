@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Slate, Races, Movement, catalogs).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -133,7 +133,7 @@ const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS
 /** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
 const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredRaceIds.join() ? null : draft.featuredRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
-const BG_OPTIONS = [["", "Transparent"], ["black", "Black"], ["green", "Green Key"]];
+const BG_OPTIONS = BACKGROUNDS;   // a keying colour or one of the backplates, the same list on every dropdown
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
 const SECTIONS = ["ticker", "screens", "detail", "broad", "movement", "persistent", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
@@ -321,7 +321,7 @@ function renderLive() {
       ${live.chunks.length ? `<tr><td class="k" title="chunks: the packages published with this ticker, used in the crawl or not">chunks</td><td>${live.chunks.map((c) => `<div><span class="chunktag">CHUNK</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
-      <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span></td></tr>
+      <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span></td></tr>
       <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})${byWhom(live)}` : "never: the shipped defaults are live"}</td></tr>
     </table>`;
   }
@@ -747,7 +747,7 @@ function screenLiveTable(key) {
   const s = live?.[key];
   if (!s) return `<div class="warnline bad">${liveError ? `Cannot read the live screen: ${esc(liveError)}` : "Reading the live screen…"}</div>`;
   const chart = CHARTS.find((c) => c.id === s.chart);
-  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span>`], ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is published"]];
+  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span>`], ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is published"]];
   return `<table class="params">${rows.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>`;
 }
 function buildScreen(key) {

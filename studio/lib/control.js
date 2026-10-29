@@ -57,6 +57,10 @@ export const FEATURED_RACES = [
  *   - a chart that joins a DEFAULTS list after launch carries added: "YYYY-MM-DD": the Studio puts it into a browser's saved
  *     lists once (studio.knownCharts), so an existing workbench sees a new default without Restore All Default Settings.
  */
+/** Every background a page can show behind its graphic: a keying colour, or one of the backplates in public/g/bg/.
+ *  The id is the ?bg= value and the body class (bg-capitol); the label is what the Studio's dropdowns say. */
+export const BACKGROUNDS = [["", "Transparent"], ["black", "Black"], ["green", "Green Key"], ["capitol", "Capitol & flag"], ["flag", "Flag glass"], ["panels", "Red, white & blue"]];
+export const BG_IDS = BACKGROUNDS.map(([id]) => id);
 export const CHARTS = [
   // A: persistent elements and lower thirds (the ticker is the one built)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
@@ -174,7 +178,7 @@ function screenDef(raw, dflt) {
   const state = /^[A-Za-z]{2}$/.test(r.state ?? "") ? r.state.toUpperCase() : "";
   const params = {};
   for (const [k, v] of Object.entries(r.params && typeof r.params === "object" ? r.params : {})) if (/^[a-zA-Z]{1,12}$/.test(k) && typeof v === "string" && v.trim()) params[k] = v.trim().slice(0, 200);
-  const bg = ["", "black", "green"].includes(r.bg) ? r.bg : dflt.bg;   // the screen's background when its address names none
+  const bg = BG_IDS.includes(r.bg) ? r.bg : dflt.bg;   // the screen's background when its address names none
   return { chart, race, state, params: Object.fromEntries(Object.entries(params).slice(0, 12)), bg };
 }
 /** The chart-id address a Live Screen shows: /g/<chart>?bg=..&opacity=..&race=..&<params>. display: {bg, opacity, sample, preview}. */
@@ -271,7 +275,7 @@ export function normalize(raw) {
     callHighlight: typeof r.callHighlight === "boolean" ? r.callHighlight : DEFAULTS.callHighlight,
     manualItems: manual,                                                 // derived: the texts in crawl order
     idleText: typeof r.idleText === "string" ? r.idleText.trim().slice(0, LIMITS.text) : "",
-    tickerBg: ["", "black", "green"].includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
+    tickerBg: BG_IDS.includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
     featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
     featuredCharts: Array.isArray(r.featuredCharts) ? chartIds(r.featuredCharts, "race") : [...DEFAULTS.featuredCharts],
     movementCharts: Array.isArray(r.movementCharts) ? chartIds(r.movementCharts, "movement") : [...DEFAULTS.movementCharts],
