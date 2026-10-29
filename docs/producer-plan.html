@@ -79,7 +79,6 @@
 </style>
 </head>
 <body>
-<script src="nav.js"></script>
 
 <header class="top">
   <div class="in">
@@ -273,6 +272,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-29T05:30:00Z", what: "Documents off the site: the build no longer publishes docs/, the /docs index and the docs navbar are deleted, the landing and Studio footers lose their Docs links, the /lookbook redirects go. The plan, lookbook, spec and Watch Party design stay in the repo as developer files, listed in the README." },
   { t: "2026-10-29T04:50:00Z", what: "electionproducer.com is live on the ap-ind project (two A records on the bare name, a CNAME on www, at Squarespace; Vercel verifies both). The laptop default (DEPLOYMENT, GLOBAL) and the README now name it; ap-ind.vercel.app keeps serving." },
   { t: "2026-10-29T04:20:00Z", what: "Named: the app is Election Producer, the product is Studio; the domain will be electionproducer.com (bought at Squarespace, not yet pointed at Vercel). Landing page, Studio header, docs navbar, package and README carry the name. The on-air Independents brand block in the ticker is the show's, unchanged." },
   { t: "2026-10-29T03:45:00Z", what: "Reversed the root swap: the Studio stays at /studio. / is now a landing page with a sign-in link and a short explanation; /docs keeps the documents index that replaced the old homepage." },

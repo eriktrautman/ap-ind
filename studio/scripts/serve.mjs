@@ -241,7 +241,7 @@ createServer(async (req, res) => {
       if (r.ok) { await writeJson("producer.json", normalize(await r.json())); console.log(`seeded producer.json from ${DEPLOYMENT} (first run)`); }
     } catch (e) { console.log(`could not seed from ${DEPLOYMENT}: ${e.message}; starting from the defaults`); }
   }
-  console.log(`ap-ind: http://localhost:${PORT}  on this network ${lanOrigin()}  Studio /studio · docs /docs · ticker /ticker · graphics /g/ · files: ${isLocalStore() ? localPath("") : "Vercel Blob (shared with the deployment)"}`);
+  console.log(`ap-ind: http://localhost:${PORT}  on this network ${lanOrigin()}  Studio /studio · ticker /ticker · graphics /g/ · files: ${isLocalStore() ? localPath("") : "Vercel Blob (shared with the deployment)"}`);
   console.log(CONNECTED ? `production: ${GLOBAL} (this laptop is its standby; pull ready; publish ${GLOBAL_PASSWORD ? "ready" : "NOT configured: set GLOBAL_PASSWORD"})` : "production: THIS MACHINE (GLOBAL=self); its outputs read its own files");
   if (mode.kind === "mirror") { startMirror(); console.log(`mirror: copying ${GLOBAL}'s data files every ${MIRROR_MS / 1000} s (no AP requests); Promote in the Studio makes this laptop production`); }
   else if (mode.kind === "poll") { startPolling(); console.log(`poller: AP every ${POLL_MS / 1000} s into this machine's files${CONNECTED ? " (--poll: make sure no other poller shares this AP key)" : ""}`); }

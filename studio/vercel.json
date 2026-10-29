@@ -19,18 +19,6 @@
       "destination": "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com/:path*"
     }
   ],
-  "redirects": [
-    {
-      "source": "/lookbook",
-      "destination": "/graphics-data-options",
-      "permanent": true
-    },
-    {
-      "source": "/lookbook.html",
-      "destination": "/graphics-data-options",
-      "permanent": true
-    }
-  ],
   "headers": [
     {
       "source": "/data/(.*)",
