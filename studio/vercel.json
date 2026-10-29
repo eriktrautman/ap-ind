@@ -21,6 +21,16 @@
   ],
   "redirects": [
     {
+      "source": "/studio",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/studio/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/lookbook",
       "destination": "/graphics-data-options",
       "permanent": true
@@ -38,6 +48,15 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=10, s-maxage=15, stale-while-revalidate=30"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
         }
       ]
     },

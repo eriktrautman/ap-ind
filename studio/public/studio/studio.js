@@ -1,4 +1,4 @@
-// Studio: status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
+// Studio (the site's front page, /; /studio forwards here): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
 import { buildQueue } from "/ticker-queue.js";
 import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
@@ -1016,7 +1016,7 @@ function renderStandby() {
   if (!el) return;
   if (!runtime || !runtime.standby) { el.hidden = true; $("standbyinfo").hidden = true; return; }   // the website, or a machine started as production
   el.hidden = false;
-  const lanLink = `<a href="${esc(runtime.lan)}/studio" target="_blank" rel="noopener" title="This laptop's Studio over the network">${esc(hostOf(runtime.lan))}</a>`;
+  const lanLink = `<a href="${esc(runtime.lan)}/" target="_blank" rel="noopener" title="This laptop's Studio over the network">${esc(hostOf(runtime.lan))}</a>`;
   const dep = runtime.deployment ?? {};
   const wasOpen = $("standbyinfo") && !$("standbyinfo").hidden;
   const info = `<button class="info" id="standbyinfobtn" type="button" aria-expanded="${wasOpen}" aria-controls="standbyinfo" title="What this strip and its buttons mean">i</button>`;

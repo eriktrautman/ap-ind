@@ -1,4 +1,4 @@
-// Producer control state shared by the Studio (/studio), the ticker and every
+// Producer control state shared by the Studio (the site's root), the ticker and every
 // graphic. One schema, three sources:
 //   default  the shipped values in this file
 //   global   producer.json in the store, read as /data/producer.json (production: what the deployed ticker and graphics read)

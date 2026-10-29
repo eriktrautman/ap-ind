@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IND Election Night</title>
+<title>Documents · IND Election Night</title>
 <style>
   :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; }
   body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; line-height: 1.5; color: var(--ink); background: var(--cream); }
@@ -31,28 +31,24 @@
 <body>
 <script src="nav.js"></script>
 <main>
-<h1>IND Election Night</h1>
-<p class="lede">AP results for a broadcast about independent candidates: the Studio, the ticker, and the graphics, all on this site.</p>
-
-<a class="hero" href="/studio">
-  <div class="k">Producers start here</div>
-  <div class="t">Studio</div>
-  <div class="d">Set the ticker, the featured races and every chart; push to the site when ready. Password required.</div>
-  <span class="cta">Open the Studio →</span>
-</a>
+<h1>Documents</h1>
+<p class="lede">The plan, the lookbook and the spec for the IND Election Night broadcast app. The <a href="/">Studio</a> is the site's front page; the ticker and graphics are fixed addresses it hands out.</p>
 
 <div class="grid">
-  <a class="tile" href="/ticker?bg=black"><b>Ticker</b><span>The live crawl at 1920×1080. Add <code>?bg=green</code> for the key.</span></a>
-  <a class="tile" href="producer-plan.html"><b>Build plan</b><span>Stories, burndown and what is left.</span></a>
+  <a class="tile" href="producer-plan.html"><b>Build plan</b><span>Stories, burndown, the log of every change, and what is left.</span></a>
   <a class="tile" href="graphics-data-options.html"><b>Graphics lookbook</b><span>Every chart by series, with its data source and on-air notes.</span></a>
   <a class="tile" href="spec.html"><b>Technical spec</b><span>Requirements, architecture as built, open questions.</span></a>
+  <a class="tile" href="watch-party.html"><b>Watch Party design</b><span>The public site for every race in the AP feed (separate deployment).</span></a>
 </div>
 
-<h2>Also here</h2>
+<h2>Addresses</h2>
 <ul>
-  <li><a href="watch-party.html">Watch Party design</a> — the public site for every race in the AP feed (separate deployment)</li>
-  <li>Graphics are one URL each under <code>/g/</code>, 1920×1080, transparent by default; the Studio opens any of them</li>
-  <li><a href="https://github.com/eriktrautman/ap-ind">Code</a> — <code>cd studio</code>, <code>npm install</code>, <code>npm start</code> runs the whole app on a laptop</li>
+  <li><a href="/">Studio</a> — the producer's page: the live ticker, the live screens, featured races and every chart. Password required; it used to live at <code>/studio</code>, which now forwards here.</li>
+  <li><a href="/ticker?bg=black">Ticker</a> — the live crawl at 1920×1080; add <code>?bg=green</code> for the key, or build one from its address (the Studio shows how).</li>
+  <li><a href="/live-screen-one">Live Screen One</a> and <a href="/live-screen-two">Live Screen Two</a> — two fixed pages showing whatever chart was last published to them.</li>
+  <li>Graphics are one address each under <code>/g/</code> (for example <a href="/g/B5?bg=black&amp;race=NE-SEN">/g/B5?bg=black&amp;race=NE-SEN</a>), 1920×1080, transparent by default; the Studio has a Copy URL on every card.</li>
+  <li><a href="/candidates">Candidates</a> and <a href="/photos">Photos</a> — the curated independent index and the photo manifest, with live shares.</li>
+  <li><a href="https://github.com/eriktrautman/ap-ind">Code</a> — <code>cd studio</code>, <code>npm install</code>, <code>npm start</code> runs the whole app on a laptop as a standby; the README covers passwords, failover and the night.</li>
 </ul>
 </main>
 </body>

@@ -64,7 +64,7 @@
     manualItems: params.getAll("item").map((text, i) => ({ id: `url${i}`, text: text.trim() })).filter((m) => m.text),
     idleText: params.get("idle") || DEFAULTS.idleText,
   } : null;
-  // Producer state source: ?src=default|global|local, else the selector saved by /studio in this
+  // Producer state source: ?src=default|global|local, else the selector saved by the Studio in this
   // browser, else Global. The deployed /ticker has no parameter, so it always reads production.
   const PX_PER_SEC = Number(params.get("speed") ?? 170);
   const INDEX_MS = 15_000, PRODUCER_MS = 5_000, STATUS_MS = 30_000;
