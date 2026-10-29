@@ -2,7 +2,7 @@
 
 A small suite that says whether the site still works, run with Node's own test runner (no dependencies).
 
-    npm test                                   build, then unit tests and a smoke test against a local server it starts itself
+    npm test                                   build, then every test file against a local server it starts itself
     npm run test:unit                          the library checks only (no build, no server)
     SMOKE_URL=https://electionproducer.com npm run test:smoke      the same smoke test against a deployment
     SMOKE_URL=... SMOKE_PASSWORD=... npm run test:smoke             also signs in and checks the Studio is served to that cookie
