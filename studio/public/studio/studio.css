@@ -76,7 +76,6 @@ main > section.card + section.card::before { content: ""; display: block; height
 /* Section headers: a fat navy band across the top of the card, title in light serif, subtext and dropdowns on it. */
 .cardhead { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; margin: -18px -22px 20px; padding: 16px 22px 14px; background: var(--navy); color: #c7cfdf; }
 .cardhead h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; color: #fff; margin: 0; letter-spacing: .01em; }
-.cardhead > .muted.small { color: #c7cfdf !important; }
 .cardhead .secdisp { color: #c7cfdf; }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .callhl { margin: 4px 0 10px; font-size: 13.5px; } .callhl input { vertical-align: -2px; margin-left: 4px; }
@@ -405,7 +404,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 .gcard .thumb.checker, .screen .frame.checker { background-color: #d9d9d9; background-image: repeating-conic-gradient(#bdbdbd 0 25%, transparent 0 50%); background-size: 24px 24px; }
 
 /* Section subtext sits on its own line under the title; the title line keeps the dropdowns on the right. */
-.cardhead > .muted.small { flex-basis: 100%; order: 10; margin-top: 2px; }
 
 /* Live Screen numbering: the same bubble as a featured race's position, on the section's title line. */
 .screenhead { display: flex; align-items: center; gap: 10px; }
@@ -427,7 +425,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 
 /* Text on the navy section bands: light enough to read; these come last so nothing muted wins. */
 .cardhead, .cardhead .secdisp, .cardhead .secdisp label { color: #e8edf7; }
-.cardhead > .muted.small { color: #d6dcea !important; }
 .cardhead .secdisp select { color: var(--ink); }
 
 /* Links in a band subtext: gold on navy. */
@@ -456,3 +453,6 @@ footer.built .footlinks { list-style: none; margin: 0; padding: 0; display: flex
 footer.built .footlinks a, footer.built .permslink { display: inline-flex; align-items: center; gap: 7px; color: #c7cfdf; text-decoration: none; font: inherit; font-size: 13px; background: none; border: 0; padding: 0; cursor: pointer; }
 footer.built .footlinks a:hover, footer.built .permslink:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 footer.built .by { color: var(--gold); font-family: var(--serif); font-size: 15px; letter-spacing: .02em; text-decoration: none; white-space: nowrap; } footer.built .by:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* the section's description sits under the navy head, dark on the card */
+.secsub { margin: -6px 0 18px; font-size: 13px; line-height: 1.5; color: #4b5563; max-width: 110ch; } .secsub a { color: var(--navy); }
