@@ -604,10 +604,10 @@ function buildScreen(key) {
         <div class="sform"></div>
       </div>
       <div class="screenmid">
-        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <button class="publish" data-act="publish" title="Make this draft the on-air screen">Publish to Live</button>
         <span class="whynot"></span>
-        <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="64" height="24"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <button class="pull" data-act="pull" title="Copy the on-air screen into the draft">Pull from Live</button>
         <span class="pubstate"></span>
       </div>
