@@ -399,3 +399,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 .seg.locked { opacity: .55; border-color: #d4d4d4; } .seg.locked button, .seg.locked button.on, .seg.locked button.on[data-rt="t"], .seg.locked button.on[data-rt="l"] { background: #f0f0f0; color: #777; }
 
 .screenmid .arrow.off { color: #c9c9c9; }   /* nothing to publish, or not allowed: the arrow fades with the button */
+
+.statusbar button.speeds { font: inherit; font-size: 12px; color: #8a98b5; background: none; border: 1px solid #2a3a5c; border-radius: 10px; padding: 1px 9px; cursor: pointer; line-height: 1.4; }
+.statusbar button.speeds:hover, .statusbar button.speeds.open { color: #eef2f9; border-color: #4a5f8a; }
