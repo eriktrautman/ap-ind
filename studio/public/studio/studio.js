@@ -121,10 +121,14 @@ let loginName = null;
 /** The account menu, top right: the name on the button; the role and what it allows in the dropdown, with Sign out. */
 const renderWho = () => {
   $("acctname").textContent = loginName ?? "Signed in";
-  $("acctrole").innerHTML = loginRole ? `<b>${esc(ROLE_LABEL[loginRole] ?? loginRole)}</b><br>${esc(ROLE_ALLOWS[loginRole] ?? "")}` : "";
+  $("acctrole").textContent = loginRole ? (ROLE_LABEL[loginRole] ?? loginRole) : "";
+  $("acctallows").textContent = loginRole ? (ROLE_ALLOWS[loginRole] ?? "") : "";
 };
-$("acctbtn").addEventListener("click", (e) => { e.stopPropagation(); $("acctmenu").hidden = !$("acctmenu").hidden; });
-document.addEventListener("click", (e) => { if (!e.target.closest("#account")) $("acctmenu").hidden = true; });
+const acctOpen = (open) => { $("acctmenu").hidden = !open; $("acctbtn").setAttribute("aria-expanded", String(open)); $("account").classList.toggle("open", open); };
+$("acctbtn").addEventListener("click", (e) => { e.stopPropagation(); acctOpen($("acctmenu").hidden); });
+$("acctperms").addEventListener("click", () => { acctOpen(false); $("permslink").click(); });
+document.addEventListener("click", (e) => { if (!e.target.closest("#account")) acctOpen(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") acctOpen(false); });
 const byWhom = (s) => s?.updatedBy ? ` by ${esc(s.updatedBy)}` : "";
 
 // ---------- data ----------

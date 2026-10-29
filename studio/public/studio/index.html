@@ -14,8 +14,12 @@
       <a href="#ticker">Live Ticker</a><a href="#screens">Live Screens</a><a href="#detail">Featured Races</a><a href="#broad">Races Overview</a><a href="#movement">Movement Overview</a><a href="#persistent">Persistent</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
     </nav>
     <div class="account" id="account" hidden>
-      <button class="acct" id="acctbtn" type="button" title="Your account"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="5.5" r="3" fill="currentColor"/><path d="M2.5 14a5.5 5.5 0 0 1 11 0z" fill="currentColor"/></svg><span id="acctname">Signed in</span> ▾</button>
-      <div class="acctmenu" id="acctmenu" hidden><div class="role" id="acctrole"></div><button class="link" id="logout">Sign out</button></div>
+      <button class="acct" id="acctbtn" type="button" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="5.5" r="3" fill="currentColor"/><path d="M2.5 14a5.5 5.5 0 0 1 11 0z" fill="currentColor"/></svg><span id="acctname">Signed in</span><svg class="caret" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <ul class="acctmenu" id="acctmenu" role="menu" hidden>
+        <li class="hdr"><b id="acctrole"></b><span class="muted small" id="acctallows"></span></li>
+        <li role="none"><button role="menuitem" type="button" id="acctperms">View user permissions</button></li>
+        <li role="none"><button role="menuitem" type="button" id="logout">Sign out</button></li>
+      </ul>
     </div>
   </div>
   <div class="statusbar" id="statusbar">

@@ -429,9 +429,16 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 /* Links in a band subtext: gold on navy. */
 .cardhead a { color: var(--gold); text-decoration: underline; } .cardhead a:hover { color: #fff; }
 
-/* Account menu, top right */
-.account .acct { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px; color: #c7cfdf; background: #16305e; border: 1px solid #2a3a5c; border-radius: 6px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
-.account .acct:hover { color: #fff; border-color: #4a5f8a; }
-.account .acctmenu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 320px; background: #fff; color: var(--ink); border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 8px 24px #0003; padding: 10px 12px; font-size: 12.5px; line-height: 1.45; text-align: left; }
-.account .acctmenu .role { margin-bottom: 8px; } .account .acctmenu .role b { color: var(--navy); }
-.account .acctmenu .link { font: inherit; font-size: 12.5px; color: var(--navy); background: none; border: 1px solid var(--sand); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+/* Account menu, top right: a standard nav dropdown */
+header.top, .brandrow { overflow: visible; }
+.account .acct { display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 13px; font-weight: 600; color: #e8edf7; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 5px 10px; cursor: pointer; white-space: nowrap; }
+.account .acct:hover, .account.open .acct { background: #16305e; border-color: #2a3a5c; color: #fff; }
+.account .acct .caret { transition: transform .15s; } .account.open .acct .caret { transform: rotate(180deg); }
+.account .acctmenu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 280px; max-width: 340px; width: max-content; margin: 0; padding: 6px 0; list-style: none; background: #fff; color: var(--ink); border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 10px 28px #0004; text-align: left; }
+.account .acctmenu::before { content: ""; position: absolute; right: 18px; top: -7px; width: 12px; height: 12px; background: #fff; border-left: 1px solid var(--sand); border-top: 1px solid var(--sand); transform: rotate(45deg); }
+.account .acctmenu .hdr { display: grid; gap: 3px; padding: 8px 14px 10px; border-bottom: 1px solid var(--sand); font-size: 12.5px; line-height: 1.4; }
+.account .acctmenu .hdr b { color: var(--navy); font-size: 13px; }
+.account .acctmenu button[role="menuitem"] { display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; color: var(--ink); background: none; border: 0; border-radius: 0; padding: 8px 14px; cursor: pointer; }
+.account .acctmenu button[role="menuitem"]:hover, .account .acctmenu button[role="menuitem"]:focus { background: var(--cream); color: var(--navy); outline: none; }
+.account .acctmenu li:last-child button { color: #8b1a1a; }
+.account .acctmenu #logout, .account .acctmenu .link { margin: 0; padding: 8px 14px; border: 0; background: none; width: 100%; text-align: left; font-size: 13px; }
