@@ -64,7 +64,9 @@ test("the ticker crawl: idle line before data, the crawl order with chunks expan
   assert.deepEqual(buildQueue(races, st).items.map((i) => i.text.split(" · ")[0]), ["Welcome", "NE-SEN", "Osborn watch", "MT-SEN", "NE-SEN", "Osborn watch"]);
   assert.deepEqual(st.pinnedRaceIds, ["1", "2"], "the races in crawl order, derived for everything that reads the old field");
   assert.deepEqual(st.manualItems.map((m) => m.text), ["Welcome", "Osborn watch", "Osborn watch"]);
-  assert.equal(normalize({ tickerItems: [{ t: "chunk", id: "gone" }] }).tickerItems[0].t, "race", "a crawl with nothing left in it falls back to the featured races");
+  const fallback = normalize({ tickerItems: [{ t: "chunk", id: "gone" }] });
+  assert.deepEqual(fallback.tickerItems, [{ t: "chunk", id: "slate" }], "a crawl with nothing left in it falls back to the Slate chunk");
+  assert.deepEqual(fallback.chunks[0].items.map((it) => it.id), fallback.pinnedRaceIds, "which holds the slate's races");
 });
 
 test("vercel.json wires the Studio gate, the chart router, the data files and the poll cron, and the build ships what the pages import", () => {

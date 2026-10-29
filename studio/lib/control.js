@@ -139,9 +139,11 @@ export function canonicalAddress(pathname, search = "") {
  *  text, defined once and placed anywhere in the sequence, any number of times). pinnedRaceIds and manualItems are derived
  *  from that sequence by normalize() (the races in crawl order, the texts in crawl order) for everything that has always
  *  read them: older addresses, D5's fallback, older clients that publish only those two. */
+/** The shipped chunk: the slate's races, one package. The default crawl is this chunk and nothing else. */
+export const SLATE_CHUNK = Object.freeze({ id: "slate", name: "Slate", items: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })) });
 export const DEFAULTS = Object.freeze({
-  tickerItems: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })),   // {t:"race",id} | {t:"text",id,text} | {t:"chunk",id}
-  chunks: [],                                                          // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
+  tickerItems: [{ t: "chunk", id: SLATE_CHUNK.id }],   // {t:"race",id} | {t:"text",id,text} | {t:"chunk",id}
+  chunks: [SLATE_CHUNK],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
   manualItems: [],
@@ -251,7 +253,10 @@ export function normalize(raw) {
     const oldManual = (Array.isArray(r.manualItems) ? r.manualItems : []).filter((m) => m && typeof m.text === "string" && m.text.trim()).map((m, i) => ({ id: String(m.id ?? `m${i}`).slice(0, 40), text: m.text.trim().slice(0, LIMITS.text) })).slice(0, LIMITS.manual);
     tickerItems = legacySequence(oldPins, oldManual);
   }
-  if (!tickerItems.length) tickerItems = DEFAULTS.tickerItems.map((it) => ({ ...it }));   // the ticker always has something to crawl
+  if (!tickerItems.length) {   // the ticker always has something to crawl: the Slate chunk, defined here if the state lacks it
+    if (!seenChunk.has(SLATE_CHUNK.id)) chunks.unshift(structuredClone(SLATE_CHUNK));
+    tickerItems = DEFAULTS.tickerItems.map((it) => ({ ...it }));
+  }
   const flat = expandTicker({ tickerItems, chunks });
   const pins = uniqIds(flat.filter((it) => it.t === "race").map((it) => it.id), LIMITS.pins);
   const manual = flat.filter((it) => it.t === "text").map((it) => ({ id: it.id, text: it.text })).slice(0, LIMITS.manual);
