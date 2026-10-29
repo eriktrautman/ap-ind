@@ -385,7 +385,7 @@ function renderStatus() {
     st("st-refresh", `<span class="k">Last Refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
     st("st-asof", `<span class="k">Data As Of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Data Stream</span>${pending ? `<b style="color:#ffd166;font-weight:700" title="Switched; waiting for the next poll to confirm. The outputs follow within about a minute.">${rt === "l" ? "LIVE" : "TEST"} → ${want === "l" ? "LIVE" : "TEST"} ⏳</b>` : `<b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`}`) +
-    st("st-api", `<span class="k">AP Access</span><span class="dot ${!s ? "off" : apOk ? "" : "bad"}"></span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
+    st("st-api", `<span class="k">API Access</span><span class="dot ${!s ? "off" : apOk ? "" : "bad"}"></span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     // The three cadences fold behind one click so the bar stays short.
     `<button class="st speeds ${speedsOpen ? "open" : ""}" id="st-speeds" type="button" title="${speedsOpen ? "Hide" : "Show"} the refresh speeds">Refresh speeds ${speedsOpen ? "▾" : "▸"}</button>` +
     (speedsOpen ? st("st-county", `<span class="k">County Data</span><b title="Each state's county units refresh every 10 minutes in rotation">every 10 min</b>`) +
