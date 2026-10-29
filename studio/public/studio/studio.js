@@ -120,7 +120,7 @@ function loadDisplay() {
 let display = loadDisplay();
 function saveDisplay() { try { localStorage.setItem("studio.display", JSON.stringify(display)); } catch {} }
 const secDisplay = (sec) => ({ ...display.top, ...(display.sections[sec] ?? {}) });
-/** A live draft's Background is part of the draft itself and goes on air with a publish; the address can still override it. */
+/** A live draft's Background is part of the draft itself and is published with it; the address can still override it. */
 const pageBg = (page) => (page === "ticker" ? draft.tickerBg : draft[page]?.bg) ?? "black";
 const selectHtml = (attrs, options, value) => `<select ${attrs}>${options.map(([v, l]) => `<option value="${v}" ${v === value ? "selected" : ""}>${l}</option>`).join("")}</select>`;
 /** The two dropdowns on every section's title line and the BG on every live draft, showing the saved values. */
@@ -152,7 +152,7 @@ document.addEventListener("change", (e) => {
 });
 $("applyall").addEventListener("click", async () => {
   const top = { bg: $("topbg").value, opacity: $("topopacity").value };
-  const ok = await ask({ title: "Apply to every section?", body: `<p>Every section's Background and Opacity become <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> at <b>${esc(top.opacity)}%</b>. Previews and links on this page change to match. Nothing on air changes.</p>`, ok: "Apply to All Charts" });
+  const ok = await ask({ title: "Apply to every section?", body: `<p>Every section's Background and Opacity become <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> at <b>${esc(top.opacity)}%</b>. Previews and links on this page change to match. Nothing published changes.</p>`, ok: "Apply to All Charts" });
   if (!ok) return;
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
@@ -233,10 +233,10 @@ function renderHow() {
   const host = prodHost();
   $("howtext").innerHTML = [
     `<b>Every chart is a link.</b> Show or Copy URL on any card gives an address carrying the chart, the race and the display settings. It always shows the same thing and can be shared with other authorized people.`,
-    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a ticker in the Ticker Builder, use it by its own link, or publish it to become the live ticker; it updates on air within seconds.`,
-    `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the on-air screen on the right.`,
+    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a ticker in the Ticker Builder, use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
+    `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the published screen on the right.`,
     `<b>Collect what you need.</b> Feature races and charts to keep them close in the sections above the catalogs. This organises your view only and is never published.`,
-    `<b>Producer actions</b> (publish, poll, Test/Live) need the real password; the rehearsal password can look but not change anything on air.`,
+    `<b>Producer actions</b> (publish, poll, Test/Live) need the real password; the rehearsal password can look but not change anything published.`,
     `<b>Restore All Default Settings</b> resets this page, never the live ticker or screens.`,
   ].map((x) => `<li>${x}</li>`).join("");
 }
@@ -310,7 +310,7 @@ async function pull() {
   const changes = tickerDiff(draft, latest);
   const ok = await ask({
     title: "Pull from the LIVE TICKER?",
-    body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing on air changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
+    body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing published changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
     ok: "Pull into the builder", danger: changes.length > 0,
   });
   if (!ok) return;
@@ -517,7 +517,7 @@ function renderTickerFrames() {
   const b = `/ticker?preview=1&bg=${pageBg("ticker")}${sec.opacity !== "100" ? `&opacity=${sec.opacity}` : ""}&src=local`;
   if (frame.dataset.u !== b) { frame.dataset.u = b; frame.src = b; }
   frame.parentElement.classList.toggle("checker", !pageBg("ticker"));
-  // The on-air preview shows what is published, on the same Background and Opacity as its Copy Live URL.
+  // The published preview shows what is published, on the same Background and Opacity as its Copy Live URL.
   const l = `/ticker?${displayParams({ bg: "", opacity: sec.opacity }).toString()}`;   // no bg: the published one shows
   if (liveFrame.dataset.u !== l) { liveFrame.dataset.u = l; liveFrame.src = l; }
   liveFrame.parentElement.classList.toggle("checker", !(live?.tickerBg ?? "black"));
@@ -544,7 +544,7 @@ $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_bl
 
 // ---------- Live Screens ----------
 // Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
-// chart's own parameters, saved on this page), an arrow with Publish and Pull, and the on-air page on the right.
+// chart's own parameters, saved on this page), an arrow with Publish and Pull, and the published page on the right.
 const SCREEN_PARAMS = {
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
@@ -557,7 +557,7 @@ const SCREEN_PARAMS = {
 const SCREEN_IDS = { screenA: "one", screenB: "two" };
 const screenLetter = (key) => (key === "screenA" ? "One" : "Two");
 const screenPath = (key) => `/live-screen-${SCREEN_IDS[key]}`;
-/** The on-air page's address: fixed; only the display parameters vary. */
+/** The published page's address: fixed; only the display parameters vary. */
 function screenLiveUrl(key) { const s = displayParams({ bg: "", opacity: secDisplay("screens").opacity }).toString(); return `${origin()}${screenPath(key)}${s ? "?" + s : ""}`; }
 /** The draft's own address: the chart-id address with the Default Chart Settings, usable anywhere. */
 function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity }); }
@@ -589,7 +589,7 @@ function screenLiveTable(key) {
   const s = live?.[key];
   if (!s) return `<div class="warnline bad">${liveError ? `Cannot read the live screen: ${esc(liveError)}` : "Reading the live screen…"}</div>`;
   const chart = CHARTS.find((c) => c.id === s.chart);
-  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span>`], ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is on air"]];
+  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span>`], ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is published"]];
   return `<table class="params">${rows.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>`;
 }
 function buildScreen(key) {
@@ -605,15 +605,15 @@ function buildScreen(key) {
       </div>
       <div class="screenmid">
         <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <button class="publish" data-act="publish" title="Make this draft the on-air screen">Publish to Live</button>
+        <button class="publish" data-act="publish" title="Make this draft the published screen">Publish to Live</button>
         <span class="whynot"></span>
         <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <button class="pull" data-act="pull" title="Copy the on-air screen into the draft">Pull from Live</button>
+        <button class="pull" data-act="pull" title="Copy the published screen into the draft">Pull from Live</button>
         <span class="pubstate"></span>
       </div>
       <div class="screen onair">
-        <div class="frame clickable" data-open="live" title="Open the on-air screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} on air"></iframe><span class="lockmark" hidden title="You cannot change what is on air from this sign-in">${LOCK.replace('width="11" height="11"', 'width="14" height="14"')}</span></div>
-        <div class="gfoot"><span class="muted small">On air now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy Live URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the on-air screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="frame clickable" data-open="live" title="Open the published screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} published"></iframe><span class="lockmark" hidden title="You cannot change what is published from this sign-in">${LOCK.replace('width="11" height="11"', 'width="14" height="14"')}</span></div>
+        <div class="gfoot"><span class="muted small">Published now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy Live URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the published screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
         <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a class="url liveaddr" target="_blank" rel="noopener"></a></p>
         <div class="liveparams"></div>
         <p class="muted small">Changes within 5 seconds of a publish, cross-fading so nothing flashes. Only an authorized publish changes it.</p>
@@ -625,7 +625,7 @@ function renderScreens() {
   for (const key of Object.keys(SCREEN_IDS)) {
     const box = $(key);
     if (!box.dataset.built) buildScreen(key);
-    // the draft preview reloads only when its address changes; the on-air frame never reloads
+    // the draft preview reloads only when its address changes; the published frame never reloads
     const dFrame = box.querySelector(".screen.draft iframe");
     const dAddr = screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity, sample: "auto" });
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
@@ -643,12 +643,12 @@ function renderScreens() {
     const changed = live ? JSON.stringify(live[key]) !== JSON.stringify(draft[key]) : false;
     const st = box.querySelector(".pubstate");
     st.className = `pubstate ${live && !changed ? "same" : "dirty"}`;
-    st.textContent = !live ? "On-air screen not read yet" : changed ? "Draft differs from on air" : "Draft matches on air";
+    st.textContent = !live ? "Published screen not read yet" : changed ? "Draft differs from published" : "Draft matches published";
     const pub = box.querySelector("button[data-act=publish]"), pull = box.querySelector("button[data-act=pull]");
     pub.disabled = !canPublish() || !changed; pub.classList.toggle("noauth", !canPublish());
     pub.innerHTML = `${canPublish() ? "" : LOCK}Publish to Live`;
     box.querySelector(".whynot").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
-    pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the on-air screen" : `Make this draft the on-air screen (${describeScreen(draft[key])})`;
+    pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the published screen" : `Make this draft the published screen (${describeScreen(draft[key])})`;
     pull.disabled = !canPull() || !live;
     box.querySelector(".lockmark").hidden = canPublish();
   }
@@ -687,7 +687,7 @@ async function publishScreen(key) {
     title: `Publish Live Screen ${letter}?`,
     body: `<p><b>${esc(prodHost())}${screenPath(key)}</b> changes to <b>${esc(describeScreen(draft[key]))}</b>${latest ? ` (now ${esc(describeScreen(latest[key]))})` : ""}, within 5 seconds, cross-fading so nothing flashes. Nothing else is published.</p>
       ${someoneElse ? `<div class="warnline bad">Someone else published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published.</div>` : ""}
-      ${same ? `<div class="warnline">The draft already matches the on-air screen.</div>` : ""}`,
+      ${same ? `<div class="warnline">The draft already matches the published screen.</div>` : ""}`,
     ok: "Publish", danger: true,
   });
   if (!ok) return;
@@ -696,15 +696,15 @@ async function publishScreen(key) {
     live = saved; liveSeenAt = saved.updatedAt; liveError = null;
     renderAll();
   } catch (e) {
-    await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>The on-air screen is unchanged. The draft is still saved on this page.</p>`, ok: "OK" });
+    await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>The published screen is unchanged. The draft is still saved on this page.</p>`, ok: "OK" });
   }
 }
 async function pullScreen(key) {
   const letter = screenLetter(key);
   let latest;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
-  catch (e) { liveError = e.message; renderScreens(); await ask({ title: "Can't read the on-air screen", body: `<div class="warnline bad">${esc(e.message)}</div><p>The draft is unchanged.</p>`, ok: "OK" }); return; }
-  const ok = await ask({ title: `Pull Live Screen ${letter} into the draft?`, body: `<p>The draft becomes <b>${esc(describeScreen(latest[key]))}</b>, what is on air now${latest.updatedAt ? ` (published ${esc(ago(latest.updatedAt))})` : ""}. Nothing on air changes.</p>`, ok: "Pull into the draft", danger: false });
+  catch (e) { liveError = e.message; renderScreens(); await ask({ title: "Can't read the published screen", body: `<div class="warnline bad">${esc(e.message)}</div><p>The draft is unchanged.</p>`, ok: "OK" }); return; }
+  const ok = await ask({ title: `Pull Live Screen ${letter} into the draft?`, body: `<p>The draft becomes <b>${esc(describeScreen(latest[key]))}</b>, what is published now${latest.updatedAt ? ` (published ${esc(ago(latest.updatedAt))})` : ""}. Nothing published changes.</p>`, ok: "Pull into the draft", danger: false });
   if (!ok) return;
   liveSeenAt = latest.updatedAt;
   draft = saveLocal({ ...draft, [key]: structuredClone(latest[key]) });
