@@ -294,16 +294,16 @@ dialog::backdrop { background: #071222aa; }
 .screenrow { display: grid; grid-template-columns: minmax(0, 1fr) 150px minmax(0, 1fr); gap: 20px; align-items: start; }
 .screen { border-radius: 8px; overflow: hidden; background: #000; }
 .screen.draft { border: 3px solid #d98a2b; box-shadow: 0 0 0 4px #fdf1dd; }
-.screen.onair { border: 3px solid var(--navy); box-shadow: 0 0 0 4px #e6ebf5; }
+.screen.onair { border: 3px solid #1f9d55; box-shadow: 0 0 0 4px #e3f4ea; }
 .screen .frame { position: relative; width: 100%; aspect-ratio: 1920 / 1080; overflow: hidden; background: #000; }
 .screen .frame.clickable { cursor: pointer; }
 .screen .frame.clickable:hover::after { content: "Show ↗"; position: absolute; right: 8px; bottom: 8px; background: #000c; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 .screen .frame::before { position: absolute; left: 8px; top: 8px; z-index: 2; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; padding: 2px 8px; border-radius: 4px; color: #fff; pointer-events: none; }
 .screen.draft .frame::before { content: "DRAFT · NOT ON AIR"; background: #d98a2b; color: #1a1200; }
-.screen.onair .frame::before { content: "ON AIR"; background: var(--navy) radial-gradient(circle at 10px 50%, #22c55e 3.5px, transparent 4.2px) no-repeat; padding-left: 20px; }
+.screen.onair .frame::before { content: "ON AIR"; background: #1f9d55 radial-gradient(circle at 10px 50%, #d9ffe6 3.5px, transparent 4.2px) no-repeat; padding-left: 20px; }
 .screen iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
 .screen .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
-.screen.draft .gfoot { background: #fdf6ea; } .screen.onair .gfoot { background: #eef2f9; }
+.screen.draft .gfoot { background: #fdf6ea; } .screen.onair .gfoot { background: #ecf7f0; }
 .screen .gfoot .spacer { flex: 1; }
 .screen .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; }
 .screen .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
