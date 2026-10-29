@@ -394,7 +394,7 @@ function renderStatus() {
   $("testbanner").hidden = rt !== "t";
   $("loginbanner").hidden = loginKind !== "test";
 
-  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt, target = pending && b.dataset.rt === want; b.classList.toggle("on", on); b.classList.toggle("pending", target); b.innerHTML = `${target ? "⏳ " : on ? (b.dataset.rt === "t" ? WRENCH : "✓ ") : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer() || pending; b.title = !isProducer() ? NOT_PRODUCER : target ? "Switching: waiting for the next poll to confirm" : on ? "Current data stream" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
+  $("rtype").querySelectorAll("button").forEach((b) => { const on = b.dataset.rt === rt, target = pending && b.dataset.rt === want; b.classList.toggle("on", on); b.classList.toggle("pending", target); b.innerHTML = `${target ? "⏳ " : on ? (b.dataset.rt === "t" ? WRENCH : "✓ ") : ""}${b.dataset.rt === "t" ? "Test" : "Live"}`; b.disabled = !isProducer() || pending; b.title = !isProducer() ? notProducer() : target ? "Switching: waiting for the next poll to confirm" : on ? "Current data stream" : `Switch to ${b.dataset.rt === "t" ? "AP test data" : "live results"}`; });
   // One lock on the group's label, not one per button; the selected side keeps its colour so the choice stays obvious.
   $("rtype").classList.toggle("locked", !isProducer());
   { const lbl = $("rtype").querySelector(".lbl"); const has = !!lbl.querySelector(".lock"); if (!isProducer() && !has) lbl.insertAdjacentHTML("afterbegin", LOCK); else if (isProducer() && has) lbl.querySelector(".lock").remove(); }
