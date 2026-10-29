@@ -936,6 +936,7 @@ function renderPlaylists() {
       { label: "Remove from playlist", onClick: () => plRemove(i) },
     ] : [];
     const el = cards.card({ chart, race, params: { ...s.params, ...(s.bg ? { bg: s.bg } : {}) }, section: "playlists", priority: 4, open: "show", showRace: !!race?.id, menu });
+    el.classList.add("minicard");
     el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="pos" title="Position ${i + 1} in ${esc(p.name || "this playlist")}">${i + 1}</span>`);
     el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}"><b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}</div>`);
     grid.appendChild(el);
