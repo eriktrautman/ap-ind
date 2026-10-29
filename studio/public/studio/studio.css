@@ -394,3 +394,6 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 @keyframes pend { 50% { opacity: .55; } }
 
 .seg button .wrench { vertical-align: -1px; margin-right: 1px; }
+
+/* A locked Data Stream switch is greyed as a whole, selection mark included. */
+.seg.locked { opacity: .55; border-color: #d4d4d4; } .seg.locked button, .seg.locked button.on, .seg.locked button.on[data-rt="t"], .seg.locked button.on[data-rt="l"] { background: #f0f0f0; color: #777; }
