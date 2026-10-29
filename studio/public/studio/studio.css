@@ -450,3 +450,6 @@ header.top, .brandrow { overflow: visible; }
 .account .acctmenu button[role="menuitem"]:hover, .account .acctmenu button[role="menuitem"]:focus { background: var(--cream); color: var(--navy); outline: none; }
 .account .acctmenu li:last-child button { color: #8b1a1a; }
 .account .acctmenu #logout, .account .acctmenu .link { margin: 0; padding: 8px 14px; border: 0; background: none; width: 100%; text-align: left; font-size: 13px; }
+
+/* The dropdown hangs from the account button itself, not from the sticky header. */
+.account { position: relative; margin-left: auto; flex: none; }
