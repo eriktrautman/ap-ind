@@ -96,9 +96,10 @@
       <div class="screen onair">
         <div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="Live ticker"></iframe><span class="lockmark" hidden title="You cannot change what is published from this sign-in"><svg class="lock" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span></div>
         <div class="gfoot"><span class="muted small">Published now</span><span class="spacer"></span><button class="copybtn" id="livecopy" type="button" title="Copy the live ticker's address">Copy Live URL</button><a class="openbtn" id="liveopen" target="_blank" rel="noopener" title="Open the live ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="freshline" id="tickerfresh" hidden></div>
         <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a id="liveurl" class="url" target="_blank" rel="noopener"></a></p>
         <div class="liveparams" id="liveparams"></div>
-        <p class="muted small">Picks up a publish within 5 seconds at the next item boundary, without restarting the crawl. Only an authorized publish changes it.</p>
+        <p class="muted small">Picks up a publish within about 5 seconds at the next item boundary, without restarting the crawl; a note appears above while the live address has not picked one up yet. Only an authorized publish changes it.</p>
       </div>
     </div>
 </section>

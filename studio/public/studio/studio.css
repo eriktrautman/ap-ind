@@ -90,6 +90,11 @@ main > section.card + section.card::before { content: ""; display: block; height
 .screenmid .whynot { margin-top: -6px; text-align: center; }
 button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .pubstate { cursor: help; } .pubstate.dirty { color: #b5651d; font-weight: 600; } .pubstate.same { color: var(--ok); font-weight: 600; }
+/* After a publish: whether the live address (what the switcher and every viewer read) has picked it up yet. */
+.freshline { margin: 6px 0; padding: 6px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 600; background: #fdf6ea; border-left: 4px solid var(--warn); color: #6b4a12; }
+.freshline .muted { font-weight: 400; }
+.freshline.late { background: #fdf0f1; border-left-color: var(--bad); color: #8b1a1a; }
+.freshline.ok { background: #ecf7f0; border-left-color: #1f9d55; color: #1a5c35; }
 .liveparams { margin: 6px 0 8px; }
 .liveparams .params { border-collapse: collapse; font-size: 12.5px; background: #fff; border: 1px solid var(--sand); border-radius: 6px; width: 100%; }
 .liveparams .params td { padding: 5px 10px; border-bottom: 1px solid var(--sand); vertical-align: top; }

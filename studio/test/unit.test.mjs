@@ -66,6 +66,8 @@ test("vercel.json wires the Studio gate, the chart router, the data files and th
   assert.ok(v.proxy.matcher.some((m) => m.startsWith("/studio")));
   assert.ok(v.rewrites.some((r) => r.source === "/g/:chart" && r.destination === "/g/chart"));
   assert.ok(v.rewrites.some((r) => r.source === "/data/:path*"));
+  const pub = v.rewrites.findIndex((r) => r.source === "/data/producer.json" && r.destination === "/api/published");   // readers get the fresh copy, before the blob rule
+  assert.ok(pub >= 0 && pub < v.rewrites.findIndex((r) => r.source === "/data/:path*"), "the published state is read through its function, ahead of the blob rewrite");
   assert.ok(v.crons.some((c) => c.path === "/api/poll"));
   assert.ok(v.headers.some((h) => h.source.startsWith("/studio") && h.headers.some((x) => x.value === "no-store")));
   if (!existsSync(`${ROOT}dist`)) return;   // npm test builds first; test:unit need not

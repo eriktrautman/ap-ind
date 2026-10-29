@@ -120,6 +120,13 @@ let runtime = undefined;      // from /api/runtime: undefined until asked, null 
 let live = null;              // the LIVE TICKER's parameters as last read (normalized), or null if never read
 let liveSeenAt = null;        // updatedAt of the live ticker when this page last pulled or published
 let liveError = null;         // why the live ticker is unreadable right now, or null
+// What the live address answers (/data/producer.json, the copy every ticker, screen and graphic reads): its updatedAt and when
+// it was read. A publish is "on air" once this matches the authoritative copy's updatedAt. lastPublished: what this page
+// published last, so the note shows under the ticker or the screen that is actually waiting.
+let readersAt = undefined;    // undefined: never read; null: the address answered with no publish stamp
+let readersReadAt = 0;
+let readersError = null;
+let lastPublished = null;     // { updatedAt, blocks: ["ticker"] | ["screenA"] | ... }
 let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
 const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
@@ -219,6 +226,43 @@ async function loadLive() {
   renderStatus();
 }
 
+/** Read the live address exactly as its readers do (same path, same 5 s bucket), to say whether a publish has reached them. */
+async function loadReaders() {
+  try {
+    const r = await fetch(`/data/producer.json?t=${Math.floor(Date.now() / 5_000)}`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(`${r.status}`);
+    readersAt = (await r.json())?.updatedAt ?? null; readersError = null;
+  } catch (e) { readersError = e.message; }
+  readersReadAt = Date.now();
+  renderFresh();
+}
+/** The note under each published preview: waiting (amber), late (red after a minute), picked up (green for a moment), or nothing. */
+function freshState() {
+  if (!live?.updatedAt || readersAt === undefined) return null;
+  const pubAt = Date.parse(live.updatedAt), seen = readersAt ? Date.parse(readersAt) : 0;
+  const behind = seen < pubAt;
+  const since = (Date.now() - pubAt) / 1000;
+  if (behind) return { kind: since > 60 ? "late" : "waiting", since };
+  if (since < 20) return { kind: "ok", since };
+  return null;
+}
+function renderFresh() {
+  const f = freshState();
+  const mine = lastPublished && live && lastPublished.updatedAt === live.updatedAt ? lastPublished.blocks : null;   // else someone else's publish: every block
+  const who = !mine && live?.updatedBy ? `${live.updatedBy} published` : "Published";
+  for (const [block, el] of [["ticker", $("tickerfresh")], ["screenA", document.querySelector("#screenA .freshline")], ["screenB", document.querySelector("#screenB .freshline")]]) {
+    if (!el) continue;
+    const show = f && (!mine || mine.includes(block));
+    el.hidden = !show;
+    if (!show) continue;
+    const when = `${who} ${Math.round(f.since)} s ago`;
+    el.className = `freshline ${f.kind}`;
+    el.innerHTML = f.kind === "ok" ? `✓ On air: the live address has picked this up. <span class="muted">${esc(when)}.</span>`
+      : f.kind === "late" ? `⚠ Still not on air after ${Math.round(f.since / 60)} min: the live address still answers with the previous version. <span class="muted">${esc(when)}${readersError ? ` · the address is unreadable: ${esc(readersError)}` : ""}. The preview on this side changes when it has picked it up.</span>`
+      : `⏳ Not on air yet: the live address still answers with the previous version. <span class="muted">${esc(when)}; readers pick a publish up within a few seconds.</span>`;
+  }
+}
+
 // ---------- state model: this page is a workbench; only the ticker builder is published, to the one live ticker ----------
 const otherOperator = () => live && liveSeenAt !== live.updatedAt;
 /** Roles, from the password's variable name. Producer actions (poll, pause, Test/Live) need a PRODUCER password. Publishing
@@ -285,6 +329,7 @@ function renderLive() {
   }
   renderPublishState();
   renderScreens();
+  renderFresh();
 }
 function renderPublishState() {
   const changes = live ? tickerDiff(live, draft) : [];
@@ -314,7 +359,7 @@ async function publish() {
   const host = prodHost();
   const ok = await ask({
     title: "Publish to the LIVE TICKER?",
-    body: `<p><b>${esc(host)}/ticker</b> takes ${BUILDER}. It changes within 5 seconds, at the next item boundary, without restarting the crawl. Nothing else on this page is published, and tickers built from an address are not affected.</p>
+    body: `<p><b>${esc(host)}/ticker</b> takes ${BUILDER}. It changes within about 5 seconds, at the next item boundary, without restarting the crawl; a note under the published preview says when the live address has picked it up. Nothing else on this page is published, and tickers built from an address are not affected.</p>
       ${changeList(changes)}
       <p class="small muted">Last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" + byWhom(latest) : "never"}.</p>
       ${someoneElse ? `<div class="warnline bad">${latest.updatedBy ? esc(latest.updatedBy) : "Someone else"} published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published. Publishing now replaces their ticker. Press Cancel and Pull if you want to see it first.</div>` : ""}
@@ -325,7 +370,8 @@ async function publish() {
   try {
     const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(tickerPart(draft)) }));
     live = saved; liveSeenAt = saved.updatedAt; liveError = null;
-    renderAll();
+    lastPublished = { updatedAt: saved.updatedAt, blocks: ["ticker"] };
+    renderAll(); loadReaders();
   } catch (e) {
     await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>The live ticker is unchanged. The builder is still saved on this page.</p>`, ok: "OK" });
   }
@@ -653,9 +699,10 @@ function buildScreen(key) {
       <div class="screen onair">
         <div class="frame clickable" data-open="live" title="Open the published screen at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} published"></iframe><span class="lockmark" hidden title="You cannot change what is published from this sign-in">${LOCK.replace('width="11" height="11"', 'width="14" height="14"')}</span></div>
         <div class="gfoot"><span class="muted small">Published now</span><span class="spacer"></span><button class="copybtn" data-copy="live" type="button" title="Copy the permanent address">Copy Live URL</button><a class="openbtn" data-open="live" target="_blank" rel="noopener" title="Open the published screen at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="freshline" hidden></div>
         <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a class="url liveaddr" target="_blank" rel="noopener"></a></p>
         <div class="liveparams"></div>
-        <p class="muted small">Changes within 5 seconds of a publish, cross-fading so nothing flashes. Only an authorized publish changes it.</p>
+        <p class="muted small">Changes within about 5 seconds of a publish, cross-fading so nothing flashes; a note appears above while the live address has not picked one up yet. Only an authorized publish changes it.</p>
       </div>
     </div>`;
   box.dataset.built = "1";
@@ -725,7 +772,7 @@ async function publishScreen(key) {
   const someoneElse = latest && latest.updatedAt !== liveSeenAt;
   const ok = await ask({
     title: `Publish Live Screen ${letter}?`,
-    body: `<p><b>${esc(prodHost())}${screenPath(key)}</b> changes to <b>${esc(describeScreen(draft[key]))}</b>${latest ? ` (now ${esc(describeScreen(latest[key]))})` : ""}, within 5 seconds, cross-fading so nothing flashes. Nothing else is published.</p>
+    body: `<p><b>${esc(prodHost())}${screenPath(key)}</b> changes to <b>${esc(describeScreen(draft[key]))}</b>${latest ? ` (now ${esc(describeScreen(latest[key]))})` : ""}, within about 5 seconds, cross-fading so nothing flashes; a note under the published screen says when the live address has picked it up. Nothing else is published.</p>
       ${someoneElse ? `<div class="warnline bad">${latest.updatedBy ? esc(latest.updatedBy) : "Someone else"} published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published.</div>` : ""}
       ${same ? `<div class="warnline">The draft already matches the published screen.</div>` : ""}`,
     ok: "Publish", danger: true,
@@ -734,7 +781,8 @@ async function publishScreen(key) {
   try {
     const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify({ [key]: draft[key] }) }));
     live = saved; liveSeenAt = saved.updatedAt; liveError = null;
-    renderAll();
+    lastPublished = { updatedAt: saved.updatedAt, blocks: [key] };
+    renderAll(); loadReaders();
   } catch (e) {
     await ask({ title: "Publish failed", body: `<div class="warnline bad">${esc(e.message)}</div><p>The published screen is unchanged. The draft is still saved on this page.</p>`, ok: "OK" });
   }
@@ -1076,9 +1124,9 @@ async function boot() {
   scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();
-  await Promise.all([loadStatus(), loadIndex(), loadLive()]);
+  await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders()]);
   renderAll();
-  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
+  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

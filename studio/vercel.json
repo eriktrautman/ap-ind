@@ -19,13 +19,17 @@
       "destination": "/g/chart"
     },
     {
+      "source": "/data/producer.json",
+      "destination": "/api/published"
+    },
+    {
       "source": "/data/:path*",
       "destination": "https://lhxyw7zt9v9qfbh3.public.blob.vercel-storage.com/:path*"
     }
   ],
   "headers": [
     {
-      "source": "/data/(.*)",
+      "source": "/data/((?!producer\\.json$).*)",
       "headers": [
         {
           "key": "Cache-Control",
