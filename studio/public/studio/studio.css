@@ -408,3 +408,8 @@ select { appearance: none; -webkit-appearance: none; padding-right: 26px !import
 
 .statusbar button.speeds { font: inherit; font-size: 12px; color: #8a98b5; background: none; border: 1px solid #2a3a5c; border-radius: 10px; padding: 1px 9px; cursor: pointer; line-height: 1.4; }
 .statusbar button.speeds:hover, .statusbar button.speeds.open { color: #eef2f9; border-color: #4a5f8a; }
+
+/* Text on the navy section bands: light enough to read; these come last so nothing muted wins. */
+.cardhead, .cardhead .secdisp, .cardhead .secdisp label { color: #e8edf7; }
+.cardhead > .muted.small { color: #d6dcea !important; }
+.cardhead .secdisp select { color: var(--ink); }
