@@ -667,7 +667,7 @@ let screenTimer = null;
 document.addEventListener("input", (e) => {
   const el = e.target.closest("[data-sk]"); if (!el) return;
   const key = el.dataset.sk, s = draft[key];
-  if (el.dataset.f === "chart") { s.chart = el.value; s.params = {}; if (!(SCREEN_PARAMS[s.chart] ?? []).length) s.params = {}; }
+  if (el.dataset.f === "chart") { s.chart = el.value; s.params = {}; el.blur(); }   // blur so the form redraws at once with the fields this chart needs
   else if (el.dataset.f === "race") s.race = el.value;
   else if (el.dataset.f === "state") s.state = el.value;
   else if (el.dataset.p) { if (el.value.trim()) s.params[el.dataset.p] = el.value; else delete s.params[el.dataset.p]; }
