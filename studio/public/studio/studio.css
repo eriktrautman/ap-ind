@@ -456,3 +456,8 @@ footer.built .by { color: var(--gold); font-family: var(--serif); font-size: 15p
 
 /* the section's description sits under the navy head, dark on the card */
 .secsub { margin: -6px 0 18px; font-size: 13px; line-height: 1.5; color: #4b5563; max-width: 110ch; } .secsub a { color: var(--navy); }
+/* Chart Display Settings: a small bar under the help box, not a section */
+main > section.card.display { margin: 10px 0 28px; padding: 8px 14px; border-width: 2px; border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.display .dtitle { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); white-space: nowrap; }
+.display .disprow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; flex: 1; min-width: 0; }
+.display #thumbbudget { flex-basis: 100%; margin: 0; }
