@@ -463,3 +463,5 @@ main > section.card.display { margin: 10px 0 28px; padding: 8px 14px; border-wid
 .display #thumbbudget { margin: 0 4px 0 0; white-space: nowrap; }
 .display .disprow label { display: inline-flex; align-items: center; gap: 6px; line-height: 1; }
 .display .disprow select, .display .disprow button { vertical-align: middle; }
+/* the bar's two buttons carry the dropdowns' border weight */
+.display .defaultsbtn { border: 2px solid #b9b2a3; padding: 5px 11px; } .display .defaultsbtn:hover { border-color: var(--navy); }
