@@ -313,7 +313,7 @@ dialog::backdrop { background: #071222aa; }
 .screen.onair .tickerurl { margin: 8px 12px 4px; } .screen.onair .liveparams { margin: 4px 12px 6px; } .screen.onair p.muted { margin: 4px 12px 12px; color: var(--muted); }
 .screen.onair { background: #fff; }
 .screenmid { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 18%; color: var(--navy); }
-.screenmid .arrow { color: #b5651d; }
+.screenmid .arrow { color: #1f9d55; }   /* publish: green, toward the published panel */
 .screenmid button { width: 100%; justify-content: center; font-size: 12px; padding: 5px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .screenmid button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .screenmid button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
 .screenmid button.pull { background: var(--navy); color: #fff; border-color: var(--navy); } .screenmid button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
@@ -337,7 +337,7 @@ button.noauth, button.noauth:disabled, .pubrow button.publish.noauth:disabled, .
 /* Results: the selected side keeps its colour even when the switch is locked; the other side is plain. */
 .seg button.on { font-weight: 700; } .seg button:disabled { opacity: 1; cursor: default; } .seg button:disabled:not(.on) { color: var(--muted); background: #f6f6f6; }
 .seg .lbl .lock { margin-right: 4px; vertical-align: -1px; }
-.screenmid .arrow.back { margin-top: 14px; color: var(--navy); }
+.screenmid .arrow.back { margin-top: 14px; color: #d98a2b; }   /* pull: orange, toward the draft */
 
 .screenrow.ticker .screen.draft { background: #fff; }
 .screen.draft .tickerurl { margin: 8px 12px 4px; } .screen.draft p.inner { margin: 4px 12px 12px; color: var(--muted); }
