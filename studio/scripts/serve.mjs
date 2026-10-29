@@ -1,5 +1,5 @@
 // The whole app on one laptop: the same code Vercel runs, in one Node process.
-//   - static files from dist/ (cleanUrls, /data/* from the store, producer.json from production when connected, no-store for the Studio at / and /ticker)
+//   - static files from dist/ (cleanUrls, /data/* from the store, producer.json from production when connected, no-store for /studio and /ticker)
 //   - the four API functions from api/, mounted with a small req/res shim, plus /api/runtime, /api/promote, /api/demote (laptop only)
 //   - where this machine's data comes from, by mode (see below)
 //
@@ -224,10 +224,9 @@ createServer(async (req, res) => {
       res.end(Buffer.from(await r.arrayBuffer()));
       return;
     }
-    if (/^\/studio\/?$/.test(url.pathname)) { res.writeHead(308, { location: `/${url.search}` }); res.end(); return; }   // the Studio is the root now
     const p = await resolve(url.pathname);
     if (!p) { res.writeHead(404, { "content-type": "text/plain" }); res.end("not found"); return; }
-    const noStore = url.pathname === "/" || /^\/(index\.html|studio|ticker|ticker-queue|live-screen)/.test(url.pathname);
+    const noStore = /^\/(studio|ticker|ticker-queue|live-screen)/.test(url.pathname);
     res.writeHead(200, { "content-type": TYPES[extname(p)] ?? "application/octet-stream", "cache-control": noStore ? "no-store" : "public, max-age=10" });
     res.end(await readFile(p));
   } catch (e) {
@@ -242,7 +241,7 @@ createServer(async (req, res) => {
       if (r.ok) { await writeJson("producer.json", normalize(await r.json())); console.log(`seeded producer.json from ${DEPLOYMENT} (first run)`); }
     } catch (e) { console.log(`could not seed from ${DEPLOYMENT}: ${e.message}; starting from the defaults`); }
   }
-  console.log(`ap-ind: http://localhost:${PORT}  on this network ${lanOrigin()}  Studio / · docs /docs · ticker /ticker · graphics /g/ · files: ${isLocalStore() ? localPath("") : "Vercel Blob (shared with the deployment)"}`);
+  console.log(`ap-ind: http://localhost:${PORT}  on this network ${lanOrigin()}  Studio /studio · docs /docs · ticker /ticker · graphics /g/ · files: ${isLocalStore() ? localPath("") : "Vercel Blob (shared with the deployment)"}`);
   console.log(CONNECTED ? `production: ${GLOBAL} (this laptop is its standby; pull ready; publish ${GLOBAL_PASSWORD ? "ready" : "NOT configured: set GLOBAL_PASSWORD"})` : "production: THIS MACHINE (GLOBAL=self); its outputs read its own files");
   if (mode.kind === "mirror") { startMirror(); console.log(`mirror: copying ${GLOBAL}'s data files every ${MIRROR_MS / 1000} s (no AP requests); Promote in the Studio makes this laptop production`); }
   else if (mode.kind === "poll") { startPolling(); console.log(`poller: AP every ${POLL_MS / 1000} s into this machine's files${CONNECTED ? " (--poll: make sure no other poller shares this AP key)" : ""}`); }

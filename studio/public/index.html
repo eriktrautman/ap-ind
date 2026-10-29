@@ -3,201 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studio · IND Election Night</title>
-<link rel="stylesheet" href="/studio/studio.css">
+<title>IND Election Night</title>
+<meta name="description" content="The broadcast app for IND Election Night: a producer's Studio, a live ticker and full-screen graphics on the AP Elections API.">
+<style>
+  :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { font: 16px/1.5 var(--sans); color: var(--ink); background: var(--cream); display: flex; flex-direction: column; }
+  header { background: var(--navy-deep); color: #c7cfdf; padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 12px; }
+  header .brand { color: var(--gold); font-family: var(--serif); font-size: 18px; letter-spacing: .02em; }
+  header .sub { color: #8f9bb3; font-size: 13px; border-left: 1px solid #2a3a5c; padding-left: 12px; }
+  main { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 72px 24px 48px; }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1.15; margin: 0 0 16px; color: var(--navy); }
+  h1 b { color: var(--gold); font-weight: 400; }
+  p { margin: 0 0 14px; font-size: 17px; color: #374151; }
+  .cta { display: inline-flex; align-items: center; gap: 10px; margin: 22px 0 10px; padding: 14px 22px; background: var(--gold); color: #1a1600; font-weight: 700; font-size: 17px; text-decoration: none; border-radius: 8px; }
+  .cta:hover { background: #e4c04a; }
+  .cta svg { flex: none; }
+  .small { font-size: 14px; color: var(--muted); }
+  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 40px 0 0; }
+  .part { background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 14px 16px; }
+  .part b { display: block; color: var(--navy); font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+  .part span { font-size: 14px; color: #4b5563; }
+  footer { padding: 18px 24px; background: var(--navy); color: #c7cfdf; font-size: 13px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  footer a { color: #c7cfdf; text-decoration: none; } footer a:hover { color: #fff; text-decoration: underline; }
+  footer .by { margin-left: auto; color: var(--gold); font-family: var(--serif); font-size: 15px; }
+  @media (max-width: 600px) { main { padding-top: 40px; } h1 { font-size: 30px; } }
+</style>
 </head>
 <body>
-<header class="top">
-  <div class="brandrow">
-    <b>IND Election Night</b><span class="subbrand">Studio</span>
-    <nav class="sections" id="sectionnav">
-      <a href="#ticker">Live Ticker</a><a href="#screens">Live Screens</a><a href="#detail">Featured Races</a><a href="#broad">Races Overview</a><a href="#movement">Movement Overview</a><a href="#persistent">Persistent</a><a href="#catalog">Race Catalog</a><a href="#charts">Chart Catalog</a>
-    </nav>
-    <div class="account" id="account" hidden>
-      <button class="acct" id="acctbtn" type="button" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="5.5" r="3" fill="currentColor"/><path d="M2.5 14a5.5 5.5 0 0 1 11 0z" fill="currentColor"/></svg><span id="acctname">Signed in</span><svg class="caret" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <ul class="acctmenu" id="acctmenu" role="menu" hidden>
-        <li class="hdr"><b id="acctrole"></b><span class="muted small" id="acctallows"></span></li>
-        <li role="none"><button role="menuitem" type="button" id="acctperms">View user permissions</button></li>
-        <li role="none"><button role="menuitem" type="button" id="logout">Sign out</button></li>
-      </ul>
-    </div>
+<header><span class="brand">IND Election Night</span><span class="sub">Broadcast app</span></header>
+<main>
+  <h1>Live results for the broadcast about <b>independent candidates</b>.</h1>
+  <p>This site runs the night's data: it reads the AP Elections API once a minute and turns it into a crawling ticker and full-screen graphics that the switcher takes as browser inputs. Every output is a fixed address, so once it is on the switcher it never has to be touched again.</p>
+  <p>The <b>Studio</b> is where producers set what those outputs show: which races the ticker follows, the manual lines it crawls, the chart on each live screen, and the featured races and charts for the show. Every publish is signed with the producer's name and reaches the screens within five seconds.</p>
+  <a class="cta" href="/studio">Sign in to the Studio<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+  <p class="small">A password is needed. Each person has their own, with producer, publisher or read-only rights; ask the producer for yours.</p>
+  <div class="parts">
+    <div class="part"><b>Ticker</b><span>The live crawl at 1920×1080, transparent, at one fixed address.</span></div>
+    <div class="part"><b>Live screens</b><span>Two fixed pages that show whatever chart was last published to them.</span></div>
+    <div class="part"><b>Graphics</b><span>Every chart is one address: the chart, the race, the look.</span></div>
   </div>
-  <div class="statusbar" id="statusbar">
-    <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
-  </div>
-  <div class="standby" id="standby" hidden></div>
-  <div class="infopanel" id="standbyinfo" hidden></div>
-  <div class="pollstrip" id="poller" hidden>
-    <span class="pl-k" title="These change what the poller does for every output. They need a producer password; publisher and read-only passwords cannot use them.">PRODUCER ACTIONS</span><button class="info" id="pollinfobtn" type="button" aria-expanded="false" aria-controls="pollinfo" title="What these actions do">i</button><span class="readonly" id="readonly" hidden><svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span id="readonlytxt">Not Authorized · This Account is Read Only</span></span>
-    <span class="pl-actions">
-      <button id="pollnow">Poll now</button>
-      <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">Reset caches</button>
-      <button id="pause"><span class="lbl">Pause polling</span></button>
-      <span class="seg" id="rtype"><span class="lbl">Data Stream</span><button data-rt="t">Test</button><button data-rt="l">Live</button></span>
-    </span>
-    <span class="note" id="pollmsg"></span>
-  </div>
-  <div class="infopanel" id="pollinfo" hidden></div>
-  <div class="testbanner" id="testbanner" hidden>TEST DATA · <span class="wide">AP's simulated election, </span>not real results</div>
-  <div class="testbanner testlogin" id="loginbanner" hidden>TEST LOGIN · <span class="wide">rehearsal password · </span>invalid once results go Live</div>
-  <div class="problem top" id="problem" hidden></div>
-</header>
-
-<div class="login" id="login" hidden>
-  <form id="loginform">
-    <h1>Studio sign-in</h1>
-    <p>Shared studio password. Ask the engineer on duty if you don't have it.</p>
-    <p class="hint" id="loginhint" hidden></p>
-    <input type="password" id="password" placeholder="Password" autocomplete="current-password" autofocus>
-    <button type="submit">Sign in</button>
-    <div class="err" id="loginerr"></div>
-  </form>
-</div>
-
-<main id="app" hidden>
-
-  <details class="howbox" id="howbox"><summary><b>How to Use This Site</b></summary><ul id="howtext"></ul></details>
-
-  <section class="card display" id="displayset">
-    <div class="cardhead"><h2>Chart Display Settings</h2><span class="muted small">Each section has its own Background and Opacity on its title line, and each live draft its own Background. Apply to All Charts resets every section to the pair chosen here; nothing published changes.</span></div>
-    <div class="disprow">
-      <label>Background <select id="topbg"><option value="">Transparent</option><option value="black" selected>Black</option><option value="green">Green Key</option></select></label>
-      <label>Opacity <select id="topopacity"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
-      <button id="applyall" class="primary">Apply to All Charts</button>
-      <span class="spacer"></span>
-      <button id="defaults" class="defaultsbtn"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Restore All Default Settings</button>
-    </div>
-    <div class="muted small" id="thumbbudget"></div>
-  </section>
-
-  <section class="card" id="ticker">
-    <div class="cardhead" data-sec="ticker"><h2>Live Ticker</h2><span class="muted small">The Live Ticker is shared by everyone at a fixed URL so it can be kept up on a single laptop and hot-swapped for other crawls. The draft can be viewed at the URL generated by its selected options.</span><span class="secdisp"></span></div>
-    <div class="screenrow ticker">
-      <div class="screen draft">
-        <div class="frame clickable" id="previewframe" title="Open this ticker at 1920×1080 in a new tab"><iframe id="preview" title="Ticker Builder preview"></iframe></div>
-        <div class="gfoot"><span class="muted small">Ticker Builder · draft on this page <span id="previewnote"></span></span><span class="spacer"></span><button class="copybtn" id="tickercopy" type="button" title="Copy this ticker's address">Copy Draft URL</button><a class="openbtn" id="tickeropen" target="_blank" rel="noopener" title="Open this ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
-        <p class="tickerurl"><span class="k" title="A ticker built entirely from its address: the races below by race id, the AP Call highlight, the items and idle text. Change the builder and the address follows.">Address for this ticker</span> <a id="tickerurl" class="url" target="_blank" rel="noopener"></a></p>
-        <p class="muted small inner">Use this ticker by its address, which carries every parameter and so never changes and needs no sign-in; or publish it to become the live ticker.</p>
-        <div class="sform tform">
-          <div class="tgrid">
-            <label for="callhl">Highlight AP Calls?</label><select id="callhl"><option value="1">Yes</option><option value="0">No</option></select>
-            <label for="tickerbg">Background</label><select id="tickerbg" data-page="ticker"></select>
-          </div>
-          <h4>Manual Crawler Text <span class="muted" id="manualcount"></span></h4>
-          <form class="addmanual" id="addmanual"><input id="manualtext" placeholder="Text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add</button></form>
-          <div class="list" id="manual"></div>
-          <h4>Idle text</h4>
-          <input id="idletext" placeholder="Welcome to the Independent Election Night coverage" maxlength="240">
-          <p class="muted small hint">Crawls on its own when the ticker has no races and no crawler text to show.</p>
-          <h4>Ticker races <span class="muted" id="pincount"></span></h4>
-          <div class="filters addfeat"><input id="pinq" placeholder="Add a race to the ticker: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="pinsuggest" hidden></div></div>
-          <div class="list pins" id="pins"></div>
-          <p class="muted small">Or add races from the <a href="#catalog">Race Catalog</a> below. At least one race stays on the ticker; removing the last one puts the default list back.</p>
-        </div>
-      </div>
-      <div class="screenmid">
-        <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <button class="publish" id="publish" title="Make this builder the live ticker">Publish to Live</button>
-        <span class="whynot" id="pubwhy"></span>
-        <div class="arrow back" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M62 12H12M22 3L12 12l10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <button class="pull" id="pull" title="Copy the live ticker's parameters into the builder">Pull from Live</button>
-        <span class="pubstate" id="pubstate">…</span>
-      </div>
-      <div class="screen onair">
-        <div class="frame clickable" id="liveframe" title="Open the live ticker at 1920×1080 in a new tab"><iframe id="livepreview" title="Live ticker"></iframe><span class="lockmark" hidden title="You cannot change what is published from this sign-in"><svg class="lock" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span></div>
-        <div class="gfoot"><span class="muted small">Published now</span><span class="spacer"></span><button class="copybtn" id="livecopy" type="button" title="Copy the live ticker's address">Copy Live URL</button><a class="openbtn" id="liveopen" target="_blank" rel="noopener" title="Open the live ticker at 1920×1080 in a new tab">Show 1920×1080</a></div>
-        <p class="tickerurl"><span class="k" title="This address never changes. Point the switcher at it once.">Permanent Address:</span> <a id="liveurl" class="url" target="_blank" rel="noopener"></a></p>
-        <div class="liveparams" id="liveparams"></div>
-        <p class="muted small">Picks up a publish within 5 seconds at the next item boundary, without restarting the crawl. Only an authorized publish changes it.</p>
-      </div>
-    </div>
-</section>
-
-  <section class="card" id="screens">
-    <div class="cardhead" data-sec="screens"><h2>Live Screens</h2><span class="muted small">Live Screens are shared by everyone at a fixed URL so they can be kept up on a single laptop and hot-swapped for other graphics. The drafts can be viewed at the URLs generated by their selected options.</span><span class="secdisp"></span></div>
-    <div class="screenblock" id="screenA"></div>
-    <div class="screenblock" id="screenB"></div>
-  </section>
-
-  <section class="card" id="detail">
-    <div class="cardhead" data-sec="detail"><h2>Featured Races</h2><span class="muted small">Featuring a race only makes its charts easy to grab here. It changes nothing in the ticker or graphics.</span><span class="secdisp"></span></div>
-    <div class="cols">
-      <div class="col">
-        <h3>Featured races <span class="muted" id="featcount"></span></h3>
-        <div class="filters addfeat"><input id="featq" placeholder="Add a featured race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" id="featsuggest" hidden></div></div>
-        <div class="list pins" id="featured"></div>
-        <p class="muted small">Or feature any race from the <a href="#catalog">Race Catalog</a> below; pick the charts from the <a href="#charts">Chart Catalog</a>.</p>
-      </div>
-      <div class="col">
-        <h3>Featured charts <span class="muted" id="chartcount"></span> <span class="muted small">· the same set for every featured race</span></h3>
-        <div class="filters addfeat"><input id="chartq" placeholder="Add a chart: type an id or name (B5, county map…)" size="34" autocomplete="off"><div class="suggest" id="chartsuggest" hidden></div></div>
-        <div class="list pins" id="featcharts"></div>
-        <p class="muted small">Or add from the <a href="#charts">Chart Catalog</a> below.</p>
-      </div>
-    </div>
-    <div class="racegrid" id="racegrid"></div>
-  </section>
-
-  <section class="card" id="broad">
-    <div class="cardhead" data-sec="broad"><h2>Races Overview</h2><span class="muted small">Where the charts for election-night coverage of many races at once live: Senate and House maps, balance of power, key races, zoom-ins, the popular vote, too close to call (the D series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span><span class="secdisp"></span></div>
-    <div class="cardgrid" id="broadgrid"></div>
-  </section>
-
-  <section class="card" id="movement">
-    <div class="cardhead" data-sec="movement"><h2>Movement Overview</h2><span class="muted small">The independent movement as a whole rather than any one race: the featured-races board, the national independent vote, polls against results (the C series). Add from the <a href="#charts">Chart Catalog</a>; remove from a card's ⋯ menu.</span><span class="secdisp"></span></div>
-    <div class="cardgrid" id="movegrid"></div>
-  </section>
-
-  <section class="card" id="persistent">
-    <div class="cardhead" data-sec="persistent"><h2>Persistent Elements</h2><span class="muted small">Lower thirds and strips (the A series). Add from the <a href="#charts">Chart Catalog</a>; each one takes its inputs here; remove from a card's ⋯ menu. The live ticker has its own <a href="#ticker">Live Ticker</a> section.</span><span class="secdisp"></span></div>
-    <div class="cardgrid" id="persistgrid"></div>
-  </section>
-
-  <section class="card" id="catalog">
-    <div class="cardhead" data-sec="catalog"><h2>Race Catalog</h2><span class="muted small">Every race in the AP feed. Add any to the ticker or feature it; expand a race for all of its graphics.</span><span class="secdisp"></span></div>
-    <div class="filters">
-      <input id="cq" placeholder="Search label, state, office, candidate" size="30">
-      <select id="cstate"><option value="">All states</option></select>
-      <select id="coffice"><option value="">All offices</option><option value="S">Senate</option><option value="H">House</option><option value="G">Governor</option><option value="statewide">Other statewide</option><option value="I">Ballot measures</option><option value="M">Mayor</option></select>
-      <span class="chip" data-cf="ind">Independent on ballot</span>
-      <span class="chip" data-cf="featured">Featured</span>
-      <span class="chip" data-cf="ticker">On the ticker</span>
-      <span class="chip" data-cf="called">AP called</span>
-      <span class="chip" data-cf="counting">Counting</span>
-      <span class="muted small" id="ccount"></span>
-    </div>
-    <div class="catalog" id="catalogList"></div>
-  </section>
-  <section class="card" id="charts">
-    <div class="cardhead" data-sec="charts"><h2>Chart Catalog</h2><span class="muted small">Every chart in the lookbook, built or not. Per-race charts go into the Featured Races set (one set for every featured race); C charts into the Movement Overview; D charts into the Broad Races Overview.</span><span class="secdisp"></span></div>
-    <h3>Persistent elements (A series) · always on, no section</h3>
-    <div class="cardgrid dense" id="chartsA"></div>
-    <h3>Per-race charts (B series) · go into Featured Races</h3>
-    <div class="cardgrid dense" id="chartsRace"></div>
-    <h3>Independent movement charts (C series) · go into Movement Overview</h3>
-    <div class="cardgrid dense" id="chartsMove"></div>
-    <h3>Broad races charts (D series) · go into Races Overview</h3>
-    <div class="cardgrid dense" id="chartsBroad"></div>
-    <h3>From the AP reports feed (F series) · reference tables, no section</h3>
-    <div class="cardgrid dense" id="chartsF"></div>
-  </section>
 </main>
-
-<footer class="built">
-  <a class="gh" href="https://github.com/eriktrautman/ap-ind" target="_blank" rel="noopener" title="The code on GitHub"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
-  <a class="gh docs" href="/docs" title="Build plan, graphics lookbook, technical spec">Docs</a>
-  <button class="link permslink" id="permslink" type="button" title="Everyone with a password on this site, their role, and what it allows"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="5.5" r="3" fill="currentColor"/><path d="M2.5 14a5.5 5.5 0 0 1 11 0z" fill="currentColor"/></svg>View User Permissions</button>
-  <a class="by" href="https://eriktrautman.com" target="_blank" rel="noopener" title="eriktrautman.com">Built by Erik Trautman</a>
+<footer>
+  <a href="/docs">Documents</a>
+  <a href="https://github.com/eriktrautman/ap-ind" target="_blank" rel="noopener">Code</a>
+  <a class="by" href="https://eriktrautman.com" target="_blank" rel="noopener">Built by Erik Trautman</a>
 </footer>
-
-<dialog id="dlg">
-  <form method="dialog" class="dlgform">
-    <h2 id="dlgtitle"></h2>
-    <div id="dlgbody"></div>
-    <div class="dlgactions"><button value="cancel" type="submit">Cancel</button><button value="ok" type="submit" class="primary" id="dlgok">Confirm</button></div>
-  </form>
-</dialog>
-
-<script type="module" src="/studio/studio.js"></script>
 </body>
 </html>

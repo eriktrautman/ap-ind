@@ -1,6 +1,6 @@
 // Shared top navigation for the documents. The docs are served at the root by the app (Vercel or
-// npm start), with their index at /docs; under /docs/ when opened from the repo. The Studio is the
-// site's front page. Broadcast graphics never include this.
+// npm start), with their index at /docs; under /docs/ when opened from the repo. The site's front page is a
+// landing page with a sign-in link to the Studio at /studio. Broadcast graphics never include this.
 (() => {
   const onDocs = location.pathname.startsWith("/docs/");
   const local = onDocs || ["localhost", "127.0.0.1"].includes(location.hostname);
@@ -25,7 +25,7 @@
   nav.className = "apnav";
   nav.innerHTML = `<a class="brand" href="${onDocs ? "/docs/docs.html" : "/docs"}">IND Election Night</a>` +
     links.map(([label, href]) => `<a href="${href}" class="${href.split("?")[0] === here ? "here" : ""}">${label}</a>`).join("") +
-    `<a class="cta" href="/">Studio →</a>` +
+    `<a class="cta" href="/studio">Studio →</a>` +
     `<span class="env">${local ? "local" : location.host}</span>`;
   document.body.insertBefore(nav, document.body.firstChild);
 })();
