@@ -7,7 +7,7 @@ Documents: [technical spec](docs/spec.html) · [graphics data options](docs/grap
 ## TL;DR: a new machine
 
 1. Install Node 24 or newer (`node -v`) and clone the repo. No other tools, no database server, no Vercel account.
-2. `cd studio && npm install && cp .env.example .env`, then put the AP key on the `AP_API_KEY=` line and choose any `STUDIO_PASSWORD`. The key is the one secret; it lives only in `studio/.env`, which is gitignored.
+2. `cd studio && npm install && cp .env.example .env`, then put the AP key on the `AP_API_KEY=` line and choose any password on the `STUDIO_PASSWORD_ERIK=` line (rename the suffix to your own name). The key is the one secret; it lives only in `studio/.env`, which is gitignored.
 3. `npm start` in `studio/` and open http://localhost:3000/studio. That is the control room; the ticker is `/ticker` and the graphics are under `/g/`.
 4. **Historical results database** (for SQL analytics, not needed for the broadcast): from the repo root run `npm run history -- --all --states auto`. It makes about 1,200 AP requests at one every 10 seconds, so roughly 3.5 hours, and writes `data/ap-history.sqlite` (about 220 MB). The file is gitignored and is never in the repo, so every machine regenerates it; the run can be stopped and restarted at any point without losing work. Everything a person or a Claude needs for this is under [Historical results](#historical-results-analytics).
 
@@ -26,7 +26,7 @@ Open `studio/.env` in a text editor and fill in two lines:
 
 ```
 AP_API_KEY=the key you were sent
-STUDIO_PASSWORD=anything you like   # the control room's sign-in password on your machine
+STUDIO_PASSWORD_ERIK=anything you like   # your sign-in password for the control room on your machine; the suffix is your name
 STUDIO_TEST_PASSWORD=test1234       # optional: the rehearsal password, flagged in the control room
 ```
 
@@ -43,7 +43,7 @@ What you will be sent, and what it is for:
 | Key | Needed to run locally? | What it does |
 |---|---|---|
 | `AP_API_KEY` | **Yes** | Reads results from the AP Elections API. Without it nothing polls. AP allows ten requests a minute per key. A polling run (deployment or laptop) uses 6 or 7 a minute: the national feed plus a tenth of the states' counties, each state every ten minutes. The deployment already polls, so a laptop that only needs the pages should serve without polling (`node --env-file=.env scripts/serve.mjs --no-poll`) and read the shared store; two pollers on one key exceed the limit. |
-| `STUDIO_PASSWORD` | You choose it yourself | Password for `/studio` on your machine only. Not a shared secret. |
+| `STUDIO_PASSWORD_<NAME>` | You choose it yourself | Password for `/studio` on your machine only, signing in as Name. Not a shared secret. |
 | `STUDIO_TEST_PASSWORD` | Optional | A second, easy password for rehearsals (`test1234` until the night). Signing in with it shows a purple TEST LOGIN banner. |
 | `BLOB_READ_WRITE_TOKEN` | No | Only if your laptop should write into the production data store (standing in for the Vercel cron). Then also delete the `STORE_DIR` line. Ask before using it: pause, test/live and every publish would then change production. |
 | `CRON_SECRET` | No | Vercel only; lets the cron call the poll function. Unused locally. |
@@ -54,7 +54,7 @@ What you will be sent, and what it is for:
 
 On a laptop, production is whatever `GLOBAL` in `.env` says:
 
-- `GLOBAL=https://ap-ind.vercel.app` (the default): the deployment's ticker is the Live Ticker. Pull works with nothing more. Publish needs `GLOBAL_PASSWORD`, the deployment's studio password; without it the builder row says **pull only** and the Publish button explains what to add. The laptop's own live ticker preview reads the deployment too.
+- `GLOBAL=https://ap-ind.vercel.app` (the default): the deployment's ticker is the Live Ticker. Pull works with nothing more. Publish needs `GLOBAL_PASSWORD`, your own password on the deployment (publishes are stamped with that name); without it the builder row says **pull only** and the Publish button explains what to add. The laptop's own live ticker preview reads the deployment too.
 - `GLOBAL=self`: this machine's ticker is the Live Ticker. Its own outputs read its own store, and publish writes there. This is the standby setup for the night the deployment is down. A store that has never been published to starts from a copy of the deployment's live ticker, so a fresh standby begins where production was.
 
 Results data never needs copying: the laptop polls AP itself.
@@ -69,7 +69,7 @@ The broadcast pages live in `studio/` (panel, ticker, poller functions) and `pub
 
 | Path on ap-ind.vercel.app | Purpose |
 |---|---|
-| `/studio` | Producer control room (shared password, `STUDIO_PASSWORD`). Status bar, Default / Global / Local state selector, four sections: Ticker, Race Detail, Movement Overview, Full Catalog. |
+| `/studio` | Producer control room (one password per person, `STUDIO_PASSWORD_<NAME>`). Status bar, Default / Global / Local state selector, four sections: Ticker, Race Detail, Movement Overview, Full Catalog. |
 | `/ticker` | The ticker, 1920×1080, transparent. `?bg=black` or `?bg=green` for keying. With no other parameters it is the **Live Ticker**: the one fixed address, crawling whatever was last published, re-read every 5 seconds and applied at the next item boundary. **Built from its address instead**: `/ticker?bg=black&opacity=60&races=NE-SEN,MT-SEN,ID-SEN&calls=0&item=Polls close at 7&item=…&idle=Welcome` crawls exactly those races (race ids, in order; AP ids also work) and items with no publish involved; `calls=1|0` is the yellow AP Call highlight; the published ticker carries its own background, which `?bg=` on any address overrides; an empty `races` means the featured races. The control room shows the address for the ticker on the page with a Copy URL button, and every chart card has one too. |
 | `/live-screen-one`, `/live-screen-two` | **Live Screens**: two fixed addresses, each showing whatever chart was last published to it (a chart id, a race or state, and the chart's own parameters). The page re-reads the published definition every 5 s and cross-fades to a new chart, so the switcher points at one address forever. `?bg=`, `?opacity=` as elsewhere. The control room's Live Screens section builds a draft on the left (chart, race, state and parameter selectors), and Publish moves it to the on-air screen on the right; Pull copies on-air back into the draft. |
 | `/g/<chart id>?bg=…&opacity=…&race=<race id>` | **The semantic address for any graphic**, e.g. `/g/B5?bg=black&opacity=60&race=NE-SEN` or `/g/D9?state=MT`. Chart ids are the lookbook ids (B5, D4; case does not matter), race ids are AP's labels (`NE-SEN`, `CA-6`, `AK-GOV`, `AK-MEASURE-3`; an AP race id also works), shown on every card and row in the control room (hover for the id). Display parameters go first (`bg`, `opacity`, `fit`, `src`), then the data. `cand=`, `a=` and `b=` take a candidate's last name or AP id. An address that does not fully specify its chart never shows a graphic: an unknown chart id, a race chart with no race, a race the feed does not have, or a state chart with no state puts up a red error card instead, listing the parameters received, what that chart needs, what is missing and a corrected example, so a bad address is obvious on the monitor and never mistaken for data. The address resolves (through `/g/chart.html`) to the page below and anything else in it is passed through. |
@@ -92,7 +92,7 @@ Poller controls (AP poller card): **Poll now**, **Poll now + reset caches**, **P
 
 The Watch Party project (`watch-party/`, ind-watch-party.vercel.app) is a pure reader of the same Blob files.
 
-Functions: `GET/POST/DELETE /api/login`, `GET/PUT /api/producer` (partial bodies merge over the stored state; every field validated), `GET/PUT /api/settings`, `GET|POST /api/poll`. Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `STUDIO_PASSWORD`.
+Functions: `GET/POST/DELETE /api/login`, `GET/PUT /api/producer` (partial bodies merge over the stored state; every field validated), `GET/PUT /api/settings`, `GET|POST /api/poll`. Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, one `STUDIO_PASSWORD_<NAME>` per person, optionally `STUDIO_TEST_PASSWORD`.
 
 Checking pages without a browser: `node scripts/browse.mjs "http://localhost:3000/g/county.html?id=28594&bg=black" --shot out.png` renders a page in headless Chrome, prints console errors and failed requests, and can run `--eval` snippets. `npm run poll` runs the poll loop alone (no web server) for a laptop standing in for the cron.
 
@@ -209,25 +209,18 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 
 - **The ticker and every graphic are public links.** `/ticker` and the pages under `/g/` are fixed URLs, the same for everyone, and they only display. Anyone who has a link sees exactly what the switcher sees. No sign-in produces these links and opening one changes nothing.
 - **The live ticker shows whatever was last published; graphics show their address.** `/ticker` reads the published parameters from the public, read-only, CDN-cached `/data/producer.json` every few seconds (`GET /api/producer` returns the same thing uncached, for the control room). A graphic's content is fixed by its address (chart id, race id, display parameters); the shipped defaults fill what the address leaves out.
-- **Two passwords, one of them for rehearsals only.** `/studio` accepts `STUDIO_PASSWORD` (the real one) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234`). The rehearsal password works only while the poller is on AP's **Test** results. The moment anyone switches results to **Live** (the Test/Live switch in the control room, or `AP_RESULTS_TYPE=l` with no override), sign-ins with it are refused and every browser that used it is signed out, including laptops publishing with `GLOBAL_PASSWORD=test1234`; switching back to Test lets it work again. The cookie remembers which password signed in, so the control room shows a purple **TEST LOGIN** banner next to the TEST DATA banner for rehearsal sign-ins, and the sign-in page says when the rehearsal password is off. Sign out on the page clears only that one browser.
+- **One password per person, plus one for rehearsals.** `/studio` accepts every `STUDIO_PASSWORD_<NAME>` variable on the project (`STUDIO_PASSWORD_ERIK` signs in as Erik; `MARY_ANN` as Mary Ann) and, when set, `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234`). Named passwords are producers: publish, poll, Test/Live, pause. The header says who you are signed in as, and every publish is stamped with that name: the live ticker's table shows it beside the time, and the conflict warning says "Erik published at 7:12 PM" instead of "someone else". The rehearsal password can look but not change anything published, and it works only while the poller is on AP's **Test** results: the moment anyone switches results to **Live**, sign-ins with it are refused and every browser already using it is signed out at the next request. The old unnamed `STUDIO_PASSWORD` is still accepted, as "Producer", so nothing breaks before a project is moved to named passwords; retire it once everyone has their own.
 
-  **For election night nothing needs doing beyond switching results to Live.** To switch the rehearsal password off for good anyway (from `studio/`, in a terminal):
+  Each password is its own secret: the sign-in cookie is signed with the password it was issued for, so changing or deleting one person's variable signs out that person and nobody else. **To add a person, change a password, or revoke one** (from `studio/`, in a normal terminal, since `vercel env add` prompts for the value and the `!` shell inside Claude Code cannot):
 
   ```sh
-  vercel env rm STUDIO_TEST_PASSWORD --environment production --yes
+  vercel env add STUDIO_PASSWORD_ERIK --environment production --sensitive   # add or (after rm) change
+  vercel env rm STUDIO_PASSWORD_ERIK --environment production --yes          # revoke
   vercel redeploy ap-ind.vercel.app
   ```
 
-  **To set or change the real password** (the first command prompts for it; the `!` shell inside Claude Code cannot prompt, so use a normal terminal):
-
-  ```sh
-  vercel env rm STUDIO_PASSWORD --environment production --yes
-  vercel env add STUDIO_PASSWORD --environment production --sensitive
-  vercel redeploy ap-ind.vercel.app
-  ```
-
-  Env changes take effect only after that redeploy. Vercel never shows a secret's value again, so keep the real password somewhere safe; if it is lost, set a new one the same way, which signs everyone out.
-- **Only a publish changes the live ticker.** A publish is a `PUT /api/producer` carrying the four ticker fields, accepted only with the signed cookie you get by signing in to `/studio` with one of those passwords. A publish from a laptop goes through the laptop's own sign-in and then signs in to the deployment with `GLOBAL_PASSWORD`, which is that same password. One shared password gates every change; change it in the Vercel project and every open control room is signed out at once.
+  Env changes take effect only after that redeploy. Vercel never shows a secret's value again, so each person keeps their own; a lost one is replaced the same way and signs out only that person. Switching results to Live is all election night needs; to switch the rehearsal password off for good anyway, remove `STUDIO_TEST_PASSWORD` the same way.
+- **Only a publish changes the live ticker.** A publish is a `PUT /api/producer` carrying the four ticker fields, accepted only with a producer's signed cookie from `/studio`, and stamped with that producer's name. A publish from a laptop goes through the laptop's own sign-in and then signs in to the deployment with `GLOBAL_PASSWORD`, that person's own password there, so the stamp is still a name. Per-person passwords gate every change; delete a person's variable in the Vercel project and only that person is signed out.
 - **Per-browser knobs affect one screen only.** `?src=local` on a graphic reads that browser's own saved settings, and a few pages take display text from the URL (the lower third's `?name=&title=`, the quote card's `?quote=&who=`). They change what that one window shows and nothing else, and the text is rendered as text, never as markup. The operational rule that matters: the switcher operator opens graphics only from the control room's **Show** buttons, never from a link someone else sends.
 - **Denial of service.** Vercel's automatic DDoS mitigation is on for the project. Everything a viewer loads (pages, results data, the published ticker parameters) is static or CDN-cached, so a flood of readers never reaches a function. Two Vercel Firewall rate-limit rules, per IP per minute, cover the functions: sign-in attempts (`POST /api/login`) and the `/api/` paths as a whole; a client over the limit gets 429 until the minute turns. Both limits are far above what a control room generates (about 7 requests a minute). They are project configuration, not code; `vercel firewall status` from `studio/` shows the live rules. On the night:
   - **If a real control room is throttled** (429s in the status bar, publishes failing), the Vercel dashboard's Firewall → Traffic view shows which rule fired and from where. Turning a rule off takes seconds and no deploy:
@@ -236,7 +229,7 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
     ```
     `rules enable` and another publish restore it. The counters are per Vercel region, so a distributed flood can exceed a limit by about the number of regions; that is the automatic mitigation's job, not these rules'.
   - **Attack Mode is the break-glass switch.** It is off. Enabled (dashboard, or `vercel firewall attack-mode enable --duration 1h --yes`), every unverified visitor gets a challenge page, which includes the switcher's browser inputs: the ticker and graphics on air would go blank until each input passed it. Enable it only during an incident, tell the control room first, and prefer a short duration.
-- **What is not there.** Sign-in is rate-limited but not locked out, so use a long random password. The shared password means no per-person revocation and no record of who published beyond the time of the last publish.
+- **What is not there.** Sign-in is rate-limited but not locked out, so use long random passwords. The audit trail is the name and time on the last publish only; there is no history of earlier publishes. Every named password has the same rights (no operator-versus-producer split yet).
 
 ## Secrets
 

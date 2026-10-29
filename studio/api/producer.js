@@ -1,5 +1,6 @@
 // Producer state: the Global source (what air uses). GET is public and uncached so the on-air
-// ticker and every graphic see a publish within one poll. PUT needs the studio cookie.
+// ticker and every graphic see a publish within one poll. PUT needs a producer's cookie and stamps
+// the state with that person's name (updatedBy), which the control room shows beside the time.
 //
 // The body may carry any subset of the fields in lib/control.js; fields it leaves out keep
 // their stored value, so an older panel that sends only the ticker fields cannot wipe the
@@ -8,7 +9,7 @@ import { requireProducer, readBody } from "../lib/auth.js";
 import { readJson, writeJson, defaultProducer } from "../lib/store.js";
 import { normalize, DEFAULTS } from "../lib/control.js";
 
-const FIELDS = Object.keys(DEFAULTS).filter((k) => k !== "updatedAt");
+const FIELDS = Object.keys(DEFAULTS).filter((k) => k !== "updatedAt" && k !== "updatedBy");
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -22,13 +23,14 @@ export default async function handler(req, res) {
     return;
   }
   if (req.method === "PUT") {
-    if (!(await requireProducer(req, res))) return;
+    const who = await requireProducer(req, res);
+    if (!who) return;
     try {
       const body = readBody(req);
       const prev = normalize((await readJson("producer.json")) ?? DEFAULTS);
       const merged = { ...prev };
       for (const k of FIELDS) if (k in body) merged[k] = body[k];
-      const state = normalize({ ...merged, updatedAt: new Date().toISOString() });
+      const state = normalize({ ...merged, updatedAt: new Date().toISOString(), updatedBy: who.name });
       await writeJson("producer.json", state);
       res.status(200).json(state);
     } catch (e) {

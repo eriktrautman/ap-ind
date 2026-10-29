@@ -2,15 +2,14 @@
 // manually with ?secret=, or by a signed-in studio user (POST). ?fresh=1 drops the in-memory
 // curated/photo caches first. Same code as the local runner.
 import { pollOnce } from "../lib/poll.js";
-import { isCron, authKind } from "../lib/auth.js";
+import { isCron, authUser, PRODUCER_ONLY } from "../lib/auth.js";
 
 export const config = { maxDuration: 60 };
 
 export default async function handler(req, res) {
-  const kind = isCron(req) ? "prod" : await authKind(req);
-  if (kind !== "prod") {   // producer only: the rehearsal cookie cannot poll
-    res.status(kind === false ? 401 : 403).json({ error: kind === false ? "unauthorized" : "producer only: this needs the real password, not the rehearsal one" });
-    return;
+  if (!isCron(req)) {   // producer only: the rehearsal cookie cannot poll
+    const a = await authUser(req);
+    if (a?.role !== "producer") { res.status(a ? 403 : 401).json({ error: a ? PRODUCER_ONLY : "unauthorized" }); return; }
   }
   const fresh = new URL(req.url, "http://x").searchParams.get("fresh") === "1";
   try {

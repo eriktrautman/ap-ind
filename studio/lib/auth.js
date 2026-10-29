@@ -1,38 +1,52 @@
-// Studio login: a shared password and a signed, expiring cookie. Two passwords are accepted,
-// each from its own env var, and the cookie records which one signed in:
-//   STUDIO_PASSWORD        the real one, for the night
-//   STUDIO_TEST_PASSWORD   an easy one for rehearsals. It works only while the poller is on AP's test
-//                          results: the moment results are switched to Live, sign-ins with it are
-//                          refused and every cookie it issued stops verifying. Removing the variable
-//                          (then redeploying) does the same for good.
-// No sessions to store: the cookie is "<expiry>.<kind>.<hmac>" and verifies statelessly, keyed by
-// the password it was issued for, so changing a password signs out everyone who used it.
+// Studio login: per-person passwords and a signed, expiring cookie. Accounts come from the environment,
+// read at call time, so adding or removing one is an env change plus a redeploy, no code:
+//   STUDIO_PASSWORD_<NAME>   one producer per person: STUDIO_PASSWORD_ERIK signs in as "Erik" (MARY_ANN → "Mary Ann").
+//                            Full rights: publish, poll, Test/Live, pause. Delete the variable to revoke that person;
+//                            every cookie it issued stops verifying and nobody else is signed out.
+//   STUDIO_TEST_PASSWORD     the rehearsal password ("Rehearsal"): can look, cannot change anything published. It
+//                            works only while the poller is on AP's test results: the moment results are switched to
+//                            Live, sign-ins with it are refused and every cookie it issued stops verifying.
+//   STUDIO_PASSWORD          the old unnamed producer password, still accepted (as "Producer") so a project that has
+//                            not been moved to named passwords keeps working. Retire it once each person has their own.
+// No sessions to store: the cookie is "<expiry>.<key>.<hmac>" and verifies statelessly, keyed by the password it was
+// issued for, so changing one person's password signs out that person and nobody else. Every publish is stamped with
+// the signer's name (producer.json updatedBy), which is the whole of the audit trail and what the conflict warning shows.
 import { createHmac, timingSafeEqual, createHash } from "node:crypto";
 import { readJson } from "./store.js";
 
 const COOKIE = "studio";
 const TTL_MS = 12 * 60 * 60 * 1000;
-export const KINDS = { prod: "STUDIO_PASSWORD", test: "STUDIO_TEST_PASSWORD" };
+const NAMED = /^STUDIO_PASSWORD_([A-Z0-9_]+)$/;
+const titleCase = (s) => s.toLowerCase().split("_").filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 
-const password = (kind) => process.env[KINDS[kind]] ?? "";
-export const configured = () => Object.keys(KINDS).filter((k) => password(k).length > 0);
-
-function secret(kind) {
-  const pw = password(kind);
-  if (!pw) throw new Error(`${KINDS[kind]} is not set`);
-  return createHash("sha256").update(`studio-cookie:${kind}:${pw}`).digest();
+/** Every account with a non-empty password, from the environment right now: {key, env, name, role}. role: producer | rehearsal. */
+export function accounts() {
+  const out = [];
+  for (const [env, value] of Object.entries(process.env)) {
+    const m = NAMED.exec(env);
+    if (m && value) out.push({ key: m[1].toLowerCase(), env, name: titleCase(m[1]), role: "producer" });
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  if (process.env.STUDIO_PASSWORD) out.push({ key: "prod", env: "STUDIO_PASSWORD", name: "Producer", role: "producer" });
+  if (process.env.STUDIO_TEST_PASSWORD) out.push({ key: "test", env: "STUDIO_TEST_PASSWORD", name: "Rehearsal", role: "rehearsal" });
+  return out;
 }
+export const account = (key) => accounts().find((a) => a.key === key) ?? null;
+export const configured = () => accounts().map((a) => a.key);
+export const producersConfigured = () => accounts().some((a) => a.role === "producer");
 
-function sig(kind, exp) {
-  return createHmac("sha256", secret(kind)).update(`${kind}.${exp}`).digest("base64url");
+function secret(a) {
+  return createHash("sha256").update(`studio-cookie:${a.key}:${process.env[a.env]}`).digest();
 }
-
+function sig(a, exp) {
+  return createHmac("sha256", secret(a)).update(`${a.key}.${exp}`).digest("base64url");
+}
 const same = (a, b) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-/** Which configured password `given` matches: "prod", "test", or null. Does not apply the Live rule. */
+/** The account whose password `given` is, or null. Does not apply the Live rule. */
 export function matchPassword(given) {
   const g = String(given ?? "");
-  for (const kind of configured()) if (same(g, password(kind))) return kind;
+  for (const a of accounts()) if (same(g, process.env[a.env])) return a;
   return null;
 }
 
@@ -42,43 +56,44 @@ export async function rehearsalAllowed() {
   try { type = (await readJson("settings.json"))?.resultsType ?? null; } catch {}
   return (type ?? process.env.AP_RESULTS_TYPE ?? "t") !== "l";
 }
-export const REHEARSAL_OFF = "That is the rehearsal password, and results are now Live, so it is switched off. Sign in with the real password.";
+export const REHEARSAL_OFF = "That is the rehearsal password, and results are now Live, so it is switched off. Sign in with your own password.";
 
-/** Like matchPassword, but a test match while results are Live returns null. */
-export async function checkPassword(given) {
-  const kind = matchPassword(given);
-  return kind === "test" && !(await rehearsalAllowed()) ? null : kind;
-}
-
-export function issueCookie(req, kind) {
+export function issueCookie(req, a) {
   const exp = Date.now() + TTL_MS;
   const secure = (req.headers["x-forwarded-proto"] ?? "").includes("https") ? "; Secure" : "";
-  return `${COOKIE}=${exp}.${kind}.${sig(kind, exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(TTL_MS / 1000)}${secure}`;
+  return `${COOKIE}=${exp}.${a.key}.${sig(a, exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(TTL_MS / 1000)}${secure}`;
 }
-
 export function clearCookie() {
   return `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
-/** The kind of password this request signed in with ("prod" | "test"), or false. A test cookie is false while results are Live. */
-export async function authKind(req) {
-  let kind;
+/** The account this request is signed in as ({key, name, role, env}), or false. A rehearsal cookie is false while results are Live. */
+export async function authUser(req) {
+  let a;
   try {
     const raw = (req.headers.cookie ?? "").split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
     if (!raw) return false;
-    const [exp, k, s] = raw.slice(COOKIE.length + 1).split(".");
-    if (!exp || !s || !(k in KINDS) || Number(exp) < Date.now()) return false;
-    if (!same(s, sig(k, Number(exp)))) return false;
-    kind = k;
+    const [exp, key, s] = raw.slice(COOKIE.length + 1).split(".");
+    if (!exp || !key || !s || Number(exp) < Date.now()) return false;
+    a = account(key);
+    if (!a || !same(s, sig(a, Number(exp)))) return false;
   } catch {
     return false;
   }
-  if (kind === "test" && !(await rehearsalAllowed())) return false;
-  return kind;
+  if (a.role === "rehearsal" && !(await rehearsalAllowed())) return false;
+  return a;
 }
-
+/** The signed-in account's key ("erik", "test", …) or false. Kept for callers that only need a yes/no with a label. */
+export async function authKind(req) {
+  const a = await authUser(req);
+  return a ? a.key : false;
+}
 export async function isAuthed(req) {
-  return (await authKind(req)) !== false;
+  return (await authUser(req)) !== false;
+}
+/** The request carries a producer's cookie. */
+export async function isProducer(req) {
+  return (await authUser(req))?.role === "producer";
 }
 
 /** Vercel Cron sends Authorization: Bearer CRON_SECRET; ?secret= is for curl. */
@@ -96,13 +111,13 @@ export async function requireStudio(req, res) {
   res.status(401).json({ error: "not signed in" });
   return false;
 }
-
-/** Producer-only actions (publish, poll, settings): the real password's cookie; the rehearsal cookie gets a 403. */
+export const PRODUCER_ONLY = "producer only: this needs your own password, not the rehearsal one";
+/** Producer-only actions (publish, poll, settings): returns the account, or sends 401/403 and returns false. */
 export async function requireProducer(req, res) {
-  const kind = await authKind(req);
-  if (kind === "prod") return true;
-  if (kind === false) { res.status(401).json({ error: "not signed in" }); return false; }
-  res.status(403).json({ error: "producer only: this needs the real password, not the rehearsal one" });
+  const a = await authUser(req);
+  if (a && a.role === "producer") return a;
+  if (!a) { res.status(401).json({ error: "not signed in" }); return false; }
+  res.status(403).json({ error: PRODUCER_ONLY });
   return false;
 }
 

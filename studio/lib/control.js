@@ -150,6 +150,7 @@ export const DEFAULTS = Object.freeze({
   screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: "black" },
   screenB: { chart: "C1", race: "", state: "", params: {}, bg: "black" },
   updatedAt: null,
+  updatedBy: null,   // who published (the signer's name); set by the server on every publish
 });
 const SCREENS = ["screenA", "screenB"];
 /** One Live Screen definition, validated: a built chart id, a race id or AP id, a state, and up to 12 short parameters. */
@@ -226,13 +227,14 @@ export function normalize(raw) {
     screenA: screenDef(r.screenA, DEFAULTS.screenA),
     screenB: screenDef(r.screenB, DEFAULTS.screenB),
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null,
+    updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null,
   };
 }
 
 /** True when two states would produce the same ticker and graphics. */
 export function sameState(a, b) {
   const A = normalize(a), B = normalize(b);
-  delete A.updatedAt; delete B.updatedAt;
+  delete A.updatedAt; delete B.updatedAt; delete A.updatedBy; delete B.updatedBy;
   return JSON.stringify(A) === JSON.stringify(B);
 }
 

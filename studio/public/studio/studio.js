@@ -81,17 +81,20 @@ $("loginform").addEventListener("submit", async (e) => {
   $("loginerr").textContent = "";
   try {
     const me = await api("/api/login", { method: "POST", body: JSON.stringify({ password: $("password").value }) });
-    loginKind = me.kind ?? "prod";
+    loginKind = me.testLogin ? "test" : "prod"; loginName = me.name ?? null; renderWho();
     $("password").value = "";
     showApp(); boot();
   } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; loginHint(false); }
 });
-$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; showLogin(); });
+$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; loginName = null; renderWho(); showLogin(); });
 // The sticky header's height changes with the banners; anchor jumps from the
 // section nav must clear it, so its measured height drives scroll-padding-top on <html>.
 new ResizeObserver(() => document.documentElement.style.setProperty("--top-h", `${document.querySelector("header.top").offsetHeight + 8}px`)).observe(document.querySelector("header.top"));
-// Which password signed in: "prod" or "test". A test sign-in is flagged in the banner row.
+// Which password signed in: "prod" (a named producer) or "test" (the rehearsal one, flagged in the banner row), and whose.
 let loginKind = null;
+let loginName = null;
+const renderWho = () => { const el = $("whoami"); if (el) { el.hidden = !loginName; el.textContent = loginName ? `Signed in as ${loginName}` : ""; } };
+const byWhom = (s) => s?.updatedBy ? ` by ${esc(s.updatedBy)}` : "";
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
@@ -205,7 +208,7 @@ const isProducer = () => loginKind === "prod";
 const canPublish = () => isProducer() && (runtime ? !!runtime.production?.canPush : true);
 const WRENCH = '<svg class="wrench" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M13.6 4.6a3.6 3.6 0 0 1-4.7 4.3L4 13.8a1.5 1.5 0 0 1-2.1-2.1l4.9-4.9a3.6 3.6 0 0 1 4.3-4.7L8.9 4.3l2.8 2.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> ';
 const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
-const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs the real password.";
+const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs your own password.";
 const NOT_CONFIGURED = "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker.";
 /** Grey out a producer-only control for the current sign-in. */
 function producerOnly(el) {
@@ -254,7 +257,7 @@ function renderLive() {
       <tr><td class="k" title="item: manual items, one after every two races">item</td><td>${live.manualItems.length ? live.manualItems.map((m) => `<div>${esc(m.text)}</div>`).join("") : '<span class="muted">none</span>'}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
       <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span></td></tr>
-      <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped defaults are live"}</td></tr>
+      <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})${byWhom(live)}` : "never: the shipped defaults are live"}</td></tr>
     </table>`;
   }
   renderPublishState();
@@ -290,8 +293,8 @@ async function publish() {
     title: "Publish to the LIVE TICKER?",
     body: `<p><b>${esc(host)}/ticker</b> takes ${BUILDER}. It changes within 5 seconds, at the next item boundary, without restarting the crawl. Nothing else on this page is published, and tickers built from an address are not affected.</p>
       ${changeList(changes)}
-      <p class="small muted">Last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" : "never"}.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published. Publishing now replaces their ticker. Press Cancel and Pull if you want to see it first.</div>` : ""}
+      <p class="small muted">Last published: ${latest?.updatedAt ? esc(fmtTime(latest.updatedAt)) + " (" + esc(ago(latest.updatedAt)) + ")" + byWhom(latest) : "never"}.</p>
+      ${someoneElse ? `<div class="warnline bad">${latest.updatedBy ? esc(latest.updatedBy) : "Someone else"} published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published. Publishing now replaces their ticker. Press Cancel and Pull if you want to see it first.</div>` : ""}
       ${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
     ok: "Publish", danger: true,
   });
@@ -693,7 +696,7 @@ async function publishScreen(key) {
   const ok = await ask({
     title: `Publish Live Screen ${letter}?`,
     body: `<p><b>${esc(prodHost())}${screenPath(key)}</b> changes to <b>${esc(describeScreen(draft[key]))}</b>${latest ? ` (now ${esc(describeScreen(latest[key]))})` : ""}, within 5 seconds, cross-fading so nothing flashes. Nothing else is published.</p>
-      ${someoneElse ? `<div class="warnline bad">Someone else published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published.</div>` : ""}
+      ${someoneElse ? `<div class="warnline bad">${latest.updatedBy ? esc(latest.updatedBy) : "Someone else"} published at ${esc(fmtTime(latest.updatedAt))}, after you last pulled or published.</div>` : ""}
       ${same ? `<div class="warnline">The draft already matches the published screen.</div>` : ""}`,
     ok: "Publish", danger: true,
   });
@@ -965,7 +968,7 @@ async function boot() {
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
-  loginKind = me.authed ? (me.kind ?? "prod") : null;
+  loginKind = me.authed ? (me.testLogin ? "test" : "prod") : null; loginName = me.authed ? (me.name ?? null) : null; renderWho();
   if (!me.authed) loginHint(false, me);
   if (me.authed) { showApp(); boot(); } else showLogin();
 })();
