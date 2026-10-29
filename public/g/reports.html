@@ -21,7 +21,7 @@
 <div class="panel">
   <div class="head"><div><div class="kicker" id="kicker">From the AP reports feed</div><div class="title" id="title">…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body" id="body"></div>
-  <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP</span></span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP via lightship.media</span></span><span id="updated"></span></div>
 </div>
 <script type="module">
   import { connectFeed, freshness, PARTY_COLOR, partyKey, raceState, clock, clockS } from "./feed.js";
@@ -90,7 +90,7 @@
       },
     };
     $("body").innerHTML = (views[view] ?? views.bop)();
-    $("src").textContent = ["bop", "house"].includes(view) ? "Source: AP Trend report" : ["counts", "expect"].includes(view) ? "Source: editorial notes (config/state-notes.json) and AP poll-close times" : view === "parties" ? "Source: AP candidate lists and config/party-codes.json" : "Source: AP";
+    $("src").textContent = ["bop", "house"].includes(view) ? "Source: AP via lightship.media via lightship.media · Trend report" : ["counts", "expect"].includes(view) ? "Source: editorial notes (config/state-notes.json) and poll-close times from AP via lightship.media" : view === "parties" ? "Source: AP via lightship.media via lightship.media · candidate lists and config/party-codes.json" : "Source: AP via lightship.media";
     $("updated").textContent = `Updated ${clockS()}`;
   }
   const feed = connectFeed({
