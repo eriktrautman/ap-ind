@@ -1,13 +1,11 @@
-# The test suite (studio/test/README.md): the unit and local smoke tests on every push, and the smoke test against
-# production after each production deployment that Vercel reports to GitHub.
+# The test suite (studio/test/README.md): unit and local route tests on every push; then, on main, the read-only
+# route checks against production once it is running the pushed commit (the build writes /version.json).
 name: test
 on:
   push:
   pull_request:
-  deployment_status:
 jobs:
   unit-and-local-smoke:
-    if: github.event_name != 'deployment_status'
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: studio } }
     steps:
@@ -17,13 +15,23 @@ jobs:
       - run: npm ci
       - run: npm test
   production-smoke:
-    if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: unit-and-local-smoke
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: studio } }
+    env:
+      SMOKE_URL: https://electionproducer.com
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
+      - name: Wait for production to run this commit
+        run: |
+          for i in $(seq 1 36); do
+            sha=$(curl -sf "$SMOKE_URL/version.json?t=$i" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).sha))' 2>/dev/null || true)
+            echo "production is running ${sha:-?}; pushed ${GITHUB_SHA}"
+            [ "$sha" = "$GITHUB_SHA" ] && exit 0
+            sleep 10
+          done
+          echo "production never reported ${GITHUB_SHA}; testing whatever is live" >&2
       - run: npm run test:smoke
-        env:
-          SMOKE_URL: ${{ github.event.deployment_status.environment_url }}

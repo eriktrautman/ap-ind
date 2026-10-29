@@ -15,6 +15,8 @@ const localOnly = (t) => { if (!S.local) { t.skip("local server only: never writ
 test("the landing page, the ticker and both live screens are up and public", async () => {
   const home = await get(url("/"));
   assert.equal(home.status, 200); assert.match(home.text, /Election Producer/);
+  const v = await get(url(`/version.json?t=${Date.now()}`));
+  assert.equal(v.status, 200); assert.match(v.json?.sha ?? "", /^[0-9a-f]{40}$|^unknown$/, "the build says which commit it is");
   const t = await get(url("/ticker"));
   assert.equal(t.status, 200); assert.match(t.text, /ticker-queue\.js/); assert.match(t.text, /id="track"/);
   for (const p of ["/live-screen-one", "/live-screen-two"]) { const r = await get(url(p)); assert.equal(r.status, 200, p); assert.match(r.text, /live-screen\.js/); }

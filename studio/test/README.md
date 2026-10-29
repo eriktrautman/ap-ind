@@ -14,5 +14,6 @@ meant to stay small enough to read in one sitting: when a new check matters more
 Each test covers one high-level thing a producer would notice broken (sign-in gate, ticker, chart router, data files,
 publish), not internals.
 
-GitHub Actions (`.github/workflows/test.yml`) runs `npm test` on every push and the smoke test against production
-after each successful production deployment reported by Vercel.
+GitHub Actions (`.github/workflows/test.yml`) runs `npm test` on every push. On a push to `main` it then waits for
+production to answer with that commit at `/version.json` (the build writes it; up to six minutes) and runs the route
+checks against the live site, read-only.
