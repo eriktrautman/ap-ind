@@ -199,6 +199,24 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .chunk .addmanual { margin: 6px 0 0; }
 .chunk .empty { padding: 8px 10px; font-size: 12.5px; }
 .sform label.na { color: var(--muted); } .sform label.na select { opacity: .6; }
+/* Playlists */
+.plbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 6px; font-size: 13px; }
+.plbar label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.plbar select { min-width: 160px; }
+.plbar .spacer { flex: 1; }
+.plbar button { padding: 4px 10px; font-size: 12.5px; }
+.plbar button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+.plbar .plmeta { color: var(--muted); font-size: 12px; }
+#plbody .cardgrid { padding: 12px 0 0; }
+.gcard .ghead .pos { margin-right: 2px; }
+.gcard .spec { padding: 4px 10px 0; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); }
+.gcard .spec b { color: var(--ink); font-weight: 600; }
+#plbody .empty { padding: 18px 10px; font-size: 13px; color: var(--muted); }
+.psform { display: grid; gap: 10px; margin: 8px 0; font-size: 13px; }
+.psform label { display: grid; gap: 4px; color: var(--muted); }
+.psform select, .psform input { width: 100%; max-width: 100%; }
+.psdesc { font-family: var(--mono); font-size: 12px; margin: 6px 0 0; }
+.ro .plbar button { display: none; }
 #addchunkref select { flex: 1; width: 100%; }
 #addchunkref select:has(option[value=""]:checked) { color: var(--muted); }   /* the helper text reads like a placeholder */
 #addchunkref select option { color: var(--ink); }

@@ -126,6 +126,25 @@ test("publishing the ticker: the crawl order and its chunks reach the file the t
   assert.deepEqual(live2.pinnedRaceIds, ["90001", "90002"]);
   assert.equal(live2.idleText, text, "the idle text was not in the publish and did not change");
 });
+test("playlists: the shipped slate playlist is served, a publisher changes what is in one, and only a producer adds a person", async (t) => {
+  if (localOnly(t)) return;
+  const doc = (await get(url("/api/playlists"))).json;
+  const ryan = doc.users.find((u) => u.name === "Ryan");
+  assert.equal(ryan.playlists[0].name, "Slate"); assert.equal(ryan.playlists[0].items.length, 36);
+  assert.deepEqual(ryan.playlists[0].items.slice(0, 2).map((i) => [i.chart, i.race]), [["B5", "NE-SEN"], ["B6", "NE-SEN"]]);
+  assert.equal((await put(url("/api/playlists"), doc)).status, 401, "signed out cannot write");
+  const publisher = await signIn(S.base, PASSWORDS.publisher);
+  ryan.playlists[0].items.push({ chart: "B14", race: "MT-SEN", state: "", params: { a: "Bodnar" }, bg: "green" });
+  const r = await put(url("/api/playlists"), { users: doc.users }, { cookie: publisher });
+  assert.equal(r.status, 200); assert.equal(r.json.updatedBy, "Test Publisher");
+  assert.deepEqual(r.json.users.find((u) => u.name === "Ryan").playlists[0].items.at(-1), { chart: "B14", race: "MT-SEN", state: "", params: { a: "Bodnar" }, bg: "green" });
+  doc.users.push({ id: "bob", name: "Bob", playlists: [{ id: "s1", name: "Segment 1", items: [] }] });
+  assert.equal((await put(url("/api/playlists"), { users: doc.users }, { cookie: publisher })).status, 403, "a publisher cannot add a person");
+  const producer = await signIn(S.base, PASSWORDS.producer);
+  const r2 = await put(url("/api/playlists"), { users: doc.users }, { cookie: producer });
+  assert.equal(r2.status, 200); assert.deepEqual(r2.json.users.map((u) => u.name), ["Ryan", "Bob"]);
+  assert.equal((await get(url("/api/playlists"))).json.users.length, 2, "everyone reads the same document");
+});
 test("publishing a live screen: screen one shows the new chart at an address the router serves, screen two is untouched, and a bad publish is cleaned up", async (t) => {
   if (localOnly(t)) return;
   const cookie = await signIn(S.base, PASSWORDS.producer);

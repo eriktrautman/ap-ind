@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Slate, Races, Movement, catalogs).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, specDef, normalizePlaylists, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -135,7 +135,7 @@ const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredR
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
 const BG_OPTIONS = BACKGROUNDS;   // a keying colour or one of the backplates, the same list on every dropdown
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
-const SECTIONS = ["ticker", "screens", "detail", "broad", "movement", "persistent", "catalog", "charts"];
+const SECTIONS = ["ticker", "screens", "playlists", "detail", "broad", "movement", "persistent", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
 function loadDisplay() {
   let d = null;
@@ -730,23 +730,25 @@ function stateOptions(selected) {
   const states = index ? [...new Set(index.races.map((r) => r.state))].sort() : FEATURED_RACES.map((r) => r.state);
   return states.map((s) => `<option ${selected === s ? "selected" : ""}>${s}</option>`).join("");
 }
-function screenForm(key) {
-  const s = draft[key];
+/** The chart specifier: Chart, Race, State (state charts), the chart's own inputs, Background. attr marks the inputs for
+ *  their handler (data-sk="screenA" for a Live Screen draft, data-ps="1" for the playlist dialog); bgAttr the Background. */
+function specFormHtml(s, attr, bgAttr, bg) {
   const chart = CHARTS.find((c) => c.id === s.chart);
   const groups = [["A", "Persistent elements"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Broad races"], ["F", "AP reports"]];
-  const chartSel = `<label>Chart<select data-sk="${key}" data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${c.id} ${esc(c.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
+  const chartSel = `<label>Chart<select ${attr} data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${c.id} ${esc(c.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
   const needsRace = chart && (chart.kind === "race" || chart.needsRace);
-  // Both screens' forms keep the same shape: Chart, Race, Background. A chart that draws no single race shows Race greyed out.
+  // The form keeps the same shape whatever the chart: Chart, Race, Background. A chart that draws no single race shows Race greyed out.
   const raceSel = needsRace || chart?.needsState
-    ? `<label>Race<select data-sk="${key}" data-f="race"><option value="">${chart?.needsState ? "(by state instead)" : "choose a race"}</option>${raceOptions(s.race)}</select></label>`
+    ? `<label>Race<select ${attr} data-f="race"><option value="">${chart?.needsState ? "(by state instead)" : "choose a race"}</option>${raceOptions(s.race)}</select></label>`
     : `<label class="na" title="${esc(chart?.name ?? "This chart")} draws every race it needs on its own; it takes no race">Race<select disabled><option>not used by this chart</option></select></label>`;
-  const stateSel = chart?.needsState ? `<label>State<select data-sk="${key}" data-f="state"><option value="">from the race</option>${stateOptions(s.state)}</select></label>` : "";
+  const stateSel = chart?.needsState ? `<label>State<select ${attr} data-f="state"><option value="">from the race</option>${stateOptions(s.state)}</select></label>` : "";
   const extra = (SCREEN_PARAMS[s.chart] ?? []).map((p) => p.options
-    ? `<label>${esc(p.label)}<select data-sk="${key}" data-p="${p.k}"><option value="">default</option>${p.options.map(([v, t]) => `<option value="${v}" ${s.params[p.k] === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`
-    : `<label>${esc(p.label)}<input data-sk="${key}" data-p="${p.k}" value="${esc(s.params[p.k] ?? "")}" placeholder="${esc(p.ph ?? "")}" maxlength="200"></label>`).join("");
-  const bgSel = `<label>Background${selectHtml(`data-page="${key}"`, BG_OPTIONS, pageBg(key))}</label>`;
+    ? `<label>${esc(p.label)}<select ${attr} data-p="${p.k}"><option value="">default</option>${p.options.map(([v, t]) => `<option value="${v}" ${s.params[p.k] === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`
+    : `<label>${esc(p.label)}<input ${attr} data-p="${p.k}" value="${esc(s.params[p.k] ?? "")}" placeholder="${esc(p.ph ?? "")}" maxlength="200"></label>`).join("");
+  const bgSel = `<label>Background${selectHtml(bgAttr, BG_OPTIONS, bg)}</label>`;
   return chartSel + raceSel + stateSel + extra + bgSel;
 }
+function screenForm(key) { return specFormHtml(draft[key], `data-sk="${key}"`, `data-page="${key}"`, pageBg(key)); }
 function screenLiveTable(key) {
   const s = live?.[key];
   if (!s) return `<div class="warnline bad">${liveError ? `Cannot read the live screen: ${esc(liveError)}` : "Reading the live screen…"}</div>`;
@@ -875,6 +877,175 @@ async function pullScreen(key) {
   liveSeenAt = latest.updatedAt;
   draft = saveLocal({ ...draft, [key]: structuredClone(latest[key]) });
   renderAll(); cards.broadcast(draft);
+}
+
+// ---------- Playlists ----------
+// Shared state from /api/playlists: people, each with playlists of chart specs. Every edit re-reads the document, applies the
+// change and writes the whole thing back, so two people editing different playlists do not overwrite each other by much.
+let playlists = null, plError = null;
+let plSel = (() => { try { return JSON.parse(localStorage.getItem("studio.playlist") ?? "null") ?? {}; } catch { return {}; } })();
+const plUser = () => playlists?.users.find((u) => u.id === plSel.user) ?? playlists?.users[0] ?? null;
+const plList = () => { const u = plUser(); return u?.playlists.find((p) => p.id === plSel.playlist) ?? u?.playlists[0] ?? null; };
+function plSelect(user, playlist) { plSel = { user, playlist }; try { localStorage.setItem("studio.playlist", JSON.stringify(plSel)); } catch {} renderPlaylists(); }
+async function loadPlaylists() {
+  try { playlists = normalizePlaylists(await api("/api/playlists")); plError = null; } catch (e) { plError = e.message; }
+  renderPlaylists();
+}
+/** Re-read, change, write back. mutate(doc) edits in place; returns false to abort. */
+async function savePlaylists(mutate, { producerOnly = false } = {}) {
+  if (!mayPublish() || (producerOnly && !isProducer())) return false;
+  let doc;
+  try { doc = normalizePlaylists(await api("/api/playlists")); } catch (e) { await ask({ title: "Can't read the playlists", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return false; }
+  if (mutate(doc) === false) return false;
+  try { playlists = normalizePlaylists(await api("/api/playlists", { method: "PUT", body: JSON.stringify({ users: doc.users }) })); plError = null; }
+  catch (e) { await ask({ title: "The change was not saved", body: `<div class="warnline bad">${esc(e.message)}</div><p>The playlists are as they were.</p>`, ok: "OK", info: true }); await loadPlaylists(); return false; }
+  renderPlaylists();
+  return true;
+}
+const specLine = (s) => [s.race || s.state, ...Object.entries(s.params ?? {}).map(([k, v]) => `${k}=${v}`), s.bg || "transparent"].filter(Boolean).join(" · ");
+/** The race object a spec names, for the card's tag and address; a state chart with only a state gets a stand-in. */
+function specRace(s) {
+  const chart = CHARTS.find((c) => c.id === s.chart);
+  const r = s.race ? index?.races?.find((x) => x.label === s.race) : null;
+  if (r) return r;
+  if (chart?.needsState && s.state) return { id: "", label: s.state, state: s.state, stateName: s.state, title: "state" };
+  if (s.race) return { id: "", label: s.race, state: "", stateName: "", title: "not in the current AP feed" };
+  return null;
+}
+function renderPlaylists() {
+  const bar = $("plbar"), body = $("plbody");
+  if (!playlists) { bar.innerHTML = ""; body.innerHTML = `<div class="empty">${plError ? `Cannot read the playlists: ${esc(plError)}` : "Reading the playlists…"}</div>`; return; }
+  const u = plUser(), p = plList();
+  const can = mayPublish(), prod = isProducer();
+  bar.innerHTML = `
+    <label>Person <select id="pluser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("") || `<option value="">nobody yet</option>`}</select></label>
+    <label>Playlist <select id="pllist" ${u ? "" : "disabled"}>${(u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === p?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}</select></label>
+    ${can && p ? `<button class="primary" id="pladd" title="Add a chart to this playlist: pick the chart, then its race and settings">+ Add chart…</button>` : ""}
+    ${prod ? `<button id="plnewuser" title="A new person with their own playlists">New person…</button><button id="plnewlist" ${u ? "" : "disabled"} title="A new playlist for ${esc(u?.name ?? "this person")}">New playlist…</button>${p ? `<button id="plrename" title="Rename this playlist">Rename…</button><button id="pldelete" title="Delete this playlist">Delete…</button>` : ""}` : ""}
+    <span class="spacer"></span>
+    <span class="plmeta" title="Playlists are shared: everyone in the Studio sees the same ones">${playlists.updatedAt ? `Changed ${esc(ago(playlists.updatedAt))}${playlists.updatedBy ? " by " + esc(playlists.updatedBy) : ""}` : "Shipped playlists; nothing changed yet"}${can ? "" : " · read only"}</span>`;
+  if (!p) { body.innerHTML = `<div class="empty">${u ? `${esc(u.name || u.id)} has no playlist yet.${prod ? " Press New playlist…" : ""}` : `No people yet.${prod ? " Press New person…" : ""}`}</div>`; return; }
+  const grid = document.createElement("div"); grid.className = "cardgrid";
+  p.items.forEach((s, i) => {
+    const chart = CHARTS.find((c) => c.id === s.chart); if (!chart) return;
+    const race = specRace(s);
+    const menu = can ? [
+      ...(i > 0 ? [{ label: "Move earlier", onClick: () => plMove(i, -1) }] : []),
+      ...(i < p.items.length - 1 ? [{ label: "Move later", onClick: () => plMove(i, 1) }] : []),
+      { label: "Edit…", onClick: () => plEdit(i) },
+      { label: "Remove from playlist", onClick: () => plRemove(i) },
+    ] : [];
+    const el = cards.card({ chart, race, params: { ...s.params, ...(s.bg ? { bg: s.bg } : {}) }, section: "playlists", priority: 4, open: "show", showRace: !!race?.id, menu });
+    el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="pos" title="Position ${i + 1} in ${esc(p.name || "this playlist")}">${i + 1}</span>`);
+    el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}"><b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}</div>`);
+    grid.appendChild(el);
+  });
+  body.innerHTML = "";
+  if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart…, or send a chart here from the Chart Catalog's ⋯ menu." : ""}</div>`;
+  else body.appendChild(grid);
+  cards.prune();
+}
+function plMove(i, d) { savePlaylists((doc) => { const list = doc.users.find((x) => x.id === plUser()?.id)?.playlists.find((x) => x.id === plList()?.id); if (!list || !list.items[i] || !list.items[i + d]) return false; [list.items[i], list.items[i + d]] = [list.items[i + d], list.items[i]]; }); }
+async function plRemove(i) {
+  const p = plList(); const s = p?.items[i]; if (!s) return;
+  const ok = await ask({ title: "Remove from the playlist?", body: `<p><b>${esc(describeScreen(s))}</b> leaves <b>${esc(p.name || "this playlist")}</b> (position ${i + 1}).</p>`, ok: "Remove", danger: true });
+  if (!ok) return;
+  savePlaylists((doc) => { const list = doc.users.find((x) => x.id === plUser()?.id)?.playlists.find((x) => x.id === p.id); if (!list) return false; list.items.splice(i, 1); });
+}
+async function plEdit(i) {
+  const p = plList(); const s = p?.items[i]; if (!s) return;
+  const spec = await specDialog(s, { title: `Edit chart ${i + 1} in ${p.name || "this playlist"}`, ok: "Save" });
+  if (!spec) return;
+  savePlaylists((doc) => { const list = doc.users.find((x) => x.id === plUser()?.id)?.playlists.find((x) => x.id === p.id); if (!list || !list.items[i]) return false; list.items[i] = spec; });
+}
+async function plAdd(preset = null, target = null) {
+  const u = target?.user ?? plUser(), p = target?.playlist ?? plList(); if (!u || !p) return;
+  const spec = await specDialog(preset ?? { chart: "B5", race: "", state: "", params: {}, bg: "black" }, { title: `Add a chart to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Add to playlist" });
+  if (!spec) return;
+  const ok = await savePlaylists((doc) => { const list = doc.users.find((x) => x.id === u.id)?.playlists.find((x) => x.id === p.id); if (!list) return false; list.items.push(spec); });
+  if (ok) plSelect(u.id, p.id);
+}
+const newPlId = () => `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+async function plNewUser() {
+  const ok = await ask({ title: "New person", body: `<p><label>Name<br><input id="plname" maxlength="60" placeholder="e.g. Bob" style="width:100%"></label></p><p class="small muted">A person has their own playlists. Everyone in the Studio can see them; producers and publishers can change them.</p>`, ok: "Add person" });
+  const name = $("plname")?.value.trim(); if (!ok || !name) return;
+  const id = newPlId();
+  if (await savePlaylists((doc) => { doc.users.push({ id, name, playlists: [] }); }, { producerOnly: true })) plSelect(id, null);
+}
+async function plNewList() {
+  const u = plUser(); if (!u) return;
+  const ok = await ask({ title: `New playlist for ${u.name || u.id}`, body: `<p><label>Name<br><input id="plname" maxlength="60" placeholder="e.g. Segment 1" style="width:100%"></label></p>`, ok: "Add playlist" });
+  const name = $("plname")?.value.trim(); if (!ok || !name) return;
+  const id = newPlId();
+  if (await savePlaylists((doc) => { const user = doc.users.find((x) => x.id === u.id); if (!user) return false; user.playlists.push({ id, name, items: [] }); }, { producerOnly: true })) plSelect(u.id, id);
+}
+async function plRename() {
+  const u = plUser(), p = plList(); if (!u || !p) return;
+  const ok = await ask({ title: "Rename the playlist", body: `<p><label>Name<br><input id="plname" maxlength="60" value="${esc(p.name)}" style="width:100%"></label></p>`, ok: "Rename" });
+  const name = $("plname")?.value.trim(); if (!ok || !name) return;
+  savePlaylists((doc) => { const list = doc.users.find((x) => x.id === u.id)?.playlists.find((x) => x.id === p.id); if (!list) return false; list.name = name; }, { producerOnly: true });
+}
+async function plDelete() {
+  const u = plUser(), p = plList(); if (!u || !p) return;
+  const ok = await ask({ title: `Delete "${p.name || p.id}"?`, body: `<p>${esc(u.name || u.id)}'s playlist and its ${p.items.length} chart${p.items.length === 1 ? "" : "s"} go. Nothing published changes.</p>`, ok: "Delete playlist", danger: true });
+  if (!ok) return;
+  if (await savePlaylists((doc) => { const user = doc.users.find((x) => x.id === u.id); if (!user) return false; user.playlists = user.playlists.filter((x) => x.id !== p.id); }, { producerOnly: true })) plSelect(u.id, null);
+}
+$("plbar").addEventListener("change", (e) => {
+  if (e.target.id === "pluser") plSelect(e.target.value, null);
+  else if (e.target.id === "pllist") plSelect(plUser()?.id, e.target.value);
+});
+$("plbar").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  ({ pladd: () => plAdd(), plnewuser: plNewUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
+});
+/** From the Chart Catalog's ⋯ menu: choose the person and playlist, then finish the chart's spec. */
+async function addToPlaylistFromCatalog(chart) {
+  if (!playlists) await loadPlaylists();
+  if (!playlists?.users.length) { await ask({ title: "No playlists yet", body: `<p>A producer adds a person and a playlist in the Playlists section first.</p>`, ok: "OK", info: true }); return; }
+  const u0 = plUser();
+  const body = `<p class="small muted">Chart <b>${esc(chart.id)} ${esc(chart.name)}</b>. Pick where it goes; the next step sets its race and settings.</p>
+    <div class="psform"><label>Person<select id="pickuser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u0?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("")}</select></label>
+    <label>Playlist<select id="picklist"></select></label></div>`;
+  const fill = () => { const u = playlists.users.find((x) => x.id === $("pickuser").value); $("picklist").innerHTML = (u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === plSel.playlist ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">no playlist yet</option>`; };
+  const pending = ask({ title: "Add to which playlist?", body, ok: "Next: race and settings" });
+  fill(); $("pickuser").addEventListener("change", fill);
+  const ok = await pending;
+  const user = playlists.users.find((x) => x.id === $("pickuser").value), list = user?.playlists.find((x) => x.id === $("picklist").value);
+  if (!ok || !user || !list) return;
+  const sample = chart.kind === "race" || chart.needsRace || chart.needsState ? "" : "";
+  await plAdd({ chart: chart.id, race: sample, state: "", params: {}, bg: "black" }, { user, playlist: list });
+}
+// The chart specifier dialog: the same form as a Live Screen draft, editing a pending spec until OK.
+let pendingSpec = null;
+function renderSpecDialog() {
+  $("psform").innerHTML = specFormHtml(pendingSpec, 'data-ps="1"', 'data-ps="1" data-f="bg"', pendingSpec.bg ?? "black");
+  $("psdesc").textContent = describeScreen(pendingSpec);
+}
+document.addEventListener("input", (e) => {
+  const el = e.target.closest("[data-ps]"); if (!el || !pendingSpec) return;
+  if (el.dataset.f === "chart") { pendingSpec.chart = el.value; pendingSpec.params = {}; renderSpecDialog(); return; }
+  if (el.dataset.f === "race") pendingSpec.race = el.value;
+  else if (el.dataset.f === "state") pendingSpec.state = el.value;
+  else if (el.dataset.f === "bg") pendingSpec.bg = el.value;
+  else if (el.dataset.p) { if (el.value.trim()) pendingSpec.params[el.dataset.p] = el.value; else delete pendingSpec.params[el.dataset.p]; }
+  $("psdesc").textContent = describeScreen(pendingSpec);
+});
+async function specDialog(spec, { title, ok }) {
+  pendingSpec = { chart: spec.chart, race: spec.race ?? "", state: spec.state ?? "", params: { ...(spec.params ?? {}) }, bg: spec.bg ?? "black" };
+  let warn = "";
+  for (;;) {
+    const pending = ask({ title, body: `${warn}<div class="psform" id="psform"></div><p class="psdesc muted" id="psdesc"></p>`, ok });
+    renderSpecDialog();
+    const confirmed = await pending;
+    if (!confirmed) { pendingSpec = null; return null; }
+    const chart = CHARTS.find((c) => c.id === pendingSpec.chart);
+    const needsRace = chart && (chart.kind === "race" || chart.needsRace);
+    if (needsRace && !pendingSpec.race) { warn = `<div class="warnline bad">${esc(chart.name)} draws one race: choose the race.</div>`; continue; }
+    if (chart?.needsState && !pendingSpec.race && !pendingSpec.state) { warn = `<div class="warnline bad">${esc(chart.name)} draws one state: choose a race or a state.</div>`; continue; }
+    const out = specDef(pendingSpec); pendingSpec = null;
+    return out;
+  }
 }
 
 // ---------- Race Detail section ----------
@@ -1124,7 +1295,8 @@ function renderChartCatalog() {
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
       const key = kind === "race" ? "featuredCharts" : kind === "other" ? "persistentCharts" : "movementCharts";
       const on = draft[key].includes(chart.id);
-      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, section: "charts", priority: 6, showRace: false });
+      const toPlaylist = chart.built && !chart.retired && chart.page && chart.id !== "A1" && mayPublish() ? [{ label: "Add to a playlist…", onClick: () => addToPlaylistFromCatalog(chart) }] : [];
+      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, section: "charts", priority: 6, showRace: false, menu: toPlaylist });
       el.classList.add("minicard"); el.classList.toggle("inuse", on);
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
@@ -1228,7 +1400,7 @@ async function demoteLaptop() {
 function renderAll() {
   renderStatus();
   renderLive();
-  renderSeq(); renderChunks(); sendPreview(); renderScreens();
+  renderSeq(); renderChunks(); sendPreview(); renderScreens(); renderPlaylists();
   renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }
@@ -1236,7 +1408,7 @@ function renderAll() {
 const secObs = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) document.querySelectorAll("#sectionnav a").forEach((a) => a.classList.toggle("here", a.getAttribute("href") === `#${e.target.id}`));
 }, { rootMargin: "-120px 0px -60% 0px" });
-for (const id of ["ticker", "screens", "detail", "broad", "movement", "persistent", "catalog", "charts"]) secObs.observe($(id));
+for (const id of ["ticker", "screens", "playlists", "detail", "broad", "movement", "persistent", "catalog", "charts"]) secObs.observe($(id));
 
 // ---------- boot ----------
 let timers = [];
@@ -1248,9 +1420,9 @@ async function boot() {
   scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();
-  await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders()]);
+  await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists()]);
   renderAll();
-  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
+  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

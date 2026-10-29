@@ -62,7 +62,7 @@ const mode = {
   mirror: { lastOk: null, lastError: null, lastTry: null, indexGenerated: null, files: 0, runs: 0 },
   poll: { lastRun: null, lastError: null },
 };
-const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json"];
+const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json", "playlists.json"];
 async function fetchData(p) {
   const r = await fetch(`${GLOBAL}/data/${p}?t=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
   if (r.status === 404) return null;
@@ -117,7 +117,7 @@ const lanOrigin = () => { const l = lan(); return l ? `http://${l.ip}:${PORT}` :
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
 
 const handlers = {};
-for (const name of ["login", "poll", "producer", "settings"]) handlers[name] = (await import(`../api/${name}.js`)).default;
+for (const name of ["login", "poll", "producer", "settings", "playlists"]) handlers[name] = (await import(`../api/${name}.js`)).default;
 
 async function file(p) { try { const s = await stat(p); return s.isFile() ? p : null; } catch { return null; } }
 async function resolve(pathname) {
@@ -136,14 +136,14 @@ async function upstreamLogin() {
   if (!r.ok) throw Object.assign(new Error(r.status === 403 ? "production rejected GLOBAL_PASSWORD" : `production login failed (${r.status})`), { status: r.status === 403 ? 403 : 502 });
   upstreamCookie = (r.headers.get("set-cookie") ?? "").split(";")[0];
 }
-/** GET or PUT the deployment's producer state. PUT logs in with GLOBAL_PASSWORD first (once per process). */
-async function upstreamProducer(method, body) {
+/** GET or PUT the deployment's producer state (or its playlists). PUT logs in with GLOBAL_PASSWORD first (once per process). */
+async function upstreamProducer(method, body, path = "/api/producer") {
   if (method === "PUT") {
     if (!GLOBAL_PASSWORD) throw Object.assign(new Error("publish not configured: set GLOBAL_PASSWORD in studio/.env to the deployment's studio password"), { status: 403 });
     if (!upstreamCookie) await upstreamLogin();
   }
-  let r = await fetch(`${GLOBAL}/api/producer`, { method, headers: { "content-type": "application/json", ...(method === "PUT" ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) });
-  if (method === "PUT" && r.status === 401) { await upstreamLogin(); r = await fetch(`${GLOBAL}/api/producer`, { method, headers: { "content-type": "application/json", cookie: upstreamCookie }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) }); }
+  let r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", ...(method === "PUT" ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) });
+  if (method === "PUT" && r.status === 401) { await upstreamLogin(); r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", cookie: upstreamCookie }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) }); }
   return r;
 }
 async function reachable() {
@@ -186,17 +186,17 @@ createServer(async (req, res) => {
       res.status(200).json({ ok: true, mode: mode.kind, production: CONNECTED ? "deployment" : "self", lan: lanOrigin() });
       return;
     }
-    if (url.pathname === "/api/producer" && CONNECTED) {
+    if ((url.pathname === "/api/producer" || url.pathname === "/api/playlists") && CONNECTED) {
       // Production lives on the deployment: this machine's outputs and Studio read it from
-      // there, and a push goes there (after the local sign-in check, then the deployment's).
+      // there, and a push goes there (after the local sign-in check, then the deployment's). Playlists likewise.
       if (req.method === "PUT") {
         const body = await readBody(req); shim(req, res, body);
         if (!(await (await import("../lib/auth.js")).isAuthed(req))) { res.status(401).json({ error: "not signed in" }); return; }
-        try { const r = await upstreamProducer("PUT", body); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
+        try { const r = await upstreamProducer("PUT", body, url.pathname); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
         catch (e) { res.writeHead(e.status ?? 502, { "content-type": "application/json" }); res.end(JSON.stringify({ error: e.message })); }
         return;
       }
-      try { const r = await upstreamProducer("GET"); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
+      try { const r = await upstreamProducer("GET", undefined, url.pathname); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
       catch (e) { res.writeHead(502, { "content-type": "application/json" }); res.end(JSON.stringify({ error: `production unreachable: ${e.message}` })); }
       return;
     }

@@ -290,6 +290,39 @@ export function normalize(raw) {
   };
 }
 
+// ---------- playlists ----------
+// A playlist is one person's run of charts for a segment, in order. Each item is a chart spec of the same shape as a Live
+// Screen definition (chart, race, state, params, bg). Playlists are shared: they live in playlists.json beside the published
+// state and are edited through /api/playlists (publisher or producer; only a producer adds, renames or removes people and
+// playlists). The shipped set is one person, Ryan, with the slate's races and six charts each.
+export const PLAYLIST_LIMITS = { users: 40, playlists: 40, items: 80, name: 60 };
+export const PLAYLIST_SLATE_CHARTS = ["B5", "B6", "B7", "B8", "B10", "B13"];   // B9 is ranked-choice only
+const plId = (s) => (typeof s === "string" && /^[a-zA-Z0-9]{1,24}$/.test(s) ? s : null);
+const plName = (s) => (typeof s === "string" ? s.trim().slice(0, PLAYLIST_LIMITS.name) : "");
+/** One chart spec, validated like a Live Screen definition; null when the chart id is not a built chart. */
+export function specDef(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = String(raw.chart ?? "").toUpperCase();
+  if (!CHARTS.some((c) => c.id === id && c.built && !c.retired && c.page)) return null;
+  return screenDef({ ...raw, chart: id }, { ...DEFAULTS.screenA, chart: id });
+}
+export function normalizePlaylists(raw) {
+  const r = raw && typeof raw === "object" ? raw : {};
+  const seenU = new Set();
+  const users = (Array.isArray(r.users) ? r.users : []).filter((u) => u && typeof u === "object" && plId(u.id) && !seenU.has(u.id) && seenU.add(u.id)).slice(0, PLAYLIST_LIMITS.users).map((u) => {
+    const seenP = new Set();
+    const playlists = (Array.isArray(u.playlists) ? u.playlists : []).filter((p) => p && typeof p === "object" && plId(p.id) && !seenP.has(p.id) && seenP.add(p.id)).slice(0, PLAYLIST_LIMITS.playlists)
+      .map((p) => ({ id: p.id, name: plName(p.name), items: (Array.isArray(p.items) ? p.items : []).map(specDef).filter(Boolean).slice(0, PLAYLIST_LIMITS.items) }));
+    return { id: u.id, name: plName(u.name), playlists };
+  });
+  return { users, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
+}
+/** The shipped playlists: Ryan, one playlist "Slate", the slate's races in order with six charts each. */
+export function defaultPlaylists() {
+  const items = FEATURED_RACES.flatMap((r) => PLAYLIST_SLATE_CHARTS.map((chart) => ({ chart, race: r.label, state: "", params: {}, bg: "black" })));
+  return normalizePlaylists({ users: [{ id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items }] }] });
+}
+
 /** True when two states would produce the same ticker and graphics. */
 export function sameState(a, b) {
   const A = normalize(a), B = normalize(b);
