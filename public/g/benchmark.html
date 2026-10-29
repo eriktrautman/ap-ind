@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Benchmark Board</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D12: every featured race's independent against the best an independent has done in that state (config/benchmarks.json,
+     editorial). The bar is tonight's share, the white tick the state's record, the dashed gold line 50%. Featured races and
+     their order come from the producer state, like C1. */
+  .body { min-height: 0; overflow: hidden; display: grid; align-content: start; gap: 8px; padding-top: 22px; }   /* room for the first row's record label */
+  .row { display: grid; grid-template-columns: 104px 470px 1fr 150px 230px; align-items: center; gap: 24px; height: 68px; padding: 0 18px 0 0; background: rgba(255,255,255,.04); border-radius: 8px; }
+  .row .st { height: 100%; display: flex; align-items: center; justify-content: center; font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 34px; background: var(--none); border-radius: 8px 0 0 8px; letter-spacing: .04em; }
+  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+  .row .nm .who { font-size: 30px; font-weight: 700; color: #fde68a; }
+  .row .nm .who .i { color: var(--ind); font-weight: 700; margin-left: 10px; font-size: 26px; }
+  .row .nm .who .race { color: var(--muted); font-weight: 400; font-size: 24px; margin-left: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .row .nm .rec { font-size: 20px; color: var(--muted); margin-top: 3px; }
+  .row .bar { position: relative; height: 30px; background: rgba(255,255,255,.07); border-radius: 4px; }
+  .row .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--ind); transition: width .6s ease; }
+  .row .bar .half { position: absolute; top: -6px; bottom: -6px; width: 0; border-left: 3px dashed var(--gold); opacity: .55; }
+  .row .bar .tick { position: absolute; top: -8px; bottom: -8px; width: 4px; margin-left: -2px; background: #fff; border-radius: 2px; }
+  .row .bar .tick b { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: 700; color: #fff; padding-bottom: 4px; white-space: nowrap; }
+  .row .num { text-align: right; line-height: 1.05; }
+  .row .num .pc { font-size: 32px; font-weight: 700; }
+  .row .num .in { font-size: 17px; color: var(--muted); margin-top: 2px; }
+  .row .delta { text-align: right; line-height: 1.05; }
+  .row .delta .n { font-size: 34px; font-weight: 700; }
+  .row .delta .k { font-size: 16px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+  .row .delta.over .n { color: var(--ok); } .row .delta.under .n { color: var(--bad); } .row .delta.tbd .n, .row .delta.none .n { color: var(--muted); }
+  .row.called .nm .who { color: var(--gold); } .row.called .bar i { background: var(--gold); }
+  .row.lost { opacity: .7; }
+  .pill { display: inline-block; font-size: 18px; font-weight: 700; padding: 2px 10px; border-radius: 4px; letter-spacing: .06em; margin-left: 12px; vertical-align: middle; position: relative; top: -3px; background: var(--gold); color: #1a1600; }
+  .foot .sw { display: inline-block; width: 22px; height: 12px; border-radius: 3px; background: var(--ind); margin: 0 6px 0 14px; vertical-align: middle; }
+  .foot .tk { display: inline-block; width: 4px; height: 16px; border-radius: 2px; background: #fff; margin: 0 8px 0 14px; vertical-align: middle; }
+  .foot .hf { display: inline-block; width: 0; height: 16px; border-left: 3px dashed var(--gold); margin: 0 8px 0 14px; vertical-align: middle; opacity: .7; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Featured races</div><div class="title">The benchmark board<small>each race vs its state's best independent result</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body" id="rows"></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, live · <span class="sw"></span>tonight's share <span class="tk"></span>the state's best independent result in a federal race <span class="hf"></span>50%</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, raceState, clockS } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const SCALE = Math.max(50, Math.min(100, Number(q.get("scale")) || 60));   // the bar's full width, in points of the vote
+  let races = null, ids = FEATURED_RACES.map((r) => r.id), marks = {};
+
+  const benchFor = (r) => marks[r.id] ?? marks[r.state] ?? null;
+  const recordLine = (b) => !b ? "Benchmark TBD" : b.pct == null ? (b.note || "Benchmark TBD") : `${b.name}${b.label ? ` (${b.label})` : ""}, ${b.year}${b.office ? ` · ${b.office}` : ""} · ${Number(b.pct).toFixed(1)}%`;
+  function render() {
+    if (!races) return;
+    const list = ids.map((id) => races.get(id)).filter(Boolean);
+    const called = list.filter((r) => r.called).length;
+    $("reporting").innerHTML = `<b>${list.length}</b> races · <b>${called}</b> called`;
+    $("rows").innerHTML = list.map((r) => {
+      const st = raceState(r);
+      const ind = r.candidates.find((c) => c.featured) ?? r.candidates.find((c) => c.independent) ?? [...r.candidates].sort((a, b) => b.votes - a.votes)[0];
+      if (!ind) return "";
+      const b = benchFor(r);
+      const have = !!r.totalVotes;
+      const share = have ? Number(ind.pct ?? 0) : null;
+      const scale = Math.max(SCALE, share ?? 0, b?.pct ?? 0);
+      const w = share === null ? 0 : share / scale * 100;
+      const delta = share !== null && b?.pct != null ? share - b.pct : null;
+      const won = r.called && !!ind.winner, lost = r.called && !ind.winner;
+      const deltaHtml = delta === null
+        ? (b?.pct == null ? `<div class="n">—</div><div class="k">Benchmark TBD</div>` : `<div class="n">—</div><div class="k">No votes yet</div>`)
+        : `<div class="n">${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)}</div><div class="k">pts ${delta >= 0 ? "over record" : "under record"}</div>`;
+      const deltaCls = delta === null ? (b?.pct == null ? "tbd" : "none") : delta >= 0 ? "over" : "under";
+      return `<div class="row ${won ? "called" : ""} ${lost ? "lost" : ""}">
+        <div class="st">${esc(r.state)}</div>
+        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${won ? `<span class="pill">AP CALL ✓</span>` : ""}</div><div class="rec">${esc(recordLine(b))}</div></div>
+        <div class="bar"><i style="width:${w.toFixed(1)}%"></i><span class="half" style="left:${(50 / scale * 100).toFixed(1)}%"></span>${b?.pct != null ? `<span class="tick" style="left:${(b.pct / scale * 100).toFixed(1)}%"><b>${Number(b.pct).toFixed(1)}%</b></span>` : ""}</div>
+        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? (st.status === "closed" ? "polls closed" : "polls open") : `${Math.round(r.eevp || r.precinctsPct)}% in`}</div></div>
+        <div class="delta ${deltaCls}">${deltaHtml}</div></div>`;
+    }).join("") || `<div class="empty">No featured races in the feed.</div>`;
+    $("updated").textContent = `Updated ${clockS()}`;
+  }
+  watchState({ onState: (s) => { ids = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
+  connectFeed({
+    onSnapshot: async (s) => { races = s.races; try { marks = (await (await fetch("./benchmarks.json")).json()).benchmarks ?? {}; } catch {} render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

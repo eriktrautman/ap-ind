@@ -882,6 +882,29 @@ racePicker("featq", "featsuggest", { exclude: () => draft.featuredRaceIds, onPic
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-feat]"); if (b) toggleFeatured(b.dataset.feat); });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-pin]"); if (b) toggleTicker(b.dataset.pin); });
 
+/** A chart added to a DEFAULTS list after this browser saved its workbench joins that list once. studio.knownCharts remembers which
+ *  charts this browser has been offered; a browser seeing this code for the first time counts every chart without an `added`
+ *  date as already known (they predate the mechanism), so nothing a producer removed on purpose comes back. */
+function adoptNewCharts() {
+  let known = null;
+  try { known = JSON.parse(localStorage.getItem("studio.knownCharts") ?? "null"); } catch {}
+  const first = !Array.isArray(known);
+  const seen = new Set(first ? CHARTS.filter((c) => !c.added).map((c) => c.id) : known);
+  let changed = false;
+  for (const c of CHARTS) {
+    if (seen.has(c.id) || !c.built || c.retired) continue;
+    const key = c.kind === "race" ? "featuredCharts" : c.kind === "other" ? "persistentCharts" : "movementCharts";
+    if (DEFAULTS[key].includes(c.id) && !draft[key].includes(c.id)) {
+      // keep the shipped order: insert before the first later default that the draft already has
+      const after = DEFAULTS[key].slice(DEFAULTS[key].indexOf(c.id) + 1).find((id) => draft[key].includes(id));
+      const at = after ? draft[key].indexOf(after) : draft[key].length;
+      draft[key].splice(at, 0, c.id); changed = true;
+    }
+  }
+  try { localStorage.setItem("studio.knownCharts", JSON.stringify(CHARTS.map((c) => c.id))); } catch {}
+  if (changed) draft = saveLocal(draft);
+}
+
 // ---------- Movement Overview ----------
 // movementCharts holds both series; the C charts render in Movement Overview, the D charts in Broad Races Overview.
 const seriesOf = (id) => id[0];
@@ -1120,6 +1143,7 @@ let timers = [];
 async function boot() {
   timers.forEach(clearInterval);
   draft = readLocal() ?? normalize(DEFAULTS);
+  adoptNewCharts();
   renderDisplayControls(); renderTickerFrames();   // the builder frame is fed by postMessage; the live one reads what is published
   scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };

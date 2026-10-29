@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Independent Scoreboard</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* D13: the featured independents at a glance. Four counts on top (in the lead, records set, still counting, decided), then a
+     row per race: tonight's share as a bar against the state's best independent result (config/benchmarks.json, editorial;
+     white tick) and 50% (dashed gold), a status pill, and the share with how much of the vote is in. Featured races and their
+     order come from the producer state, like C1. */
+  .body { min-height: 0; overflow: hidden; display: grid; grid-template-rows: auto 1fr; gap: 18px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .stat { display: flex; align-items: center; gap: 18px; background: rgba(255,255,255,.05); border-radius: 8px; padding: 4px 22px; }
+  .stat .n { font-size: 42px; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; min-width: 44px; }
+  .stat .k { font-size: 21px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .rows { display: grid; align-content: start; gap: 7px; padding-top: 20px; }   /* room for the first row's record label */
+  .row { display: grid; grid-template-columns: 96px 420px 1fr 300px 150px; align-items: center; gap: 22px; height: 58px; padding: 0 18px 0 0; background: rgba(255,255,255,.04); border-radius: 8px; }
+  .row .st { height: 100%; display: flex; align-items: center; justify-content: center; font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 30px; background: var(--none); border-radius: 8px 0 0 8px; letter-spacing: .04em; }
+  .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+  .row .nm .who { font-size: 27px; font-weight: 700; color: #fde68a; }
+  .row .nm .who .i { color: var(--ind); font-weight: 700; margin-left: 10px; font-size: 24px; }
+  .row .nm .sub { font-size: 18px; color: var(--muted); margin-top: 2px; }
+  .row .bar { position: relative; height: 26px; background: rgba(255,255,255,.07); border-radius: 4px; }
+  .row .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--ind); transition: width .6s ease; }
+  .row .bar .half { position: absolute; top: -6px; bottom: -6px; width: 0; border-left: 3px dashed var(--gold); opacity: .55; }
+  .row .bar .tick { position: absolute; top: -8px; bottom: -8px; width: 4px; margin-left: -2px; background: #fff; border-radius: 2px; }
+  .row .bar .tick b { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: 17px; font-weight: 700; color: #fff; padding-bottom: 3px; white-space: nowrap; }
+  .row .status { text-align: center; }
+  .pill { display: inline-block; font-size: 18px; font-weight: 700; padding: 4px 16px; border-radius: 999px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .pill.record { background: var(--gold); color: #1a1600; }
+  .pill.lead { background: #2a3a5c; color: #fff; }
+  .pill.decided { background: #16213a; color: var(--fg); border: 1px solid var(--rule); }
+  .pill.counting { background: var(--ind); color: #fff; }
+  .pill.behind { background: #16213a; color: var(--muted); border: 1px solid var(--rule); }
+  .pill.open { background: transparent; color: var(--muted); border: 1px solid var(--rule); }
+  .row .num { text-align: right; line-height: 1.05; }
+  .row .num .pc { font-size: 29px; font-weight: 700; }
+  .row .num .in { font-size: 17px; color: var(--muted); margin-top: 1px; }
+  .row.called .nm .who { color: var(--gold); } .row.called .bar i { background: var(--gold); }
+  .row.lost { opacity: .7; }
+  .foot .tk { display: inline-block; width: 4px; height: 16px; border-radius: 2px; background: #fff; margin: 0 8px 0 2px; vertical-align: middle; }
+  .foot .hf { display: inline-block; width: 0; height: 16px; border-left: 3px dashed var(--gold); margin: 0 8px 0 18px; vertical-align: middle; opacity: .7; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Featured races</div><div class="title">Independent scoreboard</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="stats" id="stats"></div>
+    <div class="rows" id="rows"></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, live · <span class="tk"></span>the state's best independent result in a federal race <span class="hf"></span>50% · a record is a share above that result</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, raceState, clockS } from "./feed.js";
+  import { watchState, FEATURED_RACES } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const SCALE = Math.max(50, Math.min(100, Number(q.get("scale")) || 60));   // the bar's full width, in points of the vote
+  let races = null, ids = FEATURED_RACES.map((r) => r.id), marks = {};
+  const benchFor = (r) => marks[r.id] ?? marks[r.state] ?? null;
+  const office = (r) => esc(String(r.title ?? r.officeName ?? r.label).replace(", ", " · "));   // "U.S. House, District 6" -> "U.S. House · District 6"
+
+  function render() {
+    if (!races) return;
+    const list = ids.map((id) => races.get(id)).filter(Boolean);
+    const rows = list.map((r) => {
+      const st = raceState(r);
+      const sorted = [...r.candidates].sort((a, b) => b.votes - a.votes);
+      const ind = r.candidates.find((c) => c.featured) ?? r.candidates.find((c) => c.independent) ?? sorted[0];
+      if (!ind) return null;
+      const b = benchFor(r);
+      const have = !!r.totalVotes;
+      const share = have ? Number(ind.pct ?? 0) : null;
+      const inPct = Math.round(r.eevp || r.precinctsPct || 0);
+      const won = r.called && !!ind.winner, lost = r.called && !ind.winner;
+      const leading = have && !r.called && sorted[0]?.id === ind.id;
+      const record = share !== null && b?.pct != null && share > b.pct;
+      let pill;
+      if (r.called) pill = { cls: record ? "record" : "decided", text: `Decided${record ? " · record" : ""}` };
+      else if (!have) pill = { cls: "open", text: st.status === "closed" ? "Polls closed" : "Polls open" };
+      else if (b?.countNote) pill = { cls: "counting", text: b.countNote };
+      else if (leading) pill = { cls: record ? "record" : "lead", text: `Leading${record ? " · record" : ""}` };
+      else pill = { cls: record ? "record" : "behind", text: record ? "Trailing · record" : "Counting" };
+      return { r, ind, b, share, inPct, won, lost, leading, record, pill, have };
+    }).filter(Boolean);
+    const n = { lead: rows.filter((x) => x.leading || x.won).length, record: rows.filter((x) => x.record).length, counting: rows.filter((x) => !x.r.called).length, decided: rows.filter((x) => x.r.called).length };
+    $("stats").innerHTML = [["lead", "In the lead"], ["record", "Records set"], ["counting", "Still counting"], ["decided", "Decided"]].map(([k, label]) => `<div class="stat"><span class="n">${n[k]}</span><span class="k">${label}</span></div>`).join("");
+    $("reporting").innerHTML = `<b>${rows.length}</b> races · ET · AP data`;
+    $("rows").innerHTML = rows.map(({ r, ind, b, share, inPct, won, lost, pill }) => {
+      const scale = Math.max(SCALE, share ?? 0, b?.pct ?? 0);
+      const w = share === null ? 0 : share / scale * 100;
+      return `<div class="row ${won ? "called" : ""} ${lost ? "lost" : ""}">
+        <div class="st">${esc(r.state)}</div>
+        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span></div><div class="sub">${office(r)} · ${esc(r.stateName ?? r.state)}</div></div>
+        <div class="bar"><i style="width:${w.toFixed(1)}%"></i><span class="half" style="left:${(50 / scale * 100).toFixed(1)}%"></span>${b?.pct != null ? `<span class="tick" style="left:${(b.pct / scale * 100).toFixed(1)}%"><b>${Number(b.pct).toFixed(1)}%</b></span>` : ""}</div>
+        <div class="status"><span class="pill ${pill.cls}">${esc(pill.text)}</span></div>
+        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? "no votes yet" : `${inPct}% in`}</div></div></div>`;
+    }).join("") || `<div class="empty">No featured races in the feed.</div>`;
+    $("updated").textContent = `Updated ${clockS()}`;
+  }
+  watchState({ onState: (s) => { ids = s.featuredRaceIds.length ? s.featuredRaceIds : FEATURED_RACES.map((r) => r.id); render(); } });
+  connectFeed({
+    onSnapshot: async (s) => { races = s.races; try { marks = (await (await fetch("./benchmarks.json")).json()).benchmarks ?? {}; } catch {} render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

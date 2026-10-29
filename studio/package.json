@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "rm -rf dist && mkdir dist && cp -r public/. dist/ && cp -r ../public/g dist/g && rm -f dist/g/control.js && cp lib/control.js dist/g/control.js && cp ../config/polls.json ../config/candidates.json ../config/photos.json ../config/baseline-federal.json ../config/baseline-2024-pres.json ../config/independents-history.json ../config/quotes.json ../config/explainers.json ../config/state-notes.json ../config/party-codes.json dist/g/ && cp -r ../watch-party/public/geo dist/geo && node scripts/version.mjs",
+    "build": "rm -rf dist && mkdir dist && cp -r public/. dist/ && cp -r ../public/g dist/g && rm -f dist/g/control.js && cp lib/control.js dist/g/control.js && cp ../config/polls.json ../config/candidates.json ../config/photos.json ../config/baseline-federal.json ../config/baseline-2024-pres.json ../config/independents-history.json ../config/benchmarks.json ../config/quotes.json ../config/explainers.json ../config/state-notes.json ../config/party-codes.json dist/g/ && cp -r ../watch-party/public/geo dist/geo && node scripts/version.mjs",
     "start": "npm run build && node --env-file=.env scripts/serve.mjs",
     "serve": "node --env-file=.env scripts/serve.mjs",
     "poll": "node --env-file=.env scripts/poll-local.mjs",

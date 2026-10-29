@@ -1,0 +1,51 @@
+{
+  "about": "D12 The Benchmark Board and D13 Independent Scoreboard: each featured race's independent against the best result an independent has had in that state in a federal race. Editorial, seeded 2026-10-29 from the producer's mockups; verify every row before air. pct null = benchmark still to be researched (the boards say so). countNote: what the scoreboard's status pill says while the race is still counting and not called (e.g. a slow count or a ranked-choice tabulation date). Keyed by state; a race id key (e.g. \"5696\") overrides the state for that race.",
+  "benchmarks": {
+    "NE": {
+      "name": "Dan Osborn",
+      "label": "",
+      "year": 2024,
+      "office": "U.S. Senate",
+      "pct": 46.5
+    },
+    "SD": {
+      "name": "Tom Ayres",
+      "label": "Nonpartisan",
+      "year": 1920,
+      "office": "U.S. Senate",
+      "pct": 24.1
+    },
+    "MT": {
+      "name": "Jeannette Rankin",
+      "label": "",
+      "year": 1918,
+      "office": "U.S. Senate",
+      "pct": 23.1
+    },
+    "ID": {
+      "name": null,
+      "label": "",
+      "year": null,
+      "office": null,
+      "pct": null,
+      "note": "Benchmark TBD (research)"
+    },
+    "CA": {
+      "name": null,
+      "label": "",
+      "year": null,
+      "office": null,
+      "pct": null,
+      "note": "Last independent win: William Kent, 1914",
+      "countNote": "Counting for weeks"
+    },
+    "AK": {
+      "name": "Alyse Galvin",
+      "label": "undeclared",
+      "year": 2018,
+      "office": "U.S. House",
+      "pct": 46.5,
+      "countNote": "RCV count Nov 18"
+    }
+  }
+}

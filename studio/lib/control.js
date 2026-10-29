@@ -53,7 +53,9 @@ export const FEATURED_RACES = [
  *   - to retire a chart, keep its entry and set retired: true (optionally retiredNote); the Studio
  *     greys it out with a placeholder and refuses to add it, and existing selections drop it cleanly;
  *   - a new chart gets a NEW id at the end of its series (B14, C10, D12, ...), never a freed one;
- *   - renaming a chart's page is fine; renaming its id is not.
+ *   - renaming a chart's page is fine; renaming its id is not;
+ *   - a chart that joins a DEFAULTS list after launch carries added: "YYYY-MM-DD": the Studio puts it into a browser's saved
+ *     lists once (studio.knownCharts), so an existing workbench sees a new default without Restore All Default Settings.
  */
 export const CHARTS = [
   // A: persistent elements and lower thirds (the ticker is the one built)
@@ -100,6 +102,8 @@ export const CHARTS = [
   { id: "D9",  kind: "movement", name: "State overview",            page: "/g/state-overview.html", built: true, needsState: true },
   { id: "D10", kind: "movement", name: "National popular vote",     page: "/g/house-pv.html",   built: true },
   { id: "D11", kind: "movement", name: "Too close to call",         page: "/g/too-close.html",  built: true },
+  { id: "D12", kind: "movement", name: "The benchmark board",       page: "/g/benchmark.html",  built: true, added: "2026-10-29" },
+  { id: "D13", kind: "movement", name: "Independent scoreboard",    page: "/g/scoreboard.html", built: true, added: "2026-10-29" },
   // F: from the AP reports feed
   { id: "F1",  kind: "other", name: "Balance of power from AP Trend", page: "/g/reports.html?view=bop",              built: true },
   { id: "F2",  kind: "other", name: "House composition and net change", page: "/g/reports.html?view=house",            built: true },
@@ -140,7 +144,7 @@ export const DEFAULTS = Object.freeze({
   tickerBg: "black",          // the live ticker's background when its address names none ("" transparent, black, green)
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
   featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
-  movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11"],
+  movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"],
   keyRaceIds: [],            // D5; empty means "the ticker races"
   persistentCharts: [],      // A series elements in the Persistent Elements section (never A1, the ticker)
   persistentSettings: {},    // per element inputs: A2 {name, title}, A3 {raceId}, A4 {raceId}
