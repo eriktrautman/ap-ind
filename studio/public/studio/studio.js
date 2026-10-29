@@ -75,8 +75,8 @@ async function loginHint(wasTest, me = null) {
     ? "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with your own password to continue."
     : "Results are <b>Live</b>, so the rehearsal password is switched off. Only named passwords sign in.";
 }
-function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; $("poller").hidden = true; }
-function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; $("poller").hidden = false; }
+function showLogin() { $("login").hidden = false; $("app").hidden = true; $("account").hidden = true; $("poller").hidden = true; }
+function showApp() { $("login").hidden = true; $("app").hidden = false; $("account").hidden = false; $("poller").hidden = false; }
 $("loginform").addEventListener("submit", async (e) => {
   e.preventDefault();
   $("loginerr").textContent = "";
@@ -118,7 +118,13 @@ new ResizeObserver(() => document.documentElement.style.setProperty("--top-h", `
 let loginKind = null;
 let loginRole = null;         // "producer" | "publisher" | "readonly" | "rehearsal": the variable the password came from
 let loginName = null;
-const renderWho = () => { const el = $("whoami"); if (el) { el.hidden = !loginName; el.textContent = loginName ? `Signed in as ${loginName}${loginRole && loginRole !== "rehearsal" ? ` · ${loginRole === "readonly" ? "read only" : loginRole}` : ""}` : ""; } };
+/** The account menu, top right: the name on the button; the role and what it allows in the dropdown, with Sign out. */
+const renderWho = () => {
+  $("acctname").textContent = loginName ?? "Signed in";
+  $("acctrole").innerHTML = loginRole ? `<b>${esc(ROLE_LABEL[loginRole] ?? loginRole)}</b><br>${esc(ROLE_ALLOWS[loginRole] ?? "")}` : "";
+};
+$("acctbtn").addEventListener("click", (e) => { e.stopPropagation(); $("acctmenu").hidden = !$("acctmenu").hidden; });
+document.addEventListener("click", (e) => { if (!e.target.closest("#account")) $("acctmenu").hidden = true; });
 const byWhom = (s) => s?.updatedBy ? ` by ${esc(s.updatedBy)}` : "";
 
 // ---------- data ----------
