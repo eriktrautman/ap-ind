@@ -162,6 +162,7 @@ function renderDisplayControls() {
     const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
     sel.innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}" ${v === pageBg(page) ? "selected" : ""}>${l}</option>`).join("");
   }
+  $("topbg").innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");   // the same list as every other Background dropdown
   $("topbg").value = display.top.bg; $("topopacity").value = display.top.opacity;
 }
 /** Anything that shows a background or opacity follows the saved values. */
