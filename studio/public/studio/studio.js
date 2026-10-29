@@ -407,11 +407,16 @@ function renderStatus() {
   $("pause").querySelector(".lbl").textContent = paused ? "Resume polling" : "Pause polling";
   $("pause").classList.toggle("danger", !paused);
   for (const el of [$("pollnow"), $("pollfresh"), $("pause")]) producerOnly(el);
+  $("poller").hidden = !!runtime && runtime.mode !== "poll";   // a standby has no poller of its own to control
   $("readonly").hidden = isProducer();
   $("readonlytxt").textContent = loginRole === "publisher" ? "Publisher · Publishes Only · These Need a Producer" : "Not Authorized · This Account is Read Only";
 
+  renderStandby();
   const problems = [];
-  if (!index && runtime && !runtime.polling) problems.push({ warn: true, title: "No results on this laptop yet.", text: "The app was started with --no-poll and the local store holds no index. Start it without --no-poll, or run npm run poll, and the lists fill in within a minute." });
+  if (!index && runtime) problems.push(
+    runtime.mode === "mirror" ? { warn: true, title: "No results on this laptop yet.", text: runtime.mirror?.lastError ? `The mirror cannot copy from the deployment: ${runtime.mirror.lastError}` : "The first copy from the deployment is in progress; the lists fill in within a minute." }
+    : runtime.mode === "follow" ? { warn: true, title: "No results on this laptop.", text: "Started without mirroring or polling, and the files hold no index. Restart with npm start." }
+    : { warn: true, title: "No results on this laptop yet.", text: "The first poll is running; the lists fill in within a minute." });
   if (paused) problems.push({ warn: true, title: "Polling is paused.", text: "No new AP data is being fetched. Everything keeps showing the last data. Under Producer actions press Resume polling." });
   else if (!s) problems.push({ title: "The poller has never written a status file.", text: "Under Producer actions press Poll now. If that fails, the error appears here in plain English." });
   else if (s.lastError && (s.consecutiveFailures ?? 0) > 0) problems.push({ title: `Last poll failed (${ago(s.lastError.at)}).`, text: s.lastError.text, fix: fixFor(s.lastError.code) });
@@ -975,6 +980,64 @@ function renderChartCatalog() {
   if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="muted small" style="grid-column:1/-1">Previews use ${esc(sample.label)}, the first featured race. Gold outline = in use.</div>`);
 }
 $("charts").addEventListener("click", (e) => { const fc = e.target.closest(".featchart"); if (fc) toggleChart(fc.dataset.chart); });
+
+// ---------- laptop: standby (mirroring production) or production (promoted) ----------
+const hostOf = (u) => String(u ?? "").replace(/^https?:\/\//, "");
+function renderStandby() {
+  const el = $("standby");
+  if (!el) return;
+  if (!runtime || !runtime.standby) { el.hidden = true; return; }   // the website, or a machine started as production
+  el.hidden = false;
+  const lanLink = `<a href="${esc(runtime.lan)}/studio" target="_blank" rel="noopener" title="This laptop's control room over the network">${esc(hostOf(runtime.lan))}</a>`;
+  const dep = runtime.deployment ?? {};
+  if (runtime.production?.where === "self") {
+    el.className = "standby prod";
+    el.innerHTML = `<span class="k">PRODUCTION · THIS LAPTOP</span>
+      <span>Polling AP every ${esc(String(runtime.poll?.every ?? 60))} s into this laptop's files; its ticker and graphics read them.</span>
+      <span>Switcher inputs: <b>${lanLink}</b> with the website's paths.</span>
+      <span>${dep.reachable ? `<span class="bad">The website is answering again</span>` : "The website is not answering."}</span>
+      ${runtime.canDemote ? `<button id="demote" title="Stop polling here and go back to copying the website">Return to standby</button>` : ""}`;
+  } else {
+    const m = runtime.mirror;
+    el.className = `standby${dep.reachable === false ? " warn" : ""}`;
+    const copy = runtime.mode !== "mirror" ? "Not copying (started with --no-mirror): no local copy to fall back on."
+      : m?.lastOk ? `Copy of <b>${esc(hostOf(dep.origin))}</b> taken ${esc(ago(new Date(m.lastOk).toISOString()))} (results as of ${esc(fmtTime(m.indexGenerated))}).`
+      : m?.lastError ? `<span class="bad">Mirror failing:</span> ${esc(m.lastError)}` : "First copy from the website in progress…";
+    el.innerHTML = `<span class="k">STANDBY</span>
+      <span>${copy}</span>
+      <span>Website ${dep.reachable ? "reachable" : '<span class="bad">NOT reachable</span>'}.</span>
+      <span>This laptop on the network: <b>${lanLink}</b>${runtime.iface ? ` (${esc(runtime.iface)})` : ""}.</span>
+      <span class="muted">Poller controls live on the website's control room while this is standby.</span>
+      ${runtime.canPromote ? `<button id="promote" class="danger" title="This laptop becomes production: it polls AP itself and serves its own copy">Promote: make this laptop production</button>` : ""}`;
+  }
+  const pb = $("promote"), db = $("demote");
+  if (pb) { producerOnly(pb); pb.addEventListener("click", promoteLaptop); }
+  if (db) { producerOnly(db); db.addEventListener("click", demoteLaptop); }
+}
+async function refreshRuntime() { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); }
+async function promoteLaptop() {
+  if (!isProducer() || !runtime?.canPromote) return;
+  const dep = runtime.deployment ?? {}, m = runtime.mirror;
+  const ok = await ask({
+    title: "Make this laptop production?", ok: "Promote", danger: true,
+    body: `<p>This laptop stops copying from <b>${esc(hostOf(dep.origin))}</b> and polls AP itself, every minute, into its own files. Its ticker and graphics switch to that copy at once${m?.lastOk ? `, taken ${esc(ago(new Date(m.lastOk).toISOString()))}` : ""}. Publishing from this control room then changes this laptop's ticker.</p>
+      <p><b>Then point the switcher's browser inputs at ${esc(hostOf(runtime.lan))}</b>, keeping the website's paths (/ticker, /g/B5?race=…). Use that address, not localhost.</p>
+      ${dep.reachable ? `<div class="warnline bad">The website is still answering. Its poller and this laptop would then share one AP key, which allows ten requests a minute; two pollers exceed that and both start being refused. Promote only when the website is down, or pause polling in the website's control room first.</div>` : `<div class="warnline">The website is not answering, which is what this is for.</div>`}`,
+  });
+  if (!ok) return;
+  try { await api("/api/promote", { method: "POST" }); } catch (e) { $("pollmsg").textContent = `Promote failed: ${e.message}`; }
+  await refreshRuntime(); renderAll();
+}
+async function demoteLaptop() {
+  if (!isProducer() || !runtime?.canDemote) return;
+  const ok = await ask({
+    title: "Return this laptop to standby?", ok: "Return to standby",
+    body: `<p>Polling AP from this laptop stops and it goes back to copying <b>${esc(hostOf(runtime.deployment?.origin))}</b> every 30 seconds. Its ticker and graphics read the website again.</p><p>Point the switcher's inputs back at the website.</p>`,
+  });
+  if (!ok) return;
+  try { await api("/api/demote", { method: "POST" }); } catch (e) { $("pollmsg").textContent = `Return to standby failed: ${e.message}`; }
+  await refreshRuntime(); renderAll();
+}
 
 // ---------- render everything ----------
 function renderAll() {
