@@ -13,7 +13,8 @@
   header { background: var(--navy-deep); color: #c7cfdf; padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 12px; }
   header .brand { color: var(--gold); font-family: var(--serif); font-size: 18px; letter-spacing: .02em; }
   header .sub { color: #8f9bb3; font-size: 13px; border-left: 1px solid #2a3a5c; padding-left: 12px; }
-  main { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 72px 24px 48px; }
+  main { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 56px 24px 48px; }
+  .copy { max-width: 760px; }
   h1 { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1.15; margin: 0 0 16px; color: var(--navy); }
   h1 b { color: var(--gold); font-weight: 400; }
   p { margin: 0 0 14px; font-size: 17px; color: #374151; }
@@ -28,17 +29,42 @@
   footer { padding: 18px 24px; background: var(--navy); color: #c7cfdf; font-size: 13px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
   footer a { color: #c7cfdf; text-decoration: none; } footer a:hover { color: #fff; text-decoration: underline; }
   footer .by { margin-left: auto; color: var(--gold); font-family: var(--serif); font-size: 15px; }
-  @media (max-width: 600px) { main { padding-top: 40px; } h1 { font-size: 30px; } }
+  /* Sample ticker: the real band's look (ticker.html), scaled, crawling stubbed items on a CSS loop. */
+  .hero { margin: 0 0 44px; }
+  .sample { position: relative; height: 54px; display: flex; align-items: stretch; background: linear-gradient(90deg, #0e1420, #1c2b47); color: #f4f6fa; font-size: 23px; line-height: 54px; font-variant-numeric: tabular-nums; border-radius: 6px; overflow: hidden; box-shadow: 0 10px 30px rgba(11, 31, 68, .18); }
+  .sample .brand { flex: none; padding: 0 18px; background: #a855f7; color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; display: flex; align-items: center; gap: 9px; }
+  .sample .dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; }
+  .sample .crawl { flex: 1; position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
+  .sample .track { position: absolute; top: 0; left: 0; white-space: nowrap; display: inline-block; animation: crawl 42s linear infinite; }
+  .sample .item { display: inline-block; padding-right: 32px; }
+  .sample .item::before { content: "◆"; color: #9aa7bd; font-size: 11px; margin: 0 32px; vertical-align: middle; }
+  .sample .item.call { color: #facc15; font-weight: 700; }
+  .sample .item.manual { color: #fff; font-weight: 600; }
+  .sample .item.idle { color: #9aa7bd; }
+  .sample .tag { position: absolute; right: 0; top: 0; height: 54px; padding: 0 12px; background: #f59e0b; color: #1a1200; font-size: 11px; font-weight: 700; letter-spacing: .08em; line-height: 54px; }
+  .hero .cap { margin: 8px 2px 0; font-size: 13px; color: var(--muted); }
+  @keyframes crawl { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .sample .track { animation: none; } }
+  @media (max-width: 600px) { main { padding-top: 40px; } h1 { font-size: 30px; } .sample { font-size: 18px; } }
 </style>
 </head>
 <body>
 <header><span class="brand">IND Election Night</span><span class="sub">Broadcast app</span></header>
 <main>
+  <div class="hero" aria-label="A sample of the live broadcast ticker">
+    <div class="sample">
+      <div class="brand"><span class="dot"></span>Independents</div>
+      <div class="crawl"><div class="track" id="track"></div><div class="tag">SAMPLE</div></div>
+    </div>
+    <p class="cap">The ticker, as it crawls on air. This one is a sample with made-up numbers; the real one reads the AP count once a minute.</p>
+  </div>
+  <div class="copy">
   <h1>Live results for the broadcast about <b>independent candidates</b>.</h1>
   <p>This site reads the AP Elections API once a minute and produces two things: <b>dynamic, API-driven charts</b> for every federal race and major ballot initiative, full-screen at 1920×1080, and a <b>live broadcast ticker</b>. Each is a fixed web address that updates itself as the count comes in.</p>
   <p>The <b>Studio</b> is where producers decide what goes out: which races the ticker follows and the lines it crawls, the chart on each live screen, and the featured races and charts for the show. Every publish is signed with the producer's name and is live within five seconds.</p>
   <a class="cta" href="/studio">Sign in to the Studio<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   <p class="small">A password is needed. Each person has their own, with producer, publisher or read-only rights; ask the producer for yours.</p>
+  </div>
   <div class="parts">
     <div class="part"><b>Charts</b><span>Every federal race and major ballot initiative, drawn live from the AP count. One address per chart: the chart, the race, the look.</span></div>
     <div class="part"><b>Ticker</b><span>The live broadcast crawl at 1920×1080, transparent, at one fixed address.</span></div>
@@ -50,5 +76,21 @@
   <a href="https://github.com/eriktrautman/ap-ind" target="_blank" rel="noopener">Code</a>
   <a class="by" href="https://eriktrautman.com" target="_blank" rel="noopener">Built by Erik Trautman</a>
 </footer>
+<script>
+  // Stubbed items, no data behind them. The track is doubled so the loop is seamless.
+  const items = [
+    ["manual", "Welcome to IND Election Night · coverage of every independent on a federal ballot"],
+    ["", "AK-SEN · Independent 51.0% · Republican 45.3% · 71% in"],
+    ["", "NE-SEN · Independent 48.2% · Republican 47.9% · 62% in"],
+    ["call", "AP CALL · ME-2 · Independent wins · 93% in"],
+    ["", "MT-SEN · Republican 49.4% · Independent 46.8% · 55% in"],
+    ["manual", "Polls close in the West at 11 PM ET"],
+    ["", "ID-SEN · Republican 52.1% · Independent 41.7% · 38% in"],
+    ["", "CA-6 · Democrat 44.0% · Independent 43.6% · 27% in"],
+    ["idle", "Results update once a minute from the AP Elections API"],
+  ];
+  const html = items.map(([cls, text]) => `<span class="item ${cls}">${text}</span>`).join("");
+  document.getElementById("track").innerHTML = html + html;
+</script>
 </body>
 </html>
