@@ -218,8 +218,11 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 #plbody .gcard .ghead .handle { cursor: grab; color: var(--muted); font-size: 14px; line-height: 1; padding: 0 2px; user-select: none; }
 #plbody .gcard .ghead .handle:active { cursor: grabbing; }
 #plbody .gcard.dragging { opacity: .4; }
-#plbody .gcard.dropbefore { box-shadow: -4px 0 0 0 var(--navy); }
-#plbody .gcard.dropafter { box-shadow: 4px 0 0 0 var(--navy); }
+/* Where a dragged card will land: a thick gold bar in the gap beside the card under the pointer, with a glow so it reads on any thumbnail */
+#plbody .gcard.dropbefore, #plbody .gcard.dropafter { position: relative; }
+#plbody .gcard.dropbefore::after, #plbody .gcard.dropafter::after { content: ""; position: absolute; top: -6px; bottom: -6px; width: 6px; border-radius: 3px; background: var(--gold); box-shadow: 0 0 0 2px #fff, 0 0 10px 2px #facc15aa; z-index: 5; pointer-events: none; }
+#plbody .gcard.dropbefore::after { left: -7px; }
+#plbody .gcard.dropafter::after { right: -7px; }
 /* A Live Screen draft from a playlist: the mode toggle, the pickers and the tiles */
 .screen .smode { display: flex; gap: 0; padding: 10px 12px 0; background: #fff; }
 .screen .smode button { padding: 4px 12px; font-size: 12.5px; border: 1px solid var(--sand); background: #fff; color: var(--muted); }
