@@ -58,15 +58,17 @@
   .thumb .bop i { display: block; height: 100%; } .thumb .bop .d { background: #3b82f6; } .thumb .bop .i { background: #a855f7; } .thumb .bop .r { background: #ef4444; } .thumb .bop .u { background: #2a3a5c; }
   .thumb .legend { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; }
   .thumb .legend .d { color: #60a5fa; } .thumb .legend .i { color: #c084fc; } .thumb .legend .r { color: #f87171; } .thumb .legend .u { color: #9aa7bd; font-weight: 400; }
-  footer { padding: 18px 24px; background: var(--navy); color: #c7cfdf; font-size: 13px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  footer { box-sizing: border-box; min-height: 56px; padding: 0 24px; background: var(--navy); color: #c7cfdf; font-size: 13px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
   footer a { color: #c7cfdf; text-decoration: none; } footer a:hover { color: #fff; text-decoration: underline; }
   footer .gh { display: inline-flex; align-items: center; opacity: .75; } footer .gh:hover { opacity: 1; text-decoration: none; }
   footer .by { margin-left: auto; color: var(--gold); font-family: var(--serif); font-size: 15px; }
   /* Sample ticker: the real band's look (ticker.html), scaled, crawling stubbed items on a CSS loop. */
-  /* The band is docked to the bottom of the viewport, a lower third over the page. */
-  .hero { position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; margin: 0; }
-  body { padding-bottom: 54px; }
-  .sample { position: relative; height: 54px; display: flex; align-items: stretch; background: linear-gradient(90deg, #0e1420, #1c2b47); color: #f4f6fa; font-size: 23px; line-height: 54px; font-variant-numeric: tabular-nums; border-radius: 0; overflow: hidden; box-shadow: 0 -8px 28px rgba(11, 31, 68, .22); }
+  /* The band floats above the bottom of the viewport, a lower third over the page, the way the real one floats
+     above the bottom of the frame. The gap beneath it is the footer's height plus a little page, so at the end the
+     footer shows under it without the two dark bars merging. */
+  .hero { position: fixed; left: 0; right: 0; bottom: 72px; z-index: 4; margin: 0; }
+  main { padding-bottom: 136px; }
+  .sample { position: relative; height: 54px; display: flex; align-items: stretch; background: linear-gradient(90deg, #0e1420, #1c2b47); color: #f4f6fa; font-size: 23px; line-height: 54px; font-variant-numeric: tabular-nums; border-radius: 0; overflow: hidden; box-shadow: 0 10px 30px rgba(11, 31, 68, .25); }
   .sample .brand { flex: none; padding: 0 18px; background: #a855f7; color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 15px; display: flex; align-items: center; gap: 9px; }
   .sample .dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; }
   .sample .crawl { flex: 1; position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
