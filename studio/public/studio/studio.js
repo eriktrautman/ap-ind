@@ -274,6 +274,7 @@ function renderPublishState() {
   $("pubwhy").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
   $("publish").title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   document.querySelector("#liveframe .lockmark").hidden = canPublish();
+  document.querySelector("#ticker .screenmid .arrow:not(.back)").classList.toggle("off", $("publish").disabled);
   $("pull").disabled = !canPull() || !live;
   $("pull").title = !canPull() ? (r?.reason ?? liveError ?? "pulling is not possible right now") : "Replace the builder's races, items, idle text and highlight with the live ticker's";
 }
@@ -652,6 +653,7 @@ function renderScreens() {
     pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the published screen" : `Make this draft the published screen (${describeScreen(draft[key])})`;
     pull.disabled = !canPull() || !live;
     box.querySelector(".lockmark").hidden = canPublish();
+    box.querySelector(".screenmid .arrow:not(.back)").classList.toggle("off", pub.disabled);
   }
   scaleScreens();
 }
