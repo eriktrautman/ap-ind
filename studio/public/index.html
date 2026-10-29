@@ -22,10 +22,37 @@
   .cta:hover { background: #e4c04a; }
   .cta svg { flex: none; }
   .small { font-size: 14px; color: var(--muted); }
-  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 40px 0 0; }
-  .part { background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 14px 16px; }
+  .parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin: 44px 0 0; }
+  .part { background: #fff; border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; }
+  .part .txt { padding: 12px 16px 14px; }
   .part b { display: block; color: var(--navy); font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
   .part span { font-size: 14px; color: #4b5563; }
+  /* Stubbed thumbnails in the charts' own look (public/g/g.css palette). Nothing behind them. */
+  .thumb { aspect-ratio: 16 / 9; position: relative; background: #2b2f3a; overflow: hidden; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #f4f6fa; font-variant-numeric: tabular-nums; }
+  .thumb .panel { position: absolute; left: 7%; right: 7%; top: 10%; bottom: 12%; background: linear-gradient(160deg, #0e1420, #16213a); border-radius: 6px; padding: 5% 6% 4%; box-sizing: border-box; display: flex; flex-direction: column; gap: 4%; overflow: hidden; }
+  .thumb .kicker { font-size: 9px; letter-spacing: .14em; color: #9aa7bd; text-transform: uppercase; line-height: 1; }
+  .thumb .title { font-size: 14px; font-weight: 700; line-height: 1.1; margin-top: -2%; }
+  .thumb .row { display: grid; grid-template-columns: 14px 1fr 38px; gap: 8px; align-items: center; font-size: 11px; }
+  .thumb .row .party { height: 14px; border-radius: 3px; }
+  .thumb .row .bar { position: relative; height: 10px; background: #2a3a5c; border-radius: 3px; overflow: hidden; }
+  .thumb .row .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; }
+  .thumb .row .pct { text-align: right; font-weight: 700; }
+  .thumb .ind .party, .thumb .ind .bar i { background: #a855f7; } .thumb .gop .party, .thumb .gop .bar i { background: #ef4444; } .thumb .dem .party, .thumb .dem .bar i { background: #3b82f6; }
+  .thumb .foot { margin-top: auto; font-size: 9px; color: #9aa7bd; display: flex; justify-content: space-between; }
+  .thumb .foot b { color: #facc15; font-size: 9px; letter-spacing: .06em; margin: 0; }
+  .thumb .lead { color: #facc15; }
+  /* ticker thumbnail: the band in its lower third */
+  .thumb .band { position: absolute; left: 0; right: 0; bottom: 14%; height: 15%; display: flex; align-items: stretch; background: linear-gradient(90deg, #0e1420, #1c2b47); font-size: 10px; line-height: 1; }
+  .thumb .band .brand { flex: none; padding: 0 8px; background: #a855f7; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 7px; display: flex; align-items: center; gap: 5px; }
+  .thumb .band .dot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; }
+  .thumb .band .line { flex: 1; display: flex; align-items: center; padding: 0 10px; white-space: nowrap; overflow: hidden; gap: 14px; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .thumb .band .line i { font-style: normal; color: #9aa7bd; font-size: 7px; }
+  .thumb .band .call { color: #facc15; font-weight: 700; }
+  /* balance-of-power thumbnail */
+  .thumb .bop { height: 16px; display: flex; border-radius: 4px; overflow: hidden; margin-top: 2%; }
+  .thumb .bop i { display: block; height: 100%; } .thumb .bop .d { background: #3b82f6; } .thumb .bop .i { background: #a855f7; } .thumb .bop .r { background: #ef4444; } .thumb .bop .u { background: #2a3a5c; }
+  .thumb .legend { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; }
+  .thumb .legend .d { color: #60a5fa; } .thumb .legend .i { color: #c084fc; } .thumb .legend .r { color: #f87171; } .thumb .legend .u { color: #9aa7bd; font-weight: 400; }
   footer { padding: 18px 24px; background: var(--navy); color: #c7cfdf; font-size: 13px; display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
   footer a { color: #c7cfdf; text-decoration: none; } footer a:hover { color: #fff; text-decoration: underline; }
   footer .by { margin-left: auto; color: var(--gold); font-family: var(--serif); font-size: 15px; }
@@ -65,9 +92,32 @@
   <p class="small">For production teams with an account.</p>
   </div>
   <div class="parts">
-    <div class="part"><b>Charts</b><span>Every federal race and major ballot initiative, drawn live from the count and styled for broadcast.</span></div>
-    <div class="part"><b>Ticker</b><span>A live crawl of results, race calls and the producer's own lines.</span></div>
-    <div class="part"><b>Live screens</b><span>Two always-on pages that show whatever chart the producer last published.</span></div>
+    <div class="part">
+      <div class="thumb" aria-hidden="true"><div class="panel">
+        <div class="kicker">U.S. Senate · Nebraska</div><div class="title">Race result</div>
+        <div class="row ind"><span class="party"></span><span class="bar"><i style="width:48.2%"></i></span><span class="pct">48.2</span></div>
+        <div class="row gop"><span class="party"></span><span class="bar"><i style="width:47.9%"></i></span><span class="pct">47.9</span></div>
+        <div class="row dem"><span class="party"></span><span class="bar"><i style="width:3.9%"></i></span><span class="pct">3.9</span></div>
+        <div class="foot"><span>62% in</span><span>Source: AP</span></div>
+      </div></div>
+      <div class="txt"><b>Charts</b><span>Every federal race and major ballot initiative, drawn live from the count and styled for broadcast.</span></div>
+    </div>
+    <div class="part">
+      <div class="thumb" aria-hidden="true"><div class="band">
+        <div class="brand"><span class="dot"></span>Independents</div>
+        <div class="line"><span>NE-SEN · Independent 48.2% · Republican 47.9%</span><i>◆</i><span class="call">AP CALL · ME-2 · Independent wins</span><i>◆</i><span>MT-SEN · Republican 49.4% · Independent 46.8%</span></div>
+      </div></div>
+      <div class="txt"><b>Ticker</b><span>A live crawl of results, race calls and the producer's own lines.</span></div>
+    </div>
+    <div class="part">
+      <div class="thumb" aria-hidden="true"><div class="panel">
+        <div class="kicker">Live screen one</div><div class="title">Senate balance of power</div>
+        <div class="bop"><i class="d" style="width:46%"></i><i class="i" style="width:3%"></i><i class="u" style="width:6%"></i><i class="r" style="width:45%"></i></div>
+        <div class="legend"><span class="d">46 Dem</span><span class="i">3 Ind</span><span class="u">6 undecided</span><span class="r">45 GOP</span></div>
+        <div class="foot"><span>51 for control</span><span>Source: AP</span></div>
+      </div></div>
+      <div class="txt"><b>Live screens</b><span>Two always-on pages that show whatever chart the producer last published.</span></div>
+    </div>
   </div>
 </main>
 <footer>
