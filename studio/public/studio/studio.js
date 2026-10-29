@@ -1,5 +1,5 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
-// published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
+// published), and the sections that organise this browser's view of the graphics (Slate, Races, Movement, catalogs).
 import { buildQueue } from "/ticker-queue.js";
 import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
@@ -516,9 +516,9 @@ const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 
 const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.featuredRaceIds.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
 function raceBand(r, { featured, position = null }) {
   const who = indName(r);
-  return `<div class="raceband">${position ? `<span class="pos" title="Position ${position} in the Featured races list">${position}</span>` : ""}<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
+  return `<div class="raceband">${position ? `<span class="pos" title="Position ${position} on the Slate">${position}</span>` : ""}<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
     <span class="meta">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results yet"}${r.called ? " · AP CALL" : ""}${r.rankedChoice ? " · ranked choice" : ""}</span>
-    <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Featured" : "Set as Featured race"}</button></div>`;
+    <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Slate" : "Put on the Slate"}</button></div>`;
 }
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
@@ -528,7 +528,7 @@ async function confirmThen(title, body, fn) {
 }
 function toggleFeatured(id) {
   const on = draft.featuredRaceIds.includes(id);
-  confirmThen(on ? "Remove from Featured Races?" : "Feature this race?", `${esc(raceName(id))} ${on ? "leaves the Featured Races section." : "gets a row in Featured Races with every featured chart."}`,
+  confirmThen(on ? "Remove from the Slate?" : "Put this race on the Slate?", `${esc(raceName(id))} ${on ? "leaves the Slate." : "gets a row on the Slate with every featured chart."}`,
     () => { draft.featuredRaceIds = on ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id]; });
 }
 /** The catalogs' Add to / Remove from ticker: a race joins the end of the crawl order, or every top-level entry of it goes.
@@ -548,7 +548,7 @@ function toggleChart(id) {
   const key = chart.kind === "race" ? "featuredCharts" : chart.kind === "other" ? "persistentCharts" : "movementCharts";
   const on = draft[key].includes(id);
   const target = chart.kind === "race" ? "Featured Charts" : chart.kind === "other" ? "Persistent Elements" : overviewName(chart);
-  const where = chart.kind === "race" ? "the Featured Races set (every featured race)" : `the ${target}${chart.kind === "other" ? " section, where its inputs are set" : ""}`;
+  const where = chart.kind === "race" ? "the Slate's chart set (every race on it)" : `the ${target}${chart.kind === "other" ? " section, where its inputs are set" : ""}`;
   confirmThen(on ? `Remove ${id} from ${target}?` : `Add ${id} to ${target}?`, `${esc(chart.id)} ${esc(chart.name)} ${on ? "leaves" : "joins"} ${where}.`,
     () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); if (on && key === "persistentCharts") delete draft.persistentSettings[id]; });
 }
@@ -722,7 +722,7 @@ function raceOptions(selected) {
   if (!index) return "";
   const feat = draft.featuredRaceIds.map((id) => index.byId.get(id)).filter(Boolean);
   const opt = (r) => `<option value="${esc(r.label)}" ${selected === r.label ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)} · ${esc(r.title)}</option>`;
-  return `<optgroup label="Featured races">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
+  return `<optgroup label="On the Slate">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
 }
 function stateOptions(selected) {
   const states = index ? [...new Set(index.races.map((r) => r.state))].sort() : FEATURED_RACES.map((r) => r.state);
@@ -891,7 +891,7 @@ function renderDetail() {
   draft.featuredRaceIds.forEach((id, i) => {
     const r = index.byId.get(id);
     const row = document.createElement("div"); row.className = "racerow";
-    if (!r) { row.innerHTML = `<div class="raceband"><span class="pos">${i + 1}</span><span class="lab">${esc(id)}</span><span class="ttl">Not in the current AP feed</span><button class="featbtn" data-feat="${esc(id)}">Remove from Featured</button></div>`; grid.appendChild(row); return; }
+    if (!r) { row.innerHTML = `<div class="raceband"><span class="pos">${i + 1}</span><span class="lab">${esc(id)}</span><span class="ttl">Not in the current AP feed</span><button class="featbtn" data-feat="${esc(id)}">Remove from Slate</button></div>`; grid.appendChild(row); return; }
     row.innerHTML = raceBand(r, { featured: true, position: i + 1 });
     const cg = document.createElement("div"); cg.className = "cardgrid";
     for (const cid of draft.featuredCharts) {
@@ -999,10 +999,10 @@ function adoptNewCharts() {
   if (changed) draft = saveLocal(draft);
 }
 
-// ---------- Movement Overview ----------
-// movementCharts holds both series; the C charts render in Movement Overview, the D charts in Broad Races Overview.
+// ---------- Movement and Races ----------
+// movementCharts holds both series; the C charts render in Movement, the D charts in Races.
 const seriesOf = (id) => id[0];
-const overviewName = (chart) => (seriesOf(chart.id) === "D" ? "Races Overview" : "Movement Overview");
+const overviewName = (chart) => (seriesOf(chart.id) === "D" ? "Races" : "Movement");
 function renderMovement() {
   for (const [gridId, series] of [["movegrid", "C"], ["broadgrid", "D"]]) {
     const grid = $(gridId); grid.className = "cardgrid"; grid.innerHTML = "";
@@ -1041,7 +1041,7 @@ function renderCatalog() {
     const featured = draft.featuredRaceIds.includes(r.id);
     const onTicker = draft.pinnedRaceIds.includes(r.id);
     crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
-      <div class="btns"><span class="nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</span><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button><button class="mini ${featured ? "on" : ""}" data-feat="${r.id}" title="${featured ? "Remove from Featured races" : "Set as a Featured race"}">${featured ? "★ Featured" : "☆ Feature"}</button></div></div>`;
+      <div class="btns"><span class="nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</span><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button><button class="mini ${featured ? "on" : ""}" data-feat="${r.id}" title="${featured ? "Remove from the Slate" : "Put on the Slate"}">${featured ? "★ Slate" : "☆ Slate"}</button></div></div>`;
     if (openRaces.has(r.id)) crow.appendChild(catalogBody(r, featured));
     list.appendChild(crow);
   }
