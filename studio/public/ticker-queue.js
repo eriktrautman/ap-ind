@@ -34,36 +34,45 @@ export function defaultPins(races) {
     .map((r) => r.id);
 }
 
+/** The crawl order as flat race and text entries: tickerItems with its chunks expanded when the state has a sequence,
+ *  else the older fields (races in order, a manual item after every two). */
+export function crawlSequence(p) {
+  if (Array.isArray(p.tickerItems)) {
+    const chunks = new Map((Array.isArray(p.chunks) ? p.chunks : []).map((c) => [c.id, c]));
+    const out = [];
+    for (const it of p.tickerItems) {
+      if (!it) continue;
+      if (it.t === "chunk") { const c = chunks.get(it.id); if (c) for (const x of c.items ?? []) out.push({ ...x, chunk: c.id }); }
+      else out.push(it);
+    }
+    return out;
+  }
+  const pins = Array.isArray(p.pinnedRaceIds) ? p.pinnedRaceIds : [];
+  const manual = (Array.isArray(p.manualItems) ? p.manualItems : []).filter((m) => m && m.text);
+  const out = []; let mi = 0;
+  pins.forEach((id, i) => { out.push({ t: "race", id }); if (i % 2 === 1 && mi < manual.length) { const m = manual[mi++]; out.push({ t: "text", id: m.id, text: m.text }); } });
+  while (mi < manual.length) { const m = manual[mi++]; out.push({ t: "text", id: m.id, text: m.text }); }
+  return out;
+}
+
 /**
  * @param {Array} races   from index.json
- * @param {Object} producer {pinnedRaceIds, manualItems, idleText, callHighlight}
+ * @param {Object} producer {tickerItems, chunks, idleText, callHighlight} (or the older {pinnedRaceIds, manualItems})
  * @returns {{items: Array<{key,kind,text,emphasis}>, source: "pins"|"default"|"idle", missing: string[]}}
  */
 export function buildQueue(races, producer) {
   const p = producer ?? {};
   const byId = new Map((races ?? []).map((r) => [r.id, r]));
-  const pins = Array.isArray(p.pinnedRaceIds) ? p.pinnedRaceIds : [];
-  const usingDefault = pins.length === 0;
-  const ids = usingDefault ? defaultPins(races ?? []) : pins;
-  const missing = ids.filter((id) => !byId.has(id));
+  let seq = crawlSequence(p);
+  const usingDefault = !seq.some((it) => it.t === "race" || (it.t === "text" && it.text));
+  if (usingDefault) seq = defaultPins(races ?? []).map((id) => ({ t: "race", id }));
+  const missing = [...new Set(seq.filter((it) => it.t === "race" && !byId.has(it.id)).map((it) => it.id))];
 
-  const raceItems = ids
-    .map((id) => byId.get(id))
-    .filter(Boolean)
-    .map((r) => ({ key: `race:${r.id}`, kind: "race", text: raceText(r), emphasis: !!r.called && p.callHighlight !== false }));
-
-  const manualItems = (Array.isArray(p.manualItems) ? p.manualItems : [])
-    .filter((m) => m && m.text)
-    .map((m) => ({ key: `manual:${m.id}`, kind: "manual", text: m.text, emphasis: true }));
-
-  // Interleave: one manual item after every two race items, remainder at the end.
   const out = [];
-  let mi = 0;
-  raceItems.forEach((item, i) => {
-    out.push(item);
-    if (i % 2 === 1 && mi < manualItems.length) out.push(manualItems[mi++]);
+  seq.forEach((it, i) => {
+    if (it.t === "race") { const r = byId.get(it.id); if (r) out.push({ key: `race:${r.id}:${i}`, kind: "race", text: raceText(r), emphasis: !!r.called && p.callHighlight !== false }); }
+    else if (it.t === "text" && it.text) out.push({ key: `manual:${it.id ?? i}:${i}`, kind: "manual", text: it.text, emphasis: true });
   });
-  while (mi < manualItems.length) out.push(manualItems[mi++]);
 
   if (!out.length) {
     out.push({ key: "idle", kind: "idle", text: p.idleText || PLACEHOLDER_IDLE, emphasis: false });

@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -128,7 +128,6 @@ let readersReadAt = 0;
 let readersError = null;
 let lastPublished = null;     // { updatedAt, blocks: ["ticker"] | ["screenA"] | ... }
 let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
-const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
 const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
 /** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
@@ -289,7 +288,7 @@ const canPull = () => runtime ? !!runtime.production?.canPull : !liveError;
 const prodHost = () => runtime ? (runtime.production?.where === "self" ? `${location.host} (this laptop)` : runtime.production?.origin?.replace(/^https?:\/\//, "") ?? "the website") : location.host;
 const onSite = () => !runtime;
 const origin = () => (onSite() ? location.origin : runtime?.production?.origin ?? location.origin);
-const BUILDER = "the builder's races and order, AP Call highlight, manual items and idle text";
+const BUILDER = "the builder's crawl order (races, text and chunks), its chunks, AP Call highlight and idle text";
 
 /** Every edit comes through here: the page saves to this browser at once. Nothing is published by an edit. */
 function commit() {
@@ -303,7 +302,7 @@ function renderHow() {
   const host = prodHost();
   $("howtext").innerHTML = [
     `<b>Every chart is a link.</b> Show or Copy URL on any card gives an address carrying the chart, the race and the display settings. It always shows the same thing and can be shared with other authorized people.`,
-    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a ticker in the Ticker Builder, use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
+    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a crawl order of races, text and chunks (packages of races and text, built once under the ticker and placed anywhere), use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
     `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the published screen on the right.`,
     `<b>Collect what you need.</b> Feature races and charts to keep them close in the sections above the catalogs. This organises your view only and is never published.`,
     `<b>Producer actions</b> (poll, Test/Live, pause) need a producer password. A publisher password publishes the ticker and the live screens but cannot use them; a read-only password (and the rehearsal one) can look but not change anything published.`,
@@ -317,11 +316,10 @@ function renderLive() {
   const box = $("liveparams");
   if (!live) box.innerHTML = `<div class="warnline bad">${liveError ? `Cannot read the live ticker: ${esc(liveError)}` : "Reading the live ticker…"}</div>`;
   else {
-    const labels = live.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
     box.innerHTML = `<table class="params">
-      <tr><td class="k" title="races: race ids in crawl order">races</td><td>${labels.map((l) => `<span class="lab">${esc(l)}</span>`).join(" ")}</td></tr>
+      <tr><td class="k" title="crawl: races, text and chunks in crawl order; hover a piece for the full text">crawl</td><td><div class="chips">${live.tickerItems.map((it) => seqChip(it, live)).join("")}</div></td></tr>
+      ${live.chunks.length ? `<tr><td class="k" title="chunks: the packages published with this ticker, used in the crawl or not">chunks</td><td>${live.chunks.map((c) => `<div><span class="chunktag">CHUNK</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
-      <tr><td class="k" title="item: manual items, one after every two races">item</td><td>${live.manualItems.length ? live.manualItems.map((m) => `<div>${esc(m.text)}</div>`).join("") : '<span class="muted">none</span>'}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
       <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=black</code>, <code>?bg=green</code> or <code>?bg=transparent</code>, and <code>&amp;opacity=10..100</code></span></td></tr>
       <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})${byWhom(live)}` : "never: the shipped defaults are live"}</td></tr>
@@ -380,7 +378,9 @@ async function pull() {
   let latest;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
   catch (e) { liveError = e.message; renderLive(); await ask({ title: "Can't read the live ticker", body: `<div class="warnline bad">${esc(e.message)}</div><p>The builder is unchanged.</p>`, ok: "OK" }); return; }
-  const changes = tickerDiff(draft, latest);
+  // Pull keeps chunks that exist only on this page, so the change list is against what the builder will actually become.
+  const mineAfter = draft.chunks.filter((c) => !latest.chunks.some((x) => x.id === c.id));
+  const changes = tickerDiff(draft, { ...latest, chunks: [...latest.chunks, ...mineAfter] });
   const ok = await ask({
     title: "Pull from the LIVE TICKER?",
     body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing published changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
@@ -388,7 +388,8 @@ async function pull() {
   });
   if (!ok) return;
   liveSeenAt = latest.updatedAt;
-  draft = saveLocal({ ...draft, ...tickerPart(latest) });
+  // The live chunks replace this page's copies of the same chunks; chunks that exist only here stay.
+  draft = saveLocal({ ...draft, ...tickerPart(latest), chunks: [...latest.chunks, ...mineAfter] });
   renderAll(); cards.broadcast(draft);
 }
 async function restoreDefaults() {
@@ -530,11 +531,17 @@ function toggleFeatured(id) {
   confirmThen(on ? "Remove from Featured Races?" : "Feature this race?", `${esc(raceName(id))} ${on ? "leaves the Featured Races section." : "gets a row in Featured Races with every featured chart."}`,
     () => { draft.featuredRaceIds = on ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id]; });
 }
+/** The catalogs' Add to / Remove from ticker: a race joins the end of the crawl order, or every top-level entry of it goes.
+ *  A race that crawls only inside a chunk is removed by editing the chunk. */
 function toggleTicker(id) {
-  const a = draft.pinnedRaceIds, on = a.includes(id);
-  if (on && a.length === 1) { ask({ title: "The ticker keeps at least one race", body: "<p>Add another race before removing this one.</p>", ok: "OK" }); return; }
-  confirmThen(on ? "Remove from the ticker?" : "Add to the ticker?", `${esc(raceName(id))} ${on ? "stops crawling." : "joins the crawl at the end of the list."}`,
-    () => { draft.pinnedRaceIds = on ? a.filter((x) => x !== id) : [...a, id]; });
+  const on = draft.pinnedRaceIds.includes(id);
+  const top = draft.tickerItems.some((it) => it.t === "race" && it.id === id);
+  if (on && !top) {
+    const names = draft.chunks.filter((c) => c.items.some((it) => it.t === "race" && it.id === id)).map((c) => c.name || c.id);
+    ask({ title: "This race crawls inside a chunk", body: `<p>${esc(raceName(id))} is in ${names.map((n) => `<b>${esc(n)}</b>`).join(", ")}. Edit the chunk in the Chunks area under the ticker to take it out.</p>`, ok: "OK", info: true }); return;
+  }
+  confirmThen(on ? "Remove from the ticker?" : "Add to the ticker?", `${esc(raceName(id))} ${on ? "leaves the crawl order." : "joins the end of the crawl order."}`,
+    () => { draft.tickerItems = on ? draft.tickerItems.filter((it) => !(it.t === "race" && it.id === id)) : [...draft.tickerItems, { t: "race", id }]; });
 }
 function toggleChart(id) {
   const chart = CHARTS.find((c) => c.id === id); if (!chart || id === "A1") return;
@@ -546,41 +553,106 @@ function toggleChart(id) {
     () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); if (on && key === "persistentCharts") delete draft.persistentSettings[id]; });
 }
 
-// ---------- Ticker section ----------
-function renderPins() {
-  if (!index) return;
-  $("pincount").textContent = `${draft.pinnedRaceIds.length}`;
-  $("pins").innerHTML = draft.pinnedRaceIds.map((id, i) => {
-    const r = index.byId.get(id);
-    return `<div class="row" data-id="${id}">
-      <div><div class="nm"><span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(id)}</span><span class="muted">not in the current AP feed; the ticker skips it</span>`}</div>${r ? `<div class="sub">${cands(r)}</div>` : ""}</div>
-      <div class="btns"><button class="up" ${i === 0 ? "disabled" : ""}>▲</button><button class="down" ${i === draft.pinnedRaceIds.length - 1 ? "disabled" : ""}>▼</button><button class="rm" ${draft.pinnedRaceIds.length === 1 ? 'title="At least one race stays on the ticker"' : ""}>✕</button></div>
-    </div>`;
-  }).join("");
+// ---------- Ticker section: the crawl order and the chunks ----------
+// One list type for both: rows of races, text and (in the crawl order only) chunks, reordered with ▲▼, removed with ✕.
+// data-list="seq" is draft.tickerItems; data-list="chunk:<id>" is that chunk's items.
+const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+const chunkById = (id) => draft.chunks.find((c) => c.id === id);
+const listFor = (key) => (key === "seq" ? draft.tickerItems : chunkById(key.slice(6))?.items);
+const raceTip = (id) => { const r = index?.byId?.get(id); return r ? `${[r.label, r.stateName, r.title].filter(Boolean).join(" · ")}\n${cands(r).replace(/<[^>]+>/g, "")}${r.called ? "\nAP CALL" : ""}` : `race ${id}: not in the current AP feed; the ticker skips it`; };
+const short = (t, n = 32) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
+/** A condensed piece of a sequence: a race label, a text snippet or a chunk name, each with the full version on hover. */
+function seqChip(it, st = draft) {
+  if (it.t === "race") { const r = index?.byId?.get(it.id); return `<span class="chip race ${r ? "" : "missing"}" title="${esc(raceTip(it.id))}">${esc(r?.label ?? it.id)}</span>`; }
+  if (it.t === "text") return `<span class="chip text" title="${esc(it.text)}">“${esc(short(it.text))}”</span>`;
+  const c = st.chunks.find((x) => x.id === it.id);
+  return `<span class="chip chunk ${c ? "" : "missing"}" title="${esc(c ? `Chunk ${c.name || c.id}: ${c.items.map((x) => x.t === "race" ? (index?.byId?.get(x.id)?.label ?? x.id) : `“${x.text}”`).join(" · ") || "(empty)"}` : "chunk no longer defined; the ticker skips it")}"><span class="chunktag">CHUNK</span>${esc(c?.name || it.id)}</span>`;
 }
-function renderManual() {
-  $("manualcount").textContent = `${draft.manualItems.length}`;
-  $("manual").innerHTML = draft.manualItems.length ? draft.manualItems.map((m) => `<div class="row manual" data-id="${esc(m.id)}"><div class="nm">${esc(m.text)}</div><div class="btns"><button class="rm">✕</button></div></div>`).join("") : "";
+function seqRow(it, i, n) {
+  const btns = `<div class="btns"><button class="up" ${i === 0 ? "disabled" : ""} title="Move up">▲</button><button class="down" ${i === n - 1 ? "disabled" : ""} title="Move down">▼</button><button class="rm" title="Remove from this list">✕</button></div>`;
+  if (it.t === "race") {
+    const r = index?.byId?.get(it.id);
+    return `<div class="row" data-i="${i}"><div><div class="nm"><span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(it.id)}</span><span class="muted">not in the current AP feed; the ticker skips it</span>`}</div>${r ? `<div class="sub">${cands(r)}</div>` : ""}</div>${btns}</div>`;
+  }
+  if (it.t === "text") return `<div class="row textrow" data-i="${i}"><div class="nm"><span class="ord">${i + 1}</span><span class="quote" title="${esc(it.text)}">“${esc(it.text)}”</span></div>${btns}</div>`;
+  const c = chunkById(it.id);
+  return `<div class="row chunkrow" data-i="${i}"><div><div class="nm"><span class="ord">${i + 1}</span><span class="chunktag">CHUNK</span>${c ? `<b>${esc(c.name || c.id)}</b> <span class="muted small">${c.items.length} piece${c.items.length === 1 ? "" : "s"}</span>` : `<span class="muted">chunk no longer defined; the ticker skips it</span>`}</div>${c ? `<div class="chips">${c.items.length ? c.items.map((x) => seqChip(x)).join("") : '<span class="muted small">empty: add races and text in the Chunks area below</span>'}</div>` : ""}</div>${btns}</div>`;
+}
+function renderSeq() {
+  const items = draft.tickerItems;
+  const flat = expandTicker(draft);
+  $("seqcount").textContent = `${items.length} element${items.length === 1 ? "" : "s"} · ${flat.length} piece${flat.length === 1 ? "" : "s"} crawl`;
+  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the featured races crawl. Add races, text or a chunk below.</div>`;
+  $("chunkpick").innerHTML = draft.chunks.length ? draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length})</option>`).join("") : `<option value="">no chunks yet: build one below</option>`;
+  $("addchunkref").querySelector("button").disabled = !draft.chunks.length;
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").value = draft.callHighlight ? "1" : "0";
 }
-$("pins").addEventListener("click", (e) => {
-  const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!row || !b) return;
-  const a = draft.pinnedRaceIds; const i = a.indexOf(row.dataset.id); if (i < 0) return;
-  if (b.classList.contains("rm")) { toggleTicker(row.dataset.id); return; }
-  if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
+function renderChunks() {
+  const box = $("chunks");
+  $("chunkcount").textContent = draft.chunks.length ? `${draft.chunks.length}` : "";
+  const active = document.activeElement;
+  if (box.contains(active) && active.matches(".chunkname")) return;   // typing a name: redraw on blur
+  // A picker or text box in a chunk keeps its place through the redraw (a pick or an add redraws the card it sits in).
+  const keep = box.contains(active) && active.matches("[data-pick], form[data-addtext] input") ? { chunk: active.closest(".chunk")?.dataset.chunk, pick: active.matches("[data-pick]") } : null;
+  box.innerHTML = draft.chunks.map((c) => {
+    const uses = draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length;
+    return `<div class="chunk" data-chunk="${esc(c.id)}">
+      <div class="chunktop"><span class="chunktag">CHUNK</span><input class="chunkname" value="${esc(c.name)}" maxlength="60" placeholder="Chunk name" title="The name this chunk shows in the crawl order"><span class="muted small">${uses ? `in the crawl ${uses}×` : "not in the crawl"}</span><span class="spacer"></span><button class="addref" title="Place this chunk at the end of the crawl order">Add to crawl</button><button class="rmchunk" title="Delete this chunk; the crawl order drops it">Delete</button></div>
+      <div class="list pins seq" data-list="chunk:${esc(c.id)}">${c.items.length ? c.items.map((it, i) => seqRow(it, i, c.items.length)).join("") : '<div class="empty">Empty. Add races and text below.</div>'}</div>
+      <div class="filters addfeat"><input data-pick="chunk:${esc(c.id)}" placeholder="Add a race to this chunk: type a label, state or candidate" autocomplete="off"><div class="suggest" hidden></div></div>
+      <form class="addmanual" data-addtext="chunk:${esc(c.id)}"><input placeholder="Add text to this chunk" maxlength="240"><button type="submit">Add text</button></form>
+    </div>`;
+  }).join("") || `<div class="empty">No chunks yet. Name one above to start building it.</div>`;
+  if (keep?.chunk) box.querySelector(`.chunk[data-chunk="${keep.chunk}"] ${keep.pick ? "[data-pick]" : "form[data-addtext] input"}`)?.focus();
+}
+$("chunks").addEventListener("focusout", (e) => { if (e.target.closest(".chunkname")) setTimeout(renderChunks, 450); });   // after the name's debounced commit
+// Reorder and remove, in the crawl order and inside every chunk.
+document.addEventListener("click", (e) => {
+  const list = e.target.closest("[data-list]"); const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!list || !row || !b) return;
+  const a = listFor(list.dataset.list); if (!a) return;
+  const i = Number(row.dataset.i); if (!(i >= 0 && i < a.length)) return;
+  if (b.classList.contains("rm")) a.splice(i, 1);
+  else if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
   else if (b.classList.contains("down") && i < a.length - 1) [a[i + 1], a[i]] = [a[i], a[i + 1]];
+  else return;
   commit();
 });
-$("manual").addEventListener("click", (e) => {
-  const row = e.target.closest(".row"); if (!row || !e.target.closest(".rm")) return;
-  draft.manualItems = draft.manualItems.filter((m) => m.id !== row.dataset.id); commit();
-});
-$("addmanual").addEventListener("submit", (e) => {
+// Text into the crawl order or a chunk.
+document.addEventListener("submit", (e) => {
+  const form = e.target.closest("form[data-addtext]"); if (!form) return;
   e.preventDefault();
-  const text = $("manualtext").value.trim(); if (!text) return;
-  draft.manualItems.push({ id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, text });
-  $("manualtext").value = ""; commit();
+  const input = form.querySelector("input"); const text = input.value.trim(); if (!text) return;
+  const a = listFor(form.dataset.addtext); if (!a) return;
+  a.push({ t: "text", id: newId(), text }); input.value = ""; commit();
+});
+$("addchunkref").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const id = $("chunkpick").value; if (!id || !chunkById(id)) return;
+  draft.tickerItems.push({ t: "chunk", id }); commit();
+});
+$("newchunk").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = $("chunkname").value.trim(); if (!name) { $("chunkname").focus(); return; }
+  draft.chunks.push({ id: newId(), name, items: [] }); $("chunkname").value = ""; commit();
+});
+let chunkNameTimer = null;
+$("chunks").addEventListener("input", (e) => {
+  const inp = e.target.closest(".chunkname"); if (!inp) return;
+  const c = chunkById(inp.closest(".chunk").dataset.chunk); if (!c) return;
+  c.name = inp.value.trim().slice(0, 60);
+  clearTimeout(chunkNameTimer); chunkNameTimer = setTimeout(commit, 400);
+});
+$("chunks").addEventListener("click", async (e) => {
+  const box = e.target.closest(".chunk"); const b = e.target.closest("button"); if (!box || !b) return;
+  const c = chunkById(box.dataset.chunk); if (!c) return;
+  if (b.classList.contains("addref")) { draft.tickerItems.push({ t: "chunk", id: c.id }); commit(); return; }
+  if (b.classList.contains("rmchunk")) {
+    const uses = draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length;
+    const ok = await ask({ title: `Delete chunk "${c.name || c.id}"?`, body: `<p>Its ${c.items.length} piece${c.items.length === 1 ? "" : "s"} go with it${uses ? `, and the crawl order loses it in ${uses} place${uses === 1 ? "" : "s"}` : ""}.</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: "Delete chunk", danger: true });
+    if (!ok) return;
+    draft.chunks = draft.chunks.filter((x) => x.id !== c.id); draft.tickerItems = draft.tickerItems.filter((it) => !(it.t === "chunk" && it.id === c.id)); commit();
+  }
 });
 let idleTimer = null;
 $("idletext").addEventListener("input", () => { draft.idleText = $("idletext").value; clearTimeout(idleTimer); idleTimer = setTimeout(commit, 400); });
@@ -613,9 +685,9 @@ function liveTickerUrl() { const s = displayParams({ bg: "", opacity: secDisplay
 /** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {
   const p = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity });
-  p.set("races", draft.pinnedRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(","));
+  // The crawl order with its chunks expanded: a race by its label, text after ~, entries separated by |.
+  p.set("seq", expandTicker(draft).map((it) => it.t === "race" ? (index?.byId?.get(it.id)?.label ?? it.id) : `~${it.text.replace(/\|/g, "/")}`).join("|"));
   p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
-  for (const m of draft.manualItems) if (m.text) p.append("item", m.text);
   p.set("idle", draft.idleText || DEFAULTS.idleText);   // always spelled out, like calls
   return `${origin()}/ticker?${p.toString()}`;
 }
@@ -877,7 +949,29 @@ function racePicker(inputId, boxId, { exclude, onPick }) {
   input.addEventListener("keydown", (e) => { if (e.key === "Escape") { box.hidden = true; input.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box.querySelector(".row"); if (first) { onPick(first.dataset.id); input.value = ""; render(); } } });
   document.addEventListener("click", (e) => { if (!e.target.closest(`#${inputId}, #${boxId}`)) box.hidden = true; });
 }
-racePicker("pinq", "pinsuggest", { exclude: () => draft.pinnedRaceIds, onPick: toggleTicker });
+/** The same picker for the crawl order and every chunk (data-pick="seq" | "chunk:<id>"): one listener for all of them, since
+ *  the chunk editors are redrawn on every change. A pick goes straight into that list, no confirmation: the list is right there. */
+(() => {
+  const boxOf = (input) => input.parentElement.querySelector(".suggest");
+  const render = (input) => {
+    const box = boxOf(input); if (!index || !box) { if (box) box.hidden = true; return; }
+    const target = listFor(input.dataset.pick) ?? [];
+    const skip = new Set(target.filter((it) => it.t === "race").map((it) => it.id));
+    const q = input.value.trim().toLowerCase();
+    let rows = index.races.filter((r) => !skip.has(r.id));
+    if (q) rows = rows.filter((r) => `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase().includes(q));
+    else rows = rows.filter((r) => draft.featuredRaceIds.includes(r.id) || r.hasIndependent).sort((a, b) => (draft.featuredRaceIds.includes(b.id) - draft.featuredRaceIds.includes(a.id)) || a.label.localeCompare(b.label));
+    rows = rows.slice(0, 12);
+    box.hidden = false;
+    box.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-id="${r.id}"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") + (!q ? `<div class="empty">Type to search all ${index.races.length} races.</div>` : "") : `<div class="empty">No races match.</div>`;
+  };
+  const pick = (input, id) => { const a = listFor(input.dataset.pick); if (!a) return; a.push({ t: "race", id }); input.value = ""; commit(); const again = document.querySelector(`[data-pick="${input.dataset.pick}"]`); if (again) { again.focus(); render(again); } };
+  document.addEventListener("input", (e) => { const i = e.target.closest("[data-pick]"); if (i) render(i); });
+  document.addEventListener("focusin", (e) => { const i = e.target.closest("[data-pick]"); if (i) render(i); });
+  document.addEventListener("mousedown", (e) => { const row = e.target.closest(".addfeat .suggest .row"); if (!row) return; const input = row.closest(".addfeat").querySelector("[data-pick]"); if (!input) return; e.preventDefault(); pick(input, row.dataset.id); });
+  document.addEventListener("keydown", (e) => { const i = e.target.closest("[data-pick]"); if (!i) return; const box = boxOf(i); if (e.key === "Escape") { box.hidden = true; i.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box?.querySelector(".row"); if (first) pick(i, first.dataset.id); } });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".addfeat")) document.querySelectorAll("[data-pick] ~ .suggest").forEach((b) => (b.hidden = true)); });
+})();
 racePicker("featq", "featsuggest", { exclude: () => draft.featuredRaceIds, onPick: toggleFeatured });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-feat]"); if (b) toggleFeatured(b.dataset.feat); });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-pin]"); if (b) toggleTicker(b.dataset.pin); });
@@ -1128,7 +1222,7 @@ async function demoteLaptop() {
 function renderAll() {
   renderStatus();
   renderLive();
-  renderPins(); renderManual(); sendPreview(); renderScreens();
+  renderSeq(); renderChunks(); sendPreview(); renderScreens();
   renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
   cards.prune();
 }

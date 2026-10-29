@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -45,19 +45,26 @@ test("a sign-in cookie opens the Studio for its account only, and dies when tamp
   } finally { delete process.env.STUDIO_PASSWORD_PRODUCER_TEST_PERSON; Object.assign(process.env, saved); }
 });
 
-test("the ticker crawl: idle line before data, pinned races in order with calls highlighted, manual items after every two races", () => {
+test("the ticker crawl: idle line before data, the crawl order with chunks expanded and calls highlighted, and an older state's races and items", () => {
   const races = [
     { id: "1", label: "NE-SEN", featured: true, totalVotes: 10, precinctsPct: 5, eevp: 5, candidates: [{ last: "Osborn", independent: true, pct: 51 }, { last: "Ricketts", party: "GOP", pct: 49 }] },
     { id: "2", label: "MT-SEN", called: true, totalVotes: 10, precinctsPct: 100, candidates: [{ last: "Winner", party: "Dem", pct: 60, winner: true }, { last: "Loser", party: "GOP", pct: 40 }] },
   ];
   assert.deepEqual(buildQueue([], { idleText: "Welcome" }).items.map((i) => [i.kind, i.text]), [["idle", "Welcome"]]);
+  // An older state (races in order, a manual item after every two) still crawls the same way.
   const q = buildQueue(races, { pinnedRaceIds: ["2", "1", "404"], manualItems: [{ id: "m", text: "Polls close at 7" }], callHighlight: true });
-  assert.deepEqual(q.items.map((i) => i.key), ["race:2", "race:1", "manual:m"]);
+  assert.deepEqual(q.items.map((i) => [i.kind, i.text.split(" · ")[0]]), [["race", "MT-SEN"], ["race", "NE-SEN"], ["manual", "Polls close at 7"]]);
   assert.deepEqual(q.missing, ["404"]);
   assert.match(q.items[0].text, /MT-SEN · Winner \(D\) 60\.0% · Loser \(R\) 40\.0% · AP CALL ✓ Winner \(D\)/);
   assert.equal(q.items[0].emphasis, true);
   assert.equal(buildQueue(races, { pinnedRaceIds: ["2"], callHighlight: false }).items[0].emphasis, false);
   assert.equal(buildQueue(races, {}).source, "default");
+  // The crawl order: races, text and chunks in the producer's order; a chunk expands in place, each time it is placed.
+  const st = normalize({ tickerItems: [{ t: "text", id: "a", text: "Welcome" }, { t: "chunk", id: "neb" }, { t: "race", id: "2" }, { t: "chunk", id: "neb" }], chunks: [{ id: "neb", name: "Nebraska", items: [{ t: "race", id: "1" }, { t: "text", id: "b", text: "Osborn watch" }] }] });
+  assert.deepEqual(buildQueue(races, st).items.map((i) => i.text.split(" · ")[0]), ["Welcome", "NE-SEN", "Osborn watch", "MT-SEN", "NE-SEN", "Osborn watch"]);
+  assert.deepEqual(st.pinnedRaceIds, ["1", "2"], "the races in crawl order, derived for everything that reads the old field");
+  assert.deepEqual(st.manualItems.map((m) => m.text), ["Welcome", "Osborn watch", "Osborn watch"]);
+  assert.equal(normalize({ tickerItems: [{ t: "chunk", id: "gone" }] }).tickerItems[0].t, "race", "a crawl with nothing left in it falls back to the featured races");
 });
 
 test("vercel.json wires the Studio gate, the chart router, the data files and the poll cron, and the build ships what the pages import", () => {

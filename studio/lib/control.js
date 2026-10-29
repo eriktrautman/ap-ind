@@ -135,8 +135,13 @@ export function canonicalAddress(pathname, search = "") {
   return `/g/${c.id}${s ? "?" + s : ""}`;
 }
 
-/** The shipped state. pinnedRaceIds is the ticker list (the name the ticker has always read). */
+/** The shipped state. The ticker crawls tickerItems, a sequence of races, text and chunks (named packages of races and
+ *  text, defined once and placed anywhere in the sequence, any number of times). pinnedRaceIds and manualItems are derived
+ *  from that sequence by normalize() (the races in crawl order, the texts in crawl order) for everything that has always
+ *  read them: older addresses, D5's fallback, older clients that publish only those two. */
 export const DEFAULTS = Object.freeze({
+  tickerItems: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })),   // {t:"race",id} | {t:"text",id,text} | {t:"chunk",id}
+  chunks: [],                                                          // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
   manualItems: [],
@@ -190,13 +195,42 @@ export function describeScreen(s) {
   return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""} · on ${s.bg || "transparent"}`;
 }
 
-const LIMITS = { pins: 60, featured: 40, manual: 20, text: 240, key: 8, context: 120 };
+const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, chunks: 24, chunkItems: 40, chunkName: 60 };
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
 const chartIds = (arr, kind) => {
   const known = new Set(CHARTS.filter((c) => c.kind === kind && !c.retired && c.id !== "A1").map((c) => c.id));
   return [...new Set((Array.isArray(arr) ? arr : []).filter((id) => known.has(id)))];
 };
+
+// ---------- the ticker sequence ----------
+const chunkIdOk = (id) => typeof id === "string" && /^[a-zA-Z0-9]{1,24}$/.test(id);
+/** One race, text or chunk entry, validated; null if it is none of those. Text ids are kept (or made from the position). */
+function seqItem(it, i, allowChunk) {
+  if (!it || typeof it !== "object") return null;
+  if (it.t === "race" && idOk(it.id)) return { t: "race", id: it.id };
+  if (it.t === "text" && typeof it.text === "string" && it.text.trim()) return { t: "text", id: String(it.id ?? "").slice(0, 40) || `t${i}`, text: it.text.trim().slice(0, LIMITS.text) };
+  if (allowChunk && it.t === "chunk" && chunkIdOk(it.id)) return { t: "chunk", id: it.id };
+  return null;
+}
+const seqItems = (raw, allowChunk, max) => (Array.isArray(raw) ? raw : []).map((it, i) => seqItem(it, i, allowChunk)).filter(Boolean).slice(0, max);
+/** The crawl order as flat race and text entries, chunks expanded (a chunk entry becomes its items, each carrying chunk: id). */
+export function expandTicker(state) {
+  const chunks = new Map((state.chunks ?? []).map((c) => [c.id, c]));
+  const out = [];
+  for (const it of state.tickerItems ?? []) {
+    if (it.t === "chunk") { const c = chunks.get(it.id); if (c) for (const x of c.items) out.push({ ...x, chunk: c.id }); }
+    else out.push(it);
+  }
+  return out;
+}
+/** The sequence an older state implies: its races in order with a manual item after every two, the rule the ticker had. */
+function legacySequence(pins, manual) {
+  const out = []; let mi = 0;
+  pins.forEach((id, i) => { out.push({ t: "race", id }); if (i % 2 === 1 && mi < manual.length) { const m = manual[mi++]; out.push({ t: "text", id: m.id, text: m.text }); } });
+  while (mi < manual.length) { const m = manual[mi++]; out.push({ t: "text", id: m.id, text: m.text }); }
+  return out;
+}
 
 /**
  * Coerce anything (a Blob file, a localStorage blob, a request body) into a complete, valid
@@ -206,19 +240,31 @@ const chartIds = (arr, kind) => {
  */
 export function normalize(raw) {
   const r = raw && typeof raw === "object" ? raw : {};
-  const pins = uniqIds(r.pinnedRaceIds, LIMITS.pins);
-  const manual = (Array.isArray(r.manualItems) ? r.manualItems : [])
-    .filter((m) => m && typeof m.text === "string" && m.text.trim())
-    .map((m) => ({ id: String(m.id ?? Date.now()).slice(0, 40), text: m.text.trim().slice(0, LIMITS.text), createdAt: m.createdAt ?? new Date().toISOString() }))
-    .slice(0, LIMITS.manual);
+  // Chunks first (the sequence may point at them), then the sequence: the stored one, or the one an older state implies.
+  const seenChunk = new Set();
+  const chunks = (Array.isArray(r.chunks) ? r.chunks : []).filter((c) => c && typeof c === "object" && chunkIdOk(c.id) && !seenChunk.has(c.id) && seenChunk.add(c.id))
+    .map((c) => ({ id: c.id, name: typeof c.name === "string" ? c.name.trim().slice(0, LIMITS.chunkName) : "", items: seqItems(c.items, false, LIMITS.chunkItems) })).slice(0, LIMITS.chunks);
+  let tickerItems;
+  if (Array.isArray(r.tickerItems)) tickerItems = seqItems(r.tickerItems, true, LIMITS.seq).filter((it) => it.t !== "chunk" || seenChunk.has(it.id));
+  else {
+    const oldPins = uniqIds(r.pinnedRaceIds, LIMITS.pins);
+    const oldManual = (Array.isArray(r.manualItems) ? r.manualItems : []).filter((m) => m && typeof m.text === "string" && m.text.trim()).map((m, i) => ({ id: String(m.id ?? `m${i}`).slice(0, 40), text: m.text.trim().slice(0, LIMITS.text) })).slice(0, LIMITS.manual);
+    tickerItems = legacySequence(oldPins, oldManual);
+  }
+  if (!tickerItems.length) tickerItems = DEFAULTS.tickerItems.map((it) => ({ ...it }));   // the ticker always has something to crawl
+  const flat = expandTicker({ tickerItems, chunks });
+  const pins = uniqIds(flat.filter((it) => it.t === "race").map((it) => it.id), LIMITS.pins);
+  const manual = flat.filter((it) => it.t === "text").map((it) => ({ id: it.id, text: it.text })).slice(0, LIMITS.manual);
   const context = {};
   if (r.contextLines && typeof r.contextLines === "object") {
     for (const [k, v] of Object.entries(r.contextLines)) if (idOk(k) && typeof v === "string" && v.trim()) context[k] = v.trim().slice(0, LIMITS.context);
   }
   return {
-    pinnedRaceIds: pins.length ? pins : [...DEFAULTS.pinnedRaceIds],
+    tickerItems,
+    chunks,
+    pinnedRaceIds: pins.length ? pins : [...DEFAULTS.pinnedRaceIds],   // derived: the races in crawl order (the default list when the crawl has none)
     callHighlight: typeof r.callHighlight === "boolean" ? r.callHighlight : DEFAULTS.callHighlight,
-    manualItems: manual,
+    manualItems: manual,                                                 // derived: the texts in crawl order
     idleText: typeof r.idleText === "string" ? r.idleText.trim().slice(0, LIMITS.text) : "",
     tickerBg: ["", "black", "green"].includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
     featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
@@ -257,7 +303,16 @@ export function diffState(from, to) {
     if (reordered) out.push({ field, text: `${label}: order changes to ${b.map(wrap).join(", ")} (was ${a.map(wrap).join(", ")})` });
     else if ((added.length || removed.length) && a.join() !== b.join()) out.push({ field, text: `${label}: order is now ${b.map(wrap).join(", ")}` });
   };
-  list("pinnedRaceIds", "Ticker races", true);
+  // The crawl: one line naming the new order when anything in it changes; chunks by name.
+  const seqText = (st) => st.tickerItems.map((it) => it.t === "race" ? `{${it.id}}` : it.t === "text" ? `"${it.text}"` : `[${st.chunks.find((c) => c.id === it.id)?.name || "chunk"}]`).join(", ");
+  if (JSON.stringify(A.tickerItems) !== JSON.stringify(B.tickerItems)) out.push({ field: "tickerItems", text: `Crawl order: ${seqText(B)} (was ${seqText(A)})` });
+  const itemsText = (c) => c.items.map((it) => it.t === "race" ? `{${it.id}}` : `"${it.text}"`).join(", ") || "(empty)";
+  for (const id of new Set([...A.chunks.map((c) => c.id), ...B.chunks.map((c) => c.id)])) {
+    const a = A.chunks.find((c) => c.id === id), b = B.chunks.find((c) => c.id === id);
+    if (a && !b) out.push({ field: "chunks", text: `Chunk "${a.name || id}" removed` });
+    else if (!a && b) out.push({ field: "chunks", text: `Chunk "${b.name || id}" added: ${itemsText(b)}` });
+    else if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ field: "chunks", text: `Chunk "${b.name || id}"${a.name !== b.name ? ` (was "${a.name || id}")` : ""}: ${itemsText(b)}` });
+  }
   list("featuredRaceIds", "Featured races", true);
   list("featuredCharts", "Featured charts", false);
   list("movementCharts", "Movement charts", false);
@@ -270,9 +325,6 @@ export function diffState(from, to) {
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
   if (A.tickerBg !== B.tickerBg) out.push({ field: "tickerBg", text: `Ticker background: ${B.tickerBg || "transparent"}` });
-  const am = A.manualItems.map((m) => m.text), bm = B.manualItems.map((m) => m.text);
-  for (const t of bm.filter((t) => !am.includes(t))) out.push({ field: "manualItems", text: `Manual item added: "${t}"` });
-  for (const t of am.filter((t) => !bm.includes(t))) out.push({ field: "manualItems", text: `Manual item removed: "${t}"` });
   for (const k of new Set([...Object.keys(A.contextLines), ...Object.keys(B.contextLines)])) {
     if (A.contextLines[k] !== B.contextLines[k]) out.push({ field: "contextLines", text: `Context line for {${k}}: "${B.contextLines[k] ?? "(removed)"}"` });
   }
@@ -310,7 +362,7 @@ export async function loadGlobal() {
 
 /** The fields the Live Global Ticker is made of: the only ones that are ever published. Everything else a page needs comes
  *  from its address or the shipped defaults. */
-export const TICKER_FIELDS = ["pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
+export const TICKER_FIELDS = ["tickerItems", "chunks", "pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 /** Everything that is ever published: the ticker fields and the two Live Screens. */
 export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB"];
 

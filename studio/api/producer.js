@@ -30,6 +30,9 @@ export default async function handler(req, res) {
       const prev = normalize((await readProducer()).state ?? DEFAULTS);
       const merged = { ...prev };
       for (const k of FIELDS) if (k in body) merged[k] = body[k];
+      // An older client publishes only the ticker races and manual items, never the sequence: let normalize() rebuild
+      // the sequence from those (merged with what is stored), instead of keeping the stored sequence over them.
+      if (!("tickerItems" in body) && ("pinnedRaceIds" in body || "manualItems" in body)) delete merged.tickerItems;
       const state = normalize({ ...merged, updatedAt: new Date().toISOString(), updatedBy: who.name });
       await writeProducer(state);
       res.status(200).json(state);

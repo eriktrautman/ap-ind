@@ -102,7 +102,7 @@ test("the rehearsal password works on Test results and is shut out, cookies incl
 });
 
 // ---- publishing ----
-test("publishing the ticker: the published state the ticker reads changes, stamped with the publisher's name, and the fields left out keep their values", async (t) => {
+test("publishing the ticker: the crawl order and its chunks reach the file the ticker reads, stamped with the publisher's name, and the fields left out keep their values", async (t) => {
   if (localOnly(t)) return;
   const cookie = await signIn(S.base, PASSWORDS.publisher);
   const before = (await get(url("/api/producer"))).json;
@@ -116,6 +116,15 @@ test("publishing the ticker: the published state the ticker reads changes, stamp
   assert.deepEqual(live.screenA, before.screenA, "nor was the live screen");
   const pull = (await get(url("/api/producer"))).json;
   assert.equal(pull.idleText, text, "Pull sees the same");
+  // A crawl order with a chunk, placed twice: the published file carries the sequence and the chunk, and the derived race list follows the crawl.
+  const seq = { tickerItems: [{ t: "chunk", id: "pkg1" }, { t: "text", id: "x", text: "Stay with us" }, { t: "race", id: "90002" }, { t: "chunk", id: "pkg1" }], chunks: [{ id: "pkg1", name: "Nebraska package", items: [{ t: "race", id: "90001" }, { t: "text", id: "y", text: "Osborn watch" }] }] };
+  const r2 = await put(url("/api/producer"), seq, { cookie });
+  assert.equal(r2.status, 200);
+  const live2 = (await get(url(`/data/producer.json?t=${Date.now()}`))).json;
+  assert.deepEqual(live2.tickerItems.map((it) => it.t), ["chunk", "text", "race", "chunk"]);
+  assert.deepEqual(live2.chunks.map((c) => [c.name, c.items.length]), [["Nebraska package", 2]]);
+  assert.deepEqual(live2.pinnedRaceIds, ["90001", "90002"]);
+  assert.equal(live2.idleText, text, "the idle text was not in the publish and did not change");
 });
 test("publishing a live screen: screen one shows the new chart at an address the router serves, screen two is untouched, and a bad publish is cleaned up", async (t) => {
   if (localOnly(t)) return;
