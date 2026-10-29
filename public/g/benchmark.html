@@ -53,7 +53,7 @@
   let races = null, ids = FEATURED_RACES.map((r) => r.id), marks = {};
 
   const benchFor = (r) => marks[r.id] ?? marks[r.state] ?? null;
-  const recordLine = (b) => !b ? "Benchmark TBD" : b.pct == null ? (b.note || "Benchmark TBD") : `${b.name}${b.label ? ` (${b.label})` : ""}, ${b.year}${b.office ? ` · ${b.office}` : ""} · ${Number(b.pct).toFixed(1)}%`;
+  const recordLine = (b) => !b ? "Benchmark TBD" : b.pct == null ? (b.note || "Benchmark TBD") : `${b.name}${b.label ? ` (${b.label})` : ""}, ${b.year}`;   // the share is on the tick, the race in the title line
   function render() {
     if (!races) return;
     const list = ids.map((id) => races.get(id)).filter(Boolean);
