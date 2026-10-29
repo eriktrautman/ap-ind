@@ -9,7 +9,7 @@
 // Production (the Live Ticker the Studio publishes to and pulls from) is chosen by GLOBAL in .env, and the
 // mode follows from it. A laptop never polls AP while the deployment is production: the AP key allows ten requests a
 // minute and one polling run uses six or seven, so two pollers on the key get both refused.
-//   GLOBAL=https://ap-ind.vercel.app   the deployment is production and this laptop is its STANDBY. Mode "mirror":
+//   GLOBAL=https://electionproducer.com  the deployment is production and this laptop is its STANDBY. Mode "mirror":
 //                                       every 30 s the deployment's data files (results, status, the published ticker,
 //                                       settings) are copied into this machine's own files, so it is warm the moment it
 //                                       is needed and uses no AP requests. Pull needs nothing more; publish needs
@@ -41,7 +41,7 @@ const NO_MIRROR = args.includes("--no-mirror");
 const POLL_MS = Number(process.env.POLL_SECONDS ?? 60) * 1000;
 const MIRROR_MS = Number(process.env.MIRROR_SECONDS ?? 30) * 1000;
 const DIST = new URL("../dist/", import.meta.url).pathname;
-const DEPLOYMENT = "https://ap-ind.vercel.app";
+const DEPLOYMENT = "https://electionproducer.com";
 const GLOBAL = (process.env.GLOBAL ?? DEPLOYMENT).trim();
 let CONNECTED = GLOBAL !== "self" && /^https?:\/\//.test(GLOBAL);   // false once promoted
 const STANDBY = CONNECTED;                                           // started as the deployment's standby
