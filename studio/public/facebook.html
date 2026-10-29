@@ -8,86 +8,145 @@
 <style>
   :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --dem: #3b6fd6; --gop: #c0392b; --ind: #a855f7; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: ui-monospace, Menlo, monospace; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--cream); color: var(--ink); font: 14px/1.5 var(--sans); }
+  body { margin: 0; background: var(--cream); color: var(--ink); font: 14px/1.45 var(--sans); }
   a { color: var(--navy); }
   .top { background: var(--navy-deep); color: #c7cfdf; padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 12px; }
   .top .brand { color: var(--gold); font-family: var(--serif); font-size: 18px; text-decoration: none; } .top .sub { border-left: 1px solid #2a3a5c; padding-left: 12px; font-size: 13px; color: #8f9bb3; }
   .top nav { margin-left: auto; display: flex; gap: 16px; font-size: 13px; } .top nav a { color: #c7cfdf; text-decoration: none; } .top nav a:hover { color: #fff; }
-  header { background: var(--navy); color: #fff; padding: 26px 24px 22px; }
-  header .in, main { max-width: 1240px; margin: 0 auto; }
+  header { background: var(--navy); color: #fff; padding: 24px 24px 18px; }
+  header .in, main, .bar .in { max-width: 1280px; margin: 0 auto; }
   header h1 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0 0 4px; }
-  header p { margin: 0; color: #c7cfdf; max-width: 90ch; }
-  .jump { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 14px 0 0; } .jump a { color: #fff; font-size: 12.5px; text-decoration: none; border: 1px solid #3a4f7a; border-radius: 4px; padding: 2px 8px; } .jump a:hover { border-color: var(--gold); }
-  main { padding: 10px 24px 60px; }
-  h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; color: var(--navy); margin: 34px 0 4px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-  h2 .lab { font-family: var(--mono); font-size: 12px; background: #fff; border: 1px solid var(--sand); border-radius: 4px; padding: 1px 6px; color: var(--ink); }
-  h2 .feat { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #1a1600; background: var(--gold); border-radius: 3px; padding: 1px 7px; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; margin-top: 12px; }
-  .card { background: #fff; border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; display: grid; grid-template-columns: 150px 1fr; }
-  .card.featured { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold) inset; }
-  .photo { background: #16244a; aspect-ratio: 3 / 4; align-self: start; position: relative; display: flex; align-items: center; justify-content: center; color: #6f7d99; font-size: 12px; border-bottom-right-radius: 10px; }
+  header p { margin: 0; color: #c7cfdf; max-width: 100ch; }
+  .bar { position: sticky; top: 0; z-index: 3; background: #fff; border-bottom: 2px solid var(--gold); padding: 8px 24px; }
+  .bar .in { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; }
+  .bar input[type=search], .bar select { font: inherit; font-size: 13px; padding: 5px 9px; border: 1px solid var(--sand); border-radius: 6px; background: #fff; color: var(--ink); }
+  .bar input[type=search] { width: 240px; } .bar label { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; cursor: pointer; }
+  .bar .count { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+  main { padding: 6px 24px 70px; }
+  h2.state { font-family: var(--serif); font-weight: 400; font-size: 26px; color: var(--navy); margin: 34px 0 2px; border-bottom: 2px solid var(--sand); padding-bottom: 4px; }
+  h3.race { font-size: 15px; font-weight: 700; margin: 18px 0 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: var(--navy); }
+  h3.race .lab { font-family: var(--mono); font-size: 11.5px; font-weight: 400; background: #fff; border: 1px solid var(--sand); border-radius: 4px; padding: 0 6px; color: var(--ink); }
+  h3.race .feat { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #1a1600; background: var(--gold); border-radius: 3px; padding: 1px 6px; }
+  h3.race .called { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: #1a1600; background: #facc15; border-radius: 3px; padding: 0 6px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+  .card { background: #fff; border: 1px solid var(--sand); border-radius: 8px; overflow: hidden; display: grid; grid-template-columns: 84px 1fr; }
+  .card.curated { grid-column: span 2; grid-template-columns: 150px 1fr; }
+  .card.follow { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold) inset; }
+  .photo { background: #16244a; aspect-ratio: 3 / 4; align-self: start; position: relative; display: flex; align-items: center; justify-content: center; color: #6f7d99; font-size: 11px; text-align: center; padding: 4px; }
   .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-  .body { padding: 12px 14px 12px; min-width: 0; }
-  .name { font-weight: 700; font-size: 17px; line-height: 1.2; margin: 0; }
-  .meta { color: var(--muted); font-size: 12.5px; margin: 3px 0 8px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
-  .p { display: inline-block; min-width: 2em; text-align: center; font-weight: 700; border-radius: 3px; padding: 0 6px; font-size: 11px; color: #fff; background: #6b7280; }
+  .body { padding: 8px 10px 9px; min-width: 0; }
+  .name { font-weight: 700; font-size: 14.5px; line-height: 1.2; margin: 0; }
+  .curated .name { font-size: 17px; }
+  .meta { color: var(--muted); font-size: 12px; margin: 3px 0 0; display: flex; flex-wrap: wrap; gap: 3px 7px; align-items: center; }
+  .p { display: inline-block; min-width: 2em; text-align: center; font-weight: 700; border-radius: 3px; padding: 0 5px; font-size: 10.5px; color: #fff; background: #6b7280; }
   .p.dem { background: var(--dem); } .p.gop { background: var(--gop); } .p.ind { background: var(--ind); }
-  .inc { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--navy); border: 1px solid var(--sand); border-radius: 3px; padding: 0 5px; }
-  dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; font-size: 13px; }
+  .tag { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--navy); border: 1px solid var(--sand); border-radius: 3px; padding: 0 4px; }
+  .tag.gold { border-color: var(--gold); color: #7a5c00; } .tag.win { background: #facc15; border-color: #facc15; color: #1a1600; }
+  .pct { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+  dl { margin: 8px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; font-size: 12.5px; }
   dt { color: var(--muted); } dd { margin: 0; }
-  .notes { margin: 8px 0 0; font-size: 13px; border-top: 1px solid var(--sand); padding-top: 8px; }
-  .links { margin: 8px 0 0; font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
-  .credit { font-size: 11px; color: var(--muted); margin: 6px 0 0; }
+  .notes { margin: 8px 0 0; font-size: 12.5px; border-top: 1px solid var(--sand); padding-top: 7px; }
+  .links { margin: 6px 0 0; font-size: 12px; display: flex; flex-wrap: wrap; gap: 3px 10px; }
+  .credit { font-size: 10.5px; color: var(--muted); margin: 5px 0 0; }
   .empty { color: var(--muted); padding: 24px 0; }
-  @media (max-width: 480px) { .card { grid-template-columns: 1fr; } .photo { aspect-ratio: 4 / 3; border-bottom-right-radius: 0; } }
+  .hidden { display: none !important; }
+  @media (max-width: 640px) { .card.curated { grid-column: span 1; grid-template-columns: 110px 1fr; } .bar input[type=search] { width: 100%; } }
 </style>
 </head>
 <body>
 <div class="top"><a class="brand" href="/">Election Producer</a><span class="sub">Candidate Facebook</span><nav><a href="/studio">Studio</a><a href="/candidates">Candidate index</a><a href="/photos">Photos</a></nav></div>
 <header><div class="in">
   <h1>Candidate Facebook</h1>
-  <p id="status">Every candidate in the featured races: photo, background and what to know, from the curated candidate index. The independent each race is followed for is marked in gold.</p>
-  <div class="jump" id="jump"></div>
+  <p id="status">Every candidate in every race the AP feed carries, with the cleared photo where there is one. The twenty-five in the featured races carry their full background from the curated index; the independent each featured race is followed for is outlined in gold.</p>
 </div></header>
+<div class="bar"><div class="in">
+  <input type="search" id="q" placeholder="Search name, race, state…" autocomplete="off">
+  <select id="state"><option value="">All states</option></select>
+  <select id="office"><option value="">All offices</option><option value="U.S. Senate">U.S. Senate</option><option value="U.S. House">U.S. House</option><option value="Governor">Governor</option><option value="other">Other statewide and local</option></select>
+  <label><input type="checkbox" id="fphoto"> With photo</label>
+  <label><input type="checkbox" id="find"> Independents</label>
+  <label><input type="checkbox" id="ffeat"> Featured races</label>
+  <span class="count" id="count"></span>
+</div></div>
 <main id="main"><div class="empty">Loading…</div></main>
 <script type="module">
+  // Everything is kept as data; only the races that pass the filters are rendered, and those in batches as the page is
+  // scrolled, so the full feed (about 1,600 candidates) never lands in the page at once. Images load lazily on top of that.
   const j = (u) => fetch(u, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(`${u}: ${r.status}`); return r.json(); });
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const YEAR = new Date().getFullYear();
-  const partyClass = (p) => /^dem/i.test(p) ? "dem" : /^(gop|rep)/i.test(p) ? "gop" : /^(ind|np|nonpartisan|no party)/i.test(p) ? "ind" : "";
-  const partyShort = (p) => /^dem/i.test(p) ? "Dem" : /^(gop|rep)/i.test(p) ? "GOP" : /^(ind|np)/i.test(p) ? "Ind" : p;
-  const main = document.getElementById("main");
+  const partyClass = (p) => /^dem/i.test(p) ? "dem" : /^(gop|rep)/i.test(p) ? "gop" : /^(ind|np|nonpartisan|no party|una)/i.test(p) ? "ind" : "";
+  const partyShort = (p) => /^dem/i.test(p) ? "Dem" : /^(gop|rep)/i.test(p) ? "GOP" : /^(ind|np)/i.test(p) ? "Ind" : (p ?? "");
+  const officeGroup = (r) => r.officeName === "U.S. Senate" ? "U.S. Senate" : r.officeName === "U.S. House" ? "U.S. House" : r.officeName === "Governor" ? "Governor" : "other";
+  const officeOrder = { "U.S. Senate": 0, "Governor": 1, "U.S. House": 2, "other": 3 };
+  const districtNo = (r) => Number(String(r.label ?? "").split("-")[1]) || 0;
+  const $ = (id) => document.getElementById(id);
+  const main = $("main");
+  const BATCH = 60;   // cards per render step
   try {
-    const [idx, manifest] = await Promise.all([j("/g/candidates.json"), j("/g/photos.json").catch(() => ({ photos: {} }))]);
-    const byRace = new Map();
-    for (const c of idx.candidates) { if (!byRace.has(c.race)) byRace.set(c.race, []); byRace.get(c.race).push(c); }
-    const races = (idx.races ?? []).slice().sort((a, b) => (b.featured === true) - (a.featured === true) || a.label.localeCompare(b.label));
-    document.getElementById("jump").innerHTML = races.map((r) => `<a href="#${esc(r.label)}">${esc(r.label)}</a>`).join("");
-    main.innerHTML = races.map((r) => {
-      const list = (byRace.get(r.label) ?? []).slice().sort((a, b) => (b.featured === true) - (a.featured === true) || (b.incumbent === true) - (a.incumbent === true) || a.name.localeCompare(b.name));
-      if (!list.length) return "";
-      return `<section id="${esc(r.label)}"><h2>${esc(r.title ?? r.label)} <span class="lab">${esc(r.label)}</span>${r.featured ? '<span class="feat">Featured race</span>' : ""}</h2><div class="cards">${list.map((c) => {
-        const ph = manifest.photos?.[c.id]; const src = c.photo?.file ? ph?.cdn ?? null : null;
-        const age = c.born ? YEAR - c.born : null;
-        const rows = [["Age", age ? `${age} (born ${c.born})` : null], ["Home", c.residence], ["Work", c.occupation], ["Prior office", c.priorOffices], ["Military", c.military], ["Education", c.education]].filter(([, v]) => v);
-        const links = Object.entries(c.sites ?? {}).filter(([, u]) => u).map(([k, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(k[0].toUpperCase() + k.slice(1))}</a>`).join("");
-        const credit = c.photo?.credit ? `Photo: ${esc(c.photo.credit)}${c.photo.license ? ` · ${esc(c.photo.license)}` : ""}` : "";
-        return `<article class="card${c.featured ? " featured" : ""}">
-          <div class="photo">${src ? `<img src="${esc(src)}" alt="${esc(c.name)}" loading="lazy">` : "No cleared photo"}</div>
-          <div class="body">
-            <h3 class="name">${esc(c.name)}</h3>
-            <div class="meta"><span class="p ${partyClass(c.party)}">${esc(partyShort(c.party))}</span><span>${esc(c.partyLabel ?? "")}</span>${c.incumbent ? '<span class="inc">Incumbent</span>' : ""}${c.featured ? '<span class="inc" style="border-color:var(--gold);color:#7a5c00">The independent we follow</span>' : ""}</div>
-            <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
-            ${c.notes ? `<p class="notes">${esc(c.notes)}</p>` : ""}
-            ${links ? `<div class="links">${links}</div>` : ""}
-            ${credit ? `<p class="credit">${credit}</p>` : ""}
-          </div>
-        </article>`; }).join("")}</div></section>`;
-    }).join("");
-    const n = idx.candidates.length, withPhoto = idx.candidates.filter((c) => c.photo?.file && manifest.photos?.[c.id]?.cdn).length;
-    document.getElementById("status").insertAdjacentHTML("beforeend", ` <b>${n}</b> candidates in <b>${races.length}</b> races, <b>${withPhoto}</b> with a cleared photo. Index updated ${esc(idx.updated ?? "")}.`);
+    const [index, idx, manifest] = await Promise.all([j("/data/index.json"), j("/g/candidates.json").catch(() => ({ candidates: [], races: [] })), j("/g/photos.json").catch(() => ({ photos: {} }))]);
+    const curated = new Map(idx.candidates.map((c) => [c.id, c]));
+    const races = (index.races ?? []).filter((r) => r.kind !== "measure" && (r.candidates ?? []).length);
+    const stateName = new Map(races.map((r) => [r.state, r.stateName]));
+    const states = [...stateName.entries()].sort((a, b) => a[1].localeCompare(b[1]));
+    $("state").insertAdjacentHTML("beforeend", states.map(([st, n]) => `<option value="${st}">${esc(n)}</option>`).join(""));
+    // One row per race, in display order, each with its candidates prepared for filtering.
+    const rows = races.slice().sort((a, b) => stateName.get(a.state).localeCompare(stateName.get(b.state)) || officeOrder[officeGroup(a)] - officeOrder[officeGroup(b)] || districtNo(a) - districtNo(b) || String(a.label).localeCompare(String(b.label)))
+      .map((r) => ({ r, office: officeGroup(r), cands: r.candidates.slice().sort((a, b) => (b.featured === true) - (a.featured === true) || (b.independent === true) - (a.independent === true) || (b.incumbent === true) - (a.incumbent === true) || (b.votes ?? 0) - (a.votes ?? 0) || a.name.localeCompare(b.name))
+        .map((c) => { const cu = curated.get(c.id); const src = c.photo ?? manifest.photos?.[c.id]?.cdn ?? null; return { c, cu, src, m: manifest.photos?.[c.id], ind: !!(c.independent || c.featured), text: `${c.name} ${r.label} ${r.title ?? ""} ${stateName.get(r.state)} ${c.party ?? ""} ${cu?.residence ?? ""} ${cu?.occupation ?? ""}`.toLowerCase() }; }) }));
+    const total = rows.reduce((n, x) => n + x.cands.length, 0), withPhoto = rows.reduce((n, x) => n + x.cands.filter((k) => k.src).length, 0);
+    $("status").insertAdjacentHTML("beforeend", ` <b>${total}</b> candidates in <b>${races.length}</b> races across <b>${states.length}</b> states, <b>${withPhoto}</b> with a cleared photo; results as of ${esc(index.generated ? new Date(index.generated).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET" : "")}.`);
+
+    const card = (r, k) => {
+      const { c, cu, src, m } = k;
+      const tags = `${c.incumbent ? '<span class="tag">Incumbent</span>' : ""}${c.winner ? '<span class="tag win">Winner</span>' : ""}${c.featured ? '<span class="tag gold">The independent we follow</span>' : c.independent ? '<span class="tag gold">Independent</span>' : ""}`;
+      const pct = (r.totalVotes ?? 0) > 0 ? `<span class="pct">${Number(c.pct ?? 0).toFixed(1)}%</span>` : "";
+      const photo = `<div class="photo">${src ? `<img src="${esc(src)}" alt="${esc(c.name)}" loading="lazy" decoding="async">` : "No cleared photo"}</div>`;
+      if (cu) {
+        const age = cu.born ? YEAR - cu.born : null;
+        const dl = [["Age", age ? `${age} (born ${cu.born})` : null], ["Home", cu.residence], ["Work", cu.occupation], ["Prior office", cu.priorOffices], ["Military", cu.military], ["Education", cu.education]].filter(([, v]) => v);
+        const links = Object.entries(cu.sites ?? {}).filter(([, u]) => u).map(([key, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(key[0].toUpperCase() + key.slice(1))}</a>`).join("");
+        const credit = cu.photo?.credit ? `Photo: ${esc(cu.photo.credit)}${cu.photo.license ? ` · ${esc(cu.photo.license)}` : ""}` : "";
+        return `<article class="card curated${c.featured ? " follow" : ""}">${photo}<div class="body"><h4 class="name">${esc(c.name)}</h4><div class="meta"><span class="p ${partyClass(c.party)}">${esc(partyShort(c.party))}</span><span>${esc(cu.partyLabel ?? c.partyLabel ?? "")}</span>${tags}${pct}</div><dl>${dl.map(([a, v]) => `<dt>${a}</dt><dd>${esc(v)}</dd>`).join("")}</dl>${cu.notes ? `<p class="notes">${esc(cu.notes)}</p>` : ""}${links ? `<div class="links">${links}</div>` : ""}${credit ? `<p class="credit">${credit}</p>` : ""}</div></article>`;
+      }
+      const credit = m?.credit ? `${esc(m.credit)}${m.license ? ` · ${esc(m.license)}` : ""}` : "";
+      return `<article class="card">${photo}<div class="body"><h4 class="name">${esc(c.name)}</h4><div class="meta"><span class="p ${partyClass(c.party)}">${esc(partyShort(c.party))}</span>${c.partyLabel && partyShort(c.party) !== c.partyLabel ? `<span>${esc(c.partyLabel)}</span>` : ""}${tags}${pct}</div>${credit ? `<p class="credit">${credit}</p>` : ""}</div></article>`;
+    };
+    const raceBlock = (x, cands) => `<div class="race"><h3 class="race">${esc(x.r.title ?? x.r.label)} <span class="lab">${esc(x.r.label)}</span>${x.r.featured ? '<span class="feat">Featured race</span>' : ""}${x.r.called ? '<span class="called">AP CALL</span>' : ""}</h3><div class="cards">${cands.map((k) => card(x.r, k)).join("")}</div></div>`;
+
+    // Filtering produces a queue of matching races; rendering drains it in batches as the sentinel comes into view.
+    let queue = [], shown = 0, lastState = null;
+    const sentinel = document.createElement("div"); sentinel.className = "empty"; sentinel.textContent = "";
+    function renderMore() {
+      let n = 0, html = "";
+      while (queue.length && n < BATCH) {
+        const { x, cands } = queue.shift();
+        if (x.r.state !== lastState) { lastState = x.r.state; html += `<h2 class="state">${esc(stateName.get(x.r.state))}</h2>`; }
+        html += raceBlock(x, cands); n += cands.length;
+      }
+      sentinel.insertAdjacentHTML("beforebegin", html);
+      sentinel.textContent = queue.length ? `Loading more… (${queue.reduce((a, q) => a + q.cands.length, 0)} to come)` : "";
+      if (!queue.length) io.disconnect();
+    }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) renderMore(); }, { rootMargin: "1200px 0px" });
+    function apply() {
+      const q = $("q").value.trim().toLowerCase(), st = $("state").value, off = $("office").value, fp = $("fphoto").checked, fi = $("find").checked, ff = $("ffeat").checked;
+      queue = []; shown = 0; lastState = null;
+      for (const x of rows) {
+        if ((st && x.r.state !== st) || (off && x.office !== off) || (ff && !x.r.featured)) continue;
+        const cands = x.cands.filter((k) => (!q || k.text.includes(q)) && (!fp || k.src) && (!fi || k.ind));
+        if (cands.length) { queue.push({ x, cands }); shown += cands.length; }
+      }
+      main.innerHTML = ""; main.appendChild(sentinel);
+      $("count").textContent = shown === total ? `${total} candidates` : `${shown} of ${total} candidates`;
+      if (!shown) sentinel.textContent = "No candidates match.";
+      renderMore(); io.disconnect(); if (queue.length) io.observe(sentinel);
+    }
+    for (const id of ["q", "state", "office", "fphoto", "find", "ffeat"]) $(id).addEventListener(id === "q" ? "input" : "change", apply);
+    $("ffeat").checked = true;   // start on the featured races; untick for the whole feed
+    apply();
   } catch (e) {
-    main.innerHTML = `<div class="empty">Could not load the candidate index: ${esc(e.message)}</div>`;
+    main.innerHTML = `<div class="empty">Could not load the feed: ${esc(e.message)}</div>`;
   }
 </script>
 </body>
