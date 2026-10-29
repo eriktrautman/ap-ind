@@ -1025,7 +1025,7 @@ function renderStandby() {
     el.innerHTML = `<span class="k">PRODUCTION · THIS LAPTOP</span>${info}
       <span title="This laptop polls AP itself and serves its own files">Polling AP every ${esc(String(runtime.poll?.every ?? 60))} s</span>
       <span title="Point the switcher's browser inputs here, with the website's paths">Switcher → <b>${lanLink}</b></span>
-      ${dep.reachable ? `<span class="bad" title="Its poller and this laptop now share one AP key">Website answering again</span>` : ""}
+      <span class="site" title="${dep.reachable ? "Its poller and this laptop now share one AP key" : `Whether ${esc(hostOf(dep.origin))} answers from here`}"><span class="dot ${dep.reachable ? "warn" : "bad"}"></span>${dep.reachable ? '<span class="bad">Website answering again</span>' : "Website not reachable"}</span>
       ${runtime.canDemote ? `<button id="demote" title="Stop polling here and go back to copying the website">Return to standby</button>` : ""}`;
   } else {
     const m = runtime.mirror;
@@ -1035,7 +1035,7 @@ function renderStandby() {
       : m?.lastError ? `<span class="bad">Mirror failing:</span> ${esc(m.lastError)}` : "First copy in progress…";
     el.innerHTML = `<span class="k">STANDBY</span>${info}
       <span title="This laptop's copy of the website's data, refreshed every ${esc(String(m?.every ?? 30))} s with no AP requests">${copy}</span>
-      <span title="Whether ${esc(hostOf(dep.origin))} answers from here">Website ${dep.reachable ? "reachable" : '<span class="bad">NOT reachable</span>'}</span>
+      <span class="site" title="Whether ${esc(hostOf(dep.origin))} answers from here"><span class="dot ${dep.reachable ? "" : "bad"}"></span>Website ${dep.reachable ? "reachable" : '<span class="bad">NOT reachable</span>'}</span>
       <span title="This laptop's address on the studio network, for the switcher after a promote">This laptop <b>${lanLink}</b>${runtime.iface ? ` (${esc(runtime.iface)})` : ""}</span>
       ${runtime.canPromote ? `<button id="promote" class="danger" title="This laptop becomes production: it polls AP itself and serves its own copy">Promote: make this laptop production</button>` : ""}`;
   }

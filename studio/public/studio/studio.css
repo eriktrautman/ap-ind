@@ -116,6 +116,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .standby.prod { background: #fff4e5; border-color: var(--warn); } .standby.prod .k { color: #9a5b00; }
 .standby.warn { background: #fdf0f1; border-color: var(--bad); }
 .standby .bad { color: var(--bad); font-weight: 600; } .standby a { color: inherit; }
+.standby .site { display: inline-flex; align-items: center; gap: 6px; }
 .standby button:not(.info) { margin-left: auto; font-size: 12px; padding: 2px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
 .pollstrip .readonly { font-size: 12px; color: #8b1a1a; }
 .pollstrip .pl-sum { color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
