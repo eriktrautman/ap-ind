@@ -318,13 +318,14 @@ dialog::backdrop { background: #071222aa; }
 .screenmid button.publish { background: var(--bad); color: #fff; border-color: var(--bad); } .screenmid button.publish:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
 .screenmid button.pull { background: var(--navy); color: #fff; border-color: var(--navy); } .screenmid button.pull:disabled { background: #fff; border-color: var(--sand); color: var(--muted); opacity: 1; }
 .screenmid .pubstate { font-size: 11.5px; text-align: center; }
-/* Stacked (narrow): the two arrows stay together in the middle, pointing down and up; Publish on the left, Pull on the right. */
+/* Stacked (narrow): on air on top, then the strip, then the draft. The arrows stay together in the middle, publish pointing up and pull pointing down; Publish on the left, Pull on the right. */
 @media (max-width: 900px) {
   .screenrow { grid-template-columns: 1fr; }
+  .screen.onair { order: 1; } .screenmid { order: 2; } .screen.draft { order: 3; }
   .screenmid { display: grid; grid-template-columns: 1fr auto auto 1fr; grid-template-areas: "pub down up pull" "why down up state"; align-items: center; gap: 6px 12px; padding: 4px 0; }
   .screenmid button.publish { grid-area: pub; justify-self: end; width: auto; }
   .screenmid .whynot { grid-area: why; justify-self: end; margin: 0; text-align: right; }
-  .screenmid .arrow { grid-area: down; transform: rotate(90deg); margin: 0; }
+  .screenmid .arrow { grid-area: down; transform: rotate(-90deg); margin: 0; }
   .screenmid .arrow.back { grid-area: up; }
   .screenmid button.pull { grid-area: pull; justify-self: start; width: auto; }
   .screenmid .pubstate { grid-area: state; justify-self: start; text-align: left; }
