@@ -26,8 +26,9 @@
     <span class="st" id="st-feed"><span class="dot off"></span><span>loading…</span></span>
   </div>
   <div class="standby" id="standby" hidden></div>
+  <div class="infopanel" id="standbyinfo" hidden></div>
   <div class="pollstrip" id="poller" hidden>
-    <span class="pl-k" title="These change what the poller does for every output. They need a producer password; publisher and read-only passwords cannot use them.">PRODUCER ACTIONS</span><span class="readonly" id="readonly" hidden><svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span id="readonlytxt">Not Authorized · This Account is Read Only</span></span>
+    <span class="pl-k" title="These change what the poller does for every output. They need a producer password; publisher and read-only passwords cannot use them.">PRODUCER ACTIONS</span><button class="info" id="pollinfobtn" type="button" aria-expanded="false" aria-controls="pollinfo" title="What these actions do">i</button><span class="readonly" id="readonly" hidden><svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span id="readonlytxt">Not Authorized · This Account is Read Only</span></span>
     <span class="pl-actions">
       <button id="pollnow">Poll now</button>
       <button id="pollfresh" title="Drops the in-memory curated candidate and photo files, then polls">Reset caches</button>
@@ -36,6 +37,7 @@
     </span>
     <span class="note" id="pollmsg"></span>
   </div>
+  <div class="infopanel" id="pollinfo" hidden></div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · <span class="wide">AP's simulated election, </span>not real results</div>
   <div class="testbanner testlogin" id="loginbanner" hidden>TEST LOGIN · <span class="wide">rehearsal password · </span>invalid once results go Live</div>
   <div class="problem top" id="problem" hidden></div>

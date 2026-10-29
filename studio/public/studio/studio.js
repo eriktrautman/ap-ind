@@ -412,6 +412,7 @@ function renderStatus() {
   $("pause").classList.toggle("danger", !paused);
   for (const el of [$("pollnow"), $("pollfresh"), $("pause")]) producerOnly(el);
   $("poller").hidden = !!runtime && runtime.mode !== "poll";   // a standby has no poller of its own to control
+  if ($("poller").hidden) { $("pollinfo").hidden = true; $("pollinfobtn").setAttribute("aria-expanded", "false"); }
   $("readonly").hidden = isProducer();
   $("readonlytxt").textContent = loginRole === "publisher" ? "Publisher · Publishes Only · These Need a Producer" : "Not Authorized · This Account is Read Only";
 
@@ -985,35 +986,61 @@ function renderChartCatalog() {
 }
 $("charts").addEventListener("click", (e) => { const fc = e.target.closest(".featchart"); if (fc) toggleChart(fc.dataset.chart); });
 
+// ---------- the (i) panels: what the strips' controls do, in plain English (the same words as their hover titles) ----------
+function infoToggle(btnId, panelId, html) {
+  const btn = $(btnId), panel = $(panelId);
+  if (!btn || !panel) return;
+  btn.onclick = () => { const open = panel.hidden; panel.innerHTML = html(); panel.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
+}
+const POLL_INFO = () => `<dl>
+  <dt>Poll now</dt><dd>Fetches the latest results from AP this second instead of waiting for the next minute. The status bar updates when it finishes.</dd>
+  <dt>Reset caches</dt><dd>Drops the in-memory copies of the curated candidate and photo files, then polls. Use it after those files change on GitHub.</dd>
+  <dt>Pause polling</dt><dd>Stops fetching new AP results for the ticker, every graphic and the watch party until you press Resume. Everything keeps showing the last data.</dd>
+  <dt>Data Stream</dt><dd><b>Test</b> is AP's practice simulation, <b>Live</b> is real results. Switching polls at once; the status bar confirms when the new stream has been read. Going Live also switches the rehearsal password off.</dd>
+  <dt>Who can use them</dt><dd>These change what the poller does for every output, so they need a producer password. Publisher and read-only sign-ins see them locked.${runtime ? " On a laptop they appear only once it has been promoted to production; until then the website's control room has them." : ""}</dd>
+</dl>`;
+const STANDBY_INFO = () => `<dl>
+  <dt>Standby</dt><dd>This laptop copies the website's results, poller status and published ticker into its own files every ${esc(String(runtime?.mirror?.every ?? 30))} seconds, making no AP requests, so it can take over at any moment. Its ticker and graphics show the website's live ticker meanwhile.</dd>
+  <dt>Copy taken</dt><dd>How old the local copy is, and the time of the results in it.</dd>
+  <dt>Website</dt><dd>Whether ${esc(hostOf(runtime?.deployment?.origin))} is answering from here.</dd>
+  <dt>This laptop</dt><dd>Its address on the studio network: what the switcher's browser inputs are pointed at after a promote, with the website's paths (/ticker, /g/B5?race=…).</dd>
+  <dt>Promote</dt><dd>Makes this laptop production without a restart: copying stops, it polls AP itself every minute, its outputs switch to its own copy, and this strip turns orange with the address to use. Producer password only. The dialog warns if the website is still answering, because its poller and this laptop would then share one AP key.</dd>
+  <dt>Return to standby</dt><dd>Reverses a promote: polling here stops and copying resumes. Point the switcher back at the website.</dd>
+</dl>`;
+infoToggle("pollinfobtn", "pollinfo", POLL_INFO);
+
 // ---------- laptop: standby (mirroring production) or production (promoted) ----------
 const hostOf = (u) => String(u ?? "").replace(/^https?:\/\//, "");
 function renderStandby() {
   const el = $("standby");
   if (!el) return;
-  if (!runtime || !runtime.standby) { el.hidden = true; return; }   // the website, or a machine started as production
+  if (!runtime || !runtime.standby) { el.hidden = true; $("standbyinfo").hidden = true; return; }   // the website, or a machine started as production
   el.hidden = false;
   const lanLink = `<a href="${esc(runtime.lan)}/studio" target="_blank" rel="noopener" title="This laptop's control room over the network">${esc(hostOf(runtime.lan))}</a>`;
   const dep = runtime.deployment ?? {};
+  const wasOpen = $("standbyinfo") && !$("standbyinfo").hidden;
+  const info = `<button class="info" id="standbyinfobtn" type="button" aria-expanded="${wasOpen}" aria-controls="standbyinfo" title="What this strip and its buttons mean">i</button>`;
   if (runtime.production?.where === "self") {
     el.className = "standby prod";
-    el.innerHTML = `<span class="k">PRODUCTION · THIS LAPTOP</span>
-      <span>Polling AP every ${esc(String(runtime.poll?.every ?? 60))} s into this laptop's files; its ticker and graphics read them.</span>
-      <span>Switcher inputs: <b>${lanLink}</b> with the website's paths.</span>
-      <span>${dep.reachable ? `<span class="bad">The website is answering again</span>` : "The website is not answering."}</span>
+    el.innerHTML = `<span class="k">PRODUCTION · THIS LAPTOP</span>${info}
+      <span title="This laptop polls AP itself and serves its own files">Polling AP every ${esc(String(runtime.poll?.every ?? 60))} s</span>
+      <span title="Point the switcher's browser inputs here, with the website's paths">Switcher → <b>${lanLink}</b></span>
+      ${dep.reachable ? `<span class="bad" title="Its poller and this laptop now share one AP key">Website answering again</span>` : ""}
       ${runtime.canDemote ? `<button id="demote" title="Stop polling here and go back to copying the website">Return to standby</button>` : ""}`;
   } else {
     const m = runtime.mirror;
     el.className = `standby${dep.reachable === false ? " warn" : ""}`;
-    const copy = runtime.mode !== "mirror" ? "Not copying (started with --no-mirror): no local copy to fall back on."
-      : m?.lastOk ? `Copy of <b>${esc(hostOf(dep.origin))}</b> taken ${esc(ago(new Date(m.lastOk).toISOString()))} (results as of ${esc(fmtTime(m.indexGenerated))}).`
-      : m?.lastError ? `<span class="bad">Mirror failing:</span> ${esc(m.lastError)}` : "First copy from the website in progress…";
-    el.innerHTML = `<span class="k">STANDBY</span>
-      <span>${copy}</span>
-      <span>Website ${dep.reachable ? "reachable" : '<span class="bad">NOT reachable</span>'}.</span>
-      <span>This laptop on the network: <b>${lanLink}</b>${runtime.iface ? ` (${esc(runtime.iface)})` : ""}.</span>
-      <span class="muted">Poller controls live on the website's control room while this is standby.</span>
+    const copy = runtime.mode !== "mirror" ? '<span class="bad">Not copying</span> (--no-mirror)'
+      : m?.lastOk ? `Copy taken ${esc(ago(new Date(m.lastOk).toISOString()))} · results ${esc(fmtTime(m.indexGenerated))}`
+      : m?.lastError ? `<span class="bad">Mirror failing:</span> ${esc(m.lastError)}` : "First copy in progress…";
+    el.innerHTML = `<span class="k">STANDBY</span>${info}
+      <span title="This laptop's copy of the website's data, refreshed every ${esc(String(m?.every ?? 30))} s with no AP requests">${copy}</span>
+      <span title="Whether ${esc(hostOf(dep.origin))} answers from here">Website ${dep.reachable ? "reachable" : '<span class="bad">NOT reachable</span>'}</span>
+      <span title="This laptop's address on the studio network, for the switcher after a promote">This laptop <b>${lanLink}</b>${runtime.iface ? ` (${esc(runtime.iface)})` : ""}</span>
       ${runtime.canPromote ? `<button id="promote" class="danger" title="This laptop becomes production: it polls AP itself and serves its own copy">Promote: make this laptop production</button>` : ""}`;
   }
+  infoToggle("standbyinfobtn", "standbyinfo", STANDBY_INFO);
+  if (wasOpen) $("standbyinfo").innerHTML = STANDBY_INFO();
   const pb = $("promote"), db = $("demote");
   if (pb) { producerOnly(pb); pb.addEventListener("click", promoteLaptop); }
   if (db) { producerOnly(db); db.addEventListener("click", demoteLaptop); }
