@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Election Producer</title>
+<link rel="stylesheet" href="/studio/studio.css">
+</head>
+<body>
+<header class="top">
+  <div class="brandrow"><b>Election Producer</b><span class="subbrand">Studio</span></div>
+</header>
+<div class="login">
+  <form id="loginform">
+    <h1>Studio sign-in</h1>
+    <p>Your own Studio password. Ask the engineer on duty if you don't have one.</p>
+    <p class="hint" id="loginhint" hidden></p>
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password" autofocus>
+    <button type="submit" class="primary">Sign in</button>
+    <div class="err" id="loginerr"></div>
+  </form>
+</div>
+<script type="module">
+  // The only page under /studio that is served without a cookie. A good password sets the cookie and the browser
+  // goes to /studio; a browser that already has one is sent straight there. ?why=rehearsal: the Studio sent this
+  // browser here because its rehearsal cookie stopped working when results went Live; ?why=expired: a cookie that
+  // no longer verifies (twelve hours, or the password changed).
+  const $ = (id) => document.getElementById(id);
+  const why = new URLSearchParams(location.search).get("why");
+  const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
+  if (me.authed) location.replace("/studio");
+  const hint = $("loginhint");
+  const live = me.rehearsalAllowed === false;
+  if (why === "rehearsal" && live) hint.innerHTML = "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with your own password to continue.";
+  else if (why === "expired") hint.innerHTML = "<b>You were signed out:</b> your sign-in has expired or the password was changed. Sign in again.";
+  else if (live) hint.innerHTML = "Results are <b>Live</b>, so the rehearsal password is switched off. Only named passwords sign in.";
+  else if (me.configured === false) hint.innerHTML = "<b>No password is set on this server.</b> Add one STUDIO_PASSWORD_PRODUCER_&lt;FIRST&gt;_&lt;LAST&gt; and restart or redeploy.";
+  hint.hidden = !hint.innerHTML;
+  $("loginform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("loginerr").textContent = "";
+    const btn = e.target.querySelector("button"); btn.disabled = true;
+    try {
+      const res = await fetch("/api/login", { method: "POST", cache: "no-store", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: $("password").value }) });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error ?? `${res.status}`);
+      location.replace("/studio");
+    } catch (err) {
+      $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message;
+      btn.disabled = false; $("password").select();
+    }
+  });
+</script>
+</body>
+</html>

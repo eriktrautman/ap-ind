@@ -17,7 +17,7 @@ const $ = (id) => document.getElementById(id);
 const api = async (url, opts = {}) => {
   const res = await fetch(url, { cache: "no-store", headers: { "content-type": "application/json" }, ...opts });
   const body = await res.json().catch(() => ({}));
-  if (res.status === 401) { const wasTest = loginKind === "test"; loginKind = null; showLogin(); loginHint(wasTest); throw new Error("signed out"); }
+  if (res.status === 401) { toLogin(loginKind === "test" ? "rehearsal" : "expired"); throw new Error("signed out"); }
   if (!res.ok) throw new Error(body.error ?? `${res.status}`);
   return body;
 };
@@ -65,28 +65,11 @@ const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>
 })();
 
 // ---------- auth ----------
-/** Tell people on the sign-in page why the rehearsal password will not work, and why they were signed out. */
-async function loginHint(wasTest, me = null) {
-  const hint = $("loginhint");
-  try { me = me ?? await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()); } catch { me = {}; }
-  const live = me.rehearsalAllowed === false;
-  hint.hidden = !live;
-  hint.innerHTML = !live ? "" : wasTest
-    ? "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with your own password to continue."
-    : "Results are <b>Live</b>, so the rehearsal password is switched off. Only named passwords sign in.";
-}
-function showLogin() { $("login").hidden = false; $("app").hidden = true; $("account").hidden = true; $("poller").hidden = true; }
-function showApp() { $("login").hidden = true; $("app").hidden = false; $("account").hidden = false; }   // the poller strip waits for /api/runtime (renderStatus), so a laptop never flashes it
-$("loginform").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  $("loginerr").textContent = "";
-  try {
-    const me = await api("/api/login", { method: "POST", body: JSON.stringify({ password: $("password").value }) });
-    loginKind = me.testLogin ? "test" : "prod"; loginRole = me.role ?? null; loginName = me.name ?? null; renderWho();
-    $("password").value = "";
-    showApp(); boot();
-  } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; loginHint(false); }
-});
+// The sign-in form is its own page, /studio/login. The server (proxy.js on Vercel, serve.mjs on a laptop) sends a
+// browser without a valid cookie there before any of this page is served, so this script only ever runs signed in;
+// it goes back there when the cookie stops verifying (expiry, a changed password, the rehearsal rule at Live).
+const toLogin = (why) => location.replace(`/studio/login${why ? `?why=${why}` : ""}`);
+function showApp() { $("app").hidden = false; $("account").hidden = false; }   // the poller strip waits for /api/runtime (renderStatus), so a laptop never flashes it
 // ---------- who may do what: the footer's View User Permissions ----------
 const ROLE_LABEL = { producer: "Producer", publisher: "Publisher", readonly: "Read only", rehearsal: "Rehearsal" };
 const ROLE_ALLOWS = {
@@ -110,7 +93,7 @@ $("permslink").addEventListener("click", async () => {
       <p class="small muted">Each person has their own password, set on the site's Vercel project as <code>STUDIO_PASSWORD_&lt;ROLE&gt;_&lt;FIRST&gt;_&lt;LAST&gt;</code>. Adding, removing or changing someone's role is an edit to those variables and a redeploy; the engineer does it. Every publish is stamped with the publisher's name.</p>`,
   });
 });
-$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; loginRole = null; loginName = null; renderWho(); showLogin(); });
+$("logout").addEventListener("click", async () => { try { await fetch("/api/login", { method: "DELETE" }); } catch {} toLogin(); });
 // The sticky header's height changes with the banners; anchor jumps from the
 // section nav must clear it, so its measured height drives scroll-padding-top on <html>.
 new ResizeObserver(() => document.documentElement.style.setProperty("--top-h", `${document.querySelector("header.top").offsetHeight + 8}px`)).observe(document.querySelector("header.top"));
@@ -1099,7 +1082,7 @@ async function boot() {
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
-  loginKind = me.authed ? (me.testLogin ? "test" : "prod") : null; loginRole = me.authed ? (me.role ?? null) : null; loginName = me.authed ? (me.name ?? null) : null; renderWho();
-  if (!me.authed) loginHint(false, me);
-  if (me.authed) { showApp(); boot(); } else showLogin();
+  if (!me.authed) { toLogin(me.rehearsalAllowed === false ? "rehearsal" : undefined); return; }   // the server let the page through on the cookie alone; the API applies the Live rule
+  loginKind = me.testLogin ? "test" : "prod"; loginRole = me.role ?? null; loginName = me.name ?? null; renderWho();
+  showApp(); boot();
 })();

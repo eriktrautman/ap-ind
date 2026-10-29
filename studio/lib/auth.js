@@ -73,19 +73,27 @@ export function clearCookie() {
   return `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
 }
 
+/** The account whose cookie is in this Cookie header, by signature and expiry alone, or null. No store read, so it
+ *  runs wherever the environment is: the routing middleware (proxy.js) uses it to keep the Studio's page and scripts
+ *  from a signed-out browser, and the local server does the same. The Live rule for the rehearsal password needs
+ *  the store and is applied by authUser, which every API goes through: a rehearsal cookie seen here after results
+ *  went Live gets the page, and the page's first /api/login sends that browser back to sign in. */
+export function cookieAccount(cookieHeader) {
+  try {
+    const raw = String(cookieHeader ?? "").split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
+    if (!raw) return null;
+    const [exp, key, s] = raw.slice(COOKIE.length + 1).split(".");
+    if (!exp || !key || !s || Number(exp) < Date.now()) return null;
+    const a = account(key);
+    return a && same(s, sig(a, Number(exp))) ? a : null;
+  } catch {
+    return null;
+  }
+}
 /** The account this request is signed in as ({key, name, role, env}), or false. A rehearsal cookie is false while results are Live. */
 export async function authUser(req) {
-  let a;
-  try {
-    const raw = (req.headers.cookie ?? "").split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
-    if (!raw) return false;
-    const [exp, key, s] = raw.slice(COOKIE.length + 1).split(".");
-    if (!exp || !key || !s || Number(exp) < Date.now()) return false;
-    a = account(key);
-    if (!a || !same(s, sig(a, Number(exp)))) return false;
-  } catch {
-    return false;
-  }
+  const a = cookieAccount(req.headers.cookie);
+  if (!a) return false;
   if (a.role === "rehearsal" && !(await rehearsalAllowed())) return false;
   return a;
 }

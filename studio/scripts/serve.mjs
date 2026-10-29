@@ -31,6 +31,7 @@ import { isLocalStore, localPath, readJson, writeJson, BLOB_BASE } from "../lib/
 import { pollOnce } from "../lib/poll.js";
 import { normalize } from "../lib/control.js";
 import { requireProducer } from "../lib/auth.js";
+import { studioGate } from "../proxy.js";
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
@@ -224,6 +225,8 @@ createServer(async (req, res) => {
       res.end(Buffer.from(await r.arrayBuffer()));
       return;
     }
+    // /studio needs a Studio cookie before any of it is served (proxy.js does this on Vercel; same rule here).
+    if (studioGate(url.pathname, req.headers.cookie)) { res.writeHead(302, { location: "/studio/login", "cache-control": "no-store" }); res.end(); return; }
     const p = await resolve(url.pathname);
     if (!p) { res.writeHead(404, { "content-type": "text/plain" }); res.end("not found"); return; }
     const noStore = /^\/(studio|ticker|ticker-queue|live-screen)/.test(url.pathname);

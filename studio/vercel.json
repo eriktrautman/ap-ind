@@ -3,6 +3,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "cleanUrls": true,
+  "proxy": {
+    "entrypoint": "proxy.js",
+    "matcher": ["/studio", "/studio/:path*"]
+  },
   "crons": [
     {
       "path": "/api/poll",
