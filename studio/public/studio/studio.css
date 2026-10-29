@@ -54,7 +54,7 @@ input[type=text]:focus, input:not([type]):focus, input[type=password]:focus, sel
 
 /* ---- production line: working copy · push / pull / defaults · production ---- */
 .pollstrip { padding: 3px 16px 4px; background: #fff; font-size: 12.5px; color: var(--ink); }
-.pollstrip button { font-size: 12px; padding: 2px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; line-height: 1.4; }
+.pollstrip button:not(.info) { font-size: 12px; padding: 2px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; line-height: 1.4; }
 .pollstrip { padding: 3px 16px 4px; background: #fff; font-size: 12.5px; color: var(--ink); }
 .pollstrip { display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--gold); white-space: nowrap; overflow: hidden; }
 /* The site's own status (reachable, pull only, last push) lives behind this icon's tooltip. */
@@ -107,7 +107,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .standby > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; } .standby .k, .standby .info, .standby button { flex: none; }
 .standby .k { font-weight: 700; letter-spacing: .08em; font-size: 12px; color: var(--local); }
 /* the (i) beside a strip's label opens a plain-English panel under it */
-.info { width: 16px; height: 16px; border-radius: 50%; border: 1px solid currentColor; background: none; padding: 0; margin-left: -4px; font: 700 10px/14px var(--serif); color: var(--navy); cursor: pointer; opacity: .7; flex: none; }
+.info { box-sizing: border-box; width: 16px; height: 16px; border-radius: 50%; border: 1px solid currentColor; background: none; padding: 0; margin-left: -4px; display: inline-flex; align-items: center; justify-content: center; font: 700 10px/1 var(--serif); color: var(--navy); cursor: pointer; opacity: .7; flex: none; }
 .info:hover, .info[aria-expanded="true"] { opacity: 1; background: var(--navy); color: #fff; border-color: var(--navy); }
 .standby .info { color: var(--local); } .standby .info:hover, .standby .info[aria-expanded="true"] { background: var(--local); border-color: var(--local); color: #fff; }
 .infopanel { padding: 8px 16px 10px; background: #fffdf5; border-bottom: 1px solid var(--sand); font-size: 12.5px; color: var(--ink); }
