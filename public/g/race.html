@@ -83,7 +83,7 @@
   const MAX_ROWS = 5;
 
   const $ = (id) => document.getElementById(id);
-  const escape = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const escape = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
   function render(race) {
     if (!race) { $("title").textContent = "Race not found"; $("rows").innerHTML = `<div class="empty">No race with id ${escape(raceId ?? "(none)")}. Open /api/races for ids.</div>`; return; }

@@ -207,7 +207,30 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .plbar button { padding: 4px 10px; font-size: 12.5px; }
 .plbar button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
 .plbar .plmeta { color: var(--muted); font-size: 12px; }
-#plbody .cardgrid { padding: 10px 0 0; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }   /* half the size of the other grids */
+#plbody .cardgrid { padding: 10px 0 0; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 8px; }   /* half the size of the other grids, air between rows */
+#plbody .gcard, .splist .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */
+#plbody .gcard .thumb, .splist .gcard .thumb { border-radius: 0 0 8px 8px; }
+#plbody .gcard .ghead .menu { right: 0; min-width: 180px; font-size: 12px; }
+#plbody .gcard .ghead .menu button { font-size: 12px; padding: 6px 9px; white-space: nowrap; }
+#plbody .gcard .ghead .handle { cursor: grab; color: var(--muted); font-size: 14px; line-height: 1; padding: 0 2px; user-select: none; }
+#plbody .gcard .ghead .handle:active { cursor: grabbing; }
+#plbody .gcard.dragging { opacity: .4; }
+#plbody .gcard.dropbefore { box-shadow: -4px 0 0 0 var(--navy); }
+#plbody .gcard.dropafter { box-shadow: 4px 0 0 0 var(--navy); }
+/* A Live Screen draft from a playlist: the mode toggle, the pickers and the tiles */
+.screen .smode { display: flex; gap: 0; padding: 10px 12px 0; background: #fff; }
+.screen .smode button { padding: 4px 12px; font-size: 12.5px; border: 1px solid var(--sand); background: #fff; color: var(--muted); }
+.screen .smode button:first-child { border-radius: 6px 0 0 6px; } .screen .smode button:last-child { border-radius: 0 6px 6px 0; border-left: 0; }
+.screen .smode button.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.screen .splist { padding: 10px 12px 14px; background: #fff; font-size: 12.5px; }
+.screen .splist .plbar { margin: 0 0 8px; }
+.screen .splist .cardgrid { padding: 0; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px 6px; }
+.screen .splist .gcard { cursor: pointer; }
+.screen .splist .gcard .gfoot { display: none; }
+.screen .splist .gcard .ghead { padding: 2px 5px; font-size: 10.5px; gap: 3px; } .screen .splist .gcard .ghead .racetag { display: none; }
+.screen .splist .gcard .spec { padding: 2px 5px 3px; font-size: 10px; }
+.screen .splist .gcard .thumb.clickable:hover::after { content: "Use as draft"; }
+.screen .splist .gcard.chosen { outline: 3px solid var(--gold); outline-offset: -1px; }
 #plbody .gcard .gfoot { display: none; }   /* no Copy URL or Show: the card is the rundown entry, not an output */
 #plbody .gcard .ghead { padding: 3px 6px; font-size: 11px; gap: 4px; }
 #plbody .gcard .ghead .cid { font-size: 10.5px; }

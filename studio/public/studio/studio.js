@@ -765,7 +765,9 @@ function buildScreen(key) {
       <div class="screen draft">
         <div class="frame clickable" data-open="draft" title="Open the draft at 1920×1080 in a new tab"><iframe title="Live Screen ${letter} draft"></iframe></div>
         <div class="gfoot"><span class="muted small">Draft on this page<span class="samplenote" title="The preview carries sample=auto: while no race in the feed has any votes, it draws made-up numbers so the layout can be seen. Show, Copy Draft URL and the live address read the real feed, which is empty until the count starts."></span></span><span class="spacer"></span><button class="copybtn" data-copy="draft" type="button" title="Copy the draft's address">Copy Draft URL</button><a class="openbtn" data-open="draft" target="_blank" rel="noopener" title="Open the draft at 1920×1080 in a new tab">Show 1920×1080</a></div>
+        <div class="smode"><button data-mode="generate" title="Set the chart, race and settings by hand">Generate chart</button><button data-mode="playlist" title="Pick a chart from a playlist; it becomes this draft">Use playlist</button></div>
         <div class="sform"></div>
+        <div class="splist" hidden></div>
       </div>
       <div class="screenmid">
         <div class="arrow" aria-hidden="true"><svg viewBox="0 0 64 24" width="72" height="27"><path d="M2 12h50M42 3l10 9-10 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
@@ -795,13 +797,17 @@ function renderScreens() {
     const dAddr = screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity, sample: "auto" });
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
     dFrame.parentElement.classList.toggle("checker", !pageBg(key));
-    box.querySelector(".samplenote").textContent = index && !index.races.some((r) => r.totalVotes > 0) ? " · sample numbers until the count starts (Show and the live address show the real, empty feed)" : "";
+    box.querySelector(".samplenote").textContent = index && !index.races.some((r) => r.totalVotes > 0) ? " · sample numbers until the count starts" : "";
     const oFrame = box.querySelector(".screen.onair iframe");
     const oAddr = `${screenPath(key)}?${displayParams({ bg: "", opacity: secDisplay("screens").opacity }).toString()}`;   // no bg: the published one shows
     if (oFrame.dataset.addr !== oAddr) { oFrame.dataset.addr = oAddr; oFrame.src = oAddr; }
     oFrame.parentElement.classList.toggle("checker", !(live?.[key]?.bg ?? "black"));
-    const form = box.querySelector(".sform");
+    const mode = screenMode[key] ?? "generate";
+    box.querySelectorAll(".smode button").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+    const form = box.querySelector(".sform"); form.hidden = mode !== "generate";
     if (!form.contains(document.activeElement)) form.innerHTML = screenForm(key);
+    const sp = box.querySelector(".splist"); sp.hidden = mode !== "playlist";
+    if (mode === "playlist") renderScreenPlaylist(key, sp);
     box.querySelector("a[data-open=draft]").href = screenDraftUrl(key);
     box.querySelector("a[data-open=live]").href = screenLiveUrl(key);
     const la = box.querySelector(".liveaddr"); la.textContent = screenLiveUrl(key); la.href = screenLiveUrl(key);
@@ -821,6 +827,50 @@ function renderScreens() {
   }
   scaleScreens();
 }
+// A draft from a playlist: pick the person and playlist, click a tile, and that chart spec becomes the draft.
+let screenMode = (() => { try { return JSON.parse(localStorage.getItem("studio.screenMode") ?? "null") ?? {}; } catch { return {}; } })();
+let screenPl = (() => { try { return JSON.parse(localStorage.getItem("studio.screenPl") ?? "null") ?? {}; } catch { return {}; } })();
+const saveScreenPrefs = () => { try { localStorage.setItem("studio.screenMode", JSON.stringify(screenMode)); localStorage.setItem("studio.screenPl", JSON.stringify(screenPl)); } catch {} };
+function renderScreenPlaylist(key, sp) {
+  if (!playlists) { sp.innerHTML = `<div class="empty">${plError ? `Cannot read the playlists: ${esc(plError)}` : "Reading the playlists…"}</div>`; return; }
+  const sel = screenPl[key] ?? {};
+  const u = playlists.users.find((x) => x.id === sel.user) ?? playlists.users[0] ?? null;
+  const p = u?.playlists.find((x) => x.id === sel.playlist) ?? u?.playlists[0] ?? null;
+  const sig = JSON.stringify([u?.id, p?.id, p?.items, draft[key]]);
+  if (sp.dataset.sig === sig) return;   // nothing changed: keep the tiles (and their frames) as they are
+  sp.dataset.sig = sig;
+  sp.innerHTML = `<div class="plbar"><label>Person <select data-spu="${key}">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("") || "<option value=''>nobody yet</option>"}</select></label><label>Playlist <select data-spl="${key}">${(u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === p?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || "<option value=''>none yet</option>"}</select></label><span class="spacer"></span><span class="plmeta">Click a chart to make it the draft</span></div>`;
+  if (!p?.items.length) { sp.insertAdjacentHTML("beforeend", `<div class="empty">Nothing in this playlist yet. Build it in the Playlists section.</div>`); return; }
+  const grid = document.createElement("div"); grid.className = "cardgrid";
+  const current = JSON.stringify(draft[key]);
+  p.items.forEach((s, i) => {
+    const chart = CHARTS.find((c) => c.id === s.chart); if (!chart) return;
+    const el = cards.card({ chart, race: specRace(s), params: { ...s.params, ...(s.bg ? { bg: s.bg } : {}) }, section: "screens", priority: 7, open: "show", showRace: false });
+    el.classList.add("minicard"); el.dataset.i = i; el.classList.toggle("chosen", JSON.stringify(s) === current);
+    el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="pos" title="Position ${i + 1}">${i + 1}</span>`);
+    el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}"><b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}</div>`);
+    grid.appendChild(el);
+  });
+  sp.appendChild(grid);
+  cards.prune();
+}
+document.addEventListener("click", (e) => {
+  const mb = e.target.closest(".smode button"); if (mb) { const key = mb.closest(".screenblock").id; screenMode[key] = mb.dataset.mode; saveScreenPrefs(); renderScreens(); return; }
+}, true);
+// Choosing a tile is done in the capture phase, before the card's own click (which would open the chart in a new tab).
+document.addEventListener("click", (e) => {
+  const card = e.target.closest(".screen .splist .gcard"); if (!card || e.target.closest(".kebab, .menu")) return;
+  e.stopPropagation(); e.preventDefault();
+  const key = card.closest(".screenblock").id; const sel = screenPl[key] ?? {};
+  const u = playlists?.users.find((x) => x.id === sel.user) ?? playlists?.users[0]; const p = u?.playlists.find((x) => x.id === sel.playlist) ?? u?.playlists[0];
+  const s = p?.items[Number(card.dataset.i)]; if (!s) return;
+  draft[key] = structuredClone(s); commit();
+}, true);
+document.addEventListener("change", (e) => {
+  const su = e.target.closest("[data-spu]"), sl = e.target.closest("[data-spl]");
+  if (su) { screenPl[su.dataset.spu] = { user: su.value, playlist: null }; saveScreenPrefs(); renderScreens(); }
+  else if (sl) { const key = sl.dataset.spl; screenPl[key] = { ...(screenPl[key] ?? {}), playlist: sl.value }; saveScreenPrefs(); renderScreens(); }
+});
 function scaleScreens() { document.querySelectorAll(".screen .frame").forEach((fr) => { const f = fr.querySelector("iframe"); if (f) f.style.transform = `scale(${fr.clientWidth / 1920})`; }); }
 window.addEventListener("resize", scaleScreens);
 let screenTimer = null;
@@ -890,6 +940,7 @@ function plSelect(user, playlist) { plSel = { user, playlist }; try { localStora
 async function loadPlaylists() {
   try { playlists = normalizePlaylists(await api("/api/playlists")); plError = null; } catch (e) { plError = e.message; }
   renderPlaylists();
+  if (Object.values(screenMode).includes("playlist")) renderScreens();
 }
 /** Re-read, change, write back. mutate(doc) edits in place; returns false to abort. */
 async function savePlaylists(mutate, { producerOnly = false } = {}) {
@@ -936,15 +987,31 @@ function renderPlaylists() {
       { label: "Remove from playlist", onClick: () => plRemove(i) },
     ] : [];
     const el = cards.card({ chart, race, params: { ...s.params, ...(s.bg ? { bg: s.bg } : {}) }, section: "playlists", priority: 4, open: "show", showRace: !!race?.id, menu });
-    el.classList.add("minicard");
-    el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="pos" title="Position ${i + 1} in ${esc(p.name || "this playlist")}">${i + 1}</span>`);
+    el.classList.add("minicard"); el.dataset.i = i;
+    el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="handle" title="Drag to reorder">⠿</span><span class="pos" title="Position ${i + 1} in ${esc(p.name || "this playlist")}">${i + 1}</span>`);
     el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}"><b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}</div>`);
     grid.appendChild(el);
   });
   body.innerHTML = "";
   if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart…, or send a chart here from the Chart Catalog's ⋯ menu." : ""}</div>`;
-  else body.appendChild(grid);
+  else { body.appendChild(grid); if (can) plDragDrop(grid); }
   cards.prune();
+}
+/** Reorder by dragging a card's ⠿ handle onto another card: left half drops before it, right half after. */
+function plDragDrop(grid) {
+  let from = null;
+  grid.addEventListener("mousedown", (e) => { const h = e.target.closest(".handle"); if (h) h.closest(".gcard").draggable = true; });
+  grid.addEventListener("dragstart", (e) => { const card = e.target.closest(".gcard"); if (!card?.draggable) { e.preventDefault(); return; } from = Number(card.dataset.i); card.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", String(from)); } catch {} });
+  grid.addEventListener("dragover", (e) => { const card = e.target.closest(".gcard"); if (from === null || !card) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; const r = card.getBoundingClientRect(); const after = e.clientX > r.left + r.width / 2; grid.querySelectorAll(".dropbefore, .dropafter").forEach((c) => c.classList.remove("dropbefore", "dropafter")); if (Number(card.dataset.i) !== from) card.classList.add(after ? "dropafter" : "dropbefore"); });
+  grid.addEventListener("dragleave", (e) => { const card = e.target.closest(".gcard"); if (card && !card.contains(e.relatedTarget)) card.classList.remove("dropbefore", "dropafter"); });
+  grid.addEventListener("drop", (e) => {
+    const card = e.target.closest(".gcard"); if (from === null || !card) return; e.preventDefault();
+    const r = card.getBoundingClientRect(); const to = Number(card.dataset.i) + (e.clientX > r.left + r.width / 2 ? 1 : 0); const i = from; from = null;
+    grid.querySelectorAll(".dragging, .dropbefore, .dropafter").forEach((c) => c.classList.remove("dragging", "dropbefore", "dropafter"));
+    if (to === i || to === i + 1) return;
+    savePlaylists((doc) => { const list = doc.users.find((x) => x.id === plUser()?.id)?.playlists.find((x) => x.id === plList()?.id); if (!list?.items[i]) return false; const [it] = list.items.splice(i, 1); list.items.splice(to > i ? to - 1 : to, 0, it); });
+  });
+  grid.addEventListener("dragend", (e) => { from = null; const card = e.target.closest(".gcard"); if (card) { card.draggable = false; card.classList.remove("dragging"); } grid.querySelectorAll(".dropbefore, .dropafter").forEach((c) => c.classList.remove("dropbefore", "dropafter")); });
 }
 function plMove(i, d) { savePlaylists((doc) => { const list = doc.users.find((x) => x.id === plUser()?.id)?.playlists.find((x) => x.id === plList()?.id); if (!list || !list.items[i] || !list.items[i + d]) return false; [list.items[i], list.items[i + d]] = [list.items[i + d], list.items[i]]; }); }
 async function plRemove(i) {
