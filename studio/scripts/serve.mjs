@@ -6,7 +6,7 @@
 //   npm start                  build, then serve on http://localhost:3000
 //   node scripts/serve.mjs --port 4000 [--poll | --no-poll | --no-mirror]
 //
-// Production (the Live Ticker the control room publishes to and pulls from) is chosen by GLOBAL in .env, and the
+// Production (the Live Ticker the Studio publishes to and pulls from) is chosen by GLOBAL in .env, and the
 // mode follows from it. A laptop never polls AP while the deployment is production: the AP key allows ten requests a
 // minute and one polling run uses six or seven, so two pollers on the key get both refused.
 //   GLOBAL=https://ap-ind.vercel.app   the deployment is production and this laptop is its STANDBY. Mode "mirror":
@@ -17,8 +17,8 @@
 //                                       copying; --poll polls AP from here anyway (only with a key of its own).
 //   GLOBAL=self                         this machine IS production. Mode "poll": it polls AP every POLL_SECONDS (default 60)
 //                                       into its own files and its outputs read them. --no-poll serves what the files hold.
-// Promote (a producer button in the control room, or POST /api/promote) turns a standby into production without a
-// restart: mirroring stops, polling starts, the outputs switch to this machine's copy, and the control room shows the
+// Promote (a producer button in the Studio, or POST /api/promote) turns a standby into production without a
+// restart: mirroring stops, polling starts, the outputs switch to this machine's copy, and the Studio shows the
 // address on the local network to point the switcher at. Demote reverses it.
 // Needs AP_API_KEY and one STUDIO_PASSWORD_PRODUCER_*. A connected laptop keeps its files in STORE_DIR (./data when
 // unset) and never writes the deployment's Blob store from here; BLOB_READ_WRITE_TOKEN belongs on a laptop only for
@@ -186,7 +186,7 @@ createServer(async (req, res) => {
       return;
     }
     if (url.pathname === "/api/producer" && CONNECTED) {
-      // Production lives on the deployment: this machine's outputs and control room read it from
+      // Production lives on the deployment: this machine's outputs and Studio read it from
       // there, and a push goes there (after the local sign-in check, then the deployment's).
       if (req.method === "PUT") {
         const body = await readBody(req); shim(req, res, body);
@@ -241,9 +241,9 @@ createServer(async (req, res) => {
       if (r.ok) { await writeJson("producer.json", normalize(await r.json())); console.log(`seeded producer.json from ${DEPLOYMENT} (first run)`); }
     } catch (e) { console.log(`could not seed from ${DEPLOYMENT}: ${e.message}; starting from the defaults`); }
   }
-  console.log(`ap-ind: http://localhost:${PORT}  on this network ${lanOrigin()}  control room /studio · ticker /ticker · graphics /g/ · files: ${isLocalStore() ? localPath("") : "Vercel Blob (shared with the deployment)"}`);
+  console.log(`ap-ind: http://localhost:${PORT}  on this network ${lanOrigin()}  Studio /studio · ticker /ticker · graphics /g/ · files: ${isLocalStore() ? localPath("") : "Vercel Blob (shared with the deployment)"}`);
   console.log(CONNECTED ? `production: ${GLOBAL} (this laptop is its standby; pull ready; publish ${GLOBAL_PASSWORD ? "ready" : "NOT configured: set GLOBAL_PASSWORD"})` : "production: THIS MACHINE (GLOBAL=self); its outputs read its own files");
-  if (mode.kind === "mirror") { startMirror(); console.log(`mirror: copying ${GLOBAL}'s data files every ${MIRROR_MS / 1000} s (no AP requests); Promote in the control room makes this laptop production`); }
+  if (mode.kind === "mirror") { startMirror(); console.log(`mirror: copying ${GLOBAL}'s data files every ${MIRROR_MS / 1000} s (no AP requests); Promote in the Studio makes this laptop production`); }
   else if (mode.kind === "poll") { startPolling(); console.log(`poller: AP every ${POLL_MS / 1000} s into this machine's files${CONNECTED ? " (--poll: make sure no other poller shares this AP key)" : ""}`); }
   else console.log(`serving only (${CONNECTED ? "--no-mirror" : "--no-poll"}): data comes from whatever the files hold`);
 });

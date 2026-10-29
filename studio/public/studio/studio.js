@@ -1,4 +1,4 @@
-// Control room: status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
+// Studio: status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Featured Races, overviews, catalogs).
 import { buildQueue } from "/ticker-queue.js";
 import { DEFAULTS, CHARTS, FEATURED_RACES, normalize, diffState, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
@@ -92,7 +92,7 @@ const ROLE_LABEL = { producer: "Producer", publisher: "Publisher", readonly: "Re
 const ROLE_ALLOWS = {
   producer: "Everything: publish the live ticker and the live screens, run or pause the poller, switch results between Test and Live.",
   publisher: "Publish the live ticker and the live screens. Cannot poll, pause, or switch Test/Live.",
-  readonly: "See everything in the control room, including what is live and who published it. Cannot publish or change anything.",
+  readonly: "See everything in the Studio, including what is live and who published it. Cannot publish or change anything.",
   rehearsal: "The shared rehearsal password: read only, and switched off the moment results go Live.",
 };
 const ROLE_ORDER = ["producer", "publisher", "readonly", "rehearsal"];
@@ -997,7 +997,7 @@ const POLL_INFO = () => `<dl>
   <dt>Reset caches</dt><dd>Drops the in-memory copies of the curated candidate and photo files, then polls. Use it after those files change on GitHub.</dd>
   <dt>Pause polling</dt><dd>Stops fetching new AP results for the ticker, every graphic and the watch party until you press Resume. Everything keeps showing the last data.</dd>
   <dt>Data Stream</dt><dd><b>Test</b> is AP's practice simulation, <b>Live</b> is real results. Switching polls at once; the status bar confirms when the new stream has been read. Going Live also switches the rehearsal password off.</dd>
-  <dt>Who can use them</dt><dd>These change what the poller does for every output, so they need a producer password. Publisher and read-only sign-ins see them locked.${runtime ? " On a laptop they appear only once it has been promoted to production; until then the website's control room has them." : ""}</dd>
+  <dt>Who can use them</dt><dd>These change what the poller does for every output, so they need a producer password. Publisher and read-only sign-ins see them locked.${runtime ? " On a laptop they appear only once it has been promoted to production; until then the website's Studio has them." : ""}</dd>
 </dl>`;
 const STANDBY_INFO = () => `<dl>
   <dt>Standby</dt><dd>This laptop copies the website's results, poller status and published ticker into its own files every ${esc(String(runtime?.mirror?.every ?? 30))} seconds, making no AP requests, so it can take over at any moment. Its ticker and graphics show the website's live ticker meanwhile.</dd>
@@ -1016,7 +1016,7 @@ function renderStandby() {
   if (!el) return;
   if (!runtime || !runtime.standby) { el.hidden = true; $("standbyinfo").hidden = true; return; }   // the website, or a machine started as production
   el.hidden = false;
-  const lanLink = `<a href="${esc(runtime.lan)}/studio" target="_blank" rel="noopener" title="This laptop's control room over the network">${esc(hostOf(runtime.lan))}</a>`;
+  const lanLink = `<a href="${esc(runtime.lan)}/studio" target="_blank" rel="noopener" title="This laptop's Studio over the network">${esc(hostOf(runtime.lan))}</a>`;
   const dep = runtime.deployment ?? {};
   const wasOpen = $("standbyinfo") && !$("standbyinfo").hidden;
   const info = `<button class="info" id="standbyinfobtn" type="button" aria-expanded="${wasOpen}" aria-controls="standbyinfo" title="What this strip and its buttons mean">i</button>`;
@@ -1051,9 +1051,9 @@ async function promoteLaptop() {
   const dep = runtime.deployment ?? {}, m = runtime.mirror;
   const ok = await ask({
     title: "Make this laptop production?", ok: "Promote", danger: true,
-    body: `<p>This laptop stops copying from <b>${esc(hostOf(dep.origin))}</b> and polls AP itself, every minute, into its own files. Its ticker and graphics switch to that copy at once${m?.lastOk ? `, taken ${esc(ago(new Date(m.lastOk).toISOString()))}` : ""}. Publishing from this control room then changes this laptop's ticker.</p>
+    body: `<p>This laptop stops copying from <b>${esc(hostOf(dep.origin))}</b> and polls AP itself, every minute, into its own files. Its ticker and graphics switch to that copy at once${m?.lastOk ? `, taken ${esc(ago(new Date(m.lastOk).toISOString()))}` : ""}. Publishing from this Studio then changes this laptop's ticker.</p>
       <p><b>Then point the switcher's browser inputs at ${esc(hostOf(runtime.lan))}</b>, keeping the website's paths (/ticker, /g/B5?race=…). Use that address, not localhost.</p>
-      ${dep.reachable ? `<div class="warnline bad">The website is still answering. Its poller and this laptop would then share one AP key, which allows ten requests a minute; two pollers exceed that and both start being refused. Promote only when the website is down, or pause polling in the website's control room first.</div>` : `<div class="warnline">The website is not answering, which is what this is for.</div>`}`,
+      ${dep.reachable ? `<div class="warnline bad">The website is still answering. Its poller and this laptop would then share one AP key, which allows ten requests a minute; two pollers exceed that and both start being refused. Promote only when the website is down, or pause polling in the website's Studio first.</div>` : `<div class="warnline">The website is not answering, which is what this is for.</div>`}`,
   });
   if (!ok) return;
   try { await api("/api/promote", { method: "POST" }); } catch (e) { $("pollmsg").textContent = `Promote failed: ${e.message}`; }

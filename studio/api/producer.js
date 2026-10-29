@@ -1,6 +1,6 @@
 // Producer state: the Global source (what air uses). GET is public and uncached so the on-air
 // ticker and every graphic see a publish within one poll. PUT needs a producer's or publisher's cookie and stamps
-// the state with that person's name (updatedBy), which the control room shows beside the time.
+// the state with that person's name (updatedBy), which the Studio shows beside the time.
 //
 // The body may carry any subset of the fields in lib/control.js; fields it leaves out keep
 // their stored value, so an older panel that sends only the ticker fields cannot wipe the

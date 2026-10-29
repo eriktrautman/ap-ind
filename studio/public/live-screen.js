@@ -11,7 +11,7 @@ const setBg = (bg) => { document.body.classList.remove("bg-black", "bg-green"); 
 if (q.has("bg")) setBg(q.get("bg"));
 // Background: the address wins (?bg=black|green|transparent); otherwise the published screen's own.
 const display = { bg: q.get("bg") ?? "", opacity: q.get("opacity") ?? "", sample: q.get("sample") ?? "", src: q.get("src") ?? "" };
-if (q.get("fit") === "1") {   // Preview from the control room: the 1920x1080 page scaled to the window
+if (q.get("fit") === "1") {   // Preview from the Studio: the 1920x1080 page scaled to the window
   const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.overflow = "hidden"; };
   window.addEventListener("resize", fit); fit();
 }

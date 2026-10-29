@@ -1,4 +1,4 @@
-/* Control room. Same palette as the Watch Party, kept local so this app has no cross-project assets. */
+/* Studio. Same palette as the Watch Party, kept local so this app has no cross-project assets. */
 :root { --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280; --ok: #2e9e5b; --warn: #e08a1e; --bad: #b11e2d; --local: #6d28d9; --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: ui-monospace, Menlo, monospace; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }

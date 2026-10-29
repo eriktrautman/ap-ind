@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The ap-ind app: AP poller, producer control room, on-air ticker and graphics, plus the project docs. Deployed on Vercel; npm start runs the same code on one machine.",
+  "description": "The ap-ind app: AP poller, Studio, on-air ticker and graphics, plus the project docs. Deployed on Vercel; npm start runs the same code on one machine.",
   "engines": {
     "node": ">=24"
   },

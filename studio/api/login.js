@@ -1,6 +1,6 @@
 // Studio sign-in. GET → who this browser is (and, when signed in, everyone on the project with their role), POST { password } → sets the cookie, DELETE → clears it.
 // The answer carries `name` ("Erik Trautman", "Rehearsal"), `role` ("producer" | "publisher" | "readonly" | "rehearsal") and `kind` (the account key);
-// `testLogin` is true for the rehearsal password, which the control room flags.
+// `testLogin` is true for the rehearsal password, which the Studio flags.
 import { matchPassword, rehearsalAllowed, REHEARSAL_OFF, issueCookie, clearCookie, authUser, accounts, producersConfigured, readBody } from "../lib/auth.js";
 
 const who = (a) => ({ authed: !!a, kind: a ? a.key : null, name: a ? a.name : null, role: a ? a.role : null, testLogin: a?.role === "rehearsal" });
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     const me = await authUser(req);
     res.status(200).json({
       ...who(me), configured: all.length > 0, testConfigured: all.some((a) => a.role === "rehearsal"), rehearsalAllowed: await rehearsalAllowed(),
-      // Who is on the project and with what rights (names and roles only), for the control room's View User Permissions. Signed-in browsers only.
+      // Who is on the project and with what rights (names and roles only), for the Studio's View User Permissions. Signed-in browsers only.
       ...(me ? { accounts: all.map((a) => ({ name: a.name, role: a.role })) } : {}),
     });
     return;

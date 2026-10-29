@@ -58,7 +58,7 @@
     const head = st.status === "called" ? `AP calls it for ${st.cand.last}${race.flipped ? " · a flip" : ""}` : st.status === "leading" ? (Math.abs(st.margin) < 3 && inPct > 25 ? "Too close to call" : inPct < 25 ? "Early returns" : `${st.cand.last} leads`) : st.status === "closed" ? "Polls closed, counting to begin" : "Polls open";
     $("h").textContent = head;
     $("ctx").className = `ctx ${context ? "" : "none"}`;
-    $("ctx").textContent = context || "No context line set. Type one in the control room under Race Detail.";
+    $("ctx").textContent = context || "No context line set. Type one in the Studio under Race Detail.";
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   watchState({ onState: (s) => { context = s.contextLines?.[raceId] ?? ""; render(); } });

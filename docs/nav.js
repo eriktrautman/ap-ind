@@ -5,7 +5,7 @@
   const onDocs = location.pathname.startsWith("/docs/");
   const local = onDocs || ["localhost", "127.0.0.1"].includes(location.hostname);
   const docs = onDocs ? "/docs/" : local ? "/docs/" : "/";
-  // Kept deliberately short so it is not mistaken for the control room's own navbar.
+  // Kept deliberately short so it is not mistaken for the Studio's own navbar.
   const links = [["Home", "/"]];
   const here = location.pathname.replace(/\/$/, "/index.html");
   const style = document.createElement("style");
@@ -25,7 +25,7 @@
   nav.className = "apnav";
   nav.innerHTML = `<a class="brand" href="/">IND Election Night</a>` +
     links.map(([label, href]) => `<a href="${href}" class="${href.split("?")[0] === here ? "here" : ""}">${label}</a>`).join("") +
-    `<a class="cta" href="/studio">Control room →</a>` +
+    `<a class="cta" href="/studio">Studio →</a>` +
     `<span class="env">${local ? "local" : location.host}</span>`;
   document.body.insertBefore(nav, document.body.firstChild);
 })();

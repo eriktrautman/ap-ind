@@ -1,9 +1,9 @@
-// Producer control state shared by the control room (/studio), the ticker and every
+// Producer control state shared by the Studio (/studio), the ticker and every
 // graphic. One schema, three sources:
 //   default  the shipped values in this file
 //   global   producer.json in the store, read as /data/producer.json (production: what the deployed ticker and graphics read)
 //   local    this browser's localStorage; never written to Blob
-// A page picks its source with ?src=default|global|local, else the selector the control room
+// A page picks its source with ?src=default|global|local, else the selector the Studio
 // saved in this browser, else global. A local source with nothing saved falls back to global.
 //
 // Usage in a graphic:
@@ -46,11 +46,11 @@ export const FEATURED_RACES = [
 
 /**
  * Every graphic in the lookbook. kind: race (needs ?id=), movement (C and D series), or other (A and
- * F series, which have no section in the control room and show only in the Chart Catalog). built: a page exists.
+ * F series, which have no section in the Studio and show only in the Chart Catalog). built: a page exists.
  *
  * CHART IDS ARE FIXED (from 27 October 2026). The lookbook ids (B5, C1, D7, ...) have been shared and are
  * used in rundowns and by other people, so an id never changes meaning and is never reused:
- *   - to retire a chart, keep its entry and set retired: true (optionally retiredNote); the control room
+ *   - to retire a chart, keep its entry and set retired: true (optionally retiredNote); the Studio
  *     greys it out with a placeholder and refuses to add it, and existing selections drop it cleanly;
  *   - a new chart gets a NEW id at the end of its series (B14, C10, D12, ...), never a freed one;
  *   - renaming a chart's page is fine; renaming its id is not.
@@ -242,7 +242,7 @@ export function sameState(a, b) {
 export function diffState(from, to) {
   const A = normalize(from), B = normalize(to);
   const out = [];
-  // Race ids are wrapped in {id} so the control room can print labels instead of AP numbers.
+  // Race ids are wrapped in {id} so the Studio can print labels instead of AP numbers.
   const list = (field, label, isRace) => {
     const a = A[field], b = B[field];
     const wrap = (x) => (isRace ? `{${x}}` : x);
@@ -294,7 +294,7 @@ function requestedSource(search = location.search) {
 
 // Production is read as a static file through the CDN, never through a function: every open ticker and graphic
 // asks for the same address within each 5 s bucket, so the CDN answers all of them from one copy and a flood of
-// readers (ours or anyone's) costs no invocations. The control room's Pull and conflict check still use
+// readers (ours or anyone's) costs no invocations. The Studio's Pull and conflict check still use
 // GET /api/producer, which is uncached and authoritative. A store that has never been published to is a 404: the defaults.
 export const GLOBAL_BUCKET_MS = 5_000;
 export async function loadGlobal() {
@@ -355,7 +355,7 @@ async function urlOverrides(search = location.search) {
 
 export function watchState({ source = requestedSource(), intervalMs = 0, onState, preview = new URLSearchParams(location.search).get("preview") === "1" } = {}) {
   // intervalMs > 0 re-reads the live ticker on a timer (the ticker itself does; graphics read once). Local changes
-  // made in another tab of this browser arrive through the storage event; the control room can post a draft with
+  // made in another tab of this browser arrive through the storage event; the Studio can post a draft with
   // postMessage {type:"producer", state} (preview mode). The address's own parameters sit on top of all of it.
   let requested = source;
   let lastGlobal = null;

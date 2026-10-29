@@ -115,9 +115,9 @@
     f.style.cssText = "position:absolute;left:0;top:0;width:1920px;height:1080px;border:0;background:transparent";
     f.src = `${dest.pathname.replace(/\.html$/, "")}?${out.toString()}`;
     document.body.appendChild(f);
-    // Messages pass through: the control room's feed/producer posts go down to the page, the page's reports go up.
+    // Messages pass through: the Studio's feed/producer posts go down to the page, the page's reports go up.
     window.addEventListener("message", (e) => { if (e.source === f.contentWindow) window.parent?.postMessage(e.data, "*"); else f.contentWindow?.postMessage(e.data, "*"); });
-    if (q.get("fit") === "1") {   // Preview from the control room: the 1920x1080 frame scaled to the window
+    if (q.get("fit") === "1") {   // Preview from the Studio: the 1920x1080 frame scaled to the window
       const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.overflow = "hidden"; };
       window.addEventListener("resize", fit); fit();
     }

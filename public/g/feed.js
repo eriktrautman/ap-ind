@@ -4,10 +4,10 @@
 // snapshot, update and counties messages, a freshness indicator, and helpers for county units,
 // margin history, trend reports and the committed baselines.
 //   ?demo=1   an embedded sample snapshot, no network (the docs site's embeds)
-//   ?sample=auto  (the control room's previews) when no race has any votes yet, every race gets
+//   ?sample=auto  (the Studio's previews) when no race has any votes yet, every race gets
 //             fabricated results (sample.js) and the page shows a SAMPLE DATA badge; the moment
 //             real votes arrive, the real feed takes over.
-//   ?preview=1 inside the control room: the room posts {type:"feed", index, status} to the frame,
+//   ?preview=1 inside the Studio: the room posts {type:"feed", index, status} to the frame,
 //             so forty thumbnails share one download instead of each polling; a frame that gets no
 //             message within 5 s falls back to polling on its own.
 // Usage: const feed = connectFeed({ onSnapshot, onUpdate, onStatus });
@@ -16,7 +16,7 @@ import { FEATURED_RACES, canonicalAddress } from "./control.js";
 
 // Only the chart-id address (/g/B5?race=NE-SEN) is served at the top level: a page opened directly
 // (an old-style /g/race.html?id=... saved somewhere) forwards itself there, so one address style
-// exists on air. Inside a frame (the router, the control room's thumbnails, the lookbook) the page
+// exists on air. Inside a frame (the router, the Studio's thumbnails, the lookbook) the page
 // draws as it is; ?demo=1 (the lookbook's embedded sample) is left alone too.
 if (window.self === window.top && !new URLSearchParams(location.search).get("demo")) {
   const a = canonicalAddress(location.pathname, location.search);
@@ -27,7 +27,7 @@ const FEATURED_CANDS = new Set(FEATURED_RACES.map((r) => r.cand));
 /** True for the curated independents, whatever party label AP gives them (NP, Ind, ...). */
 export const isFeaturedCand = (id) => FEATURED_CANDS.has(String(id));
 
-// ?fit=1 (the control room's Preview links): keep the 1920x1080 layout but scale it to the
+// ?fit=1 (the Studio's Preview links): keep the 1920x1080 layout but scale it to the
 // window, so a producer on a laptop sees the whole graphic. Broadcast outputs never pass it.
 if (new URLSearchParams(location.search).get("fit") === "1") {
   const fit = () => {
@@ -84,7 +84,7 @@ export function connectFeed(handlers) {
   }
 
   // Bucketed URLs let the browser cache share one copy between the dozen thumbnails the
-  // control room keeps open; the poller rewrites index.json once a minute.
+  // Studio keeps open; the poller rewrites index.json once a minute.
   const bucket = (ms) => Math.floor(Date.now() / ms);
   async function getJSON(url) {
     const res = await fetch(url, { signal: AbortSignal.timeout(10_000) });
