@@ -29,7 +29,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP (candidates, incumbency, poll close), AP results for the last contest, public polls (config/polls.json)</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand, clock, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand, isMeasure, clock, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id");
@@ -48,16 +48,19 @@
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : race.pollClose ? `Polls close ${clock(race.pollClose)}` : "";
     $("cands").innerHTML = cands.map((c) => {
       const b = bios?.get(c.id) ?? {};
-      const lab = b.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.party);
+      const lab = b.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : partyKey(c) === "yes" ? "Vote Yes" : partyKey(c) === "no" ? "Vote No" : c.party);
       return `<div class="cand"><div class="pic" style="${c.photo ? `background-image:url('${c.photo}')` : ""}"></div><div><div class="nm" style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.name)}<small>${esc(lab)}${c.incumbent ? " · incumbent" : ""}</small></div><div class="sub">${esc(b.occupation ?? b.priorOffices ?? "")}</div></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) + "%" : ""}</div></div>`;
     }).join("");
     const holder = race.currentParty ? `${race.currentParty === "Dem" ? "Democratic" : race.currentParty === "GOP" ? "Republican" : race.currentParty}-held seat` : "Open seat";
+    const seatBox = isMeasure(race)
+      ? `<div class="box"><div class="k">Measure</div><div class="v">${esc(race.category || "Ballot measure")}</div>${race.summary ? `<div class="m">${esc(String(race.summary).slice(0, 260))}</div>` : ""}</div>`
+      : `<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${inc ? ` · <span style="color:${PARTY_COLOR[partyKey(inc)]}">${esc(inc.last)}</span> running` : ""}</div>${race.rankedChoice ? `<div class="m">Ranked-choice voting</div>` : ""}</div>`;
     const inc = race.candidates.find((c) => c.incumbent);
     const last = prior ? `<div class="v">${prior.candidates.slice(0, 2).map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> ${c.pct}%`).join(" · ")}</div><div class="m">${prior.date.slice(0, 4)} · ${esc(prior.raceType ?? "")}${prior.note ? " · " + esc(prior.note) : ""}</div>` : `<div class="v m">No prior result on file.</div>`;
     const p = polls?.filter((x) => !x.average).sort((a, b) => String(b.dates).localeCompare(String(a.dates)))[0];
     const poll = p ? `<div class="v">${Object.entries(p.numbers).map(([k, v]) => `${esc(k)} <b>${v}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${p.partisan})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div>` : `<div class="v m">Polling unavailable</div><div class="m">No public poll for this race is on file</div>`;
-    $("side").innerHTML = `<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${inc ? ` · <span style="color:${PARTY_COLOR[partyKey(inc)]}">${esc(inc.last)}</span> running` : ""}</div>${race.rankedChoice ? `<div class="m">Ranked-choice voting</div>` : ""}</div>
-      <div class="box"><div class="k">Last time</div>${last}</div>
+    $("side").innerHTML = `${seatBox}
+      ${isMeasure(race) ? "" : `<div class="box"><div class="k">Last time</div>${last}</div>`}
       <div class="box"><div class="k">Latest poll</div>${poll}</div>
       ${race.pollClose ? `<div class="box"><div class="k">Polls close</div><div class="v">${clock(race.pollClose)}</div></div>` : ""}`;
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;

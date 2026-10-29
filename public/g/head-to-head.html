@@ -37,7 +37,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP · bios and photos from config/candidates.json · public polls (config/polls.json)</span></span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, fmt, clock, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clock, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), forceA = q.get("a"), forceB = q.get("b");
@@ -59,7 +59,7 @@
     return k ? p.numbers[k] : null;
   }
   const isFeat = (c) => c.featured || isFeaturedCand(c.id);
-  const label = (c, b) => b.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.party);
+  const label = (c, b) => b.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : partyKey(c) === "yes" ? "Vote Yes" : partyKey(c) === "no" ? "Vote No" : c.party);
 
   /** The pair: fixed by ?a&b; else the two vote leaders; else the featured candidate and the closest poll rival, the incumbent, or the seat holder's party. */
   function pickPair() {
@@ -118,8 +118,11 @@
       if (p) boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v">${[a, b].filter(Boolean).map((c) => `${esc(c.last)} <b>${pollNumber(p, c) ?? "–"}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${esc(p.partisan)})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div></div>`);
       else boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v m">Polling unavailable</div><div class="m">No public poll for this race is on file</div></div>`);
       if (prior) boxes.push(`<div class="box"><div class="k">Last time</div><div class="v">${prior.candidates.slice(0, 2).map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> ${c.pct}%`).join(" · ")}</div><div class="m">${esc(String(prior.date).slice(0, 4))}${prior.note ? " · " + esc(prior.note) : ""}</div></div>`);
-      const holder = race.currentParty ? `${race.currentParty === "Dem" ? "Democratic" : race.currentParty === "GOP" ? "Republican" : race.currentParty}-held` : "Open seat";
-      boxes.push(`<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${race.rankedChoice ? `</div><div class="m">Ranked-choice voting` : ""}</div></div>`);
+      if (isMeasure(race)) boxes.push(`<div class="box"><div class="k">Measure</div><div class="v">${esc(race.category || "Ballot measure")}</div>${race.summary ? `<div class="m">${esc(String(race.summary).slice(0, 220))}</div>` : ""}</div>`);
+      else {
+        const holder = race.currentParty ? `${race.currentParty === "Dem" ? "Democratic" : race.currentParty === "GOP" ? "Republican" : race.currentParty}-held` : "Open seat";
+        boxes.push(`<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${race.rankedChoice ? `</div><div class="m">Ranked-choice voting` : ""}</div></div>`);
+      }
     }
     $("mid").innerHTML = boxes.join("");
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;

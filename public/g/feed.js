@@ -201,6 +201,8 @@ export function freshness(status) {
 export function partyClass(party) {
   if (party === "Dem") return "dem";
   if (party === "GOP") return "gop";
+  if (party === "Yes") return "yes";
+  if (party === "No") return "no";
   return "ind";
 }
 
@@ -243,8 +245,20 @@ export async function loadGeo(st, [w, h] = [900, 560]) {
 }
 
 /** dem | gop | ind | oth for a candidate; curated independents are always ind. */
+/** A ballot measure (a proposition, amendment, question): its "candidates" are the Yes and No options. */
+export const isMeasure = (r) => !!r && (r.kind === "measure" || r.office === "I");
+export const isOption = (c) => !!c && (c.party === "Yes" || c.party === "No");
+/** The small box before a name: YES / NO for a measure's options, else the party letter. */
+export function candTag(c) {
+  const k = partyKey(c);
+  return { cls: k, text: k === "yes" ? "YES" : k === "no" ? "NO" : k === "ind" ? "I" : k === "dem" ? "D" : k === "gop" ? "R" : String(c?.party ?? "") };
+}
+/** The name after the tag: nothing for a measure's options (the tag says Yes or No), else the candidate's name. */
+export const candName = (c, full = false) => (isOption(c) ? "" : (full ? c?.name : c?.last ?? c?.name) ?? "");
 export function partyKey(c) {
   if (!c) return "oth";
+  if (c.party === "Yes") return "yes";
+  if (c.party === "No") return "no";
   if (c.featured || c.independent || isFeaturedCand(c.id)) return "ind";
   if (c.party === "Dem") return "dem";
   if (c.party === "GOP") return "gop";
@@ -262,4 +276,4 @@ export function raceState(r) {
   return { status: closed ? "closed" : "open", party: null, cand: null, margin: null };
 }
 
-export const PARTY_COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#facc15", oth: "#a855f7" };
+export const PARTY_COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#facc15", oth: "#a855f7", yes: "#22c55e", no: "#f97316" };

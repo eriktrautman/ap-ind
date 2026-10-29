@@ -583,7 +583,8 @@ function renderSeq() {
   const flat = expandTicker(draft);
   $("seqcount").textContent = `${items.length} element${items.length === 1 ? "" : "s"} · ${flat.length} piece${flat.length === 1 ? "" : "s"} crawl`;
   $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the featured races crawl. Add races, text or a chunk below.</div>`;
-  $("chunkpick").innerHTML = draft.chunks.length ? draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length})</option>`).join("") : `<option value="">no chunks yet: build one below</option>`;
+  // Like the two boxes above it, the dropdown opens on its helper text; the chunks follow.
+  $("chunkpick").innerHTML = `<option value="" selected>${draft.chunks.length ? "Add a chunk: choose one built below" : "Add a chunk: none built yet, build one below"}</option>` + draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
   $("addchunkref").querySelector("button").disabled = !draft.chunks.length;
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").value = draft.callHighlight ? "1" : "0";
@@ -628,7 +629,7 @@ document.addEventListener("submit", (e) => {
 });
 $("addchunkref").addEventListener("submit", (e) => {
   e.preventDefault();
-  const id = $("chunkpick").value; if (!id || !chunkById(id)) return;
+  const id = $("chunkpick").value; if (!id || !chunkById(id)) { $("chunkpick").focus(); return; }
   draft.tickerItems.push({ t: "chunk", id }); commit();
 });
 $("newchunk").addEventListener("submit", (e) => {

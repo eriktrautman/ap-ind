@@ -42,7 +42,7 @@
   if (bg) document.body.classList.add(`bg-${bg}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7" };
+  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7", yes: "#22c55e", no: "#f97316" };
   const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
   let race = null, counties = null;
 
@@ -52,7 +52,7 @@
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
     const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
-    const cand = (who && race.candidates.find((c) => c.id === who)) ?? race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent) ?? cands[0];
+    const cand = (who && race.candidates.find((c) => c.id === who)) ?? race.candidates.find((c) => c.party === "Yes") ?? race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent) ?? cands[0];   // a measure is read from the Yes side
     const rival = cands.find((c) => c.id !== cand.id) ?? cand;
     const leader = cands[0];
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;

@@ -23,14 +23,14 @@
   <div class="head"><div><div class="kicker">Path to victory</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="map"><svg id="map" viewBox="0 0 980 640"></svg><div class="legend" id="legend"></div></div>
-    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th>Must-win county</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area">Must-win county</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th></tr></thead><tbody id="rows"></tbody></table></div></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and the last contest for this seat · "then" is the comparison candidate's share in that county</span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, normName, loadGeo, isFeaturedCand, fmt, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, normName, loadGeo, isFeaturedCand, isMeasure, fmt, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), who = q.get("who") ?? "ind";
@@ -43,8 +43,32 @@
     const pc = prior.candidates;
     return pc.find((c) => c.id === cand.id) ?? (cand.party === "GOP" || cand.party === "Dem" ? pc.find((c) => c.party === cand.party) : null) ?? pc.find((c) => c.independent) ?? pc.find((c) => c.party !== pc[0].party) ?? pc[1] ?? pc[0];
   }
+  /** A measure has no prior contest: its path is a majority of votes cast, so the map is tonight's leader by county (Yes green,
+   *  No orange, paler with less of the vote in) and the table the biggest counties by votes counted. */
+  function renderMeasure() {
+    const yes = race.candidates.find((c) => c.party === "Yes"), no = race.candidates.find((c) => c.party === "No");
+    $("title").innerHTML = `${esc(race.title || race.officeName)} <small>${esc(race.stateName)} · path to passage</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("th-area").textContent = "Biggest county"; $("th-then").textContent = "Yes"; $("th-now").textContent = "No";
+    $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.yes}"></i>Yes leading</span><span><i style="background:${PARTY_COLOR.no}"></i>No leading</span><span><i style="background:#1b2a4a"></i>no results</span>`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
+    const rows = (counties ?? []).map((u) => { const y = u.votes[yes?.id] ?? 0, n = u.votes[no?.id] ?? 0, tot = y + n; return { k: unitKey(u), name: u.name, yes: tot ? y / tot * 100 : null, no: tot ? n / tot * 100 : null, tot, inPct: u.eevp || u.precinctsPct || 0 }; });
+    const byKey = new Map(rows.map((r) => [r.k, r]));
+    if (geo) {
+      const svg = d3.select("#map");
+      const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
+      sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
+        .attr("fill", (d) => { const r = byKey.get(featKey(d)); return r?.tot ? (r.yes >= 50 ? PARTY_COLOR.yes : PARTY_COLOR.no) : "#1b2a4a"; })
+        .attr("fill-opacity", (d) => { const r = byKey.get(featKey(d)); return r?.tot ? 0.35 + Math.min(1, r.inPct / 100) * 0.65 : 1; });
+    }
+    const reporting = rows.filter((r) => r.tot > 0);
+    $("headline").innerHTML = !race.totalVotes ? `<span class="note">Passes with a majority of votes cast. No results yet.</span>`
+      : `<b style="color:${PARTY_COLOR.yes}">Yes ${Number(yes?.pct ?? 0).toFixed(1)}%</b> statewide; passes with a majority of votes cast. ${reporting.length ? `Yes leads in <b>${reporting.filter((r) => r.yes >= 50).length}</b> of ${reporting.length} counties reporting.` : "Waiting for county results."}`;
+    $("rows").innerHTML = [...reporting].sort((a, b) => b.tot - a.tot).slice(0, 6).map((r) => `<tr><td class="b">${esc(r.name)}</td><td class="r b" style="color:${PARTY_COLOR.yes}">${r.yes.toFixed(1)}%</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b" style="color:${PARTY_COLOR.no}">${r.no.toFixed(1)}%</td></tr>`).join("");
+  }
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
+    if (isMeasure(race)) { renderMeasure(); return; }
     const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
     const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => isFeaturedCand(c.id)) ?? race.candidates.find((c) => c.independent) ?? cands[0];
     const cand = who === "main" ? (cands.find((c) => c.id !== ind.id) ?? cands[0]) : ind;
@@ -83,7 +107,7 @@
   const feed = connectFeed({
     onSnapshot: async (s) => {
       race = s.races.get(raceId);
-      if (race) { try { prior = (await (await fetch("./baseline-federal.json")).json()).races?.[raceId] ?? null; } catch {} geo ??= await loadGeo(race.state, [980, 640]); counties = await feed.counties(raceId); }
+      if (race) { if (!isMeasure(race)) { try { prior = (await (await fetch("./baseline-federal.json")).json()).races?.[raceId] ?? null; } catch {} } geo ??= await loadGeo(race.state, [980, 640]); counties = await feed.counties(raceId); }
       render();
     },
     onUpdate: async (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } if (msg.type === "counties" && race) { counties = await feed.counties(raceId); render(); } },

@@ -16,7 +16,7 @@
   .reporting { font-size: 30px; color: var(--muted); } .reporting b { color: var(--fg); }
   .headline { font-size: 40px; line-height: 1.2; }
   .headline b { font-size: 54px; }
-  .ahead { color: var(--ok); } .behind { color: #f87171; }
+  .ahead { color: #22c55e; } .behind { color: #f97316; }   /* ahead of the 2024 ticket green, behind orange (red would read as Republican) */
   .body { display: grid; grid-template-columns: 1fr 640px; gap: 56px; min-height: 0; overflow: hidden; }
   .map { background: rgba(0,0,0,.25); border-radius: 8px; padding: 16px; position: relative; }
   .map svg { width: 100%; height: 100%; display: block; }
@@ -45,7 +45,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, clockS } from "./feed.js";
+  import { connectFeed, officeText, freshness, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", demo = !!q.get("demo"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -71,7 +71,7 @@
   async function loadCounties() { counties = await feed.counties(raceId); }
 
   function pick() {
-    const ind = race.candidates.find((c) => c.featured);
+    const ind = race.candidates.find((c) => c.party === "Yes") ?? race.candidates.find((c) => c.featured);   // a measure is read from the Yes side
     const main = race.candidates.filter((c) => !c.featured).sort((a, b) => b.votes - a.votes)[0] ?? race.candidates.find((c) => c.id !== ind?.id);
     const cand = who === "main" ? main : (ind ?? race.candidates[0]);
     const ticket = q.get("vs") ?? (cand.party === "GOP" ? "gop" : "dem");
@@ -85,13 +85,13 @@
     if (!race) { $("title").textContent = "Race not found"; return; }
     const { cand, ticket } = pick();
     const ticketName = baseline?.tickets?.[ticket] ?? (ticket === "gop" ? "Trump" : "Harris");
-    const office = race.office === "S" ? "U.S. Senate" : race.label.endsWith("AL") ? "U.S. House, at large" : `U.S. House, ${race.seat}`;
+    const office = officeText(race);
     $("title").innerHTML = `${esc(cand.last)} vs the 2024 ${esc(ticketName)} vote <small>${esc(race.stateName)} · ${esc(office)}</small>`;
     $("th-now").textContent = `${cand.last} 2026`; $("th-then").textContent = `${ticketName} 2024`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("updated").textContent = demo ? "SAMPLE: 2024 Senate result standing in for tonight" : `Updated ${clockS(race.lastUpdated)}`;
-    const color = cand.featured ? "#d4af37" : cand.party === "GOP" ? "#ef4444" : cand.party === "Dem" ? "#3b82f6" : "#a855f7";
-    $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead of ${esc(ticketName)} 2024</span><span><i style="background:var(--behind)"></i>behind</span><span><i style="background:#1b2a4a"></i>under ${MIN_IN}% in</span>`;
+    const color = "#22c55e";   // ahead: green; behind: orange, whoever the candidate is
+    $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead of ${esc(ticketName)} 2024</span><span><i style="background:#f97316"></i>behind</span><span><i style="background:#1b2a4a"></i>under ${MIN_IN}% in</span>`;
 
     if (!counties || !baseline) {
       $("headline").innerHTML = `<span style="color:var(--muted)">${!baseline ? "No 2024 area-level baseline for this state (statewide only)." : "Waiting for county results."}</span>`;
@@ -127,7 +127,7 @@
     const svg = d3.select("#map");
     const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
     sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
-      .attr("fill", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return "#1b2a4a"; return r.diff >= 0 ? color : "#5c6b85"; })
+      .attr("fill", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return "#1b2a4a"; return r.diff >= 0 ? color : "#f97316"; })
       .attr("fill-opacity", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return 1; return 0.3 + Math.min(1, Math.abs(r.diff) / 15) * 0.7; });
   }
 

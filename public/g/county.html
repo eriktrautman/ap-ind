@@ -37,13 +37,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt, officeText, normName, loadGeo, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyClass, candTag, candName, isMeasure, fmt, officeText, normName, loadGeo, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7" };
+  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7", yes: "#22c55e", no: "#f97316" };
   let race = null, counties = null, geo = null;
 
   const unitKey = (u) => geo.kind === "county" ? String(u.fips) : normName(u.name);
@@ -56,11 +56,11 @@
 
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
-    const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent);
+    const ind = isMeasure(race) ? race.candidates.find((c) => c.party === "Yes") : race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent);   // the column on the right: the independent, or Yes
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
-    $("totals").innerHTML = race.candidates.slice(0, 4).map((c) => `<div class="trow ${partyClass(c.party)} ${c.featured ? "featured" : ""}"><div class="nm"><span class="tag ${c.featured ? "ind" : partyClass(c.party)}">${c.featured || c.independent ? "I" : c.party === "Dem" ? "D" : c.party === "GOP" ? "R" : esc(c.party)}</span>${esc(c.name)}${c.winner ? " ✓" : ""}</div><div class="pct">${Number(c.pct).toFixed(1)}%</div><div class="v">${fmt(c.votes)}</div></div>`).join("");
+    $("totals").innerHTML = race.candidates.slice(0, 4).map((c) => `<div class="trow ${partyClass(c.party)} ${c.featured ? "featured" : ""}"><div class="nm"><span class="tag ${c.featured ? "ind" : partyClass(c.party)}">${c.featured || c.independent ? "I" : esc(candTag(c).text)}</span>${esc(candName(c, true))}${c.winner ? " ✓" : ""}</div><div class="pct">${Number(c.pct).toFixed(1)}%</div><div class="v">${fmt(c.votes)}</div></div>`).join("");
     const seen = new Set();
     const legend = race.candidates.slice(0, 4).filter((c) => { const k = c.featured ? "ind" : partyClass(c.party); if (seen.has(k)) return false; seen.add(k); return true; });
     $("legend").innerHTML = legend.map((c) => `<span><i style="background:${colorFor(c)}"></i>${esc(c.last)} leads</span>`).join("") + `<span><i class="pale" style="background:#fff"></i>few votes in</span><span><i style="background:var(--none)"></i>no results</span>`;

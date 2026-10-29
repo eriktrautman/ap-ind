@@ -34,7 +34,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · status by house rule: called · too close (under 3 points, over 25% in) · counting · polls open</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, officeText, PARTY_COLOR, raceState, fmt, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, candTag, candName, officeText, PARTY_COLOR, raceState, fmt, clockS } from "./feed.js";
   import { watchState } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -51,7 +51,7 @@
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("k").textContent = `${race.label} · ${race.stateName} · ${officeText(race)}`;
-    $("rows").innerHTML = cands.map((c) => `<div class="row ${partyKey(c)}"><div class="nm"><span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}">${{ dem: "D", gop: "R", ind: "I", oth: "I" }[partyKey(c)]}</span>${esc(c.last)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${c.pct / max * 100}%;background:${PARTY_COLOR[partyKey(c)]}"></i></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) : "—"}</div></div>`).join("");
+    $("rows").innerHTML = cands.map((c) => `<div class="row ${partyKey(c)}"><div class="nm"><span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}">${esc(candTag(c).text)}</span>${esc(candName(c))}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${c.pct / max * 100}%;background:${PARTY_COLOR[partyKey(c)]}"></i></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) : "—"}</div></div>`).join("");
     const pill = st.status === "called" ? `<span class="pill call">AP CALL</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(race.eevp || race.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">POLLS CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
     $("meta").innerHTML = `${pill}<span>${st.margin !== null ? `${esc(st.cand.last)} ${st.margin >= 0 ? "+" : ""}${st.margin.toFixed(1)} · ${fmt(race.totalVotes)} votes` : ""}</span>`;
     const inPct = race.eevp || race.precinctsPct || 0;

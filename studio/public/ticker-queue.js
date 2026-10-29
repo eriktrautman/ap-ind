@@ -4,7 +4,8 @@
 const PLACEHOLDER_IDLE = "Welcome to the Independent Election Night coverage";
 
 export function partyTag(c) {
-  if (c.independent) return "I";
+  if (c.party === "Yes" || c.party === "No") return "";   // a measure's options read "Yes 52.1%", not "Yes (Yes)"
+  if (c.independent || c.featured) return "I";             // the slate's independents carry AP labels like NP
   if (c.party === "Dem") return "D";
   if (c.party === "GOP") return "R";
   return c.party ?? "";

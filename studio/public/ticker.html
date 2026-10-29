@@ -25,8 +25,8 @@
   .track { position: absolute; top: 0; left: 0; white-space: nowrap; will-change: transform; }
   /* Every item carries its own separator, so an item's width never changes when the one before it
      is dropped off the left edge (a width change there would make the crawl jump). */
-  .item { display: inline-block; padding: 0 48px 0 0; }
-  .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin: 0 48px; vertical-align: middle; }
+  .item { display: inline-block; padding: 0; }
+  .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin: 0 48px; vertical-align: middle; }   /* the same 48px on both sides: the diamond sits midway between items */
   .item.lead::before { visibility: hidden; }   /* the first item of a fresh crawl: no separator ahead of it, same width */
   .item.emphasis { color: var(--call); font-weight: 700; }
   .item.manual { color: #fff; font-weight: 600; }

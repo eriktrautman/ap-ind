@@ -35,13 +35,13 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, tonight and the last contest for this seat · same-county comparison over counties with 10%+ of the expected vote in</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, officeText, normName, isFeaturedCand, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyClass, candTag, candName, isMeasure, officeText, normName, isFeaturedCand, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7" };
+  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7", yes: "#22c55e", no: "#f97316" };
   const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
   const MIN_IN = 10;
   let race = null, counties = null, prior = null;
@@ -57,7 +57,7 @@
       ?? pc.find((c) => c.independent) ?? pc.find((c) => c.party !== pc[0].party) ?? pc[1] ?? pc[0];
   }
   const isInd = (c) => c.featured || c.independent || isFeaturedCand(c.id);
-  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm"><span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${isInd(c) ? "I" : c.party === "Dem" ? "D" : c.party === "GOP" ? "R" : esc(c.party)}</span>${esc(c.last)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
+  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm"><span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${isInd(c) ? "I" : esc(candTag(c).text)}</span>${esc(candName(c))}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
 
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
@@ -65,14 +65,14 @@
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     const nowC = [...race.candidates].sort((a, b) => b.votes - a.votes);
-    const ind = race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent);
+    const ind = race.candidates.find((c) => c.party === "Yes") ?? race.candidates.find((c) => c.featured) ?? race.candidates.find((c) => c.independent);   // a measure is read from the Yes side
     const main = nowC.find((c) => c.id !== ind?.id) ?? nowC[0];
     const cand = who === "main" ? main : (ind ?? nowC[0]);
     const maxNow = Math.max(1, ...nowC.map((c) => c.pct));
     $("h-now").textContent = `Tonight · ${race.totalVotes ? Math.round(race.eevp || race.precinctsPct) + "% in" : "no results yet"}`;
     if (!prior) {
       $("h-then").textContent = "Last time";
-      $("then").innerHTML = `<div class="note">No prior result on file for this seat.</div>`;
+      $("then").innerHTML = `<div class="note">${isMeasure(race) ? "A ballot measure has no prior contest to compare with." : "No prior result on file for this seat."}</div>`;
       $("now").innerHTML = nowC.slice(0, 4).map((c) => rowHtml(c, maxNow, c.id === cand.id)).join("");
       $("headline").innerHTML = ""; $("rows").innerHTML = ""; return;
     }

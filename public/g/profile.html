@@ -28,7 +28,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: campaign and public records (config/candidates.json) · numbers from AP</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, fmt, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), candId = q.get("cand");
@@ -39,6 +39,21 @@
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
     const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
+    const st0 = raceState(race);
+    if (isMeasure(race)) {   // a measure has no person to profile: the card is the measure itself
+      const yes = race.candidates.find((x) => x.party === "Yes"), no = race.candidates.find((x) => x.party === "No");
+      $("kicker").textContent = `${race.label} · ${race.stateName} · ${race.category || "Ballot measure"}`;
+      $("title").innerHTML = `${esc(race.title || race.officeName)}`;
+      $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+      $("photo").classList.add("none"); $("credit").textContent = "";
+      $("facts").innerHTML = [["What it does", race.description], ["Summary", race.summary], ["Category", race.category]].filter(([, v]) => v).map(([k, v]) => `<div class="k">${esc(k)}</div><div class="v">${esc(String(v).slice(0, 320))}</div>`).join("");
+      const pill = st0.status === "called" ? `<span class="pill call">AP CALL · ${st0.cand.party === "Yes" ? "PASSES" : "FAILS"}</span>` : st0.status === "leading" ? `<span class="pill counting">${Math.round(race.eevp || race.precinctsPct)}% IN</span>` : st0.status === "closed" ? `<span class="pill open">POLLS CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
+      $("now").innerHTML = race.totalVotes && yes && no
+        ? `<span><b style="color:${PARTY_COLOR.yes}">Yes ${Number(yes.pct).toFixed(1)}%</b> <span class="m">${fmt(yes.votes)}</span></span><span><b style="color:${PARTY_COLOR.no}">No ${Number(no.pct).toFixed(1)}%</b> <span class="m">${fmt(no.votes)}</span></span>${pill}`
+        : `<span class="m">Tonight: no results yet</span>${pill}`;
+      $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
+      return;
+    }
     const c = (candId && race.candidates.find((x) => x.id === candId)) ?? race.candidates.find((x) => x.featured) ?? race.candidates.find((x) => isFeaturedCand(x.id)) ?? cands[0];
     const bio = bios?.get(c.id) ?? {};
     const st = raceState(race);

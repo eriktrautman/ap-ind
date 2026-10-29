@@ -48,6 +48,8 @@
   .dem .party, .dem .bar i { background: var(--dem); }
   .gop .party, .gop .bar i { background: var(--gop); }
   .ind .party, .ind .bar i { background: var(--ind); }
+  .yes .party, .yes .bar i { background: #22c55e; } .yes .party { color: #06230f; }   /* a measure's options */
+  .no .party, .no .bar i { background: #f97316; } .no .party { color: #1a0d00; }
   .row.featured .name { color: #e9d5ff; }
 
   .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 24px; border-top: 2px solid var(--rule); padding-top: 20px; }
@@ -69,7 +71,7 @@
   </div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyClass, candTag, candName, officeText, fmt, clockS } from "./feed.js";
 
   const params = new URLSearchParams(location.search);
   const raceId = params.get("id");
@@ -78,13 +80,11 @@
   const MAX_ROWS = 5;
 
   const $ = (id) => document.getElementById(id);
-  const pTag = (p) => p === "Dem" ? "D" : p === "GOP" ? "R" : p === "Ind" ? "I" : p;
   const escape = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
   function render(race) {
     if (!race) { $("title").textContent = "Race not found"; $("rows").innerHTML = `<div class="empty">No race with id ${escape(raceId ?? "(none)")}. Open /api/races for ids.</div>`; return; }
-    const office = race.office === "S" ? "U.S. Senate" : "U.S. House";
-    $("title").innerHTML = `${escape(race.stateName)} <small>${office} · ${escape(race.seat)}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("title").innerHTML = `${escape(race.stateName)} <small>${escape(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes
       ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in`
       : "No results yet";
@@ -105,7 +105,7 @@
       }
       row.className = `row ${partyClass(c.party)} ${c.featured ? "featured" : ""}`;
       row.querySelector(".name").innerHTML =
-        `<span class="party">${pTag(c.party)}</span>${escape(c.name)}` +
+        `<span class="party">${escape(candTag(c).text)}</span>${escape(candName(c, true))}` +
         (c.incumbent ? '<span class="inc">inc.</span>' : "") + (c.winner ? '<span class="check">✓</span>' : "");
       row.querySelector(".bar i").style.width = `${(c.pct / max) * 100}%`;
       row.querySelector(".pct").textContent = `${c.pct.toFixed(1)}%`;
