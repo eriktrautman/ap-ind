@@ -33,7 +33,7 @@ applyPanelOpacity();
 const LS_LOCAL = "studio.local";
 const LS_SOURCE = "studio.source";
 
-/** Curated races: the seven independents the broadcast follows (cand = the independent's AP id). Order is the default ticker order. */
+/** The slate: the six independents the broadcast follows (cand = the independent's AP id). Order is the default ticker order. */
 export const FEATURED_RACES = [
   { id: "28594", label: "NE-SEN", state: "NE", title: "U.S. Senate", who: "Dan Osborn", cand: "168007" },
   { id: "27607", label: "MT-SEN", state: "MT", title: "U.S. Senate", who: "Seth Bodnar", cand: "177955" },
@@ -41,7 +41,7 @@ export const FEATURED_RACES = [
   { id: "42003", label: "SD-SEN", state: "SD", title: "U.S. Senate", who: "Brian Bengs", cand: "70405" },
   { id: "5696",  label: "CA-6",   state: "CA", title: "U.S. House, District 6", who: "Kevin Kiley", cand: "69756" },
   { id: "2015",  label: "AK-AL",  state: "AK", title: "U.S. House, at large", who: "Bill Hill", cand: "177719" },
-  { id: "13253", label: "ID-1",   state: "ID", title: "U.S. House, District 1", who: "Sarah Zabel", cand: "178015" },
+  // ID-1 (Sarah Zabel) left the slate on 2026-10-29; the candidate stays curated in config/candidates.json.
 ];
 
 /**

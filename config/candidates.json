@@ -48,7 +48,7 @@
    "raceId": "13253",
    "label": "ID-1",
    "title": "Idaho \u00b7 1st District",
-   "featured": true,
+   "featured": false,
    "featuredCandidateId": "178015"
   }
  ],
@@ -625,7 +625,7 @@
    "name": "Sarah Zabel",
    "party": "Ind",
    "partyLabel": "Independent",
-   "featured": true,
+   "featured": false,
    "incumbent": false,
    "born": 1965,
    "residence": "Bayview (Bonner County)",
