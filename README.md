@@ -7,7 +7,7 @@ Documents: [technical spec](docs/spec.html) · [graphics data options](docs/grap
 ## TL;DR: a new machine
 
 1. Install Node 24 or newer (`node -v`) and clone the repo. No other tools, no database server, no Vercel account.
-2. `cd studio && npm install && cp .env.example .env`, then put the AP key on the `AP_API_KEY=` line and choose any password on the `STUDIO_PASSWORD_PRODUCER_ERIK_TRAUTMAN=` line (put your own name in the suffix). The key is the one secret; it lives only in `studio/.env`, which is gitignored.
+2. `cd studio && npm install && cp .env.example .env`, then put the AP key on the `AP_API_KEY=` line and choose any password on the `STUDIO_PASSWORD_PRODUCER_FIRST_LAST=` line (put your own name in the suffix). The key is the one secret; it lives only in `studio/.env`, which is gitignored.
 3. `npm start` in `studio/` and open http://localhost:3000/studio. That is the control room; the ticker is `/ticker` and the graphics are under `/g/`.
 4. **Historical results database** (for SQL analytics, not needed for the broadcast): from the repo root run `npm run history -- --all --states auto`. It makes about 1,200 AP requests at one every 10 seconds, so roughly 3.5 hours, and writes `data/ap-history.sqlite` (about 220 MB). The file is gitignored and is never in the repo, so every machine regenerates it; the run can be stopped and restarted at any point without losing work. Everything a person or a Claude needs for this is under [Historical results](#historical-results-analytics).
 
@@ -26,7 +26,7 @@ Open `studio/.env` in a text editor and fill in two lines:
 
 ```
 AP_API_KEY=the key you were sent
-STUDIO_PASSWORD_PRODUCER_ERIK_TRAUTMAN=anything you like   # your control room password on your machine; the name says what it entitles, then whose it is
+STUDIO_PASSWORD_PRODUCER_FIRST_LAST=anything you like   # your control room password on your machine; the name says what it entitles, then whose it is
 STUDIO_TEST_PASSWORD=test1234       # optional: the rehearsal password, flagged in the control room
 ```
 
@@ -209,22 +209,22 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 
 - **The ticker and every graphic are public links.** `/ticker` and the pages under `/g/` are fixed URLs, the same for everyone, and they only display. Anyone who has a link sees exactly what the switcher sees. No sign-in produces these links and opening one changes nothing.
 - **The live ticker shows whatever was last published; graphics show their address.** `/ticker` reads the published parameters from the public, read-only, CDN-cached `/data/producer.json` every few seconds (`GET /api/producer` returns the same thing uncached, for the control room). A graphic's content is fixed by its address (chart id, race id, display parameters); the shipped defaults fill what the address leaves out.
-- **One password per person; its variable's name says what it entitles.** `/studio` accepts every `STUDIO_PASSWORD_<ROLE>_<FIRST>_<LAST>` variable on the project, where the role is one of three words, plus `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234`) when set:
+- **One password per person; its variable's name says what it entitles.** `/studio` accepts every `STUDIO_PASSWORD_<ROLE>_<FIRST>_<LAST>` variable on the project, where the role is one of three words and the suffix is the person's name in capitals with underscores (shown title-cased, so `MARY_ANN_SMITH` signs in as Mary Ann Smith), plus `STUDIO_TEST_PASSWORD` (the rehearsal one, `test1234`) when set:
 
   | Variable | Signs in as | May do |
   |---|---|---|
-  | `STUDIO_PASSWORD_PRODUCER_ERIK_TRAUTMAN` | Erik Trautman · producer | Everything: publish, poll, Test/Live, pause |
-  | `STUDIO_PASSWORD_PUBLISHER_SAM_LEE` | Sam Lee · publisher | Publish the ticker and the live screens, nothing else |
-  | `STUDIO_PASSWORD_READONLY_PAT_JONES` | Pat Jones · read only | Look at everything, change nothing published |
+  | `STUDIO_PASSWORD_PRODUCER_FIRST_LAST` | First Last · producer | Everything: publish the ticker and the live screens, run or pause the poller, switch results Test/Live |
+  | `STUDIO_PASSWORD_PUBLISHER_FIRST_LAST` | First Last · publisher | Publish the ticker and the live screens, nothing else |
+  | `STUDIO_PASSWORD_READONLY_FIRST_LAST` | First Last · read only | See everything in the control room, including what is live and who published it; change nothing |
   | `STUDIO_TEST_PASSWORD` | Rehearsal | Read only, and only while results are Test |
 
-  The split is by blast radius: a bad publish is visible on the ticker and undone in five seconds by publishing again, while Test/Live, pause and poll change what the poller does for every output at once, so those stay with producers. The header says who you are signed in as and with what rights; controls a password cannot use are greyed with a lock and say which password they need. Every publish is stamped with the signer's name: the live ticker's table shows it beside the time, and the conflict warning says "Sam Lee published at 7:12 PM" instead of "someone else". The rehearsal password works only while the poller is on AP's **Test** results: the moment anyone switches results to **Live**, sign-ins with it are refused and every browser already using it is signed out at the next request. The old unnamed `STUDIO_PASSWORD` is still accepted, as "Producer", so nothing breaks before a project is moved to named passwords; retire it once everyone has their own.
+  The split is by blast radius: a bad publish is visible on the ticker and undone in five seconds by publishing again, while Test/Live, pause and poll change what the poller does for every output at once, so those stay with producers. The header says who you are signed in as and with what rights; controls a password cannot use are greyed with a lock and say which password they need. **View User Permissions** in the control room's footer lists everyone on the site with their role and what it allows (names and roles only, to signed-in browsers only). Every publish is stamped with the signer's name: the live ticker's table shows it beside the time, and the conflict warning says who published at what time instead of "someone else". The rehearsal password works only while the poller is on AP's **Test** results: the moment anyone switches results to **Live**, sign-ins with it are refused and every browser already using it is signed out at the next request. The old unnamed `STUDIO_PASSWORD` is still accepted, as "Producer", so nothing breaks before a project is moved to named passwords; retire it once everyone has their own.
 
   Each password is its own secret: the sign-in cookie is signed with the password it was issued for, so changing or deleting one person's variable signs out that person and nobody else. **To add a person, change a password, change someone's rights, or revoke one** (from `studio/`, in a normal terminal, since `vercel env add` prompts for the value and the `!` shell inside Claude Code cannot):
 
   ```sh
-  vercel env add STUDIO_PASSWORD_PUBLISHER_SAM_LEE --environment production --sensitive   # add, or (after rm) change
-  vercel env rm STUDIO_PASSWORD_PUBLISHER_SAM_LEE --environment production --yes          # revoke
+  vercel env add STUDIO_PASSWORD_PUBLISHER_FIRST_LAST --environment production --sensitive   # add, or (after rm) change
+  vercel env rm STUDIO_PASSWORD_PUBLISHER_FIRST_LAST --environment production --yes          # revoke
   vercel redeploy ap-ind.vercel.app
   ```
 

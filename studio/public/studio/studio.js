@@ -23,13 +23,14 @@ const api = async (url, opts = {}) => {
 };
 
 // ---------- dialog ----------
-function ask({ title, body, ok = "Confirm", danger = false }) {
+function ask({ title, body, ok = "Confirm", danger = false, info = false }) {
   const dlg = $("dlg");
   if (dlg.open) dlg.close();
   $("dlgtitle").textContent = title;
   $("dlgbody").innerHTML = body;
   $("dlgok").textContent = ok;
   $("dlgok").className = danger ? "danger" : "primary";
+  dlg.querySelector('button[value="cancel"]').hidden = info;   // info: one Close button, nothing to confirm
   dlg.returnValue = "cancel";
   dlg.showModal();
   return new Promise((resolve) => dlg.addEventListener("close", () => resolve(dlg.returnValue === "ok"), { once: true }));
@@ -85,6 +86,29 @@ $("loginform").addEventListener("submit", async (e) => {
     $("password").value = "";
     showApp(); boot();
   } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; loginHint(false); }
+});
+// ---------- who may do what: the footer's View User Permissions ----------
+const ROLE_LABEL = { producer: "Producer", publisher: "Publisher", readonly: "Read only", rehearsal: "Rehearsal" };
+const ROLE_ALLOWS = {
+  producer: "Everything: publish the live ticker and the live screens, run or pause the poller, switch results between Test and Live.",
+  publisher: "Publish the live ticker and the live screens. Cannot poll, pause, or switch Test/Live.",
+  readonly: "See everything in the control room, including what is live and who published it. Cannot publish or change anything.",
+  rehearsal: "The shared rehearsal password: read only, and switched off the moment results go Live.",
+};
+const ROLE_ORDER = ["producer", "publisher", "readonly", "rehearsal"];
+$("permslink").addEventListener("click", async () => {
+  let me = {};
+  try { me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()); } catch {}
+  const people = (me.accounts ?? []).slice().sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role) || a.name.localeCompare(b.name));
+  const rows = people.map((p) => `<tr><td>${esc(p.name)}${p.name === me.name && p.role === me.role ? ' <span class="you">(you)</span>' : ""}</td><td class="role">${esc(ROLE_LABEL[p.role] ?? p.role)}</td><td>${esc(ROLE_ALLOWS[p.role] ?? "")}</td></tr>`).join("");
+  ask({
+    title: "User permissions",
+    info: true, ok: "Close",
+    body: `${people.length ? `<table class="permtable"><thead><tr><th>Name</th><th>Role</th><th>Allows</th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="muted">Sign in to see who is on this site.</p>`}
+      <p class="small"><b>Roles.</b></p>
+      <ul class="permroles">${ROLE_ORDER.map((r) => `<li><b>${ROLE_LABEL[r]}.</b> ${esc(ROLE_ALLOWS[r])}</li>`).join("")}</ul>
+      <p class="small muted">Each person has their own password, set on the site's Vercel project as <code>STUDIO_PASSWORD_&lt;ROLE&gt;_&lt;FIRST&gt;_&lt;LAST&gt;</code>. Adding, removing or changing someone's role is an edit to those variables and a redeploy; the engineer does it. Every publish is stamped with the publisher's name.</p>`,
+  });
 });
 $("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; loginRole = null; loginName = null; renderWho(); showLogin(); });
 // The sticky header's height changes with the banners; anchor jumps from the

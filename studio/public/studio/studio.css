@@ -363,6 +363,10 @@ button.noauth, button.noauth:disabled { background: #f0f0f0; border-color: #d4d4
 footer.built { margin: 48px 0 0; padding: 22px 24px; background: var(--navy); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 footer.built .gh { display: inline-flex; align-items: center; gap: 8px; color: #c7cfdf; text-decoration: none; font-size: 13px; } footer.built .gh:hover { color: #fff; }
 footer.built .by { color: var(--gold); font-family: var(--serif); font-size: 15px; letter-spacing: .02em; }
+footer.built .permslink { margin-left: auto; background: none; border: 0; padding: 0; color: #c7cfdf; font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; } footer.built .permslink:hover { color: #fff; }
+.permtable { width: 100%; border-collapse: collapse; font-size: 13px; margin: 6px 0 14px; } .permtable th, .permtable td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid #e5e7eb; } .permtable th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #667); }
+.permtable .role { font-weight: 600; white-space: nowrap; } .permtable .you { color: var(--muted, #667); font-weight: 400; }
+.permroles { margin: 0; padding-left: 18px; font-size: 13px; } .permroles li { margin: 4px 0; }
 
 .screen .frame .lockmark { position: absolute; right: 8px; top: 8px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; background: #000b; color: #fff; cursor: help; }
 .screen .frame .lockmark .lock { margin: 0; }
