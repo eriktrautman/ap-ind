@@ -71,10 +71,13 @@ input[type=text]:focus, input:not([type]):focus, input[type=password]:focus, sel
 main { max-width: 1400px; margin: 0 auto; padding: 10px 16px 80px; }
 .card { background: #fff; border: 1px solid var(--sand); border-radius: 10px; padding: 18px 22px 24px; margin: 32px 0; }
 /* Nav-level sections: a wide gap and a navy top edge so they read as separate chapters when scrolling. */
-main > section.card { margin: 40px 0; border-top: 5px solid var(--navy); border-radius: 6px 6px 10px 10px; scroll-margin-top: 12px; }
+main > section.card { margin: 40px 0; border-radius: 10px; scroll-margin-top: 12px; overflow: hidden; }
 main > section.card + section.card::before { content: ""; display: block; height: 0; }
-.cardhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-.cardhead h2 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--navy); margin: 0; }
+/* Section headers: a fat navy band across the top of the card, title in light serif, subtext and dropdowns on it. */
+.cardhead { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; margin: -18px -22px 20px; padding: 16px 22px 14px; background: var(--navy); color: #c7cfdf; }
+.cardhead h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; color: #fff; margin: 0; letter-spacing: .01em; }
+.cardhead > .muted.small { color: #c7cfdf !important; }
+.cardhead .secdisp { color: #c7cfdf; }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .callhl { margin: 4px 0 10px; font-size: 13.5px; } .callhl input { vertical-align: -2px; margin-left: 4px; }
 .bgpick { color: var(--muted); }
@@ -172,14 +175,16 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 
 /* ---- graphic cards ---- */
 .racegrid { display: grid; gap: 18px; margin-top: 16px; }
-.racerow { border: 1px solid var(--sand); border-radius: 10px; overflow: hidden; background: #f3f5fa; }
-.raceband { display: flex; align-items: baseline; gap: 12px; padding: 8px 14px; background: var(--navy); color: #fff; flex-wrap: wrap; }
-.raceband .pos { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--navy); background: #fff; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
+.racerow { border: 3px solid #9aa7bd; border-radius: 10px; overflow: hidden; background: #f3f5fa; margin-top: 14px; }
+.racerow .raceband { border: 0; border-bottom: 2px solid #c9d0dd; border-radius: 0; }
+/* Featured race bands: dark on light, lighter than the section headers above them. */
+.raceband { display: flex; align-items: baseline; gap: 12px; padding: 8px 14px; background: #f6f3ec; color: var(--navy); border: 1px solid var(--sand); border-radius: 6px 6px 0 0; flex-wrap: wrap; }
+.raceband .pos { font-family: var(--mono); font-size: 16px; font-weight: 700; color: #fff; background: var(--navy); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
 .raceband .lab { font-size: 18px; font-weight: 700; background: var(--gold); color: #1a1600; padding: 1px 9px; margin: 0; }
 .raceband .ttl { font-family: var(--serif); font-size: 17px; }
-.raceband .who { color: #e9d5ff; }
-.raceband .meta { margin-left: auto; font-size: 12.5px; color: #c7cfdf; }
-.raceband .featbtn { background: transparent; color: #c7cfdf; border-color: #3a4f7a; padding: 2px 8px; font-size: 12px; }
+.raceband .who { color: #6d28d9; }
+.raceband .meta { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+.raceband .featbtn { background: #fff; color: var(--navy); border-color: var(--sand); padding: 2px 8px; font-size: 12px; }
 .cardgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 12px; }
 .movement .cardgrid, #movegrid { padding: 12px 0 0; }
 .cardgrid.dense { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; padding: 8px 0 14px; }
@@ -273,6 +278,7 @@ dialog::backdrop { background: #071222aa; }
   .testbanner .wide { display: none; }
   .howbox { font-size: 13px; padding: 8px 12px; }
     main > section.card { margin: 22px 0; padding: 10px 12px 14px; }
+  .cardhead { margin: -10px -12px 14px; padding: 12px 12px 10px; }
   .cardhead h2 { font-size: 19px; }
   /* Nothing may push past the right edge: two-column layouts stack, list rows put their buttons on a second line. */
   .cols { grid-template-columns: 1fr; gap: 14px; }
