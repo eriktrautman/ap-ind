@@ -23,7 +23,7 @@
   document.head.appendChild(style);
   const nav = document.createElement("nav");
   nav.className = "apnav";
-  nav.innerHTML = `<a class="brand" href="${onDocs ? "/docs/docs.html" : "/docs"}">IND Election Night</a>` +
+  nav.innerHTML = `<a class="brand" href="${onDocs ? "/docs/docs.html" : "/docs"}">Election Producer</a>` +
     links.map(([label, href]) => `<a href="${href}" class="${href.split("?")[0] === here ? "here" : ""}">${label}</a>`).join("") +
     `<a class="cta" href="/studio">Studio →</a>` +
     `<span class="env">${local ? "local" : location.host}</span>`;
