@@ -460,6 +460,6 @@ footer.built .by { color: var(--gold); font-family: var(--serif); font-size: 15p
 main > section.card.display { margin: 10px 0 28px; padding: 8px 14px; border-width: 2px; border-radius: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
 .display .dtitle { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); white-space: nowrap; }
 .display .disprow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0; flex: 1; min-width: 0; }
-.display #thumbbudget { flex-basis: 100%; margin: 0; }
+.display #thumbbudget { margin: 0 4px 0 0; white-space: nowrap; }
 .display .disprow label { display: inline-flex; align-items: center; gap: 6px; line-height: 1; }
 .display .disprow select, .display .disprow button { vertical-align: middle; }
