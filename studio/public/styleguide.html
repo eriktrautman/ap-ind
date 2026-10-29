@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en" data-theme="election-producer">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style guide · Election Producer</title>
+<meta name="robots" content="noindex">
+<style>
+  /* ============================================================================================
+     TOKENS. Every colour, font and radius on this page comes from these custom properties, and the
+     theme switcher in the header rewrites them, so a new style guide is a new entry in THEMES
+     below (the script) plus nothing else. The default values are what the product ships today:
+     studio/public/studio/studio.css (Studio), public/g/g.css and studio/public/ticker.html (air).
+     ============================================================================================ */
+  :root {
+    /* Studio (the producer's page, the landing page) */
+    --navy: #0b1f44; --navy-deep: #071222; --gold: #d4af37; --ink: #1f2937; --cream: #faf7f2; --sand: #e7e1d6; --muted: #6b7280;
+    --ok: #2e9e5b; --warn: #e08a1e; --bad: #b11e2d; --local: #6d28d9;
+    --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: ui-monospace, Menlo, monospace;
+    /* Air (1920×1080 graphics and the ticker) */
+    --panel: #0e1420; --panel-edge: #16213a; --band-edge: #1c2b47; --fg: #f4f6fa; --fg-muted: #9aa7bd; --rule: #2a3a5c;
+    --dem: #3b82f6; --gop: #ef4444; --ind: #a855f7; --call: #facc15; --air-ok: #2ecc71; --air-bad: #f87171; --air-font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    /* Shape */
+    --r-chip: 3px; --r-field: 6px; --r-card: 10px; --r-panel: 8px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font: 15px/1.5 var(--sans); color: var(--ink); background: var(--cream); }
+  a { color: var(--navy); }
+  code, .tok { font-family: var(--mono); font-size: 12px; background: #fff; border: 1px solid var(--sand); border-radius: var(--r-chip); padding: 0 5px; }
+  .sg-top { position: sticky; top: 0; z-index: 5; background: var(--navy-deep); color: #c7cfdf; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 14px; }
+  .sg-top .brand { color: var(--gold); font-family: var(--serif); font-size: 18px; } .sg-top .sub { border-left: 1px solid #2a3a5c; padding-left: 12px; font-size: 13px; color: #8f9bb3; }
+  .sg-top nav { margin-left: 18px; display: flex; gap: 14px; font-size: 13px; overflow-x: auto; } .sg-top nav a { color: #c7cfdf; text-decoration: none; white-space: nowrap; } .sg-top nav a:hover { color: #fff; }
+  .sg-top label { margin-left: auto; font-size: 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; } .sg-top select { font: inherit; font-size: 13px; padding: 3px 6px; border-radius: var(--r-field); }
+  main { max-width: 1100px; margin: 0 auto; padding: 36px 24px 80px; }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: 38px; color: var(--navy); margin: 0 0 8px; } .lede { font-size: 17px; color: #4b5563; max-width: 760px; margin: 0 0 8px; }
+  section { margin: 48px 0 0; } h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; color: var(--navy); margin: 0 0 6px; border-bottom: 2px solid var(--sand); padding-bottom: 6px; }
+  h3 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 26px 0 10px; }
+  p.why { color: #4b5563; max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .sw { background: #fff; border: 1px solid var(--sand); border-radius: var(--r-card); overflow: hidden; font-size: 12px; } .sw i { display: block; height: 56px; } .sw div { padding: 8px 10px; } .sw b { display: block; font-size: 13px; } .sw .tok { margin-top: 4px; display: inline-block; }
+  .sw.dark div { background: #0e1420; color: #c7cfdf; } .sw.dark .tok { background: #1b2a4a; border-color: #2a3a5c; color: #e5e7eb; }
+  .demo { background: #fff; border: 1px solid var(--sand); border-radius: var(--r-card); padding: 18px; margin: 10px 0; }
+  .demo.air { background: #2b2f3a; } .demo .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .cap { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+  table.spec { border-collapse: collapse; width: 100%; font-size: 13.5px; background: #fff; border: 1px solid var(--sand); border-radius: var(--r-card); overflow: hidden; } .spec th, .spec td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--sand); vertical-align: top; } .spec th { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .rules { columns: 2; column-gap: 32px; font-size: 14px; } .rules li { break-inside: avoid; margin: 0 0 8px; } @media (max-width: 700px) { .rules { columns: 1; } }
+
+  /* ---- type specimens ---- */
+  .t-brand { font-family: var(--serif); font-size: 32px; color: var(--navy); } .t-brand b { color: var(--gold); font-weight: 400; }
+  .t-h2 { font-family: var(--serif); font-weight: 400; font-size: 24px; color: var(--navy); }
+  .t-body { font-size: 15px; } .t-small { font-size: 12.5px; color: var(--muted); } .t-k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); }
+  .t-mono { font-family: var(--mono); font-size: 12px; background: var(--cream); border: 1px solid var(--sand); border-radius: var(--r-chip); padding: 1px 5px; }
+  .t-num { font-variant-numeric: tabular-nums; font-size: 22px; }
+  .t-air { font-family: var(--air-font); color: var(--fg); } .t-air .title { font-size: 34px; font-weight: 700; letter-spacing: -.01em; } .t-air .kicker { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-muted); }
+
+  /* ---- Studio components, the shipped rules at their shipped sizes ---- */
+  .s button { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--sand); border-radius: var(--r-field); background: #fff; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .s button:hover { border-color: var(--navy); } .s button:disabled { opacity: .5; cursor: default; border-color: var(--sand); }
+  .s button.primary { background: var(--navy); color: #fff; border-color: var(--navy); } .s button.danger { color: var(--bad); } .s button.mini { padding: 2px 8px; font-size: 11.5px; }
+  .s button.cta { background: var(--gold); color: #1a1600; font-weight: 700; border-color: var(--gold); padding: 10px 18px; font-size: 15px; border-radius: var(--r-panel); }
+  .s .link { background: none; border: 0; color: var(--navy); text-decoration: underline dotted; text-underline-offset: 3px; padding: 0; }
+  .s input, .s select { font: inherit; font-size: 13px; padding: 6px 9px; border: 1px solid var(--sand); border-radius: var(--r-field); background: #fff; color: var(--ink); } .s input:focus, .s select:focus { outline: 2px solid var(--gold); outline-offset: 1px; border-color: var(--navy); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; flex: none; } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); } .dot.off { background: #777; }
+  .statusbar { display: flex; flex-wrap: wrap; gap: 4px 18px; padding: 6px 16px 7px; background: #1b2a4a; font-size: 12.5px; color: #c7cfdf; border-top: 1px solid var(--rule); border-radius: var(--r-field); } .statusbar .st { display: inline-flex; align-items: center; gap: 7px; } .statusbar b { color: #fff; } .statusbar .k { color: #8f9bb3; }
+  .strip { display: flex; align-items: center; gap: 12px; padding: 4px 16px; font-size: 12.5px; white-space: nowrap; overflow: hidden; border-radius: var(--r-field); }
+  .strip .k { font-weight: 700; letter-spacing: .08em; font-size: 12px; }
+  .strip.poll { background: #fff; border-bottom: 2px solid var(--gold); color: var(--ink); } .strip.poll .k { color: var(--navy); }
+  .strip.standby { background: #f3f0fb; border-bottom: 2px solid var(--local); } .strip.standby .k { color: var(--local); }
+  .strip.prod { background: #fff4e5; border-bottom: 2px solid var(--warn); } .strip.prod .k { color: #9a5b00; }
+  .strip button { font-size: 12px; padding: 2px 8px; font-weight: 600; } .strip button:first-of-type { margin-left: auto; }
+  .testbanner { background: var(--warn); color: #1a1200; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; letter-spacing: .04em; border-radius: var(--r-field); } .testbanner.testlogin { background: var(--local); color: #fff; }
+  .problem { background: #fdf0f1; border: 1px solid #f0c3c7; border-left: 4px solid var(--bad); border-radius: var(--r-panel); padding: 10px 14px; margin: 10px 0; font-size: 14px; } .problem.warn { background: #fdf6ea; border-color: #f1d9a8; border-left-color: var(--warn); } .problem b { display: block; margin-bottom: 3px; }
+  .warnline { background: #fdf0f1; border-left: 4px solid var(--bad); padding: 8px 12px; border-radius: var(--r-field); font-size: 13px; } .warnline.note { background: #fdf6ea; border-left-color: var(--warn); }
+  .lab { font-family: var(--mono); font-size: 12px; background: var(--cream); border: 1px solid var(--sand); padding: 1px 5px; border-radius: 4px; }
+  .pill { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: var(--r-chip); letter-spacing: .03em; } .pill.call { background: var(--call); color: #1a1600; } .pill.live { background: var(--ok); color: #fff; } .pill.test { background: var(--warn); color: #1a1200; }
+  .kind { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 1px 5px; border-radius: var(--r-chip); background: #ebe6db; color: #5b5648; } .kind.sen { background: #dbe5f6; color: #1b3f7a; } .kind.house { background: #ece4d2; color: #5a4a2a; } .kind.gov { background: #e4e9f5; color: #1f3a6e; } .kind.measure { background: #e9e4f3; color: #4b3b78; }
+  .lock { display: inline-block; width: 11px; height: 11px; vertical-align: -1px; }
+  .readonly { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--bad); }
+  .info { box-sizing: border-box; width: 16px; height: 16px; border-radius: 50%; border: 1px solid currentColor; background: none; padding: 0; display: inline-flex; align-items: center; justify-content: center; font: 700 10px/1 var(--serif); color: var(--navy); cursor: pointer; opacity: .7; } .info.on { opacity: 1; background: var(--navy); color: #fff; border-color: var(--navy); }
+  .infopanel { padding: 8px 16px 10px; background: #fffdf5; border: 1px solid var(--sand); border-top: 0; font-size: 12.5px; border-radius: 0 0 var(--r-field) var(--r-field); } .infopanel dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; } .infopanel dt { font-weight: 700; } .infopanel dd { margin: 0; }
+  .card { background: #fff; border: 3px solid var(--navy); border-radius: var(--r-card); overflow: hidden; } .cardhead { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; padding: 14px 22px 12px; background: var(--navy); color: #c7cfdf; } .cardhead h4 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: #fff; margin: 0; } .cardhead .sub { font-size: 12.5px; } .cardbody { padding: 16px 22px 20px; }
+  .dlg { background: #fff; border: 1px solid var(--sand); border-radius: var(--r-card); box-shadow: 0 20px 60px rgba(11, 31, 68, .25); max-width: 520px; padding: 18px 20px; } .dlg h4 { margin: 0 0 8px; font-size: 18px; } .dlg .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+  /* ---- Air components, scaled to 0.5 of the 1920 frame's sizes ---- */
+  .air { font-family: var(--air-font); color: var(--fg); font-variant-numeric: tabular-nums; }
+  .apanel { background: linear-gradient(160deg, var(--panel), var(--panel-edge)); border-radius: var(--r-panel); padding: 26px 36px; }
+  .ahead { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--rule); padding-bottom: 10px; gap: 12px; } .ahead .title { font-size: 28px; font-weight: 700; letter-spacing: -.01em; } .ahead .title small { font-size: 15px; font-weight: 400; color: var(--fg-muted); margin-left: 9px; } .akicker { font-size: 12px; color: var(--fg-muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 3px; } .areporting { font-size: 15px; color: var(--fg-muted); } .areporting b { color: var(--fg); }
+  .arow { display: grid; grid-template-columns: 44px 1fr 2fr 70px; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 16px; } .arow .tag { display: inline-block; min-width: 40px; text-align: center; padding: 1px 6px; border-radius: 4px; font-size: 13px; font-weight: 700; color: #fff; } .arow .bar { height: 14px; background: var(--rule); border-radius: 3px; overflow: hidden; } .arow .bar i { display: block; height: 100%; } .arow .pct { text-align: right; font-weight: 700; font-size: 20px; }
+  .dem .tag, .dem .bar i { background: var(--dem); } .gop .tag, .gop .bar i { background: var(--gop); } .ind .tag, .ind .bar i { background: var(--ind); }
+  .acall { display: inline-block; background: var(--call); color: #1a1600; font-weight: 700; font-size: 13px; padding: 3px 8px; border-radius: 4px; letter-spacing: .04em; margin-left: 10px; vertical-align: middle; }
+  .afoot { display: flex; justify-content: space-between; color: var(--fg-muted); font-size: 12px; border-top: 2px solid var(--rule); padding-top: 9px; margin-top: 6px; }
+  .band { display: flex; align-items: stretch; height: 36px; background: linear-gradient(90deg, var(--panel), var(--band-edge)); color: var(--fg); font-size: 17px; line-height: 36px; border-radius: 4px; overflow: hidden; }
+  .band .brand { flex: none; padding: 0 14px; background: var(--ind); color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 11px; display: flex; align-items: center; gap: 7px; } .band .brand i { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+  .band .crawl { flex: 1; overflow: hidden; white-space: nowrap; padding: 0 12px; } .band .sep { color: var(--fg-muted); font-size: 8px; margin: 0 20px; vertical-align: middle; } .band .em { color: var(--call); font-weight: 700; } .band .man { color: #fff; font-weight: 600; } .band .idle { color: var(--fg-muted); }
+  .frame { aspect-ratio: 16 / 9; background: repeating-conic-gradient(#3a3f4b 0 25%, #2b2f3a 0 50%) 0 0 / 24px 24px; border-radius: var(--r-field); position: relative; overflow: hidden; } .frame .safe { position: absolute; left: 5%; top: 7.4%; width: 90%; height: 85.2%; border: 1px dashed rgba(255,255,255,.35); border-radius: 3px; } .frame .lbl { position: absolute; left: 6%; top: 8.5%; font-size: 10px; color: #c7cfdf; letter-spacing: .08em; } .frame .lower { position: absolute; left: 0; right: 0; bottom: 5.5%; height: 6.7%; } .frame .lower .band { height: 100%; font-size: 12px; line-height: 1; border-radius: 0; } .frame .lower .band .crawl { display: flex; align-items: center; }
+</style>
+</head>
+<body>
+<div class="sg-top">
+  <span class="brand">Election Producer</span><span class="sub">Style guide</span>
+  <nav><a href="#principles">Principles</a><a href="#colour">Colour</a><a href="#type">Type</a><a href="#studio">Studio</a><a href="#air">Air</a><a href="#layout">Layout</a><a href="#copy">Copy</a><a href="#themes">Themes</a></nav>
+  <label>Theme <select id="theme"></select></label>
+</div>
+<main>
+  <h1>How Election Producer looks and speaks</h1>
+  <p class="lede">What the product does today, written down: the colours and type of the Studio and of the graphics that go to air, the components built from them, and the rules of copy. Every value here is a token; the switcher above swaps the whole set, which is how another style guide would be dropped in.</p>
+
+  <section id="principles">
+    <h2>Principles</h2>
+    <ul class="rules">
+      <li><b>Two worlds, one family.</b> The Studio is a daylight page: cream paper, navy ink, one gold accent. Air is a night panel: near-black navy, white type, party colours. They share the navy, the gold and the sans; nothing else crosses over.</li>
+      <li><b>Colour means something.</b> Purple is independent, red Republican, blue Democrat, yellow an AP call, green healthy, amber a warning or test data, red a fault. Those meanings never change page to page, and no decorative element borrows them.</li>
+      <li><b>Numbers line up.</b> Every number that can change sits in tabular figures, so a crawl, a table or a status bar never jitters as a value changes.</li>
+      <li><b>One address per output.</b> The ticker, each live screen and each chart are fixed addresses; the look of a page never depends on who opened it.</li>
+      <li><b>Say who and when.</b> Every time shown carries its zone (ET by default); every publish carries a name. The interface never says "someone".</li>
+      <li><b>Locked, not hidden.</b> A control a password cannot use stays visible, greyed, with a lock and a sentence saying which password it needs.</li>
+    </ul>
+  </section>
+
+  <section id="colour">
+    <h2>Colour</h2>
+    <h3>Studio</h3>
+    <div class="grid" id="sw-studio"></div>
+    <h3>Status</h3>
+    <div class="grid" id="sw-status"></div>
+    <h3>Air: panel and type</h3>
+    <div class="grid" id="sw-air"></div>
+    <h3>Air: parties and calls</h3>
+    <div class="grid" id="sw-party"></div>
+    <p class="cap">Backgrounds for keying: <code>?bg=black</code> paints #000, <code>?bg=green</code> #00ff00; the default is transparent.</p>
+  </section>
+
+  <section id="type">
+    <h2>Type</h2>
+    <p class="why">Three faces. A serif for the brand and section titles, because the product sits in a newsroom. A system sans for everything that is read quickly. A monospace for identifiers that people copy: race ids, chart ids, addresses.</p>
+    <div class="demo">
+      <div class="t-brand">Election Producer <b>Studio</b></div><p class="cap"><span class="tok">--serif</span> Georgia · brand, h1, section titles, the credit. Weight 400 always.</p>
+      <div class="t-h2">Live Ticker</div><p class="cap"><span class="tok">--serif</span> 24px on a navy card head.</p>
+      <div class="t-body">The builder matches the live ticker. Publish replaces the live ticker's parameters with the builder's.</div><p class="cap"><span class="tok">--sans</span> 15px / 1.5 body; 13px controls; 12.5px strips and status.</p>
+      <div class="t-k">PRODUCER ACTIONS</div><p class="cap">12px, 700, letter-spacing .08em, uppercase: strip labels and card kickers.</p>
+      <div><span class="t-mono">NE-SEN</span> <span class="t-mono">B5</span> <span class="t-mono">/g/B5?bg=black&amp;race=NE-SEN</span></div><p class="cap"><span class="tok">--mono</span> identifiers, on cream with a sand border.</p>
+      <div class="t-num">48.2 · 47.9 · 3.9 · 62% in · 7:12:08 PM ET</div><p class="cap"><span class="tok">font-variant-numeric: tabular-nums</span> wherever a number can change.</p>
+    </div>
+    <div class="demo air t-air">
+      <div class="kicker">U.S. Senate · Nebraska</div><div class="title">Race result</div>
+      <p class="cap" style="color:#9aa7bd"><span class="tok">--air-font</span> Helvetica Neue on air: titles 56px/700, kickers 24px uppercase, tables 28px, footers 22px at 1920×1080. Tracking tightened a hair on titles.</p>
+    </div>
+  </section>
+
+  <section id="studio" class="s">
+    <h2>Studio components</h2>
+    <h3>Buttons</h3>
+    <div class="demo"><div class="row">
+      <button class="primary">Publish to Live</button><button>Pull from Live</button><button class="danger">Pause polling</button><button class="mini">Copy URL</button><button class="mini on">✓ In Featured</button><button disabled><svg class="lock" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Publish to Live</button><button class="cta">Sign in to Studio →</button><button class="link">View User Permissions</button>
+    </div><p class="cap">Primary is navy and used once per card. Danger is red text on white, for actions that change what every output shows; it is confirmed by a dialog. Locked controls stay in place, greyed, with the lock and a title saying which password they need. The gold button is for the landing page's one call to action and nowhere inside the Studio.</p></div>
+    <h3>Fields</h3>
+    <div class="demo"><div class="row"><input placeholder="Add a manual item"><select><option>Chart panel at 100%</option><option>60%</option></select><input type="password" placeholder="Password"></div><p class="cap">Sand border, navy on hover, gold focus ring.</p></div>
+    <h3>Status bar and dots</h3>
+    <div class="demo"><div class="statusbar"><span class="st"><span class="dot"></span><b>AP feed live</b></span><span class="st"><span class="k">Last Refresh</span><b>57s ago</b></span><span class="st"><span class="k">Data As Of</span><b>8:04:33 PM ET</b></span><span class="st"><span class="k">Data Stream</span><b style="color:var(--call)">TEST</b></span><span class="st"><span class="k">API Access</span><span class="dot"></span>working</span></div>
+    <p class="cap">One dark bar under the header. Facts as <span class="tok">key value</span> pairs, the key muted. Dots: green healthy, amber stale or warning, red fault, grey unknown. The same dot appears in the standby strip and on every graphic's footer.</p></div>
+    <h3>Strips</h3>
+    <div class="demo">
+      <div class="strip poll"><span class="k">PRODUCER ACTIONS</span><span class="info">i</span><span class="readonly"><svg class="lock" viewBox="0 0 16 16"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Publisher · Publishes Only · These Need a Producer</span><button class="mini" style="margin-left:auto">Poll now</button><button class="mini">Reset caches</button><button class="mini danger">Pause polling</button></div>
+      <div style="height:8px"></div>
+      <div class="strip standby"><span class="k">STANDBY</span><span class="info on">i</span><span>Copy taken 12s ago · results 9:27:46 PM ET</span><span><span class="dot"></span> Website reachable</span><span>This laptop <b>192.168.1.23:3000</b> (en0)</span><button class="danger">Promote: make this laptop production</button></div>
+      <div class="infopanel"><dl><dt>Standby</dt><dd>This laptop copies the website's results and published ticker every 30 seconds, so it can take over at any moment.</dd><dt>Promote</dt><dd>Makes this laptop production without a restart. Producer password only.</dd></dl></div>
+      <div style="height:8px"></div>
+      <div class="strip prod"><span class="k">PRODUCTION · THIS LAPTOP</span><span class="info">i</span><span>Polling AP every 60 s</span><span>Switcher → <b>192.168.1.23:3000</b></span><button>Return to standby</button></div>
+      <p class="cap">A strip is one line: a bold tracked label, an (i) that opens a plain-English panel beneath it, three to five short facts, and at most one button, right-aligned. Gold rule for the poller, purple for standby, amber for a laptop that has become production.</p>
+    </div>
+    <h3>Banners and problems</h3>
+    <div class="demo">
+      <div class="testbanner">TEST DATA · AP's simulated election, not real results</div><div style="height:6px"></div>
+      <div class="testbanner testlogin">TEST LOGIN · rehearsal password · invalid once results go Live</div>
+      <div class="problem"><b>Last poll failed (2 min ago).</b>AP rejected the key (403). Check AP_API_KEY in Vercel, and that the key is entitled to this election date.</div>
+      <div class="problem warn"><b>Polling is paused.</b>No new AP data is being fetched. Everything keeps showing the last data. Under Producer actions press Resume polling.</div>
+      <div class="warnline">Sam Lee published at 7:12:08 PM ET, after you last pulled or published. Publishing now replaces their ticker.</div>
+      <p class="cap">Banners are full-width, centred, amber for test data and purple for a test sign-in. A problem is a card with a coloured left rule: red for a fault, amber for a warning; the first line says what, the rest says what to do, in words a producer can act on. A warnline is the same idea inside a dialog.</p>
+    </div>
+    <h3>Chips</h3>
+    <div class="demo"><div class="row"><span class="lab">NE-SEN</span><span class="lab">CA-6</span><span class="lab">B5</span><span class="pill call">AP CALL</span><span class="pill live">LIVE</span><span class="pill test">TEST</span><span class="kind sen">SEN</span><span class="kind house">H-6</span><span class="kind gov">GOV</span><span class="kind measure">MEASURE</span></div>
+    <p class="cap">Mono labels for ids people copy. Pills for states that matter on air. Kind badges for the office, tinted but quiet.</p></div>
+    <h3>Cards and dialogs</h3>
+    <div class="demo">
+      <div class="card"><div class="cardhead"><h4>Live Ticker</h4><span class="sub">The one fixed address. Changed only by publishing.</span></div><div class="cardbody"><div class="row"><button class="primary">Publish to Live</button><button>Pull from Live</button><span class="t-small">Builder matches the live ticker</span></div></div></div>
+      <div style="height:14px"></div>
+      <div class="dlg"><h4>Publish to the LIVE TICKER?</h4><p style="margin:0 0 8px;font-size:14px"><b>electionproducer.com/ticker</b> takes the builder's races and items. It changes within 5 seconds, at the next item boundary.</p><div class="warnline note">The builder already matches the live ticker.</div><div class="acts"><button>Cancel</button><button class="danger">Publish</button></div></div>
+      <p class="cap">A section is a card with a 3px navy border and a navy head carrying a serif title and one line of subtext. A dialog names the exact thing that will change, lists the differences, and puts the irreversible verb on the right in red.</p>
+    </div>
+  </section>
+
+  <section id="air" class="air">
+    <h2>Air components</h2>
+    <p class="why" style="color:#4b5563">Every graphic is a 1920×1080 page, transparent unless keyed, with one panel inset to the title-safe area. Shown here at half size.</p>
+    <h3>Chart panel</h3>
+    <div class="demo air"><div class="apanel">
+      <div class="ahead"><div><div class="akicker">U.S. Senate · Nebraska</div><div class="title">Race result<small>62% of the expected vote in</small></div></div><div class="areporting"><b>7:12 PM ET</b></div></div>
+      <div class="arow ind"><span class="tag">IND</span><span>Independent</span><span class="bar"><i style="width:48.2%"></i></span><span class="pct">48.2</span></div>
+      <div class="arow gop"><span class="tag">GOP</span><span>Republican <span class="acall">AP CALL</span></span><span class="bar"><i style="width:47.9%"></i></span><span class="pct">47.9</span></div>
+      <div class="arow dem"><span class="tag">DEM</span><span>Democrat</span><span class="bar"><i style="width:3.9%"></i></span><span class="pct">3.9</span></div>
+      <div class="afoot"><span><span class="dot" style="width:7px;height:7px"></span> Source: AP · updated 7:12:08 PM ET</span><span>Independents · B5</span></div>
+    </div><p class="cap" style="color:#9aa7bd">Head: kicker, title, reporting share on the right, under a 2px rule. Rows: party tag, name, bar, tabular percentage; the leader in white, others unchanged. Foot: source and timestamp left, the show and the chart id right, over a 2px rule. The dot on the foot is the poller's health.</p></div>
+    <h3>Ticker band</h3>
+    <div class="demo air"><div class="band"><div class="brand"><i></i>Independents</div><div class="crawl"><span class="man">Polls close in the West at 11 PM ET</span><span class="sep">◆</span><span>AK-SEN · Independent 51.0% · Republican 45.3% · 71% in</span><span class="sep">◆</span><span class="em">AP CALL · ME-2 · Independent wins</span><span class="sep">◆</span><span class="idle">Live results through the night</span></div></div>
+    <p class="cap" style="color:#9aa7bd">72px tall, 60px above the bottom edge, 34px type. The brand block is purple with the health dot. Items carry their own diamond separator so widths never change mid-crawl; yellow bold for an AP call, white semibold for a producer's line, muted for the idle line.</p></div>
+    <h3>The frame</h3>
+    <div class="demo air" style="padding:12px"><div class="frame"><div class="safe"></div><div class="lbl">TITLE-SAFE PANEL · 96px / 80px inset</div><div class="lower"><div class="band"><div class="brand"><i></i>Independents</div><div class="crawl"><span>NE-SEN · Independent 48.2% · Republican 47.9%</span><span class="sep">◆</span><span class="em">AP CALL · ME-2</span></div></div></div></div>
+    <p class="cap" style="color:#9aa7bd">Panel at 96px from the sides and 80px from the top, 1728×920, radius 8px, padding 52px 72px. The ticker sits in the lower third. A graphic and the ticker are never on the same page; the switcher layers them.</p></div>
+  </section>
+
+  <section id="layout">
+    <h2>Layout, spacing, shape</h2>
+    <table class="spec">
+      <tr><th>Token</th><th>Value</th><th>Where</th></tr>
+      <tr><td><span class="tok">--r-chip</span></td><td>3px</td><td>Pills, kind badges, labels</td></tr>
+      <tr><td><span class="tok">--r-field</span></td><td>6px</td><td>Buttons, inputs, strips, warnlines</td></tr>
+      <tr><td><span class="tok">--r-panel</span></td><td>8px</td><td>Air panel, problems, the landing call to action</td></tr>
+      <tr><td><span class="tok">--r-card</span></td><td>10px</td><td>Cards, dialogs, swatches</td></tr>
+      <tr><td>Strip</td><td>4px 16px padding, 2px coloured bottom rule</td><td>Poller, standby, production</td></tr>
+      <tr><td>Status bar</td><td>6px 16px, 12.5px type</td><td>Under the Studio header</td></tr>
+      <tr><td>Section card</td><td>3px navy border, head 14–16px 22px, body 18px 22px 24px, 40px between cards</td><td>Every Studio section</td></tr>
+      <tr><td>Air frame</td><td>1920×1080; panel 96/80 inset, 1728×920, padding 52px 72px</td><td>Every graphic</td></tr>
+      <tr><td>Ticker</td><td>72px tall, bottom 60px, 34px type, 48px between items</td><td>/ticker</td></tr>
+      <tr><td>Content column</td><td>1100px max; copy 760px max</td><td>Landing page, this guide</td></tr>
+    </table>
+  </section>
+
+  <section id="copy">
+    <h2>Copy</h2>
+    <ul class="rules">
+      <li><b>Names.</b> The app is <b>Election Producer</b>; the product is <b>Studio</b>. The ticker at its fixed address is the <b>Live Ticker</b>; the two chart pages are <b>Live Screen One</b> and <b>Two</b>. Never "control room", never "on air" for the deployed state: that is <b>production</b>, and the verb is <b>publish</b>.</li>
+      <li><b>Plain English, present tense.</b> Say what will happen and to what: "electionproducer.com/ticker takes the builder's races." No jargon on any page a producer sees; a message a producer cannot act on is a bug.</li>
+      <li><b>Every time has a zone.</b> 7:12:08 PM ET. Relative times ("57s ago") only beside the absolute one or in a strip that refreshes.</li>
+      <li><b>Say who.</b> "Sam Lee published at 7:12 PM", never "someone else published".</li>
+      <li><b>Outward pages describe outputs.</b> The landing page talks about charts and the ticker, not the pipeline, the API cadence, pixel sizes or the switcher. Those belong in the README.</li>
+      <li><b>Labels are nouns, buttons are verbs.</b> PRODUCER ACTIONS, STANDBY; Publish to Live, Pull from Live, Promote, Return to standby.</li>
+      <li><b>Capitals.</b> Strip labels and kickers in tracked capitals; everything else sentence case, including dialog titles ("Publish to the LIVE TICKER?" is the one exception, because LIVE TICKER is a name on screen).</li>
+    </ul>
+  </section>
+
+  <section id="themes">
+    <h2>Themes</h2>
+    <p class="why">The switcher at the top rewrites the tokens on <code>:root</code>, and every component on this page is drawn from them. A new style guide is a new entry in the <code>THEMES</code> object in this file's script: the same keys, new values. The second theme here is a demonstration of the mechanism, not a proposal. The product's own stylesheets still carry their values inline; wiring them to a shared token file is the step that would let the switcher drive the Studio and the graphics themselves.</p>
+    <table class="spec" id="tokens"></table>
+  </section>
+</main>
+<script>
+  // Themes: the same keys, different values. The first is what ships today (see the :root block above).
+  const THEMES = {
+    "election-producer": { name: "Election Producer (current)", tokens: {} },   // empty: the stylesheet's defaults
+    "slate-demo": {
+      name: "Slate (demonstration)",
+      tokens: {
+        "--navy": "#1f2933", "--navy-deep": "#111827", "--gold": "#f59e0b", "--cream": "#f8fafc", "--sand": "#e2e8f0", "--ink": "#0f172a", "--muted": "#64748b",
+        "--local": "#0e7490", "--ok": "#15803d", "--warn": "#d97706", "--bad": "#b91c1c",
+        "--serif": "'Iowan Old Style', 'Palatino Linotype', Palatino, serif",
+        "--panel": "#111827", "--panel-edge": "#1f2937", "--band-edge": "#273449", "--rule": "#334155", "--fg-muted": "#94a3b8",
+        "--ind": "#8b5cf6", "--gop": "#dc2626", "--dem": "#2563eb", "--call": "#fbbf24",
+        "--r-chip": "2px", "--r-field": "4px", "--r-panel": "4px", "--r-card": "6px",
+      },
+    },
+  };
+  const KEYS = ["--navy","--navy-deep","--gold","--cream","--sand","--ink","--muted","--ok","--warn","--bad","--local","--serif","--sans","--mono","--panel","--panel-edge","--band-edge","--fg","--fg-muted","--rule","--dem","--gop","--ind","--call","--air-ok","--air-bad","--air-font","--r-chip","--r-field","--r-panel","--r-card"];
+  const root = document.documentElement;
+  const sel = document.getElementById("theme");
+  for (const [id, t] of Object.entries(THEMES)) sel.add(new Option(t.name, id));
+  function apply(id) {
+    for (const k of KEYS) root.style.removeProperty(k);
+    for (const [k, v] of Object.entries(THEMES[id]?.tokens ?? {})) root.style.setProperty(k, v);
+    root.dataset.theme = id; sel.value = id;
+    try { localStorage.setItem("sg-theme", id); } catch {}
+    render();
+  }
+  sel.addEventListener("change", () => apply(sel.value));
+  const val = (k) => getComputedStyle(root).getPropertyValue(k).trim();
+  const SHIPPED = Object.fromEntries(KEYS.map((k) => [k, val(k)]));   // the stylesheet's defaults, read before any theme is applied
+  const sw = (id, list, dark) => { document.getElementById(id).innerHTML = list.map(([k, label, use]) => `<div class="sw${dark ? " dark" : ""}"><i style="background:${val(k)}"></i><div><b>${label}</b>${use}<br><span class="tok">${k}</span> <span class="tok">${val(k)}</span></div></div>`).join(""); };
+  function render() {
+    sw("sw-studio", [["--navy","Navy","Headers, card heads, primary buttons, headings"],["--navy-deep","Deep navy","The top bar"],["--gold","Gold","The one accent: brand, rules, focus, the landing call to action"],["--cream","Cream","Page background"],["--sand","Sand","Borders"],["--ink","Ink","Body text"],["--muted","Muted","Secondary text"]]);
+    sw("sw-status", [["--ok","OK","Healthy dot, Live pill"],["--warn","Warn","Stale dot, test-data banner, amber problems"],["--bad","Bad","Fault dot, danger text, red problems"],["--local","Local","Standby strip, test sign-in banner, this browser only"]]);
+    sw("sw-air", [["--panel","Panel","Chart panel and ticker band, start of the gradient"],["--panel-edge","Panel edge","End of the panel gradient"],["--band-edge","Band edge","End of the ticker gradient"],["--rule","Rule","Table rules, empty bars"],["--fg","Foreground","Type on air"],["--fg-muted","Muted","Kickers, footers, idle line"]], true);
+    sw("sw-party", [["--ind","Independent","Tags, bars, the ticker brand block"],["--gop","Republican","Tags and bars"],["--dem","Democrat","Tags and bars"],["--call","AP call","Call chips, the ticker's call items, TEST in the status bar"],["--air-ok","Ahead","Margin up"],["--air-bad","Behind","Margin down"]], true);
+    document.getElementById("tokens").innerHTML = `<tr><th>Token</th>${Object.values(THEMES).map((t) => `<th>${t.name}</th>`).join("")}</tr>` +
+      KEYS.map((k) => `<tr><td><span class="tok">${k}</span></td>${Object.keys(THEMES).map((id) => { const v = THEMES[id].tokens[k] ?? (id === "election-producer" ? SHIPPED[k] : "<span style='color:var(--muted)'>inherits</span>"); return `<td>${/^#|^rgb/.test(v) ? `<i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px;background:${v};border:1px solid var(--sand)"></i>` : ""}${v}</td>`; }).join("")}</tr>`).join("");
+  }
+  let saved = null; try { saved = localStorage.getItem("sg-theme"); } catch {}
+  apply(saved && THEMES[saved] ? saved : "election-producer");
+</script>
+</body>
+</html>
