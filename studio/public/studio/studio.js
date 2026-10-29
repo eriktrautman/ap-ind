@@ -375,8 +375,8 @@ function renderStatus() {
   const st = (id, html) => `<span class="st" id="${id}">${html}</span>`;
   $("statusbar").innerHTML =
     st("st-feed", `<span class="dot ${cls === "ok" ? "" : cls}"></span><b>${esc(feedLabel)}</b>`) +
-    st("st-refresh", `<span class="k">Last Refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
-    st("st-asof", `<span class="k">Data As Of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
+    st("st-refresh", `<span class="k" title="When our poller last fetched results from AP successfully">Last Refresh</span><b>${esc(ago(s?.lastApSuccess))}</b>`) +
+    st("st-asof", `<span class="k" title="AP's own timestamp on the results, not our fetch time. On the Test stream it moves only when AP runs its simulation, so it can sit hours or days back; on Live it advances with every tabulation update.">Data As Of</span><b>${esc(s?.apTimestamp ? fmtTime(s.apTimestamp) : "—")}</b>`) +
     st("st-rt", `<span class="k">Data Stream</span>${pending ? `<b style="color:#ffd166;font-weight:700" title="Switched; waiting for the next poll to confirm. The outputs follow within about a minute.">${rt === "l" ? "LIVE" : "TEST"} → ${want === "l" ? "LIVE" : "TEST"} ⏳</b>` : `<b style="color:${rt === "l" ? "#5fd48a" : "#ffd166"};font-weight:700">${rt === "l" ? "LIVE" : "TEST"}</b>`}`) +
     st("st-api", `<span class="k">API Access</span><span class="dot ${!s ? "off" : apOk ? "" : "bad"}"></span><b>${!s ? "unknown" : apOk ? "working" : "failing"}</b>`) +
     // The three cadences fold behind one click so the bar stays short.
