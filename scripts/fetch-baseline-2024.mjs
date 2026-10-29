@@ -1,6 +1,6 @@
 // Fetch the 2024 presidential result by reporting unit (county, or Alaska house district) for
 // the featured states from AP, and store it as config/baseline-2024-pres.json. One-time data.
-//   node --env-file=.env scripts/fetch-baseline-2024.mjs
+//   node --env-file=studio/.env scripts/fetch-baseline-2024.mjs
 import { writeFileSync } from "node:fs";
 
 const STATES = (process.argv[2] ?? "NE,MT,ID,SD,CA,AK").split(",");

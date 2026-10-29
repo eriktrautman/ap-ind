@@ -8,6 +8,10 @@ data/
 *.sqlite
 *.sqlite-*
 
+# python
+__pycache__/
+*.pyc
+
 # node
 node_modules/
 dist/
@@ -18,8 +22,6 @@ npm-debug.log*
 .vscode/
 .idea/
 .vercel
-docs/g/
 public/photos/congress/
 public/photos/bp/
-docs/geo/
 public/photos/campaign/

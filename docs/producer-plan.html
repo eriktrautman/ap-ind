@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-10-28T23:57:52Z",
+  updated: "2026-10-29T00:20:00Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -275,6 +275,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-29T00:20:00Z", what: "Audit: the README brought up to date (chart count, the Studio's sections, the five ticker fields, 32 live thumbnails, the feed polls Blob with no WebSocket, docs are not deployed, every config file listed with its charts); removed the tracked .pyc, the stale copy public/g/control.js that the build overwrote, the orphaned config/independents-results.json, the dead watch-party seed-from-raw script and the root .env.example (the key lives only in studio/.env); AP_ELECTION_DATE documented in studio/.env.example." },
   { t: "2026-10-29T04:00:00Z", what: "The production check after a deploy: Vercel's GitHub app creates no GitHub deployments here, so the deployment_status trigger never fired. Instead the build writes /version.json with the commit, and the workflow's second job, on a push to main, polls it until production is running the pushed commit (up to six minutes) and then runs the route checks against the live site." },
   { t: "2026-10-29T03:50:00Z", what: "The test script names its files with a quoted glob: Node 24, which the workflow runs, does not take a directory after --test (Node 26 does), so the first Actions run failed before a test ran. Checked in a fresh clone under Node 24." },
   { t: "2026-10-29T03:40:00Z", what: "Test suite (S125): sixteen tests on the routes that matter (outputs, data, sign-in and roles, publishing, the AP and deployment failovers), capped at 100 for life, run by GitHub Actions on every push and read-only against production after each deployment." },

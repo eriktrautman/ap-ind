@@ -6,12 +6,12 @@
 //     and only re-normalizes. Use --refresh to re-download.
 //   - County level (level=ru) must be requested per state; a national ru pull times out at AP's gateway.
 //
-//   node --env-file=.env scripts/fetch-history.mjs 2024-11-05
-//   node --env-file=.env scripts/fetch-history.mjs 2022-11-08 --offices P,S,H --states CA,TX
-//   node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --dry-run        # list planned requests
-//   node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --no-ru          # state/national level only
-//   node --env-file=.env scripts/fetch-history.mjs 2024-11-05 --reparse        # rebuild tables from stored raw
-//   node --env-file=.env scripts/fetch-history.mjs --all --states auto          # every date AP lists, county level
+//   node --env-file=studio/.env scripts/fetch-history.mjs 2024-11-05
+//   node --env-file=studio/.env scripts/fetch-history.mjs 2022-11-08 --offices P,S,H --states CA,TX
+//   node --env-file=studio/.env scripts/fetch-history.mjs 2024-11-05 --dry-run        # list planned requests
+//   node --env-file=studio/.env scripts/fetch-history.mjs 2024-11-05 --no-ru          # state/national level only
+//   node --env-file=studio/.env scripts/fetch-history.mjs 2024-11-05 --reparse        # rebuild tables from stored raw
+//   node --env-file=studio/.env scripts/fetch-history.mjs --all --states auto          # every date AP lists, county level
 //                                                                               # only where a federal race was held
 //
 // Options: --db <path> (default data/ap-history.sqlite), --results-type l|c|t (default l; AP lists
@@ -52,7 +52,7 @@ if (dates.length === 0 && !has("list") && !opts.all) {
   process.exit(2);
 }
 const key = process.env.AP_API_KEY;
-if (!key && !opts.dryRun && !opts.reparse) throw new Error("AP_API_KEY not set (use --env-file=.env)");
+if (!key && !opts.dryRun && !opts.reparse) throw new Error("AP_API_KEY not set (use --env-file=studio/.env)");
 
 const STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME",
