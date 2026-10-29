@@ -1,11 +1,11 @@
 // Producer state: the Global source (what air uses). GET is public and uncached so the on-air
-// ticker and every graphic see a publish within one poll. PUT needs a producer's cookie and stamps
+// ticker and every graphic see a publish within one poll. PUT needs a producer's or publisher's cookie and stamps
 // the state with that person's name (updatedBy), which the control room shows beside the time.
 //
 // The body may carry any subset of the fields in lib/control.js; fields it leaves out keep
 // their stored value, so an older panel that sends only the ticker fields cannot wipe the
 // featured races or chart lists. Every field is validated and capped by normalize().
-import { requireProducer, readBody } from "../lib/auth.js";
+import { requirePublisher, readBody } from "../lib/auth.js";
 import { readJson, writeJson, defaultProducer } from "../lib/store.js";
 import { normalize, DEFAULTS } from "../lib/control.js";
 
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     return;
   }
   if (req.method === "PUT") {
-    const who = await requireProducer(req, res);
+    const who = await requirePublisher(req, res);
     if (!who) return;
     try {
       const body = readBody(req);

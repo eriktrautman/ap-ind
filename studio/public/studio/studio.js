@@ -71,8 +71,8 @@ async function loginHint(wasTest, me = null) {
   const live = me.rehearsalAllowed === false;
   hint.hidden = !live;
   hint.innerHTML = !live ? "" : wasTest
-    ? "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with the real password to continue."
-    : "Results are <b>Live</b>, so the rehearsal password is switched off. Only the real password signs in.";
+    ? "<b>You were signed out:</b> you were using the rehearsal password and results have just gone <b>Live</b>. The rehearsal password is switched off from here on. Sign in with your own password to continue."
+    : "Results are <b>Live</b>, so the rehearsal password is switched off. Only named passwords sign in.";
 }
 function showLogin() { $("login").hidden = false; $("app").hidden = true; $("logout").hidden = true; $("poller").hidden = true; }
 function showApp() { $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false; $("poller").hidden = false; }
@@ -81,19 +81,20 @@ $("loginform").addEventListener("submit", async (e) => {
   $("loginerr").textContent = "";
   try {
     const me = await api("/api/login", { method: "POST", body: JSON.stringify({ password: $("password").value }) });
-    loginKind = me.testLogin ? "test" : "prod"; loginName = me.name ?? null; renderWho();
+    loginKind = me.testLogin ? "test" : "prod"; loginRole = me.role ?? null; loginName = me.name ?? null; renderWho();
     $("password").value = "";
     showApp(); boot();
   } catch (err) { $("loginerr").textContent = err.message === "wrong password" ? "Wrong password." : err.message; loginHint(false); }
 });
-$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; loginName = null; renderWho(); showLogin(); });
+$("logout").addEventListener("click", async () => { await fetch("/api/login", { method: "DELETE" }); loginKind = null; loginRole = null; loginName = null; renderWho(); showLogin(); });
 // The sticky header's height changes with the banners; anchor jumps from the
 // section nav must clear it, so its measured height drives scroll-padding-top on <html>.
 new ResizeObserver(() => document.documentElement.style.setProperty("--top-h", `${document.querySelector("header.top").offsetHeight + 8}px`)).observe(document.querySelector("header.top"));
 // Which password signed in: "prod" (a named producer) or "test" (the rehearsal one, flagged in the banner row), and whose.
 let loginKind = null;
+let loginRole = null;         // "producer" | "publisher" | "readonly" | "rehearsal": the variable the password came from
 let loginName = null;
-const renderWho = () => { const el = $("whoami"); if (el) { el.hidden = !loginName; el.textContent = loginName ? `Signed in as ${loginName}` : ""; } };
+const renderWho = () => { const el = $("whoami"); if (el) { el.hidden = !loginName; el.textContent = loginName ? `Signed in as ${loginName}${loginRole && loginRole !== "rehearsal" ? ` · ${loginRole === "readonly" ? "read only" : loginRole}` : ""}` : ""; } };
 const byWhom = (s) => s?.updatedBy ? ` by ${esc(s.updatedBy)}` : "";
 
 // ---------- data ----------
@@ -203,16 +204,21 @@ async function loadLive() {
 
 // ---------- state model: this page is a workbench; only the ticker builder is published, to the one live ticker ----------
 const otherOperator = () => live && liveSeenAt !== live.updatedAt;
-/** Producer actions (publish, poll, pause, Test/Live) need the real password; the rehearsal sign-in only looks. */
-const isProducer = () => loginKind === "prod";
-const canPublish = () => isProducer() && (runtime ? !!runtime.production?.canPush : true);
+/** Roles, from the password's variable name. Producer actions (poll, pause, Test/Live) need a PRODUCER password. Publishing
+ *  (ticker, live screens) is open to PRODUCER and PUBLISHER. READONLY and the rehearsal password only look. */
+const isProducer = () => loginRole === "producer";
+const mayPublish = () => loginRole === "producer" || loginRole === "publisher";
+const canPublish = () => mayPublish() && (runtime ? !!runtime.production?.canPush : true);
 const WRENCH = '<svg class="wrench" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M13.6 4.6a3.6 3.6 0 0 1-4.7 4.3L4 13.8a1.5 1.5 0 0 1-2.1-2.1l4.9-4.9a3.6 3.6 0 0 1 4.3-4.7L8.9 4.3l2.8 2.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> ';
 const LOCK = '<svg class="lock" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
-const NOT_PRODUCER = "Producer only. You are signed in with the rehearsal password; this needs your own password.";
+const notProducer = () => loginRole === "publisher"
+  ? "Producer only. A publisher password publishes the ticker and the live screens; Test/Live, pause and poll change the poller for every output and need a producer password."
+  : "Producer only. You are signed in with a read-only password, which can look but not change anything.";
+const NOT_PUBLISHER = "Read-only account. This password can look but not publish; a publisher or producer password can.";
 const NOT_CONFIGURED = "You are not authorized to publish from this computer. Publishing needs the live ticker's password to be set up on this machine by the engineer. You can still use this ticker by its address, and pull from the live ticker.";
 /** Grey out a producer-only control for the current sign-in. */
 function producerOnly(el) {
-  el.disabled = !isProducer(); el.classList.toggle("noauth", !isProducer()); if (!isProducer()) el.title = NOT_PRODUCER;
+  el.disabled = !isProducer(); el.classList.toggle("noauth", !isProducer()); if (!isProducer()) el.title = notProducer();
   const has = !!el.querySelector(".lock");
   if (!isProducer() && !has) el.insertAdjacentHTML("afterbegin", LOCK); else if (isProducer() && has) el.querySelector(".lock").remove();
 }
@@ -239,7 +245,7 @@ function renderHow() {
     `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a ticker in the Ticker Builder, use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
     `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the published screen on the right.`,
     `<b>Collect what you need.</b> Feature races and charts to keep them close in the sections above the catalogs. This organises your view only and is never published.`,
-    `<b>Producer actions</b> (publish, poll, Test/Live) need the real password; the rehearsal password can look but not change anything published.`,
+    `<b>Producer actions</b> (poll, Test/Live, pause) need a producer password. A publisher password publishes the ticker and the live screens but cannot use them; a read-only password (and the rehearsal one) can look but not change anything published.`,
     `<b>Restore All Default Settings</b> resets this page, never the live ticker or screens.`,
   ].map((x) => `<li>${x}</li>`).join("");
 }
@@ -274,8 +280,8 @@ function renderPublishState() {
   $("publish").disabled = !canPublish() || !changes.length;
   $("publish").classList.toggle("noauth", !canPublish());
   $("publish").innerHTML = `${canPublish() ? "" : LOCK}Publish to Live`;
-  $("pubwhy").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
-  $("publish").title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
+  $("pubwhy").textContent = canPublish() ? "" : mayPublish() ? "Not set up on this machine" : "Read-only account";
+  $("publish").title = !canPublish() ? (mayPublish() ? NOT_CONFIGURED : NOT_PUBLISHER) : !changes.length ? "Nothing to publish: the builder already matches the live ticker" : `Replace the live ticker's parameters with the builder's (${changes.length} change${changes.length === 1 ? "" : "s"})`;
   document.querySelector("#liveframe .lockmark").hidden = canPublish();
   document.querySelector("#ticker .screenmid .arrow:not(.back)").classList.toggle("off", $("publish").disabled);
   $("pull").disabled = !canPull() || !live;
@@ -372,6 +378,7 @@ function renderStatus() {
   $("pause").classList.toggle("danger", !paused);
   for (const el of [$("pollnow"), $("pollfresh"), $("pause")]) producerOnly(el);
   $("readonly").hidden = isProducer();
+  $("readonlytxt").textContent = loginRole === "publisher" ? "Publisher · Publishes Only · These Need a Producer" : "Not Authorized · This Account is Read Only";
 
   const problems = [];
   if (!index && runtime && !runtime.polling) problems.push({ warn: true, title: "No results on this laptop yet.", text: "The app was started with --no-poll and the local store holds no index. Start it without --no-poll, or run npm run poll, and the lists fill in within a minute." });
@@ -656,8 +663,8 @@ function renderScreens() {
     const pub = box.querySelector("button[data-act=publish]"), pull = box.querySelector("button[data-act=pull]");
     pub.disabled = !canPublish() || !changed; pub.classList.toggle("noauth", !canPublish());
     pub.innerHTML = `${canPublish() ? "" : LOCK}Publish to Live`;
-    box.querySelector(".whynot").textContent = canPublish() ? "" : isProducer() ? "Not set up on this machine" : "Read-only account";
-    pub.title = !canPublish() ? (isProducer() ? NOT_CONFIGURED : NOT_PRODUCER) : !changed ? "Nothing to publish: the draft already matches the published screen" : `Make this draft the published screen (${describeScreen(draft[key])})`;
+    box.querySelector(".whynot").textContent = canPublish() ? "" : mayPublish() ? "Not set up on this machine" : "Read-only account";
+    pub.title = !canPublish() ? (mayPublish() ? NOT_CONFIGURED : NOT_PUBLISHER) : !changed ? "Nothing to publish: the draft already matches the published screen" : `Make this draft the published screen (${describeScreen(draft[key])})`;
     pull.disabled = !canPull() || !live;
     box.querySelector(".lockmark").hidden = canPublish();
     box.querySelector(".screenmid .arrow:not(.back)").classList.toggle("off", pub.disabled);
@@ -968,7 +975,7 @@ async function boot() {
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
-  loginKind = me.authed ? (me.testLogin ? "test" : "prod") : null; loginName = me.authed ? (me.name ?? null) : null; renderWho();
+  loginKind = me.authed ? (me.testLogin ? "test" : "prod") : null; loginRole = me.authed ? (me.role ?? null) : null; loginName = me.authed ? (me.name ?? null) : null; renderWho();
   if (!me.authed) loginHint(false, me);
   if (me.authed) { showApp(); boot(); } else showLogin();
 })();

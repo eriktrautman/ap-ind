@@ -1,9 +1,15 @@
 // Studio login: per-person passwords and a signed, expiring cookie. Accounts come from the environment,
 // read at call time, so adding or removing one is an env change plus a redeploy, no code:
-//   STUDIO_PASSWORD_<NAME>   one producer per person: STUDIO_PASSWORD_ERIK signs in as "Erik" (MARY_ANN → "Mary Ann").
-//                            Full rights: publish, poll, Test/Live, pause. Delete the variable to revoke that person;
-//                            every cookie it issued stops verifying and nobody else is signed out.
-//   STUDIO_TEST_PASSWORD     the rehearsal password ("Rehearsal"): can look, cannot change anything published. It
+//   STUDIO_PASSWORD_PRODUCER_<FIRST>_<LAST>    everything: publish, poll, Test/Live, pause. STUDIO_PASSWORD_PRODUCER_ERIK_TRAUTMAN
+//                                              signs in as "Erik Trautman".
+//   STUDIO_PASSWORD_PUBLISHER_<FIRST>_<LAST>   publishes the ticker and the live screens, nothing else. Test/Live, pause and poll
+//                                              change what the poller does for every output, so they stay with producers; a bad
+//                                              publish is visible on the ticker and undone in five seconds.
+//   STUDIO_PASSWORD_READONLY_<FIRST>_<LAST>    looks at everything, changes nothing published.
+//                            The variable's name is what the password entitles its holder to; there is no other list to keep.
+//                            Delete a variable to revoke that person: every cookie it issued stops verifying and nobody else is
+//                            signed out. To change someone's rights, delete one variable and add the other with the same value.
+//   STUDIO_TEST_PASSWORD     the rehearsal password ("Rehearsal"): read-only like READONLY, unnamed and shared. It
 //                            works only while the poller is on AP's test results: the moment results are switched to
 //                            Live, sign-ins with it are refused and every cookie it issued stops verifying.
 //   STUDIO_PASSWORD          the old unnamed producer password, still accepted (as "Producer") so a project that has
@@ -16,15 +22,15 @@ import { readJson } from "./store.js";
 
 const COOKIE = "studio";
 const TTL_MS = 12 * 60 * 60 * 1000;
-const NAMED = /^STUDIO_PASSWORD_([A-Z0-9_]+)$/;
+const NAMED = /^STUDIO_PASSWORD_(PRODUCER|PUBLISHER|READONLY)_([A-Z0-9_]+)$/;
 const titleCase = (s) => s.toLowerCase().split("_").filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 
-/** Every account with a non-empty password, from the environment right now: {key, env, name, role}. role: producer | rehearsal. */
+/** Every account with a non-empty password, from the environment right now: {key, env, name, role}. role: producer | publisher | readonly | rehearsal. */
 export function accounts() {
   const out = [];
   for (const [env, value] of Object.entries(process.env)) {
     const m = NAMED.exec(env);
-    if (m && value) out.push({ key: m[1].toLowerCase(), env, name: titleCase(m[1]), role: "producer" });
+    if (m && value) out.push({ key: `${m[1]}_${m[2]}`.toLowerCase(), env, name: titleCase(m[2]), role: m[1].toLowerCase() });
   }
   out.sort((a, b) => a.name.localeCompare(b.name));
   if (process.env.STUDIO_PASSWORD) out.push({ key: "prod", env: "STUDIO_PASSWORD", name: "Producer", role: "producer" });
@@ -111,15 +117,20 @@ export async function requireStudio(req, res) {
   res.status(401).json({ error: "not signed in" });
   return false;
 }
-export const PRODUCER_ONLY = "producer only: this needs your own password, not the rehearsal one";
-/** Producer-only actions (publish, poll, settings): returns the account, or sends 401/403 and returns false. */
-export async function requireProducer(req, res) {
+export const PRODUCER_ONLY = "producer only: Test/Live, pause and poll need a producer's password";
+export const READ_ONLY = "read-only account: this password cannot publish";
+/** The signed-in account if its role is one of `roles`; else 401 (not signed in) or 403 (`msg`) and false. */
+export async function requireRole(req, res, roles, msg) {
   const a = await authUser(req);
-  if (a && a.role === "producer") return a;
+  if (a && roles.includes(a.role)) return a;
   if (!a) { res.status(401).json({ error: "not signed in" }); return false; }
-  res.status(403).json({ error: PRODUCER_ONLY });
+  res.status(403).json({ error: msg });
   return false;
 }
+/** Producer-only actions (poll, settings). */
+export const requireProducer = (req, res) => requireRole(req, res, ["producer"], PRODUCER_ONLY);
+/** Publishing (the ticker and the live screens): producers and publishers. */
+export const requirePublisher = (req, res) => requireRole(req, res, ["producer", "publisher"], READ_ONLY);
 
 export function readBody(req) {
   if (req.body && typeof req.body === "object") return req.body;

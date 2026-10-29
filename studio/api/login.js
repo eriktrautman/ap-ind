@@ -1,5 +1,5 @@
 // Studio sign-in. GET → who this browser is, POST { password } → sets the cookie, DELETE → clears it.
-// The answer carries `name` ("Erik", "Rehearsal"), `role` ("producer" | "rehearsal") and `kind` (the account key);
+// The answer carries `name` ("Erik Trautman", "Rehearsal"), `role` ("producer" | "publisher" | "readonly" | "rehearsal") and `kind` (the account key);
 // `testLogin` is true for the rehearsal password, which the control room flags.
 import { matchPassword, rehearsalAllowed, REHEARSAL_OFF, issueCookie, clearCookie, authUser, accounts, producersConfigured, readBody } from "../lib/auth.js";
 
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
   if (req.method === "POST") {
     if (!producersConfigured()) {
-      res.status(500).json({ error: "no producer password is set on the server: add STUDIO_PASSWORD_<NAME> to the project and redeploy" });
+      res.status(500).json({ error: "no producer password is set on the server: add STUDIO_PASSWORD_PRODUCER_<FIRST>_<LAST> to the project and redeploy" });
       return;
     }
     // A small fixed delay blunts online guessing without any state to keep (the firewall rate-limits the rest).
