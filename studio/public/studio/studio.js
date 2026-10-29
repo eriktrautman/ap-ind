@@ -1067,8 +1067,9 @@ $("plbar").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   ({ pladd: () => plAdd(), plnewuser: plNewUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
 });
-/** From the Chart Catalog's ⋯ menu: choose the person and playlist, then finish the chart's spec. */
-async function addToPlaylistFromCatalog(chart) {
+/** From a card's ⋯ menu (Chart Catalog, Slate, Races, Movement): choose the person and playlist, then finish the chart's
+ *  spec. preset carries what the card already knows, e.g. the Slate card's race. */
+async function addToPlaylistFromCatalog(chart, preset = {}) {
   if (!playlists) await loadPlaylists();
   if (!playlists?.users.length) { await ask({ title: "No playlists yet", body: `<p>A producer adds a person and a playlist in the Playlists section first.</p>`, ok: "OK", info: true }); return; }
   const u0 = plUser();
@@ -1081,8 +1082,7 @@ async function addToPlaylistFromCatalog(chart) {
   const ok = await pending;
   const user = playlists.users.find((x) => x.id === $("pickuser").value), list = user?.playlists.find((x) => x.id === $("picklist").value);
   if (!ok || !user || !list) return;
-  const sample = chart.kind === "race" || chart.needsRace || chart.needsState ? "" : "";
-  await plAdd({ chart: chart.id, race: sample, state: "", params: {}, bg: "black" }, { user, playlist: list });
+  await plAdd({ chart: chart.id, race: preset.race ?? "", state: preset.state ?? "", params: {}, bg: "black" }, { user, playlist: list });
 }
 // The chart specifier dialog: the same form as a Live Screen draft, editing a pending spec until OK.
 let pendingSpec = null;
@@ -1142,7 +1142,7 @@ function renderDetail() {
     for (const cid of draft.featuredCharts) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
       if (chart.only && !chart.only(r)) continue;
-      cg.appendChild(cards.card({ chart, race: r, section: "detail", priority: i === 0 ? 1 : 2, open: "show", menu: [{ label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
+      cg.appendChild(cards.card({ chart, race: r, section: "detail", priority: i === 0 ? 1 : 2, open: "show", menu: [...(mayPublish() ? [{ label: "Add to a playlist…", onClick: () => addToPlaylistFromCatalog(chart, { race: r.label }) }] : []), { label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
     }
     if (!cg.children.length) cg.innerHTML = `<div class="empty">No featured charts selected.</div>`;
     row.appendChild(cg); grid.appendChild(row);
@@ -1254,7 +1254,7 @@ function renderMovement() {
     for (const cid of draft.movementCharts.filter((id) => seriesOf(id) === series)) {
       const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
       const params = chart.id === "D5" && draft.keyRaceIds.length ? { races: draft.keyRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(",") } : null;
-      grid.appendChild(cards.card({ chart, params, section: series === "D" ? "broad" : "movement", priority: 3, open: "show", menu: [{ label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
+      grid.appendChild(cards.card({ chart, params, section: series === "D" ? "broad" : "movement", priority: 3, open: "show", menu: [...(mayPublish() ? [{ label: "Add to a playlist…", onClick: () => addToPlaylistFromCatalog(chart) }] : []), { label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
     }
     if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add ${series} charts from the Chart Catalog below.</div>`;
   }
