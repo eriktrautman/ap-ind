@@ -736,7 +736,10 @@ function screenForm(key) {
   const groups = [["A", "Persistent elements"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Broad races"], ["F", "AP reports"]];
   const chartSel = `<label>Chart<select data-sk="${key}" data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${c.id} ${esc(c.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
   const needsRace = chart && (chart.kind === "race" || chart.needsRace);
-  const raceSel = needsRace || chart?.needsState ? `<label>Race<select data-sk="${key}" data-f="race"><option value="">${chart?.needsState ? "(by state instead)" : "choose a race"}</option>${raceOptions(s.race)}</select></label>` : "";
+  // Both screens' forms keep the same shape: Chart, Race, Background. A chart that draws no single race shows Race greyed out.
+  const raceSel = needsRace || chart?.needsState
+    ? `<label>Race<select data-sk="${key}" data-f="race"><option value="">${chart?.needsState ? "(by state instead)" : "choose a race"}</option>${raceOptions(s.race)}</select></label>`
+    : `<label class="na" title="${esc(chart?.name ?? "This chart")} draws every race it needs on its own; it takes no race">Race<select disabled><option>not used by this chart</option></select></label>`;
   const stateSel = chart?.needsState ? `<label>State<select data-sk="${key}" data-f="state"><option value="">from the race</option>${stateOptions(s.state)}</select></label>` : "";
   const extra = (SCREEN_PARAMS[s.chart] ?? []).map((p) => p.options
     ? `<label>${esc(p.label)}<select data-sk="${key}" data-p="${p.k}"><option value="">default</option>${p.options.map(([v, t]) => `<option value="${v}" ${s.params[p.k] === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`

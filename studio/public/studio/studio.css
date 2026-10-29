@@ -198,6 +198,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .chunk .addfeat { margin-top: 6px; }
 .chunk .addmanual { margin: 6px 0 0; }
 .chunk .empty { padding: 8px 10px; font-size: 12.5px; }
+.sform label.na { color: var(--muted); } .sform label.na select { opacity: .6; }
 #addchunkref select { flex: 1; width: 100%; }
 #addchunkref select:has(option[value=""]:checked) { color: var(--muted); }   /* the helper text reads like a placeholder */
 #addchunkref select option { color: var(--ink); }
