@@ -160,7 +160,7 @@ const META = {
   minPerPoint: 5,          // assumed pace until three stories are done
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
-  note: "S109 (B12) blocked on the AP VoteCast licence; E8 access control complete; production env vars still to be renamed",
+  note: "S109 (B12) blocked on the AP VoteCast licence; E8 access control complete and in production",
   updated: "2026-10-28T23:57:52Z",
 };
 const EPICS = {
@@ -266,6 +266,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-29T00:20:00Z", what: "Production moved to named passwords: two producers, one publisher, one read-only account added on the project; the old shared STUDIO_PASSWORD removed and the site redeployed. Anyone still signed in with the old password is signed out at their next request." },
   { t: "2026-10-28T23:58:00Z", what: "Roles by variable name (S116): STUDIO_PASSWORD_PRODUCER_, _PUBLISHER_ and _READONLY_ followed by FIRST_LAST. Publishers publish the ticker and screens; only producers touch Test/Live, pause and poll; read-only looks. The control room greys what a password cannot use and says which one it needs." },
   { t: "2026-10-28T23:40:00Z", what: "Per-person passwords (S115): STUDIO_PASSWORD_<NAME> per team member, the first being Erik's. Same stateless cookie, now keyed per person; publishes stamped with the name; conflict warnings and the live table say who. Rehearsal password unchanged. The unnamed STUDIO_PASSWORD keeps working until it is removed from the project." },
   { t: "2026-10-28T23:57:52Z", what: "Data Stream switch has a waiting state: between the switch and the poll that confirms it the bar reads TEST → LIVE ⏳, the target side of the switch pulses amber and the switch is locked; status is re-read every 3 s past the CDN's 15 s copy until it confirms. Before this the bar flipped back to the old stream for up to 45 s because the CDN kept serving the earlier status file." },
