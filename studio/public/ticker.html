@@ -51,10 +51,7 @@
   const setBg = (bg) => { document.body.className = document.body.className.replace(/\bbg-\S+/g, "").trim(); if (bg && BG_IDS.includes(bg)) document.body.classList.add(`bg-${bg}`); };
   const bg = params.get("bg");
   if (params.has("bg")) setBg(bg);
-  if (params.get("fit") === "1") {   // Preview from the Studio: scale the 1920x1080 page to the window
-    const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.background = getComputedStyle(document.body).backgroundColor; };
-    window.addEventListener("resize", fit); fit();
-  }
+  // ?fit=1 (Preview from the Studio: the 1920x1080 page scaled to the window) is applied by control.js, imported above.
   const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
   // A ticker built entirely from its address, no pushed state involved:
   //   /ticker?bg=black&opacity=60&seq=NE-SEN|~Polls close at 7|MT-SEN|ID-SEN&calls=1&idle=Welcome

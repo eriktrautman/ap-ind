@@ -1,6 +1,10 @@
 // Graphic cards: the real broadcast page scaled into a 16:9 thumbnail, an open-in-new-tab
 // link at 1920x1080, a freshness bubble, and a race tag that cannot be mistaken.
 //
+// Thumbnails run at half size: a 960x540 frame with ?fit=1, so the page keeps its 1920x1080 layout but
+// paints a quarter of the pixels; the card then scales the frame to its width. The Open and Show links
+// are the full-size page.
+const THUMB_W = 960;
 // Thumbnail budget: only `maxLive` cards run a live iframe at once. Cards ask for a slot when
 // they scroll into view and give it up when they leave; lower `priority` wins (featured
 // sections use 1-2, movement 3, catalog 9). Catalog cards start static (numbers only) and
@@ -27,7 +31,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "bla
   const ro = new ResizeObserver((entries) => { for (const e of entries) scaleThumb(e.target); });
   function scaleThumb(thumb) {
     const f = thumb.querySelector("iframe"); if (!f) return;
-    f.style.transform = `scale(${thumb.clientWidth / 1920})`;
+    f.style.transform = `scale(${thumb.clientWidth / THUMB_W})`;
   }
   function schedule() { if (scheduled) return; scheduled = true; setTimeout(() => { scheduled = false; reconcile(); }, 50); }
 
@@ -57,7 +61,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "bla
     const d = getDisplay(c.section);   // the section's Background and Opacity: previews and links alike
     if (d.bg) p.set("bg", d.bg);
     if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
-    if (forOpen && c.open === "preview") p.set("fit", "1");   // "show": the real page at full size
+    if (!forOpen || c.open === "preview") p.set("fit", "1");   // thumbnails and Preview scale the page; "show" is the real page at full size
     for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts
     if (c.race && c.chart.needsState) p.set(semantic ? "state" : "st", c.race.state);
     else if (c.race) { if (semantic) p.set("race", c.race.label); else p.set("id", c.race.id); }

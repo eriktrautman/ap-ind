@@ -27,19 +27,7 @@ const FEATURED_CANDS = new Set(FEATURED_RACES.map((r) => r.cand));
 /** True for the curated independents, whatever party label AP gives them (NP, Ind, ...). */
 export const isFeaturedCand = (id) => FEATURED_CANDS.has(String(id));
 
-// ?fit=1 (the Studio's Preview links): keep the 1920x1080 layout but scale it to the
-// window, so a producer on a laptop sees the whole graphic. Broadcast outputs never pass it.
-if (new URLSearchParams(location.search).get("fit") === "1") {
-  const fit = () => {
-    const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1);
-    document.body.style.transformOrigin = "0 0";
-    document.body.style.transform = `scale(${k})`;
-    document.documentElement.style.overflow = "hidden";
-    document.documentElement.style.background = getComputedStyle(document.body).backgroundColor;
-  };
-  window.addEventListener("resize", fit);
-  if (document.body) fit(); else document.addEventListener("DOMContentLoaded", fit);
-}
+// ?fit=1 (the Studio's Preview links and thumbnails) is applied by control.js, imported above.
 
 const INDEX_MS = 15_000;
 const STATUS_MS = 30_000;

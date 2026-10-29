@@ -30,6 +30,23 @@ export function applyPanelOpacity(search = typeof location === "undefined" ? "" 
   document.body ? apply() : document.addEventListener("DOMContentLoaded", apply);
 }
 applyPanelOpacity();
+
+// ?fit=1 (the Studio's Preview links and its thumbnails): keep the 1920x1080 layout but scale it to the
+// window, so a producer on a laptop sees the whole graphic, and a thumbnail frame half the size paints a
+// quarter of the pixels. Broadcast outputs never pass it. Node imports this module too, hence the guard.
+export function applyFit(search = typeof location === "undefined" ? "" : location.search) {
+  if (typeof document === "undefined" || new URLSearchParams(search).get("fit") !== "1") return;
+  const fit = () => {
+    const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1);
+    document.body.style.transformOrigin = "0 0";
+    document.body.style.transform = `scale(${k})`;
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.background = getComputedStyle(document.body).backgroundColor;
+  };
+  window.addEventListener("resize", fit);
+  document.body ? fit() : document.addEventListener("DOMContentLoaded", fit);
+}
+applyFit();
 const LS_LOCAL = "studio.local";
 const LS_SOURCE = "studio.source";
 

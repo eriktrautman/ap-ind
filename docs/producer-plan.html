@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-10-29T00:20:00Z",
+  updated: "2026-10-29T21:30:00Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -280,6 +280,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-10-29T21:30:00Z", what: "Studio thumbnails run at half size: a 960x540 frame with ?fit=1 scales the 1920x1080 page inside it, so each live preview paints a quarter of the pixels it did (the Open and Show links are unchanged). ?fit=1 now lives in control.js (applyFit) for every page and the ticker; explainer and quote cards, which do not import it, carry the same four lines." },
   { t: "2026-10-29T07:50:00Z", what: "Candidate facebook widened to the whole feed (1,595 candidates, 1,010 photos) with filters and batch rendering on scroll; featured races shown by default. Studio footer icons removed." },
   { t: "2026-10-30T00:30:00Z", what: "Playlists (S129): a Playlists section under Live Screens; per person, per playlist, ordered chart specs as real thumbnails with their settings condensed; add through the chart specifier or from the Chart Catalog's ⋯ menu; move, edit, remove. Shared through /api/playlists (playlists.json); Ryan's Slate playlist ships with 36 charts." },
   { t: "2026-10-29T23:35:00Z", what: "Every source line credits AP via lightship.media (33 graphics and the Studio's sample cards); the lines that named something else keep it and credit the AP numbers the same way. B8, C5 and C7 gained a source line." },
