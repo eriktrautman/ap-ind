@@ -19,7 +19,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "black", opacity: "100" }), getOrigin = () => location.origin, getRaces = () => null, getDraft = () => null } = {}) {
+export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "black", opacity: "100" }), getOrigin = () => location.origin, getRaces = () => null, getDraft = () => null, getTheme = () => "" } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -62,6 +62,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "bla
     if (d.bg) p.set("bg", d.bg);
     if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
     if (!forOpen || c.open === "preview") p.set("fit", "1");   // thumbnails and Preview scale the page; "show" is the real page at full size
+    { const th = getTheme(); if (th && (!forOpen || c.open === "preview")) p.set("theme", th); }   // a previewed stylesheet: previews only, never the address people copy
     for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts
     if (c.race && c.chart.needsState) p.set(semantic ? "state" : "st", c.race.state);
     else if (c.race) { if (semantic) p.set("race", c.race.label); else p.set("id", c.race.id); }

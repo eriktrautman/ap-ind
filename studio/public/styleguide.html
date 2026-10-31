@@ -244,20 +244,21 @@
     <h2>Guides on file</h2>
     <p class="why">External style guides the product can take its tokens from. Each is kept as pages in the repo (<code>studio/public/styleguides/</code>) and transcribed into a theme above. Preview-size renders; the originals live with their authors.</p>
     <h3>Election Night · Independent Edition — brand styleguide v1 (geniots, 10.30.26)</h3>
-    <p class="why">Source: <a href="https://www.canva.com/design/DAHZiul-lmE/Fs1mjUqFDMA8h8VVUQALiA/view" target="_blank" rel="noopener">the Canva design</a>, 16 pages. Everything on air is Helvetica Neue. Note one difference from the product today: this guide gives <b>independents gold</b> (#F9C515), where the product uses purple; selecting the theme above shows the effect.</p>
+    <p class="why">Two sources, both 30 October 2026: <a href="https://www.canva.com/design/DAHZiul-lmE/Fs1mjUqFDMA8h8VVUQALiA/view" target="_blank" rel="noopener">the Canva deck</a> (16 pages) and a PSD kit of two production sheets (lower thirds and colour palette; full-screen type). Everything on air is Helvetica Neue. They agree except on four points, settled here by the pixels the sheets actually render: the accent blue is <b>#9FAEF6</b> (deck: #93A1E7); the lower third's first line is <b>navy #090E40 at 62 pt</b> (deck: #344FF5, 61 pt); the brand red is <b>#BC0000</b> (both documents mislabel it #090E40); and the lower-third band is a <b>#FFFFFF → #9A9A9A</b> gradient, which the deck never states. One difference from the product today: this guide gives <b>independents gold</b> (#F9C515), where the product uses purple; selecting the theme above shows the effect.</p>
     <table class="spec">
       <tr><th>Element</th><th>Face</th><th>Colour</th><th>Size</th></tr>
       <tr><td>Logo, "ELECTION" / "NIGHT"</td><td>Helvetica Neue Heavy Extended</td><td>#090E40</td><td>155 pt / 246 pt</td></tr>
-      <tr><td>Logo, "INDEPENDENT EDITION" strip</td><td>Helvetica Neue Heavy Extended</td><td>#FFFFFF on a bar the guide labels #090E40 (rendered red in every comp)</td><td>54 pt</td></tr>
-      <tr><td>Party colours</td><td></td><td>Democrat blue #344FF5 · Republican red #ED3C3C · Independent gold #F9C515</td><td></td></tr>
+      <tr><td>Logo, "INDEPENDENT EDITION" strip</td><td>Helvetica Neue Heavy Extended</td><td>#FFFFFF on the brand red, #BC0000 as rendered (both documents label it #090E40)</td><td>54 pt</td></tr>
+      <tr><td>Party colours (deck)</td><td></td><td>Democrat blue #344FF5 · Republican red #ED3C3C · Independent gold #F9C515</td><td></td></tr>
+      <tr><td>Brand palette (production sheet)</td><td></td><td>Primary blue #090E40 (its swatch renders #1B1362) · brand red #BC0000 · white · grey #9A9A9A · band gradient #FFFFFF → #9A9A9A</td><td></td></tr>
       <tr><td>Background gradient</td><td></td><td>#1B1362 → #090E40</td><td></td></tr>
       <tr><td>Maps and stats</td><td>Helvetica Neue Bold (headings, leaders) · Regular (everything else)</td><td>white on the gradient; party colours for fills</td><td></td></tr>
-      <tr><td>Lower third, line 1</td><td>Helvetica Neue Bold</td><td>#344FF5</td><td>61 pt</td></tr>
-      <tr><td>Lower third, live tab ("LIVE FROM…")</td><td>Helvetica Neue Bold Italic</td><td>#FFFFFF on red</td><td>27 pt</td></tr>
-      <tr><td>Lower third, line 2</td><td>Helvetica Neue Bold Italic</td><td>#FFFFFF</td><td>35 pt</td></tr>
-      <tr><td>Lower third, line 3</td><td>Helvetica Neue Medium</td><td>#FFFFFF on red</td><td>27 pt</td></tr>
+      <tr><td>Lower third, line 1</td><td>Helvetica Neue Bold</td><td>navy #090E40 on the white→grey band (deck says #344FF5)</td><td>62 pt (deck: 61)</td></tr>
+      <tr><td>Lower third, live tab ("LIVE FROM…")</td><td>Helvetica Neue Bold Italic</td><td>#FFFFFF on brand red #BC0000</td><td>27 pt</td></tr>
+      <tr><td>Lower third, line 2</td><td>Helvetica Neue Bold Italic</td><td>#FFFFFF on navy #090E40</td><td>35 pt</td></tr>
+      <tr><td>Lower third, line 3</td><td>Helvetica Neue Medium</td><td>#FFFFFF on brand red #BC0000</td><td>27 pt</td></tr>
       <tr><td>Ticker</td><td>Helvetica Neue Bold</td><td>#FFFFFF on navy, logo block at left</td><td>44 pt</td></tr>
-      <tr><td>Full-screen text box: kicker / main / sub / name</td><td>Bold Italic / Bold / Bold Italic / Bold</td><td>#93A1E7 / #FFFFFF / #93A1E7 / #FFFFFF</td><td>30 / 120 / 34 / 80 pt</td></tr>
+      <tr><td>Full-screen text box: kicker / main / sub / name</td><td>Bold Italic / Bold / Bold Italic / Bold</td><td>accent blue #9FAEF6 / #FFFFFF / #9FAEF6 / #FFFFFF, on a navy radial backplate (deck: #93A1E7)</td><td>30 / 120 / 34 / 80 pt</td></tr>
       <tr><td>Mortise (2-up) and PIP captions</td><td>Helvetica Neue Bold</td><td>#344FF5 on a light band</td><td>61 pt</td></tr>
       <tr><td>Credits</td><td>Helvetica Neue Bold / Regular</td><td>#FFFFFF</td><td>23 pt</td></tr>
       <tr><td>Deck chrome (geniots)</td><td>Montserrat-style caps</td><td>gold #ae955e on navy #02102f</td><td></td></tr>
@@ -267,38 +268,13 @@
 
   <section id="themes">
     <h2>Themes</h2>
-    <p class="why">The switcher at the top rewrites the tokens on <code>:root</code>, and every component on this page is drawn from them. A new style guide is a new entry in the <code>THEMES</code> object in this file's script: the same keys, new values. The Election Night theme is transcribed from the guide on file below; the Slate theme is a demonstration of the mechanism, not a proposal. The product's own stylesheets still carry their values inline; wiring them to a shared token file is the step that would let the switcher drive the Studio and the graphics themselves.</p>
+    <p class="why">The switcher at the top rewrites the tokens on <code>:root</code>, and every component on this page is drawn from them. A new style guide is a new entry in the <code>THEMES</code> object in this file's script: the same keys, new values. The Election Night theme is transcribed from the guide on file below; the Slate theme is a demonstration of the mechanism, not a proposal. The themes live in <code>/g/themes.js</code>, which the ticker, every graphic and the live screens read: a producer previews one in the Studio and <b>pushes</b> it, and every output repaints within seconds. The Studio's own daylight page keeps its look; only its previews change.</p>
     <table class="spec" id="tokens"></table>
   </section>
 </main>
-<script>
-  // Themes: the same keys, different values. The first is what ships today (see the :root block above).
-  const THEMES = {
-    "election-producer": { name: "Election Producer (current)", tokens: {} },   // empty: the stylesheet's defaults
-    "election-night-v1": {
-      name: "Election Night · Independent Edition (geniots, v1, 10.30.26)",
-      source: "election-night-v1",
-      tokens: {
-        // Air, straight from the guide: background gradient, party colours, Helvetica Neue throughout.
-        "--panel": "#1B1362", "--panel-edge": "#090E40", "--band-edge": "#090E40", "--fg": "#FFFFFF", "--fg-muted": "#93A1E7", "--rule": "#2b2f72",
-        "--dem": "#344FF5", "--gop": "#ED3C3C", "--ind": "#F9C515", "--call": "#FFFFFF", "--air-font": "'Helvetica Neue', Helvetica, Arial, sans-serif",
-        // Studio: the guide defines no daylight UI; its navy and its deck's gold are carried over, and the serif gives way to Helvetica Neue.
-        "--navy": "#090E40", "--navy-deep": "#02102f", "--gold": "#ae955e", "--local": "#344FF5",
-        "--serif": "'Helvetica Neue', Helvetica, Arial, sans-serif",
-      },
-    },
-    "slate-demo": {
-      name: "Slate (demonstration)",
-      tokens: {
-        "--navy": "#1f2933", "--navy-deep": "#111827", "--gold": "#f59e0b", "--cream": "#f8fafc", "--sand": "#e2e8f0", "--ink": "#0f172a", "--muted": "#64748b",
-        "--local": "#0e7490", "--ok": "#15803d", "--warn": "#d97706", "--bad": "#b91c1c",
-        "--serif": "'Iowan Old Style', 'Palatino Linotype', Palatino, serif",
-        "--panel": "#111827", "--panel-edge": "#1f2937", "--band-edge": "#273449", "--rule": "#334155", "--fg-muted": "#94a3b8",
-        "--ind": "#8b5cf6", "--gop": "#dc2626", "--dem": "#2563eb", "--call": "#fbbf24",
-        "--r-chip": "2px", "--r-field": "4px", "--r-panel": "4px", "--r-card": "6px",
-      },
-    },
-  };
+<script type="module">
+  import { THEMES } from "/g/themes.js";
+  // Themes live in /g/themes.js, the same file the outputs and the Studio read, so this page can never drift from them.
   const KEYS = ["--navy","--navy-deep","--gold","--cream","--sand","--ink","--muted","--ok","--warn","--bad","--local","--serif","--sans","--mono","--panel","--panel-edge","--band-edge","--fg","--fg-muted","--rule","--dem","--gop","--ind","--call","--air-ok","--air-bad","--air-font","--r-chip","--r-field","--r-panel","--r-card"];
   const root = document.documentElement;
   const sel = document.getElementById("theme");
@@ -323,8 +299,13 @@
       KEYS.map((k) => `<tr><td><span class="tok">${k}</span></td>${Object.keys(THEMES).map((id) => { const v = THEMES[id].tokens[k] ?? (id === "election-producer" ? SHIPPED[k] : "<span style='color:var(--muted)'>inherits</span>"); return `<td>${/^#|^rgb/.test(v) ? `<i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px;background:${v};border:1px solid var(--sand)"></i>` : ""}${v}</td>`; }).join("")}</tr>`).join("");
   }
   // The pages of each guide on file, as a gallery.
-  const PAGES = { "election-night-v1": ["Cover", "Logo", "Party colours", "Map / stats 1 (county map)", "Map / stats 2 (House map)", "Stats overview (balance of power)", "Lower third, 1 line with live tab", "Lower third, 2 lines with live tab", "Lower third, 2 lines", "Lower third, 3 lines", "Ticker", "Full-screen text box", "PIP 16:9", "Mortise (2-up)", "Credits", "Contact"] };
-  for (const [guide, names] of Object.entries(PAGES)) { const el = document.getElementById(`pages-${guide}`); if (el) el.innerHTML = names.map((n, i) => { const f = `/styleguides/${guide}/page-${String(i + 1).padStart(2, "0")}.png`; return `<a href="${f}" target="_blank" rel="noopener"><img src="${f}" alt="${n}" loading="lazy"><span>${i + 1} · ${n}</span></a>`; }).join(""); }
+  const DECK = ["Cover", "Logo", "Party colours", "Map / stats 1 (county map)", "Map / stats 2 (House map)", "Stats overview (balance of power)", "Lower third, 1 line with live tab", "Lower third, 2 lines with live tab", "Lower third, 2 lines", "Lower third, 3 lines", "Ticker", "Full-screen text box", "PIP 16:9", "Mortise (2-up)", "Credits", "Contact"];
+  const PAGES = { "election-night-v1": [
+    ...DECK.map((n, i) => ({ file: `page-${String(i + 1).padStart(2, "0")}.png`, name: `Deck ${i + 1} · ${n}` })),
+    { file: "sheet-lowerthirds.png", name: "Production sheet · lower thirds and colour palette (from the PSD kit)" },
+    { file: "sheet-fullscreen-type.png", name: "Production sheet · full-screen type (from the PSD kit)" },
+  ] };
+  for (const [guide, pages] of Object.entries(PAGES)) { const el = document.getElementById(`pages-${guide}`); if (el) el.innerHTML = pages.map((p) => { const f = `/styleguides/${guide}/${p.file}`; return `<a href="${f}" target="_blank" rel="noopener"><img src="${f}" alt="${p.name}" loading="lazy"><span>${p.name}</span></a>`; }).join(""); }
   let saved = null; try { saved = localStorage.getItem("sg-theme"); } catch {}
   apply(saved && THEMES[saved] ? saved : "election-producer");
 </script>

@@ -170,6 +170,7 @@ export const DEFAULTS = Object.freeze({
   manualItems: [],
   idleText: "Welcome to the Independent Election Night coverage",
   tickerBg: "black",          // the live ticker's background when its address names none ("" transparent, black, green)
+  theme: "election-producer", // the stylesheet every output paints with (an id in /g/themes.js); pushed by a producer
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
   featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
   movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"],
@@ -293,6 +294,7 @@ export function normalize(raw) {
     manualItems: manual,                                                 // derived: the texts in crawl order
     idleText: typeof r.idleText === "string" ? r.idleText.trim().slice(0, LIMITS.text) : "",
     tickerBg: BG_IDS.includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
+    theme: typeof r.theme === "string" && /^[a-z0-9-]{1,40}$/.test(r.theme) ? r.theme : DEFAULTS.theme,
     featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
     featuredCharts: Array.isArray(r.featuredCharts) ? chartIds(r.featuredCharts, "race") : [...DEFAULTS.featuredCharts],
     movementCharts: Array.isArray(r.movementCharts) ? chartIds(r.movementCharts, "movement") : [...DEFAULTS.movementCharts],
@@ -384,6 +386,7 @@ export function diffState(from, to) {
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
   if (A.tickerBg !== B.tickerBg) out.push({ field: "tickerBg", text: `Ticker background: ${B.tickerBg || "transparent"}` });
+  if (A.theme !== B.theme) out.push({ field: "theme", text: `Stylesheet: ${B.theme}` });
   for (const k of new Set([...Object.keys(A.contextLines), ...Object.keys(B.contextLines)])) {
     if (A.contextLines[k] !== B.contextLines[k]) out.push({ field: "contextLines", text: `Context line for {${k}}: "${B.contextLines[k] ?? "(removed)"}"` });
   }
@@ -423,7 +426,7 @@ export async function loadGlobal() {
  *  from its address or the shipped defaults. */
 export const TICKER_FIELDS = ["tickerItems", "chunks", "pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 /** Everything that is ever published: the ticker fields and the two Live Screens. */
-export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB"];
+export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB", "theme"];
 
 /**
  * Resolve the state for a source once. Non-ticker fields are always the shipped defaults (a page's address

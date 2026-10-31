@@ -53,6 +53,11 @@
       <label>Background <select id="topbg"></select></label>
       <label>Opacity <select id="topopacity"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
       <button id="applyall" class="defaultsbtn" title="Sets every section's Background and Opacity to the pair chosen here. Nothing published changes.">Apply to All Charts</button>
+      <span class="vsep"></span>
+      <label title="The stylesheet the previews on this page paint with. Pick one other than the live one to try it here only; Push stylesheet makes it live for every output.">Stylesheet <select id="themesel"></select></label>
+      <span class="muted small" id="themestate"></span>
+      <button id="pushtheme" class="defaultsbtn" title="Make the previewed stylesheet the live one: the ticker, both live screens and every chart repaint within seconds">Push stylesheet</button>
+      <a class="small sglink" href="/styleguide" target="_blank" rel="noopener" title="Every stylesheet with its colours, type and components, and the guides they come from">Style guide</a>
       <span class="spacer"></span>
       <span class="muted small" id="thumbbudget"></span>
       <button id="defaults" class="defaultsbtn" title="Resets this page to the shipped settings: the ticker builder, the featured races and charts, every section's display choices. Never the live ticker or the live screens."><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 3a5 5 0 1 1-4.6 3H1.6L4 2.2 6.4 6H4.9A3.5 3.5 0 1 0 8 4.5z" fill="currentColor"/></svg>Restore All Default Settings</button>

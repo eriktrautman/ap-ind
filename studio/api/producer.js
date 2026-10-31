@@ -25,8 +25,9 @@ export default async function handler(req, res) {
   if (req.method === "PUT") {
     const who = await requirePublisher(req, res);
     if (!who) return;
+    const body = readBody(req);
+    if ("theme" in body && who.role !== "producer") { res.status(403).json({ error: "producer only: the stylesheet is pushed by a producer" }); return; }
     try {
-      const body = readBody(req);
       const prev = normalize((await readProducer()).state ?? DEFAULTS);
       const merged = { ...prev };
       for (const k of FIELDS) if (k in body) merged[k] = body[k];

@@ -10,7 +10,7 @@ const q = new URLSearchParams(location.search);
 const setBg = (bg) => { document.body.className = document.body.className.replace(/\bbg-\S+/g, "").trim(); if (bg && BG_IDS.includes(bg)) document.body.classList.add(`bg-${bg}`); };
 if (q.has("bg")) setBg(q.get("bg"));
 // Background: the address wins (?bg=black|green|capitol|flag|panels|transparent); otherwise the published screen's own.
-const display = { bg: q.get("bg") ?? "", opacity: q.get("opacity") ?? "", sample: q.get("sample") ?? "", src: q.get("src") ?? "" };
+const display = { bg: q.get("bg") ?? "", opacity: q.get("opacity") ?? "", sample: q.get("sample") ?? "", src: q.get("src") ?? "", theme: q.get("theme") ?? "" };   // theme: a previewed stylesheet, passed to the chart
 if (q.get("fit") === "1") {   // Preview from the Studio: the 1920x1080 page scaled to the window
   const fit = () => { const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080, 1); document.body.style.transformOrigin = "0 0"; document.body.style.transform = `scale(${k})`; document.documentElement.style.overflow = "hidden"; };
   window.addEventListener("resize", fit); fit();

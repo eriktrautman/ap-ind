@@ -2,6 +2,7 @@
 // published), and the sections that organise this browser's view of the graphics (Slate, Races, Movement, catalogs).
 import { buildQueue } from "/ticker-queue.js";
 import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, specDef, normalizePlaylists, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { THEMES, DEFAULT_THEME, themeName } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -185,7 +186,7 @@ $("applyall").addEventListener("click", async () => {
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
-const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft });
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft , getTheme: () => previewThemeParam() });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
@@ -669,16 +670,57 @@ function sendPreview() {
 }
 frame.addEventListener("load", sendPreview);
 window.addEventListener("resize", scalePreviews);
+// ---------- stylesheet: previewed in this browser, pushed to production by a producer ----------
+// The previewed stylesheet is remembered per browser. While it differs from the live one, every preview frame on this
+// page carries ?theme= so it paints with it; addresses people copy never do, they follow what is live.
+const THEME_LS = "studio.previewTheme";
+let previewTheme = (() => { try { const v = localStorage.getItem(THEME_LS); return v && THEMES[v] ? v : null; } catch { return null; } })();
+const liveTheme = () => (live?.theme && THEMES[live.theme] ? live.theme : DEFAULT_THEME);
+const shownTheme = () => previewTheme ?? liveTheme();
+function previewThemeParam() { const t = shownTheme(); return t !== liveTheme() ? t : ""; }
+const withTheme = (url) => { const t = previewThemeParam(); return t ? `${url}${url.includes("?") ? "&" : "?"}theme=${encodeURIComponent(t)}` : url; };
+function renderTheme() {
+  const sel = $("themesel"); if (!sel) return;
+  if (!sel.options.length) for (const [id, t] of Object.entries(THEMES)) sel.add(new Option(t.name, id));
+  sel.value = shownTheme();
+  const previewing = shownTheme() !== liveTheme();
+  const st = $("themestate");
+  st.textContent = previewing ? `Previewing here · live is ${themeName(liveTheme())}` : "Live";
+  st.className = `muted small${previewing ? " preview" : ""}`;
+  sel.disabled = !isProducer(); sel.title = isProducer() ? "" : notProducer();
+  const pb = $("pushtheme"); producerOnly(pb); if (isProducer()) { pb.disabled = !previewing || !canPublish(); if (!canPublish()) pb.title = NOT_CONFIGURED; }
+}
+$("themesel").addEventListener("change", () => {
+  const v = $("themesel").value; previewTheme = v === liveTheme() ? null : v;
+  try { previewTheme ? localStorage.setItem(THEME_LS, previewTheme) : localStorage.removeItem(THEME_LS); } catch {}
+  renderTickerFrames(); cards.refreshFrames(); renderAll();   // every preview frame on the page reloads with the stylesheet
+});
+$("pushtheme").addEventListener("click", async () => {
+  if (!isProducer() || !canPublish()) return;
+  const id = shownTheme(); if (id === liveTheme()) return;
+  const ok = await ask({
+    title: "Push this stylesheet to production?", ok: "Push stylesheet", danger: true,
+    body: `<p>Every output repaints with <b>${esc(themeName(id))}</b> within about ten seconds: the live ticker, both live screens and every chart address. Nothing else that is published changes.</p><p class="small muted">Live now: ${esc(themeName(liveTheme()))}. The <a href="/styleguide" target="_blank" rel="noopener">style guide</a> shows both.</p>`,
+  });
+  if (!ok) return;
+  try {
+    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify({ theme: id }) }));
+    live = saved; liveSeenAt = saved.updatedAt; liveError = null; previewTheme = null;
+    try { localStorage.removeItem(THEME_LS); } catch {}
+    renderTickerFrames(); cards.refreshFrames(); renderAll();
+  } catch (e) { $("pollmsg").textContent = `Push stylesheet failed: ${e.message}`; }
+});
+
 function displayParams(d = secDisplay("ticker")) { const p = new URLSearchParams(); if (d.bg) p.set("bg", d.bg); if (d.opacity !== "100") p.set("opacity", d.opacity); return p; }
 /** The two ticker frames: the builder with its own BG, the live one with the section's pair; reload only when the address changes. */
 function renderTickerFrames() {
   const sec = secDisplay("ticker");
   const b = `/ticker?preview=1&bg=${pageBg("ticker")}${sec.opacity !== "100" ? `&opacity=${sec.opacity}` : ""}&src=local`;
-  if (frame.dataset.u !== b) { frame.dataset.u = b; frame.src = b; }
+  { const u = withTheme(b); if (frame.dataset.u !== u) { frame.dataset.u = u; frame.src = u; } }
   frame.parentElement.classList.toggle("checker", !pageBg("ticker"));
   // The published preview shows what is published, on the same Background and Opacity as its Copy Live URL.
   const l = `/ticker?${displayParams({ bg: "", opacity: sec.opacity }).toString()}`;   // no bg: the published one shows
-  if (liveFrame.dataset.u !== l) { liveFrame.dataset.u = l; liveFrame.src = l; }
+  { const u = withTheme(l); if (liveFrame.dataset.u !== u) { liveFrame.dataset.u = u; liveFrame.src = u; } }
   liveFrame.parentElement.classList.toggle("checker", !(live?.tickerBg ?? "black"));
 }
 /** The LIVE TICKER's address: fixed; only the display parameters vary. */
@@ -794,13 +836,13 @@ function renderScreens() {
     if (!box.dataset.built) buildScreen(key);
     // the draft preview reloads only when its address changes; the published frame never reloads
     const dFrame = box.querySelector(".screen.draft iframe");
-    const dAddr = screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity, sample: "auto" });
+    const dAddr = screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity, sample: "auto", theme: previewThemeParam() });
     if (dFrame.dataset.addr !== dAddr) { dFrame.dataset.addr = dAddr; dFrame.src = dAddr; }
     dFrame.parentElement.classList.toggle("checker", !pageBg(key));
     box.querySelector(".samplenote").textContent = index && !index.races.some((r) => r.totalVotes > 0) ? " · sample numbers until the count starts" : "";
     const oFrame = box.querySelector(".screen.onair iframe");
     const oAddr = `${screenPath(key)}?${displayParams({ bg: "", opacity: secDisplay("screens").opacity }).toString()}`;   // no bg: the published one shows
-    if (oFrame.dataset.addr !== oAddr) { oFrame.dataset.addr = oAddr; oFrame.src = oAddr; }
+    { const u = withTheme(oAddr); if (oFrame.dataset.addr !== u) { oFrame.dataset.addr = u; oFrame.src = u; } }
     oFrame.parentElement.classList.toggle("checker", !(live?.[key]?.bg ?? "black"));
     const mode = screenMode[key] ?? "generate";
     box.querySelectorAll(".smode button").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
@@ -1468,6 +1510,7 @@ async function demoteLaptop() {
 // ---------- render everything ----------
 function renderAll() {
   renderStatus();
+  renderTheme();
   renderLive();
   renderSeq(); renderChunks(); sendPreview(); renderScreens(); renderPlaylists();
   renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();

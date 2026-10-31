@@ -13,6 +13,8 @@
 // Usage: const feed = connectFeed({ onSnapshot, onUpdate, onStatus });
 
 import { FEATURED_RACES, canonicalAddress } from "./control.js";
+import { watchTheme } from "./themes.js";
+watchTheme();   // the published stylesheet, or the address's ?theme=; repainted within seconds of a push
 
 // Only the chart-id address (/g/B5?race=NE-SEN) is served at the top level: a page opened directly
 // (an old-style /g/race.html?id=... saved somewhere) forwards itself there, so one address style
@@ -264,4 +266,7 @@ export function raceState(r) {
   return { status: closed ? "closed" : "open", party: null, cand: null, margin: null };
 }
 
-export const PARTY_COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#facc15", oth: "#a855f7", yes: "#22c55e", no: "#f97316" };
+// Party colours for scripts that paint SVG and inline styles: read from the page's variables at use time, so a
+// stylesheet change reaches them too. (ind here is the gold used for featured independents in those charts.)
+const cssVar = (name, fallback) => { try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; } catch { return fallback; } };
+export const PARTY_COLOR = { get dem() { return cssVar("--dem", "#3b82f6"); }, get gop() { return cssVar("--gop", "#ef4444"); }, get ind() { return cssVar("--gold", "#facc15"); }, oth: "#a855f7", yes: "#22c55e", no: "#f97316" };

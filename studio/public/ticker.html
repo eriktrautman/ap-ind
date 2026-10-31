@@ -45,6 +45,8 @@
 <script type="module">
   import { buildQueue } from "/ticker-queue.js";
   import { watchState, DEFAULTS, BG_IDS } from "/g/control.js";
+  import { watchTheme } from "/g/themes.js";
+  watchTheme();   // the published stylesheet, or ?theme= on this address
 
   const params = new URLSearchParams(location.search);
   // Background: the address wins (?bg=black|green|capitol|flag|panels|transparent); otherwise the published one arrives with the state.
