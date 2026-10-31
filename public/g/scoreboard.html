@@ -37,8 +37,7 @@
   .row .num { text-align: right; line-height: 1.05; }
   .row .num .pc { font-size: 29px; font-weight: 700; }
   .row .num .in { font-size: 17px; color: var(--muted); margin-top: 1px; }
-  .row.called .nm .who { color: var(--gold); } .row.called .bar i { background: var(--gold); }
-  .row.lost { opacity: .7; }
+  .row .nm .sub .winner { color: var(--fg); }
   .foot .tk { display: inline-block; width: 4px; height: 16px; border-radius: 2px; background: #fff; margin: 0 8px 0 2px; vertical-align: middle; }
   .foot .hf { display: inline-block; width: 0; height: 16px; border-left: 3px dashed var(--gold); margin: 0 8px 0 18px; vertical-align: middle; opacity: .7; }
 </style>
@@ -81,25 +80,27 @@
       const record = share !== null && (b?.first ? true : b?.pct != null && share > b.pct);   // a FIRST sets the benchmark with any share
       let pill;
       const mark = b?.first ? " · first" : " · record";
-      if (r.called) pill = { cls: record ? "record" : "decided", text: `Decided${record ? mark : ""}` };
+      if (r.called) pill = { cls: record ? "record" : "decided", text: `${won ? "Won" : "Called"}${record ? mark : ""}` };
       else if (!have) pill = { cls: "open", text: st.status === "closed" ? "Polls closed" : "Polls open" };
       else if (b?.countNote) pill = { cls: "counting", text: b.countNote };
       else if (leading) pill = { cls: record ? "record" : "lead", text: `Leading${record ? mark : ""}` };
       else pill = { cls: record ? "record" : "behind", text: record ? `Trailing${mark}` : "Counting" };
-      return { r, ind, b, share, inPct, won, lost, leading, record, pill, have };
+      const winner = lost ? sorted.find((c) => c.winner) : null;
+      const pl = (c) => c?.party === "Dem" ? "D" : c?.party === "GOP" ? "R" : c?.independent ? "I" : (c?.party ?? "")[0] ?? "";
+      return { r, ind, b, share, inPct, won, lost, leading, record, pill, have, winner: winner ? `${winner.last ?? winner.name} (${pl(winner)})` : null };
     }).filter(Boolean);
     const n = { lead: rows.filter((x) => x.leading || x.won).length, record: rows.filter((x) => x.record).length, counting: rows.filter((x) => !x.r.called).length, decided: rows.filter((x) => x.r.called).length };
     $("stats").innerHTML = [["lead", "In the lead"], ["record", "Records set"], ["counting", "Still counting"], ["decided", "Decided"]].map(([k, label]) => `<div class="stat"><span class="n">${n[k]}</span><span class="k">${label}</span></div>`).join("");
     $("reporting").innerHTML = `<b>${rows.length}</b> races · <b>${n.decided}</b> called`;
-    $("rows").innerHTML = rows.map(({ r, ind, b, share, inPct, won, lost, pill }) => {
+    $("rows").innerHTML = rows.map(({ r, ind, b, share, inPct, won, lost, pill, winner }) => {
       const scale = Math.max(SCALE, share ?? 0, b?.pct ?? 0);
       const w = share === null ? 0 : share / scale * 100;
-      return `<div class="row ${won ? "called" : ""} ${lost ? "lost" : ""}">
+      return `<div class="row ${r.called ? "called" : ""}">
         <div class="st">${esc(r.state)}</div>
-        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span></div><div class="sub">${office(r)} · ${esc(r.stateName ?? r.state)}</div></div>
+        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span></div><div class="sub">${office(r)} · ${esc(r.stateName ?? r.state)}${winner ? ` · <span class="winner">${esc(winner)}</span>` : ""}</div></div>
         <div class="bar"><i style="width:${w.toFixed(1)}%"></i><span class="half" style="left:${(50 / scale * 100).toFixed(1)}%"></span>${b?.pct != null ? `<span class="tick" style="left:${(b.pct / scale * 100).toFixed(1)}%"><b>${Number(b.pct).toFixed(1)}%</b></span>` : ""}</div>
         <div class="status"><span class="pill ${pill.cls}">${esc(pill.text)}</span></div>
-        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? "no votes yet" : `${inPct}% in`}</div></div></div>`;
+        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? "no votes yet" : r.called ? "final" : `${inPct}% in`}</div></div></div>`;
     }).join("") || `<div class="empty">No featured races in the feed.</div>`;
     $("updated").textContent = `Updated ${clockS()}`;
   }

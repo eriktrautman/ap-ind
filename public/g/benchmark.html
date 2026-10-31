@@ -9,7 +9,7 @@
      editorial). The bar is tonight's share, the white tick the state's record, the dashed gold line 50%. Featured races and
      their order come from the producer state, like C1. */
   .body { min-height: 0; overflow: hidden; display: grid; align-content: start; gap: 8px; padding-top: 22px; }   /* room for the first row's record label */
-  .row { display: grid; grid-template-columns: 104px 470px 1fr 150px 230px; align-items: center; gap: 24px; height: 68px; padding: 0 18px 0 0; background: rgba(255,255,255,.04); border-radius: 8px; }
+  .row { display: grid; grid-template-columns: 104px 580px 1fr 150px 230px; align-items: center; gap: 24px; height: 68px; padding: 0 18px 0 0; background: rgba(255,255,255,.04); border-radius: 8px; }
   .row .st { height: 100%; display: flex; align-items: center; justify-content: center; font-family: ui-monospace, Menlo, monospace; font-weight: 700; font-size: 34px; background: var(--none); border-radius: 8px 0 0 8px; letter-spacing: .04em; }
   .row .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
   .row .nm .who { font-size: 30px; font-weight: 700; color: #fde68a; }
@@ -29,8 +29,10 @@
   .row .delta .n { font-size: 34px; font-weight: 700; }
   .row .delta .k { font-size: 16px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
   .row .delta.over .n { color: var(--ok); } .row .delta.under .n { color: var(--bad); } .row .delta.tbd .n, .row .delta.none .n { color: var(--muted); } .row .delta.first .n { color: var(--gold); letter-spacing: .04em; }
-  .row.called .nm .who { color: var(--gold); } .row.called .bar i { background: var(--gold); }
-  .row.lost { opacity: .7; }
+  .who .pill { font-size: 15px; padding: 1px 8px; margin-left: 10px; top: -2px; }
+  .pill.rec { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.85); padding: 0 7px; }
+  .rec .winner { color: var(--fg); }
+  .row.called .num .pc { color: #fff; }
   .pill { display: inline-block; font-size: 18px; font-weight: 700; padding: 2px 10px; border-radius: 4px; letter-spacing: .06em; margin-left: 12px; vertical-align: middle; position: relative; top: -3px; background: var(--gold); color: #1a1600; }
   .foot .sw { display: inline-block; width: 22px; height: 12px; border-radius: 3px; background: var(--ind); margin: 0 6px 0 14px; vertical-align: middle; }
   .foot .tk { display: inline-block; width: 4px; height: 16px; border-radius: 2px; background: #fff; margin: 0 8px 0 14px; vertical-align: middle; }
@@ -71,15 +73,20 @@
       const w = share === null ? 0 : share / scale * 100;
       const delta = share !== null && b?.pct != null ? share - b.pct : null;
       const won = r.called && !!ind.winner, lost = r.called && !ind.winner;
+      const winner = lost ? r.candidates.find((c) => c.winner) : null;
+      const pl = (c) => c?.party === "Dem" ? "D" : c?.party === "GOP" ? "R" : c?.independent ? "I" : (c?.party ?? "")[0] ?? "";
+      const rec = share !== null && b?.pct != null && share > b.pct;   // a FIRST is already named in the delta column
+      const chips = `${r.called ? `<span class="pill">AP CALL${won ? " ✓" : ""}</span>` : ""}${rec ? `<span class="pill rec">RECORD</span>` : ""}`;
+      const line2 = `${recordLine(b)}${winner ? ` · <span class="winner">${esc(winner.last ?? winner.name)} (${pl(winner)}) wins</span>` : ""}`;
       const deltaHtml = delta === null
         ? (b?.first ? `<div class="n">FIRST</div><div class="k">${share === null ? "no independent before" : "sets the benchmark"}</div>` : b?.pct == null ? `<div class="n">—</div><div class="k">Benchmark TBD</div>` : `<div class="n">—</div><div class="k">No votes yet</div>`)
         : `<div class="n">${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)}</div><div class="k">pts ${delta >= 0 ? "over record" : "under record"}</div>`;
       const deltaCls = delta === null ? (b?.first ? "first" : b?.pct == null ? "tbd" : "none") : delta >= 0 ? "over" : "under";
-      return `<div class="row ${won ? "called" : ""} ${lost ? "lost" : ""}">
+      return `<div class="row ${r.called ? "called" : ""}">
         <div class="st">${esc(r.state)}</div>
-        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${won ? `<span class="pill">AP CALL ✓</span>` : ""}</div><div class="rec">${esc(recordLine(b))}</div></div>
+        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${chips}</div><div class="rec">${line2.startsWith("<") ? line2 : esc(recordLine(b)) + line2.slice(recordLine(b).length)}</div></div>
         <div class="bar"><i style="width:${w.toFixed(1)}%"></i><span class="half" style="left:${(50 / scale * 100).toFixed(1)}%"></span>${b?.pct != null ? `<span class="tick" style="left:${(b.pct / scale * 100).toFixed(1)}%"><b>${Number(b.pct).toFixed(1)}%</b></span>` : ""}</div>
-        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? (st.status === "closed" ? "polls closed" : "polls open") : `${Math.round(r.eevp || r.precinctsPct)}% in`}</div></div>
+        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? (st.status === "closed" ? "polls closed" : "polls open") : r.called ? "final" : `${Math.round(r.eevp || r.precinctsPct)}% in`}</div></div>
         <div class="delta ${deltaCls}">${deltaHtml}</div></div>`;
     }).join("") || `<div class="empty">No featured races in the feed.</div>`;
     $("updated").textContent = `Updated ${clockS()}`;
