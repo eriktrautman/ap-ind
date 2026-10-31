@@ -7,6 +7,9 @@
 // Token names are the style guide's. AIR_VARS maps them onto the variables the graphics (public/g/g.css) and the ticker
 // (studio/public/ticker.html) are actually written against, so a theme never has to know those names.
 // Adding a stylesheet is adding an entry here: the same keys, new values; a key left out keeps the shipped default.
+// Every output page loads /g/theme-boot.js first thing in <head>: a classic script the build generates from this file
+// (studio/scripts/theme-boot.mjs) that applies ?theme=, else the last published stylesheet this browser saw, else the
+// default, before the first paint, so a page never flashes from its written-in colours to the live ones.
 
 export const DEFAULT_THEME = "election-night-v1";   // the stylesheet a fresh state and an unpushed site use
 
@@ -56,6 +59,7 @@ export const themeId = (id) => (id && THEMES[id] ? id : DEFAULT_THEME);
 export function applyAirTheme(id, root = typeof document === "undefined" ? null : document.documentElement) {
   if (!root) return;
   const t = THEMES[themeId(id)];
+  try { if (!urlTheme()) localStorage.setItem("ep.theme", themeId(id)); } catch {}   // what /g/theme-boot.js paints with before the first paint next time
   for (const outs of Object.values(AIR_VARS)) for (const v of outs) root.style.removeProperty(v);
   for (const [k, outs] of Object.entries(AIR_VARS)) { const val = t.tokens[k]; if (val) for (const v of outs) root.style.setProperty(v, val); }
   root.dataset.theme = themeId(id);
