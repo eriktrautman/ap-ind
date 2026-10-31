@@ -19,7 +19,7 @@
     --serif: Georgia, "Iowan Old Style", serif; --sans: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; --mono: ui-monospace, Menlo, monospace;
     /* Air (1920×1080 graphics and the ticker) */
     --panel: #0e1420; --panel-edge: #16213a; --band-edge: #1c2b47; --fg: #f4f6fa; --fg-muted: #9aa7bd; --rule: #2a3a5c;
-    --dem: #3b82f6; --gop: #ef4444; --ind: #a855f7; --call: #facc15; --air-ok: #2ecc71; --air-bad: #f87171; --air-font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --dem: #3b82f6; --gop: #ef4444; --ind: #a855f7; --ind-fg: #ffffff; --call: #facc15; --air-ok: #2ecc71; --air-bad: #f87171; --air-font: "Helvetica Neue", Helvetica, Arial, sans-serif;
     /* Shape */
     --r-chip: 3px; --r-field: 6px; --r-card: 10px; --r-panel: 8px;
   }
@@ -275,7 +275,7 @@
 <script type="module">
   import { THEMES, themeLabel } from "/g/themes.js";
   // Themes live in /g/themes.js, the same file the outputs and the Studio read, so this page can never drift from them.
-  const KEYS = ["--navy","--navy-deep","--gold","--cream","--sand","--ink","--muted","--ok","--warn","--bad","--local","--serif","--sans","--mono","--panel","--panel-edge","--band-edge","--fg","--fg-muted","--rule","--dem","--gop","--ind","--call","--air-ok","--air-bad","--air-font","--r-chip","--r-field","--r-panel","--r-card"];
+  const KEYS = ["--navy","--navy-deep","--gold","--cream","--sand","--ink","--muted","--ok","--warn","--bad","--local","--serif","--sans","--mono","--panel","--panel-edge","--band-edge","--fg","--fg-muted","--rule","--dem","--gop","--ind","--ind-fg","--call","--air-ok","--air-bad","--air-font","--r-chip","--r-field","--r-panel","--r-card"];
   const root = document.documentElement;
   const sel = document.getElementById("theme");
   for (const id of Object.keys(THEMES)) sel.add(new Option(themeLabel(id), id));

@@ -9,7 +9,7 @@
   /* A5: a lower strip of the next poll closings by state, from AP's poll-close times, with a countdown.
      ?after=ISO pretends it is that time (rehearsal). */
   .strip { position: absolute; left: 0; right: 0; bottom: 60px; height: 96px; display: flex; align-items: stretch; background: linear-gradient(90deg, var(--panel), var(--panel-edge)); font-size: 30px; }
-  .head { flex: none; background: var(--ind); color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 22px; padding: 0 28px; display: flex; align-items: center; }
+  .head { flex: none; background: var(--ind); color: var(--ind-fg, #fff); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 22px; padding: 0 28px; display: flex; align-items: center; }
   .list { flex: 1; display: flex; align-items: center; gap: 0; overflow: hidden; padding: 0 12px; }
   .slot { display: flex; align-items: baseline; gap: 12px; padding: 0 28px; border-right: 1px solid var(--rule); white-space: nowrap; }
   .slot:last-child { border-right: 0; }
