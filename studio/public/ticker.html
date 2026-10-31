@@ -31,24 +31,19 @@
      is dropped off the left edge (a width change there would make the crawl jump). */
   .item { display: inline-block; padding: 0; }
   .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin: 0 48px; vertical-align: middle; }   /* the same 48px on both sides: the diamond sits midway between items */
-  /* The geniots stylesheet (its deck, page 11, "Ticker Option 01", measured at 1920×1080): the band is 84px tall and sits
-     102px above the bottom, 44px white uppercase bold with bullets between items; nothing to the left of the logo. The
-     Election Night logo block is 374×168 on white, two lines of navy Heavy Extended over the red Independent Edition
-     strip, standing 44px above the band and 25px below it. Keyed on the root's data-theme, which theme-boot.js sets
-     before the first paint, so the band is right from the first frame. */
+  /* The geniots stylesheet, measured on its deck's ticker page (page 11, a 1920×1080 comp): the band is 82px tall with its
+     bottom 105px above the frame's bottom, across the full width; the crawl is 44pt (58px) white uppercase bold, centred in
+     the band, bullets between items. The Election Night logo block is the deck's own artwork (/brand/election-night-logo.png,
+     cut from the comp): 361×148 at x 97, standing 43px above the band and 23px below it. Keyed on the root's data-theme,
+     which theme-boot.js sets before the first paint, so the band is right from the first frame. */
   .brand .logo { display: none; }
-  html[data-theme="election-night-v1"] .ticker { background: none; align-items: flex-end; height: 84px; bottom: 102px; font-size: 44px; line-height: 84px; }
-  html[data-theme="election-night-v1"] .crawl { height: 84px; background: linear-gradient(90deg, var(--band), var(--band-edge)); }
-  html[data-theme="election-night-v1"] .test { height: 84px; line-height: 84px; }
-  html[data-theme="election-night-v1"] .brand { width: 374px; height: 168px; margin: 0 0 -25px 48px; padding: 0; background: #fff; color: #090E40; letter-spacing: 0; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
-  html[data-theme="election-night-v1"] .brand .word { display: none; }
-  html[data-theme="election-night-v1"] .brand .dot { position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; }
-  html[data-theme="election-night-v1"] .brand .logo { display: flex; flex-direction: column; align-items: center; line-height: .86; }
-  html[data-theme="election-night-v1"] .brand .logo b { display: block; font-size: 58px; font-weight: 900; letter-spacing: -.03em; font-stretch: expanded; color: #090E40; }
-  html[data-theme="election-night-v1"] .brand .logo b.n { font-size: 70px; }
-  html[data-theme="election-night-v1"] .brand .logo i { font-style: normal; display: block; margin-top: 8px; background: #BC0000; color: #fff; font-size: 17px; font-weight: 800; letter-spacing: .12em; line-height: 1; padding: 5px 12px 4px; }
+  html[data-theme="election-night-v1"] .ticker { height: 82px; bottom: 105px; font-size: 58px; line-height: 82px; padding-left: 458px; }
+  html[data-theme="election-night-v1"] .test { height: 82px; line-height: 82px; }
+  html[data-theme="election-night-v1"] .brand { position: absolute; left: 97px; bottom: -23px; width: 361px; height: 148px; margin: 0; padding: 0; background: #fff url(/brand/election-night-logo.png) no-repeat 0 0 / 361px 148px; color: transparent; letter-spacing: 0; display: block; overflow: hidden; }   /* out of the row, so the band's height is its own */
+  html[data-theme="election-night-v1"] .brand .word, html[data-theme="election-night-v1"] .brand .logo { display: none; }
+  html[data-theme="election-night-v1"] .brand .dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; }
   html[data-theme="election-night-v1"] .crawl { text-transform: uppercase; font-weight: 700; }
-  html[data-theme="election-night-v1"] .item::before { content: "•"; color: var(--fg); font-size: 34px; margin: 0 40px; }
+  html[data-theme="election-night-v1"] .item::before { content: "•"; color: var(--fg); font-size: 44px; margin: 0 40px; }
   .item.lead::before { visibility: hidden; }   /* the first item of a fresh crawl: no separator ahead of it, same width */
   .item.emphasis { color: var(--call); font-weight: 700; }
   .item.manual { color: #fff; font-weight: 600; }
