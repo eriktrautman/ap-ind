@@ -685,8 +685,10 @@ function renderTheme() {
   sel.value = shownTheme();
   const previewing = shownTheme() !== liveTheme();
   const st = $("themestate");
-  st.textContent = previewing ? `Previewing here · live is ${themeName(liveTheme())}` : "Live";
-  st.className = `muted small${previewing ? " preview" : ""}`;
+  const short = (id) => themeName(id).replace(/\s*\(.*\)$/, "");   // the name without its bracketed provenance
+  st.textContent = previewing ? `Previewing here · live: ${short(liveTheme())}` : "Live";
+  st.title = previewing ? `Only this page's previews use ${short(shownTheme())}. Every output is still on ${themeName(liveTheme())} until you push.` : "The previews show the stylesheet every output is on.";
+  st.className = `muted small${previewing ? " previewing" : ""}`;
   sel.disabled = !isProducer(); sel.title = isProducer() ? "" : notProducer();
   const pb = $("pushtheme"); producerOnly(pb); if (isProducer()) { pb.disabled = !previewing || !canPublish(); if (!canPublish()) pb.title = NOT_CONFIGURED; }
 }

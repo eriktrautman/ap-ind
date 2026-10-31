@@ -553,4 +553,4 @@ main > section.card.display { margin: 10px 0 28px; padding: 8px 14px; border-wid
 .display .vsep { width: 1px; height: 22px; background: var(--sand); margin: 0 2px; }
 .display .sglink { color: var(--navy); white-space: nowrap; }
 .display #themestate { white-space: nowrap; }
-.display #themestate.preview { color: #9a5b00; font-weight: 600; }
+.display #themestate.previewing { color: #9a5b00; font-weight: 600; }
