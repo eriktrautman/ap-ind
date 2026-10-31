@@ -30,6 +30,7 @@
   .row .delta .k { font-size: 16px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
   .row .delta.over .n { color: var(--ok); } .row .delta.under .n { color: var(--bad); } .row .delta.tbd .n, .row .delta.none .n { color: var(--muted); } .row .delta.first .n { color: var(--gold); letter-spacing: .04em; }
   .who .pill { font-size: 15px; padding: 1px 8px; margin-left: 10px; top: -2px; }
+  .num .pill.ap { font-size: 14px; padding: 1px 7px; margin: 2px 0 0; top: 0; letter-spacing: .06em; }
   .pill.rec { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.85); padding: 0 7px; }
   .rec .winner { color: var(--fg); }
   .row.called .num .pc { color: #fff; }
@@ -76,7 +77,7 @@
       const winner = lost ? r.candidates.find((c) => c.winner) : null;
       const pl = (c) => c?.party === "Dem" ? "D" : c?.party === "GOP" ? "R" : c?.independent ? "I" : (c?.party ?? "")[0] ?? "";
       const rec = share !== null && b?.pct != null && share > b.pct;   // a FIRST is already named in the delta column
-      const chips = `${r.called ? `<span class="pill">AP CALL${won ? " ✓" : ""}</span>` : ""}${rec ? `<span class="pill rec">RECORD</span>` : ""}`;
+      const chips = rec ? `<span class="pill rec">RECORD</span>` : "";   // the AP call sits under the share, where "x% in" was
       const line2 = `${recordLine(b)}${winner ? ` · <span class="winner">${esc(winner.last ?? winner.name)} (${pl(winner)}) wins</span>` : ""}`;
       const deltaHtml = delta === null
         ? (b?.first ? `<div class="n">FIRST</div><div class="k">${share === null ? "no independent before" : "sets the benchmark"}</div>` : b?.pct == null ? `<div class="n">—</div><div class="k">Benchmark TBD</div>` : `<div class="n">—</div><div class="k">No votes yet</div>`)
@@ -86,7 +87,7 @@
         <div class="st">${esc(r.state)}</div>
         <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${chips}</div><div class="rec">${line2.startsWith("<") ? line2 : esc(recordLine(b)) + line2.slice(recordLine(b).length)}</div></div>
         <div class="bar"><i style="width:${w.toFixed(1)}%"></i><span class="half" style="left:${(50 / scale * 100).toFixed(1)}%"></span>${b?.pct != null ? `<span class="tick" style="left:${(b.pct / scale * 100).toFixed(1)}%"><b>${Number(b.pct).toFixed(1)}%</b></span>` : ""}</div>
-        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? (st.status === "closed" ? "polls closed" : "polls open") : r.called ? "final" : `${Math.round(r.eevp || r.precinctsPct)}% in`}</div></div>
+        <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? (st.status === "closed" ? "polls closed" : "polls open") : r.called ? `<span class="pill ap">AP CALL${won ? " ✓" : ""}</span>` : `${Math.round(r.eevp || r.precinctsPct)}% in`}</div></div>
         <div class="delta ${deltaCls}">${deltaHtml}</div></div>`;
     }).join("") || `<div class="empty">No featured races in the feed.</div>`;
     $("updated").textContent = `Updated ${clockS()}`;
