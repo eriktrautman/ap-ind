@@ -19,10 +19,11 @@ export const THEMES = {
     name: "geniots, v1, 10.30.26",
     tokens: {
       // Air, from the brand guide: the background gradient, the party colours, Helvetica Neue throughout. Independents
-      // are gold in this guide (the product's default is purple), so gold is kept for them alone: the AP-call colour,
-      // record pills and the 50% line go white. The accent blue is the production sheet's #9FAEF6.
+      // are gold in this guide (the product's default is purple); anything written on gold uses --ind-fg (dark), never
+      // white. The accent blue is the production sheet's #9FAEF6. The ticker's layout under this stylesheet (the logo
+      // block, uppercase crawl, bullet separators) is in ticker.html, keyed on html[data-theme].
       "--panel": "#1B1362", "--panel-edge": "#090E40", "--band-edge": "#090E40", "--fg": "#FFFFFF", "--fg-muted": "#9FAEF6", "--rule": "#2b2f72",
-      "--dem": "#344FF5", "--gop": "#ED3C3C", "--ind": "#F9C515", "--ind-fg": "#1a1600", "--call": "#FFFFFF", "--air-font": "'Helvetica Neue', Helvetica, Arial, sans-serif",
+      "--dem": "#344FF5", "--gop": "#ED3C3C", "--ind": "#F9C515", "--ind-fg": "#1a1600", "--call": "#F9C515", "--air-font": "'Helvetica Neue', Helvetica, Arial, sans-serif",
       // Studio: the guide defines no daylight page; its navy and its deck's gold are carried over, and the serif gives way.
       "--navy": "#090E40", "--navy-deep": "#02102f", "--gold": "#ae955e", "--local": "#344FF5",
       "--serif": "'Helvetica Neue', Helvetica, Arial, sans-serif",
