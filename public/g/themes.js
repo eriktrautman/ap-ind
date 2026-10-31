@@ -11,9 +11,9 @@
 export const DEFAULT_THEME = "election-producer";
 
 export const THEMES = {
-  "election-producer": { name: "Election Producer (current)", tokens: {} },   // empty: the stylesheets' own defaults
+  "election-producer": { name: "Election Producer (default)", tokens: {} },   // empty: the stylesheets' own defaults; the look the product ships with
   "election-night-v1": {
-    name: "Election Night · Independent Edition (geniots, v1, 10.30.26)",
+    name: "geniots, v1, 10.30.26",
     tokens: {
       // Air, from the brand guide: the background gradient, the party colours, Helvetica Neue throughout. Independents
       // are gold in this guide (the product's default is purple). The accent blue is the production sheet's #9FAEF6.
@@ -25,7 +25,7 @@ export const THEMES = {
     },
   },
   "slate-demo": {
-    name: "Slate (demonstration)",
+    name: "Slate",
     tokens: {
       "--navy": "#1f2933", "--navy-deep": "#111827", "--gold": "#f59e0b", "--cream": "#f8fafc", "--sand": "#e2e8f0", "--ink": "#0f172a", "--muted": "#64748b",
       "--local": "#0e7490", "--ok": "#15803d", "--warn": "#d97706", "--bad": "#b91c1c",
