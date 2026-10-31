@@ -8,10 +8,10 @@
 // (studio/public/ticker.html) are actually written against, so a theme never has to know those names.
 // Adding a stylesheet is adding an entry here: the same keys, new values; a key left out keeps the shipped default.
 
-export const DEFAULT_THEME = "election-producer";
+export const DEFAULT_THEME = "election-night-v1";   // the stylesheet a fresh state and an unpushed site use
 
 export const THEMES = {
-  "election-producer": { name: "Election Producer (default)", tokens: {} },   // empty: the stylesheets' own defaults; the look the product ships with
+  "election-producer": { name: "Election Producer", tokens: {} },   // empty: the stylesheets' own values, the look the pages are written in
   "election-night-v1": {
     name: "geniots, v1, 10.30.26",
     tokens: {
@@ -47,6 +47,8 @@ export const AIR_VARS = {
 
 export const themeIds = () => Object.keys(THEMES);
 export const themeName = (id) => THEMES[id]?.name ?? id;
+/** The name for a dropdown: the default one says so. */
+export const themeLabel = (id) => `${themeName(id)}${id === DEFAULT_THEME ? " (default)" : ""}`;
 /** A known id, else the default. */
 export const themeId = (id) => (id && THEMES[id] ? id : DEFAULT_THEME);
 

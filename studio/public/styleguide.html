@@ -273,12 +273,12 @@
   </section>
 </main>
 <script type="module">
-  import { THEMES } from "/g/themes.js";
+  import { THEMES, themeLabel } from "/g/themes.js";
   // Themes live in /g/themes.js, the same file the outputs and the Studio read, so this page can never drift from them.
   const KEYS = ["--navy","--navy-deep","--gold","--cream","--sand","--ink","--muted","--ok","--warn","--bad","--local","--serif","--sans","--mono","--panel","--panel-edge","--band-edge","--fg","--fg-muted","--rule","--dem","--gop","--ind","--call","--air-ok","--air-bad","--air-font","--r-chip","--r-field","--r-panel","--r-card"];
   const root = document.documentElement;
   const sel = document.getElementById("theme");
-  for (const [id, t] of Object.entries(THEMES)) sel.add(new Option(t.name, id));
+  for (const id of Object.keys(THEMES)) sel.add(new Option(themeLabel(id), id));
   function apply(id) {
     for (const k of KEYS) root.style.removeProperty(k);
     for (const [k, v] of Object.entries(THEMES[id]?.tokens ?? {})) root.style.setProperty(k, v);

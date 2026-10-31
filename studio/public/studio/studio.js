@@ -1,8 +1,8 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), and the sections that organise this browser's view of the graphics (Slate, Races, Movement, catalogs).
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, specDef, normalizePlaylists, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
-import { THEMES, DEFAULT_THEME, themeName } from "/g/themes.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, specDef, normalizePlaylists, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -134,22 +134,22 @@ const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS
 /** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
 const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredRaceIds.join() ? null : draft.featuredRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
-const BG_OPTIONS = BACKGROUNDS;   // a keying colour or one of the backplates, the same list on every dropdown
+const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
 const SECTIONS = ["ticker", "screens", "playlists", "detail", "broad", "movement", "persistent", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
 function loadDisplay() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem("studio.display") ?? "null"); } catch {}
-  if (!d) d = { top: { bg: "black", opacity: "100" }, sections: {}, pages: {} };   // the defaults: Black at 100%
-  d.top ??= { bg: "black", opacity: "100" }; d.sections ??= {}; d.pages ??= {};
+  if (!d) d = { top: { bg: DEFAULT_BG, opacity: "100" }, sections: {}, pages: {} };   // the defaults: the default background at 100%
+  d.top ??= { bg: DEFAULT_BG, opacity: "100" }; d.sections ??= {}; d.pages ??= {};
   return d;
 }
 let display = loadDisplay();
 function saveDisplay() { try { localStorage.setItem("studio.display", JSON.stringify(display)); } catch {} }
 const secDisplay = (sec) => ({ ...display.top, ...(display.sections[sec] ?? {}) });
 /** A live draft's Background is part of the draft itself and is published with it; the address can still override it. */
-const pageBg = (page) => (page === "ticker" ? draft.tickerBg : draft[page]?.bg) ?? "black";
+const pageBg = (page) => (page === "ticker" ? draft.tickerBg : draft[page]?.bg) ?? DEFAULT_BG;
 const selectHtml = (attrs, options, value) => `<select ${attrs}>${options.map(([v, l]) => `<option value="${v}" ${v === value ? "selected" : ""}>${l}</option>`).join("")}</select>`;
 /** The two dropdowns on every section's title line and the BG on every live draft, showing the saved values. */
 function renderDisplayControls() {
@@ -157,7 +157,7 @@ function renderDisplayControls() {
     const d = secDisplay(sec);
     const box = document.querySelector(`.cardhead[data-sec="${sec}"] .secdisp`); if (!box) continue;
     // The Live Ticker and Live Screens sections have no Background of their own: each draft's Background covers both its addresses.
-    box.innerHTML = `${sec === "ticker" || sec === "screens" ? "" : `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%"]), d.opacity)}</label>`;
+    box.innerHTML = `${sec === "ticker" || sec === "screens" ? "" : `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%" + (o === "100" ? " (default)" : "")]), d.opacity)}</label>`;
   }
   for (const page of PAGES) {
     const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
@@ -399,7 +399,7 @@ async function restoreDefaults() {
   const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, featured races and charts, overview charts, persistent elements and their inputs, and every Background and Opacity dropdown (Black at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
-  display = { top: { bg: "black", opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: Black at 100%
+  display = { top: { bg: DEFAULT_BG, opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: the default background at 100%
   renderAll(); cards.broadcast(draft);
 }
 $("publish").addEventListener("click", publish);
@@ -681,7 +681,7 @@ function previewThemeParam() { const t = shownTheme(); return t !== liveTheme() 
 const withTheme = (url) => { const t = previewThemeParam(); return t ? `${url}${url.includes("?") ? "&" : "?"}theme=${encodeURIComponent(t)}` : url; };
 function renderTheme() {
   const sel = $("themesel"); if (!sel) return;
-  if (!sel.options.length) for (const [id, t] of Object.entries(THEMES)) sel.add(new Option(t.name, id));
+  if (!sel.options.length) for (const id of Object.keys(THEMES)) sel.add(new Option(themeLabel(id), id));
   sel.value = shownTheme();
   const previewing = shownTheme() !== liveTheme();
   const st = $("themestate");
@@ -689,6 +689,9 @@ function renderTheme() {
   st.textContent = previewing ? `Previewing here · live: ${short(liveTheme())}` : "Live";
   st.title = previewing ? `Only this page's previews use ${short(shownTheme())}. Every output is still on ${themeName(liveTheme())} until you push.` : "The previews show the stylesheet every output is on.";
   st.className = `muted small${previewing ? " previewing" : ""}`;
+  const bn = $("themebanner");
+  bn.hidden = !previewing;
+  if (previewing) bn.innerHTML = `PREVIEWING STYLESHEET · ${esc(short(shownTheme()))} · <span class="wide">it shows only in this page's previews, or on an output address with </span><code>?theme=${esc(shownTheme())}</code><span class="wide"> appended</span> · live is ${esc(short(liveTheme()))}`;
   sel.disabled = !isProducer(); sel.title = isProducer() ? "" : notProducer();
   const pb = $("pushtheme"); producerOnly(pb); if (isProducer()) { pb.disabled = !previewing || !canPublish(); if (!canPublish()) pb.title = NOT_CONFIGURED; }
 }
@@ -723,7 +726,7 @@ function renderTickerFrames() {
   // The published preview shows what is published, on the same Background and Opacity as its Copy Live URL.
   const l = `/ticker?${displayParams({ bg: "", opacity: sec.opacity }).toString()}`;   // no bg: the published one shows
   { const u = withTheme(l); if (liveFrame.dataset.u !== u) { liveFrame.dataset.u = u; liveFrame.src = u; } }
-  liveFrame.parentElement.classList.toggle("checker", !(live?.tickerBg ?? "black"));
+  liveFrame.parentElement.classList.toggle("checker", !(live?.tickerBg ?? DEFAULT_BG));
 }
 /** The LIVE TICKER's address: fixed; only the display parameters vary. */
 /** The permanent address: bare, since the background is published with the ticker; only an opacity other than 100% is added. */

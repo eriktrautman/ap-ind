@@ -39,6 +39,7 @@
   </div>
   <div class="infopanel" id="pollinfo" hidden></div>
   <div class="testbanner" id="testbanner" hidden>TEST DATA · <span class="wide">AP's simulated election, </span>not real results</div>
+  <div class="testbanner stylepreview" id="themebanner" hidden></div>
   <div class="testbanner testlogin" id="loginbanner" hidden>TEST LOGIN · <span class="wide">rehearsal password · </span>invalid once results go Live</div>
   <div class="problem top" id="problem" hidden></div>
 </header>
@@ -51,7 +52,7 @@
     <span class="dtitle" title="Each section has its own Background and Opacity on its title line, and each live draft its own Background. These two set the pair that Apply to All Charts copies to every section.">Chart Display Settings</span>
     <div class="disprow">
       <label>Background <select id="topbg"></select></label>
-      <label>Opacity <select id="topopacity"><option value="100" selected>100%</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
+      <label>Opacity <select id="topopacity"><option value="100" selected>100% (default)</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
       <button id="applyall" class="defaultsbtn" title="Sets every section's Background and Opacity to the pair chosen here. Nothing published changes.">Apply to All Charts</button>
       <span class="vsep"></span>
       <label title="The stylesheet the previews on this page paint with. Pick one other than the live one to try it here only; Push stylesheet makes it live for every output.">Stylesheet <select id="themesel"></select></label>

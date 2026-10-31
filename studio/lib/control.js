@@ -78,6 +78,7 @@ export const FEATURED_RACES = [
  *  The id is the ?bg= value and the body class (bg-capitol); the label is what the Studio's dropdowns say. */
 export const BACKGROUNDS = [["", "Transparent"], ["black", "Black"], ["green", "Green Key"], ["capitol", "Capitol & flag"], ["flag", "Flag glass"], ["panels", "Red, white & blue"]];
 export const BG_IDS = BACKGROUNDS.map(([id]) => id);
+export const DEFAULT_BG = "green";   // the background a fresh state, a new draft and the Studio's display settings start on
 export const CHARTS = [
   // A: persistent elements and lower thirds (the ticker is the one built)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
@@ -169,8 +170,8 @@ export const DEFAULTS = Object.freeze({
   callHighlight: true,
   manualItems: [],
   idleText: "Welcome to the Independent Election Night coverage",
-  tickerBg: "black",          // the live ticker's background when its address names none ("" transparent, black, green)
-  theme: "election-producer", // the stylesheet every output paints with (an id in /g/themes.js); pushed by a producer
+  tickerBg: "green",          // the live ticker's background when its address names none ("" transparent, black, green)
+  theme: "election-night-v1", // the stylesheet every output paints with (an id in /g/themes.js); pushed by a producer
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
   featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
   movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"],
@@ -180,8 +181,8 @@ export const DEFAULTS = Object.freeze({
   contextLines: {},          // D6: raceId -> one line the producer typed
   // Live Screens: two fixed pages (/live-screen-one, /live-screen-two), each showing one published chart. chart is a
   // chart id, race a race id (NE-SEN), state two letters for state charts, params the chart's extra address parameters.
-  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: "black" },
-  screenB: { chart: "C1", race: "", state: "", params: {}, bg: "black" },
+  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: "green" },
+  screenB: { chart: "C1", race: "", state: "", params: {}, bg: "green" },
   updatedAt: null,
   updatedBy: null,   // who published (the signer's name); set by the server on every publish
 });
@@ -338,7 +339,7 @@ export function normalizePlaylists(raw) {
 }
 /** The shipped playlists: Ryan, one playlist "Slate", the slate's races in order with six charts each. */
 export function defaultPlaylists() {
-  const items = FEATURED_RACES.flatMap((r) => PLAYLIST_SLATE_CHARTS.map((chart) => ({ chart, race: r.label, state: "", params: {}, bg: "black" })));
+  const items = FEATURED_RACES.flatMap((r) => PLAYLIST_SLATE_CHARTS.map((chart) => ({ chart, race: r.label, state: "", params: {}, bg: "green" })));
   return normalizePlaylists({ users: [{ id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items }] }] });
 }
 
