@@ -1,50 +1,60 @@
 {
-  "about": "D12 The Benchmark Board and D13 Independent Scoreboard: each featured race's independent against the best result an independent has had in that state in a federal race. Editorial, seeded 2026-10-29 from the producer's mockups; verify every row before air. pct null = benchmark still to be researched (the boards say so). countNote: what the scoreboard's status pill says while the race is still counting and not called (e.g. a slow count or a ranked-choice tabulation date). Keyed by state; a race id key (e.g. \"5696\") overrides the state for that race.",
+  "about": "D12 The benchmark board and D13 Independent scoreboard: each slate race's independent against the best vote share an independent has ever received in that race. Set 2026-10-31 from the producer's email after the day's call; the metric is the same for all six. Senate races: the best independent result in any U.S. Senate race in that state. CA-6 is a new district under the 2025 map, so its benchmark is the best independent U.S. House result in California since top-two primaries began (2012). Alaska: Alyse Galvin (2018, 2020) is excluded, she carried the Independent label as the Democratic nominee; Alaska is ranked choice, so Hill is compared on his first-round share, which is what AP's top-line pct is until the tabulation. pct null = still to be researched (the boards say so). countNote: what the scoreboard's status pill says while the race is counting and not called. Keyed by state; a race id key (e.g. \"5696\") overrides the state for that race.",
   "benchmarks": {
     "NE": {
       "name": "Dan Osborn",
       "label": "",
       "year": 2024,
       "office": "U.S. Senate",
-      "pct": 46.5
+      "pct": 46.52,
+      "basis": "best independent in any Nebraska U.S. Senate race",
+      "source": "2024 Nebraska Senate election"
     },
     "SD": {
-      "name": "Tom Ayres",
-      "label": "Nonpartisan",
-      "year": 1920,
+      "name": "Larry Pressler",
+      "label": "",
+      "year": 2014,
       "office": "U.S. Senate",
-      "pct": 24.1
+      "pct": 17.09,
+      "basis": "best independent in any South Dakota U.S. Senate race",
+      "source": "Third-party and independent Senate candidacies"
     },
     "MT": {
-      "name": "Jeannette Rankin",
+      "name": "Joseph Monaghan",
       "label": "",
-      "year": 1918,
+      "year": 1936,
       "office": "U.S. Senate",
-      "pct": 23.1
+      "pct": 17.91,
+      "basis": "best independent in any Montana U.S. Senate race",
+      "source": "Third-party and independent Senate candidacies"
     },
     "ID": {
-      "name": null,
+      "name": "Scott Cleveland",
       "label": "",
-      "year": null,
-      "office": null,
-      "pct": null,
-      "note": "Benchmark TBD (research)"
+      "year": 2022,
+      "office": "U.S. Senate",
+      "pct": 8.4,
+      "basis": "best independent in any Idaho U.S. Senate race",
+      "source": "Third-party and independent Senate candidacies"
     },
     "CA": {
-      "name": null,
-      "label": "",
-      "year": null,
-      "office": null,
-      "pct": null,
-      "note": "Last independent win: William Kent, 1914",
+      "name": "Bill Bloomfield",
+      "label": "CA-33",
+      "year": 2012,
+      "office": "U.S. House",
+      "pct": 46.04,
+      "basis": "CA-6 is new under the 2025 map: the best independent U.S. House result in California since top-two primaries (2012)",
+      "source": "Third-party and independent performances in U.S. elections",
       "countNote": "Counting for weeks"
     },
     "AK": {
-      "name": "Alyse Galvin",
-      "label": "undeclared",
-      "year": 2018,
+      "name": "Betty Breck",
+      "label": "",
+      "year": 1984,
       "office": "U.S. House",
-      "pct": 46.5,
+      "pct": 3.15,
+      "basis": "best independent in an Alaska U.S. House race; Alyse Galvin (2018, 2020) excluded as the Democratic nominee; Hill compared on his first-round share",
+      "source": "1984 Alaska House election",
       "countNote": "RCV count Nov 18"
     }
   }
