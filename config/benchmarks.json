@@ -1,5 +1,5 @@
 {
-  "about": "D12 The benchmark board and D13 Independent scoreboard: each slate race's independent against the best vote share an independent has ever received in that race. Set 2026-10-31 from the producer's email after the day's call; the metric is the same for all six. Senate races: the best independent result in any U.S. Senate race in that state. CA-6 is a new district under the 2025 map, so its benchmark is the best independent U.S. House result in California since top-two primaries began (2012). Alaska: Alyse Galvin (2018, 2020) is excluded, she carried the Independent label as the Democratic nominee; Alaska is ranked choice, so Hill is compared on his first-round share, which is what AP's top-line pct is until the tabulation. pct null = still to be researched (the boards say so). countNote: what the scoreboard's status pill says while the race is counting and not called. Keyed by state; a race id key (e.g. \"5696\") overrides the state for that race.",
+  "about": "D12 The benchmark board and D13 Independent scoreboard: each slate race's independent against the best vote share an independent has ever received in that race. Set 2026-10-31 from the producer's email after the day's call; the metric is the same for all six. Senate races: the best independent result in any U.S. Senate race in that state. CA-6 is a new district under the 2025 map and no independent has made the November ballot in any of its predecessor districts since top-two primaries began (2012), so it has no number: first = true, and the boards call it FIRST, with tonight's share becoming the benchmark. Alaska: Alyse Galvin (2018, 2020) is excluded, she carried the Independent label as the Democratic nominee; Alaska is ranked choice, so Hill is compared on his first-round share, which is what AP's top-line pct is until the tabulation. pct null = still to be researched (the boards say so). countNote: what the scoreboard's status pill says while the race is counting and not called. Keyed by state; a race id key (e.g. \"5696\") overrides the state for that race.",
   "benchmarks": {
     "NE": {
       "name": "Dan Osborn",
@@ -38,13 +38,15 @@
       "source": "Third-party and independent Senate candidacies"
     },
     "CA": {
-      "name": "Bill Bloomfield",
-      "label": "CA-33",
-      "year": 2012,
+      "name": null,
+      "label": "",
+      "year": null,
       "office": "U.S. House",
-      "pct": 46.04,
-      "basis": "CA-6 is new under the 2025 map: the best independent U.S. House result in California since top-two primaries (2012)",
-      "source": "Third-party and independent performances in U.S. elections",
+      "pct": null,
+      "first": true,
+      "note": "First independent on the November ballot",
+      "basis": "CA-6 is new under the 2025 map; its communities (Roseville, Rocklin, Citrus Heights, Natomas, North Sacramento, West Sacramento) were split among the old 3rd, 4th, 6th and 7th. Since top-two primaries began in 2012 no independent has made the November ballot in any of them, so Kiley's share tonight becomes the benchmark.",
+      "source": "Producer's email, 31 October 2026 (Christopher's point); replaces the 46.04% statewide benchmark",
       "countNote": "Counting for weeks"
     },
     "AK": {

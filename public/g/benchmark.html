@@ -28,7 +28,7 @@
   .row .delta { text-align: right; line-height: 1.05; }
   .row .delta .n { font-size: 34px; font-weight: 700; }
   .row .delta .k { font-size: 16px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
-  .row .delta.over .n { color: var(--ok); } .row .delta.under .n { color: var(--bad); } .row .delta.tbd .n, .row .delta.none .n { color: var(--muted); }
+  .row .delta.over .n { color: var(--ok); } .row .delta.under .n { color: var(--bad); } .row .delta.tbd .n, .row .delta.none .n { color: var(--muted); } .row .delta.first .n { color: var(--gold); letter-spacing: .04em; }
   .row.called .nm .who { color: var(--gold); } .row.called .bar i { background: var(--gold); }
   .row.lost { opacity: .7; }
   .pill { display: inline-block; font-size: 18px; font-weight: 700; padding: 2px 10px; border-radius: 4px; letter-spacing: .06em; margin-left: 12px; vertical-align: middle; position: relative; top: -3px; background: var(--gold); color: #1a1600; }
@@ -72,9 +72,9 @@
       const delta = share !== null && b?.pct != null ? share - b.pct : null;
       const won = r.called && !!ind.winner, lost = r.called && !ind.winner;
       const deltaHtml = delta === null
-        ? (b?.pct == null ? `<div class="n">—</div><div class="k">Benchmark TBD</div>` : `<div class="n">—</div><div class="k">No votes yet</div>`)
+        ? (b?.first ? `<div class="n">FIRST</div><div class="k">${share === null ? "no independent before" : "sets the benchmark"}</div>` : b?.pct == null ? `<div class="n">—</div><div class="k">Benchmark TBD</div>` : `<div class="n">—</div><div class="k">No votes yet</div>`)
         : `<div class="n">${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)}</div><div class="k">pts ${delta >= 0 ? "over record" : "under record"}</div>`;
-      const deltaCls = delta === null ? (b?.pct == null ? "tbd" : "none") : delta >= 0 ? "over" : "under";
+      const deltaCls = delta === null ? (b?.first ? "first" : b?.pct == null ? "tbd" : "none") : delta >= 0 ? "over" : "under";
       return `<div class="row ${won ? "called" : ""} ${lost ? "lost" : ""}">
         <div class="st">${esc(r.state)}</div>
         <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${won ? `<span class="pill">AP CALL ✓</span>` : ""}</div><div class="rec">${esc(recordLine(b))}</div></div>

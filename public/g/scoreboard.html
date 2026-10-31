@@ -78,13 +78,14 @@
       const inPct = Math.round(r.eevp || r.precinctsPct || 0);
       const won = r.called && !!ind.winner, lost = r.called && !ind.winner;
       const leading = have && !r.called && sorted[0]?.id === ind.id;
-      const record = share !== null && b?.pct != null && share > b.pct;
+      const record = share !== null && (b?.first ? true : b?.pct != null && share > b.pct);   // a FIRST sets the benchmark with any share
       let pill;
-      if (r.called) pill = { cls: record ? "record" : "decided", text: `Decided${record ? " · record" : ""}` };
+      const mark = b?.first ? " · first" : " · record";
+      if (r.called) pill = { cls: record ? "record" : "decided", text: `Decided${record ? mark : ""}` };
       else if (!have) pill = { cls: "open", text: st.status === "closed" ? "Polls closed" : "Polls open" };
       else if (b?.countNote) pill = { cls: "counting", text: b.countNote };
-      else if (leading) pill = { cls: record ? "record" : "lead", text: `Leading${record ? " · record" : ""}` };
-      else pill = { cls: record ? "record" : "behind", text: record ? "Trailing · record" : "Counting" };
+      else if (leading) pill = { cls: record ? "record" : "lead", text: `Leading${record ? mark : ""}` };
+      else pill = { cls: record ? "record" : "behind", text: record ? `Trailing${mark}` : "Counting" };
       return { r, ind, b, share, inPct, won, lost, leading, record, pill, have };
     }).filter(Boolean);
     const n = { lead: rows.filter((x) => x.leading || x.won).length, record: rows.filter((x) => x.record).length, counting: rows.filter((x) => !x.r.called).length, decided: rows.filter((x) => x.r.called).length };
