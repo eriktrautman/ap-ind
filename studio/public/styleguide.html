@@ -94,6 +94,8 @@
   .band { display: flex; align-items: stretch; height: 36px; background: linear-gradient(90deg, var(--panel), var(--band-edge)); color: var(--fg); font-size: 17px; line-height: 36px; border-radius: 4px; overflow: hidden; }
   .band .brand { flex: none; padding: 0 14px; background: var(--ind); color: #fff; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 11px; display: flex; align-items: center; gap: 7px; } .band .brand i { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
   .band .crawl { flex: 1; overflow: hidden; white-space: nowrap; padding: 0 12px; } .band .sep { color: var(--fg-muted); font-size: 8px; margin: 0 20px; vertical-align: middle; } .band .em { color: var(--call); font-weight: 700; } .band .man { color: #fff; font-weight: 600; } .band .idle { color: var(--fg-muted); }
+  .livetk { position: relative; width: 100%; aspect-ratio: 1920 / 250; overflow: hidden; border-radius: var(--r-field); background: #000; }
+  .livetk iframe { position: absolute; left: 0; bottom: 0; width: 100%; aspect-ratio: 16 / 9; border: 0; }
   .frame { aspect-ratio: 16 / 9; background: repeating-conic-gradient(#3a3f4b 0 25%, #2b2f3a 0 50%) 0 0 / 24px 24px; border-radius: var(--r-field); position: relative; overflow: hidden; } .frame .safe { position: absolute; left: 5%; top: 7.4%; width: 90%; height: 85.2%; border: 1px dashed rgba(255,255,255,.35); border-radius: 3px; } .frame .lbl { position: absolute; left: 6%; top: 8.5%; font-size: 10px; color: #c7cfdf; letter-spacing: .08em; } .frame .lower { position: absolute; left: 0; right: 0; bottom: 5.5%; height: 6.7%; } .frame .lower .band { height: 100%; font-size: 12px; line-height: 1; border-radius: 0; } .frame .lower .band .crawl { display: flex; align-items: center; }
 </style>
 </head>
@@ -203,8 +205,8 @@
       <div class="afoot"><span><span class="dot" style="width:7px;height:7px"></span> Source: AP via lightship.media · updated 7:12:08 PM ET</span><span>Independents · B5</span></div>
     </div><p class="cap" style="color:#9aa7bd">Head: kicker, title, reporting share on the right, under a 2px rule. Rows: party tag, name, bar, tabular percentage; the leader in white, others unchanged. Foot: source and timestamp left, the show and the chart id right, over a 2px rule. The dot on the foot is the poller's health.</p></div>
     <h3>Ticker band</h3>
-    <div class="demo air"><div class="band"><div class="brand"><i></i>Independents</div><div class="crawl"><span class="man">Polls close in the West at 11 PM ET</span><span class="sep">◆</span><span>AK-SEN · Independent 51.0% · Republican 45.3% · 71% in</span><span class="sep">◆</span><span class="em">AP CALL · ME-2 · Independent wins</span><span class="sep">◆</span><span class="idle">Live results through the night</span></div></div>
-    <p class="cap" style="color:#9aa7bd">72px tall, 60px above the bottom edge, 34px type. The brand block is purple with the health dot. Items carry their own diamond separator so widths never change mid-crawl; yellow bold for an AP call, white semibold for a producer's line, muted for the idle line.</p></div>
+    <div class="demo air" style="padding:12px"><div class="livetk"><iframe id="tickerframe" title="The live ticker page, under the selected stylesheet" loading="lazy"></iframe></div>
+    <p class="cap" style="color:#9aa7bd">The real ticker page, scaled, under the stylesheet selected above: the band is 72px tall, 60px above the bottom edge, 34px type. The default look: the purple Independents block with the health dot, diamond separators, yellow bold for an AP call, white semibold for a producer's line, muted for the idle line. The geniots stylesheet: the Election Night logo block on white, the crawl in white uppercase bold on the navy gradient, bullets between items.</p></div>
     <h3>The frame</h3>
     <div class="demo air" style="padding:12px"><div class="frame"><div class="safe"></div><div class="lbl">TITLE-SAFE PANEL · 96px / 80px inset</div><div class="lower"><div class="band"><div class="brand"><i></i>Independents</div><div class="crawl"><span>NE-SEN · Independent 48.2% · Republican 47.9%</span><span class="sep">◆</span><span class="em">AP CALL · ME-2</span></div></div></div></div>
     <p class="cap" style="color:#9aa7bd">Panel at 96px from the sides and 80px from the top, 1728×920, radius 8px, padding 52px 72px. The ticker sits in the lower third. A graphic and the ticker are never on the same page; the switcher layers them.</p></div>
@@ -273,7 +275,7 @@
   </section>
 </main>
 <script type="module">
-  import { THEMES, themeLabel } from "/g/themes.js";
+  import { THEMES, DEFAULT_THEME, themeLabel } from "/g/themes.js";
   // Themes live in /g/themes.js, the same file the outputs and the Studio read, so this page can never drift from them.
   const KEYS = ["--navy","--navy-deep","--gold","--cream","--sand","--ink","--muted","--ok","--warn","--bad","--local","--serif","--sans","--mono","--panel","--panel-edge","--band-edge","--fg","--fg-muted","--rule","--dem","--gop","--ind","--ind-fg","--call","--air-ok","--air-bad","--air-font","--r-chip","--r-field","--r-panel","--r-card"];
   const root = document.documentElement;
@@ -283,6 +285,8 @@
     for (const k of KEYS) root.style.removeProperty(k);
     for (const [k, v] of Object.entries(THEMES[id]?.tokens ?? {})) root.style.setProperty(k, v);
     root.dataset.theme = id; sel.value = id;
+    const tf = document.getElementById("tickerframe");
+    if (tf) { const u = `/ticker?bg=black&fit=1&theme=${encodeURIComponent(id)}&seq=NE-SEN|~Polls close in the West at 11 PM ET|MT-SEN&calls=1&idle=Live results through the night`; if (tf.dataset.u !== u) { tf.dataset.u = u; tf.src = u; } }
     try { localStorage.setItem("sg-theme", id); } catch {}
     render();
   }
@@ -307,7 +311,7 @@
   ] };
   for (const [guide, pages] of Object.entries(PAGES)) { const el = document.getElementById(`pages-${guide}`); if (el) el.innerHTML = pages.map((p) => { const f = `/styleguides/${guide}/${p.file}`; return `<a href="${f}" target="_blank" rel="noopener"><img src="${f}" alt="${p.name}" loading="lazy"><span>${p.name}</span></a>`; }).join(""); }
   let saved = null; try { saved = localStorage.getItem("sg-theme"); } catch {}
-  apply(saved && THEMES[saved] ? saved : "election-producer");
+  apply(saved && THEMES[saved] ? saved : DEFAULT_THEME);
 </script>
 </body>
 </html>

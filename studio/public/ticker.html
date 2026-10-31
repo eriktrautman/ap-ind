@@ -31,18 +31,24 @@
      is dropped off the left edge (a width change there would make the crawl jump). */
   .item { display: inline-block; padding: 0; }
   .item::before { content: "◆"; color: var(--muted); font-size: 16px; margin: 0 48px; vertical-align: middle; }   /* the same 48px on both sides: the diamond sits midway between items */
-  /* The geniots stylesheet (its deck, "Ticker Option 01"): the Election Night logo block on white at the left, the crawl in
-     white uppercase bold on the navy band, bullets between items. Keyed on the root's data-theme, which theme-boot.js sets
+  /* The geniots stylesheet (its deck, page 11, "Ticker Option 01", measured at 1920×1080): the band is 84px tall and sits
+     102px above the bottom, 44px white uppercase bold with bullets between items; nothing to the left of the logo. The
+     Election Night logo block is 374×168 on white, two lines of navy Heavy Extended over the red Independent Edition
+     strip, standing 44px above the band and 25px below it. Keyed on the root's data-theme, which theme-boot.js sets
      before the first paint, so the band is right from the first frame. */
   .brand .logo { display: none; }
-  html[data-theme="election-night-v1"] .brand { background: #fff; color: #090E40; padding: 0 18px; letter-spacing: 0; position: relative; }
+  html[data-theme="election-night-v1"] .ticker { background: none; align-items: flex-end; height: 84px; bottom: 102px; font-size: 44px; line-height: 84px; }
+  html[data-theme="election-night-v1"] .crawl { height: 84px; background: linear-gradient(90deg, var(--band), var(--band-edge)); }
+  html[data-theme="election-night-v1"] .test { height: 84px; line-height: 84px; }
+  html[data-theme="election-night-v1"] .brand { width: 374px; height: 168px; margin: 0 0 -25px 48px; padding: 0; background: #fff; color: #090E40; letter-spacing: 0; position: relative; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
   html[data-theme="election-night-v1"] .brand .word { display: none; }
-  html[data-theme="election-night-v1"] .brand .dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; }
-  html[data-theme="election-night-v1"] .brand .logo { display: flex; flex-direction: column; align-items: center; line-height: 1; }
-  html[data-theme="election-night-v1"] .brand .logo b { font-size: 27px; font-weight: 900; letter-spacing: -.02em; font-stretch: expanded; color: #090E40; }
-  html[data-theme="election-night-v1"] .brand .logo i { font-style: normal; display: block; margin-top: 4px; background: #BC0000; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .14em; padding: 2px 8px 1px; }
+  html[data-theme="election-night-v1"] .brand .dot { position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; }
+  html[data-theme="election-night-v1"] .brand .logo { display: flex; flex-direction: column; align-items: center; line-height: .86; }
+  html[data-theme="election-night-v1"] .brand .logo b { display: block; font-size: 58px; font-weight: 900; letter-spacing: -.03em; font-stretch: expanded; color: #090E40; }
+  html[data-theme="election-night-v1"] .brand .logo b.n { font-size: 70px; }
+  html[data-theme="election-night-v1"] .brand .logo i { font-style: normal; display: block; margin-top: 8px; background: #BC0000; color: #fff; font-size: 17px; font-weight: 800; letter-spacing: .12em; line-height: 1; padding: 5px 12px 4px; }
   html[data-theme="election-night-v1"] .crawl { text-transform: uppercase; font-weight: 700; }
-  html[data-theme="election-night-v1"] .item::before { content: "•"; color: var(--fg); font-size: 28px; margin: 0 40px; }
+  html[data-theme="election-night-v1"] .item::before { content: "•"; color: var(--fg); font-size: 34px; margin: 0 40px; }
   .item.lead::before { visibility: hidden; }   /* the first item of a fresh crawl: no separator ahead of it, same width */
   .item.emphasis { color: var(--call); font-weight: 700; }
   .item.manual { color: #fff; font-weight: 600; }
@@ -52,7 +58,7 @@
 </head>
 <body>
 <div class="ticker">
-  <div class="brand"><span class="dot" id="dot"></span><span class="word">Independents</span><span class="logo"><b>Election Night</b><i>Independent Edition</i></span></div>
+  <div class="brand"><span class="dot" id="dot"></span><span class="word">Independents</span><span class="logo"><b>Election</b><b class="n">Night</b><i>Independent Edition</i></span></div>
   <div class="crawl"><div class="track" id="track"></div><div class="test" id="test" hidden>TEST DATA</div></div>
 </div>
 <script type="module">
