@@ -7,8 +7,12 @@
 <link rel="stylesheet" href="./g.css">
 <style>
   /* B4: where the independent needs to win, from the last contest's county map, with tonight's reporting overlaid.
-     ?id=<raceID>; ?who=ind (default) | main. Counties: colour = the lane's prior share (dark = strong), overlaid
-     with tonight's result once a county reports (outline gold where the candidate is running ahead of that pace). */
+     ?id=<raceID>; ?who=ind (default) | main. Before anything is counted the map shows the lane's prior share (deeper = stronger).
+     Once a county is counted it reads as B13 does: gold ahead of the prior share, slate gray behind, deeper with the gap, hatched
+     until 10% is in. The six must-win counties are outlined in white throughout. */
+  .ahead { color: var(--gold); } .behind { color: #B4BDD3; }
+  .legend i.none { background: repeating-linear-gradient(45deg, #3a4c74 0 2px, #1b2a4a 2px 7px); }
+  .legend i.must { box-sizing: border-box; border: 3px solid #fff; }
   .body { display: grid; grid-template-columns: 1fr 600px; gap: 56px; min-height: 0; }
   .map { background: rgba(0,0,0,.25); border-radius: 8px; padding: 16px; position: relative; min-height: 0; }
   .map svg { width: 100%; height: 100%; display: block; }
@@ -24,7 +28,7 @@
   <div class="head"><div><div class="kicker">Path to victory</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="map"><svg id="map" viewBox="0 0 980 640"></svg><div class="legend" id="legend"></div></div>
-    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:52%">County</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:40%">County</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th><th class="r" id="th-diff">Diff</th></tr></thead><tbody id="rows"></tbody></table></div></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, tonight and the last contest for this seat · <span id="foot-note"></span></span><span id="updated"></span></div>
 </div>
@@ -37,6 +41,7 @@
   const raceId = q.get("id"), who = q.get("who") ?? "ind";
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const MIN_IN = 10;   // as B13: a county counts as reporting once this much of its vote is in
   let race = null, counties = null, prior = null, geo = null;
   const unitKey = (u) => geo.kind === "county" ? String(u.fips) : normName(u.name);
   const featKey = (d) => geo.kind === "county" ? String(d.id) : normName(d.properties.name);
@@ -50,7 +55,7 @@
     const yes = race.candidates.find((c) => c.party === "Yes"), no = race.candidates.find((c) => c.party === "No");
     $("title").innerHTML = `${esc(race.title || race.officeName)} <small>${esc(race.stateName)} · path to passage</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
-    $("th-area").textContent = "Biggest county"; $("th-then").textContent = "Yes"; $("th-now").textContent = "No";
+    $("th-area").textContent = "Biggest county"; $("th-then").textContent = "Yes"; $("th-now").textContent = "No"; $("th-diff").hidden = true;
     $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.yes}"></i>Yes leading</span><span><i style="background:${PARTY_COLOR.no}"></i>No leading</span><span><i style="background:#1b2a4a"></i>no results</span>`;
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     const rows = (counties ?? []).map((u) => { const y = u.votes[yes?.id] ?? 0, n = u.votes[no?.id] ?? 0, tot = y + n; return { k: unitKey(u), name: u.name, yes: tot ? y / tot * 100 : null, no: tot ? n / tot * 100 : null, tot, inPct: u.eevp || u.precinctsPct || 0 }; });
@@ -86,28 +91,41 @@
       const share = b.total ? (b.votes[lane.id] ?? 0) / b.total * 100 : 0;
       const n = nowBy.get(k); const tot = n ? Object.values(n.votes).reduce((s, v) => s + v, 0) : 0;
       const now = tot ? (n.votes[cand.id] ?? 0) / tot * 100 : null;
-      return { k, name: b.name, then: share, votesThen: b.votes[lane.id] ?? 0, total: b.total, inPct: n ? (n.eevp || n.precinctsPct) : 0, now, ahead: now !== null && tot > 0 ? now >= share : null };
+      const inPct = n ? (n.eevp || n.precinctsPct) : 0, counted = now !== null && inPct >= MIN_IN;
+      return { k, name: b.name, then: share, votesThen: b.votes[lane.id] ?? 0, total: b.total, inPct, now, counted, ahead: counted ? now >= share : null };
     });
-    const maxShare = Math.max(1, ...rows.map((r) => r.then));
-    const scale = d3.scaleLinear().domain([0, maxShare]).range([0.12, 1]);
-    const svg = d3.select("#map");
-    const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
-    sel.enter().append("path").attr("d", geo.path).merge(sel)
-      .attr("fill", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r ? color : "#1b2a4a"; })
-      .attr("fill-opacity", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r ? scale(r.then) : 1; })
-      .attr("stroke", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r?.ahead === true ? "#facc15" : r?.ahead === false ? "#071222" : "#071222"; })
-      .attr("stroke-width", (d) => { const r = rows.find((x) => x.k === featKey(d)); return r?.ahead === true ? 2.5 : 0.8; });
-    $("legend").innerHTML = `<span><i style="background:${color};opacity:1"></i>${esc(lane.last)} strong in ${year}</span><span><i style="background:${color};opacity:.2"></i>weak</span><span><i style="border:3px solid #facc15;box-sizing:border-box"></i>${esc(cand.last)} ahead of that pace tonight</span>`;
     // Must-win: the counties that gave the lane the most votes last time.
     const must = [...rows].sort((a, b) => b.votesThen - a.votesThen).slice(0, 6);
+    const mustKeys = new Set(must.map((r) => r.k));
+    const counting = rows.some((r) => r.counted);
+    const maxShare = Math.max(1, ...rows.map((r) => r.then));
+    const scale = d3.scaleLinear().domain([0, maxShare]).range([0.12, 1]);
+    const rowOf = (d) => rows.find((x) => x.k === featKey(d));
+    const svg = d3.select("#map");
+    if (svg.select("#notcounted").empty()) {   // the same hatching as B13: fine diagonal lines on the empty colour
+      const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
+      pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a");
+      pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
+    }
+    const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
+    sel.enter().append("path").attr("d", geo.path).merge(sel)
+      .style("fill", (d) => { const r = rowOf(d); if (!r) return "#1b2a4a"; if (!counting) return color; return r.counted ? (r.ahead ? "var(--gold)" : "#6B7694") : "url(#notcounted)"; })
+      .attr("fill-opacity", (d) => { const r = rowOf(d); if (!r) return 1; if (!counting) return scale(r.then); return r.counted ? 0.45 + Math.min(1, Math.abs(r.now - r.then) / 15) * 0.55 : 1; })
+      .attr("stroke", (d) => (mustKeys.has(featKey(d)) ? "#fff" : "#071222"))
+      .attr("stroke-width", (d) => (mustKeys.has(featKey(d)) ? 3 : 0.8))
+      .filter((d) => mustKeys.has(featKey(d))).raise();   // on top, so a neighbour's border cannot cut the outline
+    const mustKey = `<span><i class="must"></i>must-win</span>`;
+    $("legend").innerHTML = counting
+      ? `<span><i style="background:var(--gold)"></i>ahead</span><span><i style="background:#6B7694"></i>behind</span><span><i class="none"></i>under ${MIN_IN}% in</span>${mustKey}`
+      : `<span><i style="background:${color};opacity:1"></i>${esc(lane.last)} strong in ${year}</span><span><i style="background:${color};opacity:.2"></i>weak</span>${mustKey}`;
     const needShare = must.reduce((s, r) => s + r.votesThen, 0) / Math.max(1, rows.reduce((s, r) => s + r.votesThen, 0)) * 100;
     // Two different measures, said plainly: the paragraph is how much of the candidate's statewide vote these counties held; the table is their share of each county's vote.
-    const reporting = rows.filter((r) => r.now !== null), mustIn = must.filter((r) => r.now !== null);
+    const reporting = rows.filter((r) => r.counted), mustIn = must.filter((r) => r.counted);
     const aheadOf = (list) => list.filter((r) => r.ahead === true).length;
     const inMust = mustIn.length === must.length ? "them" : `the ${mustIn.length} reporting`;
     const inState = reporting.length === rows.length ? "statewide" : "reporting statewide";
     $("headline").innerHTML = `<b>${needShare.toFixed(0)}%</b> of ${esc(lane.last)}'s ${year} votes came from these ${must.length} counties. ${esc(cand.last)} ${reporting.length ? `is ahead of that pace in <b>${aheadOf(mustIn)}</b> of ${inMust}, and in <b>${aheadOf(reporting)}</b> of ${reporting.length} ${inState}.` : "needs to match that pace there."}`;
-    $("rows").innerHTML = must.map((r) => `<tr><td class="b">${esc(r.name)}</td><td class="r">${r.then.toFixed(1)}%</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b ${r.ahead === true ? "ahead" : r.ahead === false ? "behind" : ""}">${r.now === null ? "—" : r.now.toFixed(1) + "%"}</td></tr>`).join("");
+    $("rows").innerHTML = must.map((r) => `<tr><td class="b">${esc(r.name)}</td><td class="r">${r.then.toFixed(1)}%</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b">${r.now === null ? "—" : r.now.toFixed(1) + "%"}</td><td class="r b ${r.ahead === true ? "ahead" : r.ahead === false ? "behind" : ""}">${r.counted ? (r.now >= r.then ? "+" : "") + (r.now - r.then).toFixed(1) : "—"}</td></tr>`).join("");
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   const feed = connectFeed({
