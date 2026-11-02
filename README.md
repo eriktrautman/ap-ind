@@ -245,8 +245,8 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
   Each password is its own secret: the sign-in cookie is signed with the password it was issued for, so changing or deleting one person's variable signs out that person and nobody else. **To add a person, change a password, change someone's rights, or revoke one** (from `studio/`, in a normal terminal, since `vercel env add` prompts for the value and the `!` shell inside Claude Code cannot):
 
   ```sh
-  vercel env add STUDIO_PASSWORD_PUBLISHER_FIRST_LAST --environment production --sensitive   # add, or (after rm) change
-  vercel env rm STUDIO_PASSWORD_PUBLISHER_FIRST_LAST --environment production --yes          # revoke
+  vercel env add STUDIO_PASSWORD_PUBLISHER_FIRST_LAST production --sensitive   # add, or (after rm) change
+  vercel env rm STUDIO_PASSWORD_PUBLISHER_FIRST_LAST production --yes          # revoke
   vercel redeploy ap-ind.vercel.app
   ```
 
