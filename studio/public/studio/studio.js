@@ -746,7 +746,7 @@ const SCREEN_PARAMS = {
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
   B13: [{ k: "who", label: "Who", options: [["ind", "the independent vs the 2024 Democratic vote"], ["main", "the Republican vs the 2024 Trump vote"]] }],
   B11: [{ k: "quote", label: "Quote", ph: "empty = the curated quotes in turn" }, { k: "who", label: "Attribution", ph: "" }],
-  A2: [{ k: "name", label: "Name", ph: "" }, { k: "title", label: "Title", ph: "" }],
+  A2: [{ k: "name", label: "Name", ph: "" }, { k: "title", label: "Title", ph: "" }, { k: "tab", label: "Live tab", ph: "e.g. Live from Omaha; empty = no tab; geniots stylesheet only" }],
   D6: [{ k: "context", label: "Context line", ph: "one line under the race" }],
   C9: [{ k: "n", label: "Card number", ph: "0, 1, 2 …" }],
 };
@@ -1010,7 +1010,12 @@ function renderPlaylists() {
     <label>Person <select id="pluser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("") || `<option value="">nobody yet</option>`}</select></label>
     <label>Playlist <select id="pllist" ${u ? "" : "disabled"}>${(u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === p?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}</select></label>
     ${can && p ? `<button class="primary" id="pladd" title="Add a chart to this playlist: pick the chart, then its race and settings">+ Add chart…</button>` : ""}
-    ${prod ? `<button id="plnewuser" title="A new person with their own playlists">New person…</button><button id="plnewlist" ${u ? "" : "disabled"} title="A new playlist for ${esc(u?.name ?? "this person")}">New playlist…</button>${p ? `<button id="plrename" title="Rename this playlist">Rename…</button><button id="pldelete" title="Delete this playlist">Delete…</button>` : ""}` : ""}
+    ${prod ? `<details class="ploptions" id="ploptions"><summary title="Add, rename or delete people and playlists">Options</summary><div class="plmenu">
+      <div class="plmenuhead">${u ? `Person: ${esc(u.name || u.id)}` : "People"}</div>
+      <button id="plnewuser">New person…</button><button id="plrenameuser" ${u ? "" : "disabled"}>Rename person…</button><button id="pldeleteuser" class="dangerous" ${u ? "" : "disabled"}>Delete person…</button>
+      <div class="plmenuhead">${p ? `Playlist: ${esc(p.name || p.id)}` : "Playlists"}</div>
+      <button id="plnewlist" ${u ? "" : "disabled"}>New playlist…</button><button id="plrename" ${p ? "" : "disabled"}>Rename playlist…</button><button id="pldelete" class="dangerous" ${p ? "" : "disabled"}>Delete playlist…</button>
+    </div></details>` : ""}
     <span class="spacer"></span>
     <span class="plmeta" title="Playlists are shared: everyone in the Studio sees the same ones">${playlists.updatedAt ? `Changed ${esc(ago(playlists.updatedAt))}${playlists.updatedBy ? " by " + esc(playlists.updatedBy) : ""}` : "Shipped playlists; nothing changed yet"}${can ? "" : " · read only"}</span>`;
   if (!p) { body.innerHTML = `<div class="empty">${u ? `${esc(u.name || u.id)} has no playlist yet.${prod ? " Press New playlist…" : ""}` : `No people yet.${prod ? " Press New person…" : ""}`}</div>`; return; }
@@ -1085,15 +1090,30 @@ async function plNewList() {
   const id = newPlId();
   if (await savePlaylists((doc) => { const user = doc.users.find((x) => x.id === u.id); if (!user) return false; user.playlists.push({ id, name, items: [] }); }, { producerOnly: true })) plSelect(u.id, id);
 }
+async function plRenameUser() {
+  const u = plUser(); if (!u) return;
+  const ok = await ask({ title: "Rename the person", body: `<p><label>Name<br><input id="plname" maxlength="60" value="${esc(u.name)}" style="width:100%"></label></p>`, ok: "Rename" });
+  const name = $("plname")?.value.trim(); if (!ok || !name) return;
+  savePlaylists((doc) => { const user = doc.users.find((x) => x.id === u.id); if (!user) return false; user.name = name; }, { producerOnly: true });
+}
 async function plRename() {
   const u = plUser(), p = plList(); if (!u || !p) return;
   const ok = await ask({ title: "Rename the playlist", body: `<p><label>Name<br><input id="plname" maxlength="60" value="${esc(p.name)}" style="width:100%"></label></p>`, ok: "Rename" });
   const name = $("plname")?.value.trim(); if (!ok || !name) return;
   savePlaylists((doc) => { const list = doc.users.find((x) => x.id === u.id)?.playlists.find((x) => x.id === p.id); if (!list) return false; list.name = name; }, { producerOnly: true });
 }
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+async function plDeleteUser() {
+  const u = plUser(); if (!u) return;
+  const charts = u.playlists.reduce((n, p) => n + p.items.length, 0);
+  const lists = u.playlists.length ? `<p>${plural(u.playlists.length, "playlist")} and ${plural(charts, "chart")} go with them:</p><ul>${u.playlists.map((p) => `<li><b>${esc(p.name || p.id)}</b> (${plural(p.items.length, "chart")})</li>`).join("")}</ul>` : "<p>They have no playlists.</p>";
+  const ok = await ask({ title: `Delete ${u.name || u.id}?`, body: `<div class="warnline bad"><b>This can't be undone, and it goes for everyone in the Studio.</b></div>${lists}<p class="small muted">Nothing published changes: the live ticker and live screens keep showing what they show.</p>`, ok: "Delete person and playlists", danger: true });
+  if (!ok) return;
+  if (await savePlaylists((doc) => { if (!doc.users.some((x) => x.id === u.id)) return false; doc.users = doc.users.filter((x) => x.id !== u.id); }, { producerOnly: true })) plSelect(null, null);
+}
 async function plDelete() {
   const u = plUser(), p = plList(); if (!u || !p) return;
-  const ok = await ask({ title: `Delete "${p.name || p.id}"?`, body: `<p>${esc(u.name || u.id)}'s playlist and its ${p.items.length} chart${p.items.length === 1 ? "" : "s"} go. Nothing published changes.</p>`, ok: "Delete playlist", danger: true });
+  const ok = await ask({ title: `Delete "${p.name || p.id}"?`, body: `<div class="warnline bad"><b>This can't be undone, and it goes for everyone in the Studio.</b></div><p>${esc(u.name || u.id)}'s playlist and its ${plural(p.items.length, "chart")} go.</p><p class="small muted">Nothing published changes: the live ticker and live screens keep showing what they show.</p>`, ok: "Delete playlist", danger: true });
   if (!ok) return;
   if (await savePlaylists((doc) => { const user = doc.users.find((x) => x.id === u.id); if (!user) return false; user.playlists = user.playlists.filter((x) => x.id !== p.id); }, { producerOnly: true })) plSelect(u.id, null);
 }
@@ -1103,8 +1123,10 @@ $("plbar").addEventListener("change", (e) => {
 });
 $("plbar").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  ({ pladd: () => plAdd(), plnewuser: plNewUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
+  $("ploptions")?.removeAttribute("open");
+  ({ pladd: () => plAdd(), plnewuser: plNewUser, plrenameuser: plRenameUser, pldeleteuser: plDeleteUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
 });
+document.addEventListener("click", (e) => { if (!e.target.closest("#ploptions")) $("ploptions")?.removeAttribute("open"); });
 /** From either catalog: choose the person and playlist, then finish the chart's spec. preset carries what the card
  *  already knows, e.g. the race a Race Catalog card belongs to. */
 const mayAddToPlaylist = (chart) => chart.built && !chart.retired && chart.page && chart.id !== "A1" && mayPublish();

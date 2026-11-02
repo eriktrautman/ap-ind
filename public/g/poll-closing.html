@@ -18,6 +18,15 @@
   .slot.past { opacity: .45; }
   .cd { flex: none; padding: 0 96px 0 28px; display: flex; align-items: center; gap: 14px; font-size: 26px; color: var(--muted); }
   .cd b { color: var(--fg); font-size: 34px; font-variant-numeric: tabular-nums; }
+  /* The geniots stylesheet: where the ticker sits and the height it is (82px, its bottom 105px above the frame), on the navy
+     gradient; the head is the lower third's red tab, starting at the safe area; bold type. */
+  html[data-theme="election-night-v1"] .strip { bottom: 105px; height: 82px; background: linear-gradient(180deg, #1B1362, #090E40); }
+  html[data-theme="election-night-v1"] .head { padding: 0 28px 0 97px; background: #BC0000; color: #fff; font-size: 30px; font-weight: 700; font-style: italic; letter-spacing: 0; }
+  html[data-theme="election-night-v1"] .slot { border-right: 0; padding: 0 20px; }
+  html[data-theme="election-night-v1"] .slot .t { font-size: 38px; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .slot .st { color: #fff; font-size: 26px; font-weight: 700; }
+  html[data-theme="election-night-v1"] .cd { color: #fff; font-weight: 700; font-style: italic; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .cd b { font-size: 38px; font-style: normal; }
 </style>
 </head>
 <body>

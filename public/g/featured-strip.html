@@ -17,6 +17,17 @@
   .vs { font-size: 22px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .vs b { float: right; color: var(--muted); }
   .pos { color: var(--ok); } .neg { color: var(--bad); }
+  /* The geniots stylesheet: each tile is a small lower third: the race and status on the red tab (gold once called), the
+     independent on the white-to-grey band in navy, the opponent and margin on the navy line. */
+  html[data-theme="election-night-v1"] .strip { height: auto; bottom: 82px; gap: 10px; align-items: flex-start; }
+  html[data-theme="election-night-v1"] .tile { display: block; padding: 0; background: none; border: 0; border-radius: 0; box-shadow: 0 8px 24px rgba(9, 14, 64, .45); }
+  html[data-theme="election-night-v1"] .lab { height: 30px; line-height: 30px; padding: 0 10px; background: #BC0000; color: #fff; font-family: var(--font); font-size: 20px; font-style: italic; }
+  html[data-theme="election-night-v1"] .lab .st { color: #fff; font-size: 18px; font-weight: 700; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .tile.called .lab, html[data-theme="election-night-v1"] .tile.called .lab .st { background: var(--call); color: var(--ind-fg); }
+  html[data-theme="election-night-v1"] .who { height: 52px; line-height: 52px; padding: 0 10px; background: linear-gradient(180deg, #FFFFFF, #9A9A9A); color: #090E40; font-size: 30px; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .who b { color: #090E40; }
+  html[data-theme="election-night-v1"] .vs { height: 38px; line-height: 38px; padding: 0 10px; background: #090E40; color: #fff; font-size: 22px; font-weight: 700; font-style: italic; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .vs b, html[data-theme="election-night-v1"] .vs b.pos, html[data-theme="election-night-v1"] .vs b.neg { color: #fff; }
 </style>
 </head>
 <body>

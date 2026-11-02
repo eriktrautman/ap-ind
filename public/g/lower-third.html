@@ -6,23 +6,40 @@
 <title>Name Lower Third</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* A2: name and title lower third. ?name=…&title=… (or ?cand=<candidateID>&id=<raceID> to take them from the feed). ?corner=l|r */
+  /* A2: name and title lower third. ?tab=… is the geniots stylesheet's live tab. ?name=…&title=… (or ?cand=<candidateID>&id=<raceID> to take them from the feed). ?corner=l|r */
   .lt { position: absolute; left: 96px; bottom: 150px; display: grid; grid-template-columns: 10px auto; background: linear-gradient(90deg, var(--panel), var(--panel-edge)); border-radius: 6px; overflow: hidden; box-shadow: 0 8px 30px #0008; min-width: 640px; max-width: 1200px; }
   .lt.r { left: auto; right: 96px; }
   .bar { background: var(--gold); }
   .txt { padding: 16px 36px 18px 28px; }
   .nm { font-size: 52px; font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tt { font-size: 30px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tab { display: none; }
+  /* The geniots stylesheet, measured on the lower-third sheet (the kit's rendered pixels), scaled so the logo block is the
+     ticker's 361×148 at x 97, with its bottom 82px above the frame. With a live tab: tab 38 tall, band 70, navy line 59, the
+     navy line hanging below the logo as on the sheet. Without one (the deck's 2-line page): band 88 and navy 60, flush with
+     the logo's top and bottom. Type: 67px bold navy on the white-to-grey band, 36px bold italic white on navy, 26px bold italic white on red. */
+  html[data-theme="election-night-v1"] .lt { left: 97px; right: auto; top: 850px; bottom: auto; display: block; padding-left: 364px; background: none; border-radius: 0; box-shadow: none; overflow: visible; min-width: 0; max-width: 1727px; }
+  html[data-theme="election-night-v1"] .lt::before { content: ""; position: absolute; left: 0; top: 0; width: 361px; height: 148px; background: #fff url(/brand/election-night-logo.png) no-repeat 0 0 / 361px 148px; box-shadow: 0 8px 24px rgba(9, 14, 64, .45); }
+  html[data-theme="election-night-v1"] .bar { display: none; }
+  html[data-theme="election-night-v1"] .txt { padding: 0; min-width: 885px; }
+  html[data-theme="election-night-v1"] .tab { position: relative; left: -9px; width: fit-content; min-width: 348px; height: 38px; line-height: 38px; padding: 0 14px; box-sizing: border-box; background: #BC0000; color: #fff; font-size: 26px; font-weight: 700; font-style: italic; text-transform: uppercase; white-space: nowrap; }
+  html[data-theme="election-night-v1"] .tab:not(:empty) { display: block; }
+  html[data-theme="election-night-v1"] .tab:not(:empty) ~ .nm { height: 70px; line-height: 70px; }
+  html[data-theme="election-night-v1"] .tab:not(:empty) ~ .tt { height: 59px; line-height: 59px; }
+  html[data-theme="election-night-v1"] .nm, html[data-theme="election-night-v1"] .tt { box-shadow: 0 8px 24px rgba(9, 14, 64, .45); }
+  html[data-theme="election-night-v1"] .nm { height: 88px; line-height: 88px; padding: 0 24px; background: linear-gradient(180deg, #FFFFFF, #9A9A9A); color: #090E40; font-size: 67px; font-weight: 700; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .tt { height: 60px; line-height: 60px; margin: 0; padding: 0 24px; background: #090E40; color: #fff; font-size: 36px; font-weight: 700; font-style: italic; text-transform: uppercase; }
 </style>
 </head>
 <body>
-<div class="lt" id="lt"><div class="bar"></div><div class="txt"><div class="nm" id="nm"></div><div class="tt" id="tt"></div></div></div>
+<div class="lt" id="lt"><div class="bar"></div><div class="txt"><div class="tab" id="tab"></div><div class="nm" id="nm"></div><div class="tt" id="tt"></div></div></div>
 <script type="module">
   import { connectFeed, partyKey } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   if (q.get("corner") === "r") document.getElementById("lt").classList.add("r");
   const $ = (id) => document.getElementById(id);
+  $("tab").textContent = q.get("tab") ?? "";
   const set = (name, title) => { $("nm").textContent = name || "Name"; $("tt").textContent = title || ""; };
   if (q.get("name") || !q.get("cand")) set(q.get("name") ?? "Name goes here", q.get("title") ?? "Title goes here (?name=&title=)");
   else connectFeed({ onSnapshot: (s) => {

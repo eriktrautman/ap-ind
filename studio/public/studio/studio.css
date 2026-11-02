@@ -204,6 +204,17 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .plbar .spacer { flex: 1; }
 .plbar button { padding: 4px 10px; font-size: 12.5px; }
 .plbar button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
+.ploptions { position: relative; }
+.ploptions summary { list-style: none; cursor: pointer; padding: 4px 22px 4px 10px; font-size: 12.5px; font-weight: 600; background: #fff; border: 1px solid var(--sand); border-radius: 6px; position: relative; }
+.ploptions summary::-webkit-details-marker { display: none; }
+.ploptions summary::after { content: "▾"; position: absolute; right: 8px; top: 3px; color: var(--muted); }
+.ploptions summary:hover { border-color: var(--navy); }
+.plmenu { position: absolute; left: 0; top: calc(100% + 4px); z-index: 20; display: grid; min-width: 220px; padding: 4px; background: #fff; border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 6px 20px #0002; }
+.plmenu .plmenuhead { padding: 7px 9px 3px; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plmenu button { border: 0; background: none; text-align: left; padding: 6px 9px; border-radius: 6px; font-size: 13px; }
+.plmenu button:hover:not(:disabled) { background: var(--cream); }
+.plmenu button.dangerous { color: var(--bad); }
+.plmenu button:disabled { color: var(--muted); opacity: .6; cursor: default; }
 .plbar .plmeta { color: var(--muted); font-size: 12px; }
 #plbody .cardgrid { padding: 10px 0 0; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 22px 10px; }   /* the Chart Catalog's card size, air between rows */
 #plbody .gcard, .splist .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */

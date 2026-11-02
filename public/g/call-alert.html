@@ -8,7 +8,7 @@
 <style>
   /* A4: a full-width band announcing an AP call. ?id=<raceID> for one race; without it, the latest
      call among the featured races (and nothing until there is one). Slides in when the call lands. */
-  .band { position: absolute; left: 0; right: 0; bottom: 150px; height: 150px; display: flex; align-items: stretch; background: linear-gradient(90deg, #1a1600, #2a2200 40%, var(--panel)); box-shadow: 0 10px 40px #000a; transform: translateY(200px); transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
+  .band { position: absolute; left: 0; right: 0; bottom: 150px; height: 150px; display: flex; align-items: stretch; background: linear-gradient(90deg, #1a1600, #2a2200 40%, var(--panel)); box-shadow: 0 10px 40px #000a; transform: translateY(320px); transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
   .band.on { transform: none; }
   .tag { background: var(--gold); color: #1a1600; font-weight: 800; font-size: 44px; letter-spacing: .08em; padding: 0 48px 0 96px; display: flex; align-items: center; clip-path: polygon(0 0, 100% 0, calc(100% - 36px) 100%, 0 100%); }
   .text { padding: 0 48px; display: grid; align-content: center; gap: 4px; flex: 1; min-width: 0; }
@@ -17,6 +17,19 @@
   .line2 { font-size: 30px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .line2 b { color: var(--fg); }
   .when { padding: 0 96px 0 24px; display: flex; align-items: center; color: var(--muted); font-size: 26px; white-space: nowrap; }
+  /* The geniots stylesheet: the lower third with its logo and live tab (see A2), the tab saying AP CALL and when. */
+  html[data-theme="election-night-v1"] .band { left: 97px; right: 96px; top: 850px; bottom: auto; height: auto; display: block; padding-left: 364px; background: none; box-shadow: none; transform: translateY(330px); }
+  html[data-theme="election-night-v1"] .band.on { transform: none; }
+  html[data-theme="election-night-v1"] .band::before { content: ""; position: absolute; left: 0; top: 0; width: 361px; height: 148px; background: #fff url(/brand/election-night-logo.png) no-repeat 0 0 / 361px 148px; box-shadow: 0 8px 24px rgba(9, 14, 64, .45); }
+  html[data-theme="election-night-v1"] .tag { position: absolute; left: 355px; top: 0; width: 160px; height: 38px; padding: 0 0 0 14px; box-sizing: border-box; clip-path: none; background: var(--call); color: var(--ind-fg); font-size: 26px; font-weight: 700; font-style: italic; letter-spacing: 0; }
+  html[data-theme="election-night-v1"] .when { position: absolute; left: 515px; top: 0; height: 38px; padding: 0 14px; background: #BC0000; color: #fff; font-size: 26px; font-weight: 700; font-style: italic; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .text { display: block; padding: 38px 0 0; box-shadow: none; }
+  html[data-theme="election-night-v1"] .line1 { height: 70px; line-height: 70px; padding: 0 24px; background: linear-gradient(180deg, #FFFFFF, #9A9A9A); color: #090E40; font-size: 54px; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .line1 span { color: #090E40 !important; }
+  html[data-theme="election-night-v1"] .line1 .lab { display: none; }
+  html[data-theme="election-night-v1"] .line2 { height: 59px; line-height: 59px; padding: 0 24px; background: #090E40; color: #fff; font-size: 30px; font-weight: 700; font-style: italic; text-transform: uppercase; }
+  html[data-theme="election-night-v1"] .line2 b { color: #fff; }
+  html[data-theme="election-night-v1"] .line2 .xtra { display: none; }
 </style>
 </head>
 <body>
@@ -45,7 +58,7 @@
     const tag = (c) => candTag(c).text;
     const office = r.office === "S" ? "Senate" : r.label.endsWith("AL") ? "House seat" : `House ${r.seat.replace(/\D/g, "") ? "District " + r.seat.replace(/\D/g, "") : ""}`;
     $("l1").innerHTML = `<span class="lab">${esc(r.label)}</span><span style="color:${PARTY_COLOR[partyKey(w)]}">${esc(w.name)} (${tag(w)})</span> wins ${esc(r.stateName)} ${esc(office)}${r.flipped ? " · a flip" : ""}`;
-    $("l2").innerHTML = loser ? `<b>${Number(w.pct).toFixed(1)}%</b> to <b>${Number(loser.pct).toFixed(1)}%</b> over ${esc(loser.name)} (${tag(loser)}) · ${fmt(w.votes - loser.votes)} votes · ${Math.round(r.eevp || r.precinctsPct)}% of expected vote in` : `${Number(w.pct).toFixed(1)}% · ${Math.round(r.eevp || r.precinctsPct)}% in`;
+    $("l2").innerHTML = loser ? `<b>${Number(w.pct).toFixed(1)}%</b> to <b>${Number(loser.pct).toFixed(1)}%</b> over ${esc(loser.name)} (${tag(loser)}) · ${fmt(w.votes - loser.votes)} votes<span class="xtra"> · ${Math.round(r.eevp || r.precinctsPct)}% of expected vote in</span>` : `${Number(w.pct).toFixed(1)}% · ${Math.round(r.eevp || r.precinctsPct)}% in`;
     $("when").textContent = r.calledAt ? `Called ${clock(r.calledAt)}` : "";
   }
   watchState({ onState: (s) => { if (s.featuredRaceIds.length) featured = s.featuredRaceIds; render(); } });
