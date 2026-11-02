@@ -516,7 +516,7 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
 }));
 
 // ---------- shared race rendering ----------
-const cands = (r) => r.candidates.slice(0, 3).map((c) => `${esc(c.last ?? c.name)} ${partyLetter(c) ? `(${partyLetter(c)})` : ""}${r.totalVotes ? ` ${Number(c.pct).toFixed(1)}%` : ""}`).join(" · ");
+const cands = (r) => r.candidates.slice(0, 3).map((c) => `${esc(c.last ?? c.name)} ${partyLetter(c) ? `(${partyLetter(c)})` : ""}${c.suspended ? " suspended" : ""}${r.totalVotes ? ` ${Number(c.pct).toFixed(1)}%` : ""}`).join(" · ");
 const indName = (r) => FEATURED_RACES.find((f) => f.id === r.id)?.who ?? r.candidates.find((c) => c.featured)?.name ?? r.candidates.find((c) => c.independent)?.name ?? null;
 const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M1 4h14v8H1z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 8h6M11 8h1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
 const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
@@ -1206,16 +1206,15 @@ function renderCatalog() {
   const rows = index.races.filter(cmatches).sort((a, b) => (starred.has(b.id) - starred.has(a.id)) || a.state.localeCompare(b.state) || a.label.localeCompare(b.label));
   $("ccount").textContent = `${rows.length} of ${index.races.length} races`;
   const list = $("catalogList"); list.innerHTML = "";
-  let wasStarred = false;
+  let starGroup = null;
   for (const r of rows.slice(0, 300)) {
-    if (wasStarred && !starred.has(r.id)) list.insertAdjacentHTML("beforeend", `<div class="cgap"></div>`);
-    wasStarred = starred.has(r.id);
+    if (starred.has(r.id) && !starGroup) { starGroup = document.createElement("div"); starGroup.className = "cstarred"; list.appendChild(starGroup); }
     const crow = document.createElement("div"); crow.className = `crow ${openRaces.has(r.id) ? "open" : ""}`; crow.dataset.id = r.id;
     const onTicker = draft.pinnedRaceIds.includes(r.id);
     crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
       <div class="btns"><button class="starbtn ${starred.has(r.id) ? "on" : ""}" data-star="${r.id}" aria-pressed="${starred.has(r.id)}" title="${starred.has(r.id) ? "Starred: kept at the top of this list. Press to unstar" : "Star: keep this race at the top of this list"}">${starred.has(r.id) ? "★" : "☆"}</button><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button></div></div>`;
     if (openRaces.has(r.id)) crow.appendChild(catalogBody(r));
-    list.appendChild(crow);
+    (starred.has(r.id) ? starGroup : list).appendChild(crow);
   }
   if (rows.length > 300) list.insertAdjacentHTML("beforeend", `<div class="empty">Showing 300. Narrow the search.</div>`);
   if (!rows.length) list.innerHTML = `<div class="empty">No races match.</div>`;

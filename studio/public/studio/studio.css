@@ -326,7 +326,7 @@ button.copybtn:hover { border-color: var(--navy); background: var(--cream); }
 .catalog .cbody .gfoot { flex-wrap: wrap; }
 .toplaylist { white-space: nowrap; }
 #catalog .filters { margin-bottom: 16px; }
-.catalog .cgap { height: 14px; background: var(--cream); border-bottom: 1px solid var(--sand); }
+.catalog .cstarred { border: 2px solid #c9a227; border-radius: 8px; }
 .catalog .starbtn { background: none; border: 0; padding: 0 4px; font-size: 20px; line-height: 1; color: var(--muted); cursor: pointer; }
 .catalog .starbtn:hover, .catalog .starbtn.on { color: #c9a227; }
 .catalog .btns { align-items: center; }

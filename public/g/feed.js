@@ -243,9 +243,9 @@ export function candTag(c) {
   const k = partyKey(c);
   return { cls: k, text: k === "yes" ? "YES" : k === "no" ? "NO" : partyLetter(c) };
 }
-/** The incumbent marker after a candidate's name. * always means incumbent on air, and any page showing one gets the key
- *  in its footer automatically (below), only while a marked name is actually on screen. */
-export const incStar = (c) => (c?.incumbent ? '<span class="incstar">*</span>' : "");
+/** The markers after a candidate's name. * always means incumbent on air, and any page showing one gets the key in its
+ *  footer automatically (below), only while a marked name is actually on screen. A suspended campaign says so in words. */
+export const incStar = (c) => (c?.incumbent ? '<span class="incstar">*</span>' : "") + (c?.suspended ? '<span class="susmark" style="margin-left:.5em;font-size:.6em;font-weight:400;letter-spacing:.06em;text-transform:uppercase;opacity:.7">suspended</span>' : "");
 if (typeof document !== "undefined") {
   const syncIncNote = () => {
     const first = document.querySelector(".foot")?.firstElementChild;
@@ -262,6 +262,7 @@ export function partyKey(c) {
   if (!c) return "oth";
   if (c.party === "Yes") return "yes";
   if (c.party === "No") return "no";
+  if (c.suspended) return "sus";
   if (c.featured || c.independent || isFeaturedCand(c.id)) return "ind";
   if (c.party === "Dem") return "dem";
   if (c.party === "GOP") return "gop";
@@ -282,4 +283,4 @@ export function raceState(r) {
 // Party colours for scripts that paint SVG and inline styles: read from the page's variables at use time, so a
 // stylesheet change reaches them too. (ind here is the gold used for featured independents in those charts.)
 const cssVar = (name, fallback) => { try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; } catch { return fallback; } };
-export const PARTY_COLOR = { get dem() { return cssVar("--dem", "#3b82f6"); }, get gop() { return cssVar("--gop", "#ef4444"); }, get ind() { return cssVar("--gold", "#facc15"); }, oth: "#a855f7", yes: "#22c55e", no: "#f97316" };
+export const PARTY_COLOR = { get dem() { return cssVar("--dem", "#3b82f6"); }, get gop() { return cssVar("--gop", "#ef4444"); }, get ind() { return cssVar("--gold", "#facc15"); }, get sus() { return cssVar("--sus", "#7b8494"); }, oth: "#a855f7", yes: "#22c55e", no: "#f97316" };

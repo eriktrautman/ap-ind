@@ -14,7 +14,7 @@
   .ring text { font-family: var(--font); font-weight: 700; fill: #fff; }
   .legend { font-size: 24px; color: var(--muted); margin-top: 12px; display: flex; justify-content: center; gap: 24px; }
   .legend i { display: inline-block; width: 20px; height: 20px; border-radius: 3px; vertical-align: -2px; margin-right: 8px; }
-  .legend i.hatch { background: repeating-linear-gradient(45deg, #c7d2fe 0 3px, #1b2a4a 3px 7px); }
+  .legend i.lap { height: 6px; vertical-align: 5px; }
 </style>
 </head>
 <body>
@@ -22,7 +22,7 @@
   <div class="head"><div><div class="kicker">Independent vote tonight</div><div class="title" id="title">All federal races</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div><div class="big" id="big">—</div><div class="sub" id="sub">votes for independent and third-party candidates so far</div><div class="cmp" id="cmp"></div></div>
-    <div><svg class="ring" id="ring" viewBox="0 0 400 400"></svg><div class="legend"><span><i style="background:var(--gold)"></i>tonight</span><span><i class="hatch"></i>2022 share</span></div></div>
+    <div><svg class="ring" id="ring" viewBox="0 0 400 400"></svg><div class="legend" id="legend"></div></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · Ind = not Dem or Rep</span><span id="updated"></span></div>
 </div>
@@ -54,28 +54,28 @@
     $("sub").textContent = `votes for independent and third-party candidates so far · ${withInd} of ${list.length} races have one on the ballot`;
     $("cmp").innerHTML = share === null ? "" : `<b>${share.toFixed(1)}%</b> of all votes counted ${sharePrior !== null ? `<span class="m">· 2022: ${sharePrior.toFixed(1)}%</span>` : ""}`;
     const svg = d3.select("#ring"); svg.selectAll("*").remove();
-    // Hatched is always 2022, solid gold is always tonight. Short of 2022 the whole ring is 2022's share and gold fills it
-    // toward 2022. Past 2022 the whole ring is tonight's share: 2022 is the hatched part and the gold is what pushes beyond it.
-    const pattern = svg.append("defs").append("pattern").attr("id", "hatch2022").attr("width", 12).attr("height", 12).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
-    pattern.append("rect").attr("width", 12).attr("height", 12).attr("fill", "#1b2a4a");
-    pattern.append("rect").attr("width", 5).attr("height", 12).attr("fill", "#c7d2fe");
-    const band = (from, to, fill) => svg.append("path").attr("transform", "translate(200,200)").style("fill", fill).attr("d", d3.arc()({ innerRadius: 128, outerRadius: 172, startAngle: from * 2 * Math.PI, endAngle: to * 2 * Math.PI }));
+    // One full lap of the ring is 2022's share. Chasing it, the fat gold arc fills the gray track. Past it, the finished lap
+    // becomes a thin gold circle in the middle of the band and the fat arc starts again from the top with whatever is beyond.
+    const GOLD = "var(--gold)", TRACK = "#3a4560";
+    const band = (from, to, fill, inner = 128, outer = 172) => svg.append("path").attr("transform", "translate(200,200)").style("fill", fill).attr("d", d3.arc()({ innerRadius: inner, outerRadius: outer, startAngle: from * 2 * Math.PI, endAngle: to * 2 * Math.PI }));
     const center = (y, size, text, fill) => { const t = svg.append("text").attr("x", 200).attr("y", y).attr("text-anchor", "middle").attr("font-size", size).text(text); if (fill) t.style("fill", fill); return t; };
     const pct = share !== null && sharePrior ? share / sharePrior * 100 : null;   // tonight's share as a percent of 2022's
     const ahead = pct !== null && Math.round(pct) > 100;
+    band(0, 1, TRACK);
     if (ahead) {
-      const edge = 100 / pct;
-      band(0, 1, "var(--gold)");
-      band(0, edge, "url(#hatch2022)");
+      band(0, 1, GOLD, 146, 154);
+      band(0, Math.min(1, (pct - 100) / 100), GOLD);   // twice 2022 or more: the arc has closed; the number keeps counting
       const plus = `+${Math.round(pct - 100).toLocaleString("en-US")}%`;
-      center(222, plus.length > 5 ? 50 : plus.length > 4 ? 66 : 84, plus, "var(--gold)");
+      center(222, plus.length > 5 ? 50 : plus.length > 4 ? 66 : 84, plus, GOLD);
       center(258, 24, "ahead of 2022", "var(--muted)").attr("font-weight", 400);
     } else {
-      band(0, 1, sharePrior === null ? "#1b2a4a" : "url(#hatch2022)");
-      if (pct !== null) band(0, Math.min(1, pct / 100), "var(--gold)");
+      if (pct !== null) band(0, Math.min(1, pct / 100), GOLD);
       center(215, 64, share === null ? "—" : `${share.toFixed(1)}%`);
       if (sharePrior !== null) center(258, 24, pct === null ? `2022: ${sharePrior.toFixed(1)}%` : `${Math.round(pct)}% of 2022`, "var(--muted)").attr("font-weight", 400);
     }
+    $("legend").innerHTML = ahead
+      ? `<span><i class="lap" style="background:${GOLD}"></i>2022 share</span><span><i style="background:${GOLD}"></i>past 2022</span>`
+      : `<span><i style="background:${GOLD}"></i>tonight</span>${sharePrior !== null ? `<span><i style="background:${TRACK}"></i>2022 share</span>` : ""}`;
     $("updated").textContent = `Updated ${clockS()}`;
   }
   const feed = connectFeed({

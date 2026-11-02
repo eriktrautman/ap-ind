@@ -17,7 +17,7 @@ export const SAMPLE = {
         { id: "168007", name: "Dan Osborn", last: "Osborn", party: "NP", votes: 315518, pct: 46.0, incumbent: false, winner: false, featured: true },
         { id: "179197", name: "Chuck Conboy", last: "Conboy", party: "AFi", votes: 18775, pct: 2.7, incumbent: false, winner: false, featured: true },
         { id: "129622", name: "Robin Richards", last: "Richards", party: "NWk", votes: 14692, pct: 2.1, incumbent: false, winner: false, featured: true },
-        { id: "175130", name: "Mike Marvin", last: "Marvin", party: "LMN", votes: 8064, pct: 1.2, incumbent: false, winner: false, featured: true },
+        { id: "175130", name: "Mike Marvin", last: "Marvin", party: "LMN", votes: 8064, pct: 1.2, incumbent: false, winner: false, featured: false, independent: true, suspended: true },
       ],
     },
     {

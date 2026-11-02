@@ -61,7 +61,7 @@
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
-    $("totals").innerHTML = race.candidates.slice(0, 4).map((c) => `<div class="trow ${partyClass(c.party)} ${c.featured ? "featured" : ""}"><div class="nm"><span class="tag ${c.featured ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c, true))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="pct">${Number(c.pct).toFixed(1)}%</div><div class="v">${fmt(c.votes)}</div></div>`).join("");
+    $("totals").innerHTML = race.candidates.slice(0, 4).map((c) => `<div class="trow ${c.suspended ? "sus" : partyClass(c.party)} ${c.featured ? "featured" : ""}"><div class="nm"><span class="tag ${c.suspended ? "sus" : c.featured ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c, true))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="pct">${Number(c.pct).toFixed(1)}%</div><div class="v">${fmt(c.votes)}</div></div>`).join("");
     const seen = new Set();
     const legend = race.candidates.slice(0, 4).filter((c) => { const k = c.featured ? "ind" : partyClass(c.party); if (seen.has(k)) return false; seen.add(k); return true; });
     $("legend").innerHTML = legend.map((c) => `<span><i style="background:${colorFor(c)}"></i>${esc(c.last)} leads</span>`).join("") + `<span><i class="pale" style="background:#fff"></i>few votes in</span><span><i style="background:var(--none)"></i>no results</span>`;

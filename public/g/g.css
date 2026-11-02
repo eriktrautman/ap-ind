@@ -23,6 +23,8 @@ body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px n
 .empty { font-size: 36px; color: var(--muted); align-self: center; text-align: center; }
 .tag { display: inline-block; min-width: 44px; text-align: center; padding: 2px 10px; border-radius: 4px; font-size: 24px; font-weight: 700; color: #fff; margin-right: 14px; vertical-align: middle; }
 .dem .tag, .tag.dem { background: var(--dem); } .gop .tag, .tag.gop { background: var(--gop); } .ind .tag, .tag.ind { background: var(--ind); color: var(--ind-fg, #fff); }
+:root { --sus: #7b8494; }
+.sus .tag, .tag.sus { background: var(--sus); color: #fff; }   /* a suspended campaign: gray, and the word after the name */
 .yes .tag, .tag.yes { background: var(--yes); color: #06230f; } .no .tag, .tag.no { background: var(--no); color: #1a0d00; }   /* a measure's options */
 .c-dem { color: var(--dem); } .c-gop { color: var(--gop); } .c-ind { color: var(--ind); } .c-gold { color: var(--gold); }
 table { border-collapse: collapse; width: 100%; font-size: 28px; align-self: start; }

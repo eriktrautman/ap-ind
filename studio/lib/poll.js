@@ -24,6 +24,9 @@ const COUNTY_SLOTS = 10;
 // AP flags these as incumbents, but the seat they are running for is new: Kevin Kiley sits in Congress, and CA-6 is a new
 // district under the 2025 map. The charts mark an incumbent of the seat, so the flag is cleared here for every output.
 const NOT_INCUMBENT_HERE = new Set(["69756"]);
+// On the ballot, so AP still counts them, but the campaign has ended: Mike Marvin (NE-SEN) suspended on Aug 21 2026. Every
+// output shows the name in gray with the word suspended.
+const SUSPENDED = new Set(["175130"]);
 
 let curatedCache = null;
 let photoCache = null;
@@ -121,6 +124,7 @@ export async function pollOnce({ run = Date.now(), log = console.log, fresh = fa
       c.partyLabel = k?.partyLabel ?? null;
       c.featured = !!k?.featured;
       if (NOT_INCUMBENT_HERE.has(c.id)) c.incumbent = false;
+      if (SUSPENDED.has(c.id)) c.suspended = true;
     }
   }
   status.apTimestamp = nat.timestamp;
