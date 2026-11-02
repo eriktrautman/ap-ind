@@ -1577,7 +1577,7 @@ async function boot() {
   await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists()]);
   renderAll();
   restoreScroll();
-  timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
+  timers = [setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

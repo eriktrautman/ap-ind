@@ -14,14 +14,16 @@
 //                            Live, sign-ins with it are refused and every cookie it issued stops verifying.
 //   STUDIO_PASSWORD          the old unnamed producer password, still accepted (as "Producer") so a project that has
 //                            not been moved to named passwords keeps working. Retire it once each person has their own.
-// No sessions to store: the cookie is "<expiry>.<key>.<hmac>" and verifies statelessly, keyed by the password it was
+// A sign-in lasts seven days from the last renewal: GET /api/login, which the Studio calls on load and hourly, reissues the
+// cookie once it is a day old, so anyone using the Studio stays signed in. No sessions to store: the cookie is "<expiry>.<key>.<hmac>" and verifies statelessly, keyed by the password it was
 // issued for, so changing one person's password signs out that person and nobody else. Every publish is stamped with
 // the signer's name (producer.json updatedBy), which is the whole of the audit trail and what the conflict warning shows.
 import { createHmac, timingSafeEqual, createHash } from "node:crypto";
 import { readJson } from "./store.js";
 
 const COOKIE = "studio";
-const TTL_MS = 12 * 60 * 60 * 1000;
+const TTL_MS = 7 * 24 * 60 * 60 * 1000;   // a sign-in lasts a week
+const RENEW_AFTER_MS = 24 * 60 * 60 * 1000;   // and is renewed to a full week once it is a day old and in use
 const NAMED = /^STUDIO_PASSWORD_(PRODUCER|PUBLISHER|READONLY)_([A-Z0-9_]+)$/;
 const titleCase = (s) => s.toLowerCase().split("_").filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 
@@ -68,6 +70,12 @@ export function issueCookie(req, a) {
   const exp = Date.now() + TTL_MS;
   const secure = (req.headers["x-forwarded-proto"] ?? "").includes("https") ? "; Secure" : "";
   return `${COOKIE}=${exp}.${a.key}.${sig(a, exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(TTL_MS / 1000)}${secure}`;
+}
+/** True when this signed-in Cookie header is at least a day old, so the sign-in should be renewed. */
+export function cookieWantsRenewal(cookieHeader) {
+  const raw = String(cookieHeader ?? "").split(/;\s*/).find((c) => c.startsWith(`${COOKIE}=`));
+  const exp = Number(raw?.slice(COOKIE.length + 1).split(".")[0]);
+  return Number.isFinite(exp) && exp - Date.now() < TTL_MS - RENEW_AFTER_MS;
 }
 export function clearCookie() {
   return `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;

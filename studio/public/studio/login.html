@@ -24,7 +24,7 @@
   // The only page under /studio that is served without a cookie. A good password sets the cookie and the browser
   // goes to /studio; a browser that already has one is sent straight there. ?why=rehearsal: the Studio sent this
   // browser here because its rehearsal cookie stopped working when results went Live; ?why=expired: a cookie that
-  // no longer verifies (twelve hours, or the password changed).
+  // no longer verifies (a week without use, or the password changed).
   const $ = (id) => document.getElementById(id);
   const why = new URLSearchParams(location.search).get("why");
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));
