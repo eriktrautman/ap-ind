@@ -1529,16 +1529,27 @@ for (const id of ["ticker", "screens", "playlists", "detail", "broad", "movement
 
 // ---------- boot ----------
 let timers = [];
-// ---------- Races opens and closes: closed by default, remembered per browser; hidden cards load no previews ----------
-function setRacesOpen(open) {
-  $("broad").classList.toggle("collapsed", !open);
-  $("broadtoggle").textContent = open ? "▾" : "▸";
-  $("broadtoggle").setAttribute("aria-expanded", String(open));
-  try { localStorage.setItem("studio.racesOpen", open ? "1" : "0"); } catch {}
+// ---------- every section opens and closes from a triangle: open by default, except where the markup says collapsed ----------
+// The choice is remembered per browser, a link to a section opens it, and a closed section's cards load no previews.
+const SECTIONS_KEY = "studio.sectionsOpen";
+let sectionsOpen = (() => { try { return JSON.parse(localStorage.getItem(SECTIONS_KEY) ?? "null") ?? {}; } catch { return {}; } })();
+function setSectionOpen(id, open, remember = true) {
+  const sec = $(id), btn = sec.querySelector(".sectoggle");
+  sec.classList.toggle("collapsed", !open);
+  btn.textContent = open ? "▾" : "▸";
+  btn.setAttribute("aria-expanded", String(open));
+  if (open) scaleScreens();   // frames measured while hidden have no width
+  if (remember) { sectionsOpen[id] = open; try { localStorage.setItem(SECTIONS_KEY, JSON.stringify(sectionsOpen)); } catch {} }
 }
-try { if (localStorage.getItem("studio.racesOpen") === "1") setRacesOpen(true); } catch {}
-for (const id of ["broadtoggle", "broadtitle"]) $(id).addEventListener("click", () => setRacesOpen($("broad").classList.contains("collapsed")));
-document.addEventListener("click", (e) => { if (e.target.closest('a[href="#broad"]')) setRacesOpen(true); });   // going to the section from a link opens it
+for (const id of SECTIONS) {
+  const head = $(id).querySelector(".cardhead");
+  head.insertAdjacentHTML("afterbegin", `<button class="sectoggle" type="button" title="Show or hide this section"></button>`);
+  const toggle = () => setSectionOpen(id, $(id).classList.contains("collapsed"));
+  head.querySelector(".sectoggle").addEventListener("click", toggle);
+  head.querySelector("h2").addEventListener("click", toggle);
+  setSectionOpen(id, sectionsOpen[id] ?? !$(id).classList.contains("collapsed"), false);
+}
+document.addEventListener("click", (e) => { const id = e.target.closest('a[href^="#"]')?.getAttribute("href").slice(1); if (SECTIONS.includes(id)) setSectionOpen(id, true); });
 
 // ---------- a reload comes back to the same place ----------
 // The page is built after it loads, so the browser's own restore finds a short page and lands at the top. The position is

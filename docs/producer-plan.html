@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T19:12:35Z",
+  updated: "2026-11-02T19:14:05Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -281,6 +281,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T19:14:05Z", what: "Studio: every section opens and closes from a triangle in its head. Slate is closed by default, the rest open; Races is back to open (closing it was a mix-up for Slate). The choice is remembered per browser, a link to a section opens it, and a closed section loads no previews." },
   { t: "2026-11-02T19:12:35Z", what: "Sign-ins last seven days instead of twelve hours and renew while the Studio is in use, so a shift can no longer end in a sign-out mid-count." },
   { t: "2026-11-02T19:05:48Z", what: "Studio: the Races section is closed by default and opens from a triangle in its head; the choice is remembered per browser, a link to the section opens it, and while closed its cards load no previews. Its future is undecided." },
   { t: "2026-11-02T19:04:16Z", what: "Studio: a reload returns to the same place on the page. The position is kept per tab and restored once the content is drawn, and again as it settles, until the person scrolls." },
