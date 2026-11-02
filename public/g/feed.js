@@ -296,4 +296,6 @@ export function raceState(r) {
 // Party colours for scripts that paint SVG and inline styles: read from the page's variables at use time, so a
 // stylesheet change reaches them too. (ind here is the gold used for featured independents in those charts.)
 const cssVar = (name, fallback) => { try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; } catch { return fallback; } };
+/** Candidates' colours by partyClass, read live, so a map or bar follows the stylesheet as the tags do. */
+export const CAND_COLOR = { get dem() { return cssVar("--dem", "#3b82f6"); }, get gop() { return cssVar("--gop", "#ef4444"); }, get ind() { return cssVar("--ind", "#a855f7"); }, get yes() { return cssVar("--yes", "#22c55e"); }, get no() { return cssVar("--no", "#f97316"); } };
 export const PARTY_COLOR = { get dem() { return cssVar("--dem", "#3b82f6"); }, get gop() { return cssVar("--gop", "#ef4444"); }, get ind() { return cssVar("--gold", "#facc15"); }, get sus() { return cssVar("--sus", "#7b8494"); }, oth: "#a855f7", yes: "#22c55e", no: "#f97316" };

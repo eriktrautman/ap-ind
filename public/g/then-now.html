@@ -19,6 +19,7 @@
   .headline { font-size: 40px; font-weight: 700; line-height: 1.2; }
   .headline b { color: var(--gold); } .headline small { display: block; font-size: 24px; font-weight: 400; color: var(--muted); margin-top: 4px; }
   table { font-size: 25px; } th, td { padding: 5px 8px; }
+  .ahead { color: var(--gold); } .behind, .headline b.behind { color: #B4BDD3; }   /* as B4 and B13: gold ahead, slate gray behind; neither reads as a party */
 </style>
 </head>
 <body>
@@ -35,14 +36,13 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · same counties, 10%+ of the expected vote in</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, featArrow, freshness, partyClass, candTag, candName, isMeasure, officeText, normName, isFeaturedCand, clockS, incStar } from "./feed.js";
+  import { CAND_COLOR as COLOR, connectFeed, featArrow, freshness, partyClass, candTag, candName, isMeasure, officeText, normName, isFeaturedCand, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7", yes: "#22c55e", no: "#f97316" };
-  const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
+    const colorFor = (c) => c.featured ? COLOR.ind : COLOR[partyClass(c.party)];
   const MIN_IN = 10;
   let race = null, counties = null, prior = null;
 

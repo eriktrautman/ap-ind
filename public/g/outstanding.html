@@ -34,17 +34,16 @@
     <div class="stats" id="stats"></div>
     <div><table><thead><tr><th>Where the votes are</th><th class="r">In</th><th class="r">Est. still out</th><th class="r" id="th-cand">Counted so far</th></tr></thead><tbody id="rows"></tbody></table><div class="keynote" id="keynote"></div></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · remaining = AP expected vote minus votes counted, by county · "needs" assumes the rest splits between the top two</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · "needs" assumes the rest splits between the top two</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt, officeText, clockS } from "./feed.js";
+  import { CAND_COLOR as COLOR, connectFeed, freshness, partyClass, fmt, officeText, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const COLOR = { dem: "#3b82f6", gop: "#ef4444", ind: "#a855f7", yes: "#22c55e", no: "#f97316" };
-  const colorFor = (c) => c.featured ? "#facc15" : COLOR[partyClass(c.party)];
+    const colorFor = (c) => c.featured ? COLOR.ind : COLOR[partyClass(c.party)];
   let race = null, counties = null;
 
   // Expected total for a unit from AP's eevp: counted / (eevp/100). Units with nothing in yet are unknown.

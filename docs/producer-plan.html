@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T21:31:16Z",
+  updated: "2026-11-02T21:36:21Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -283,6 +283,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T21:36:21Z", what: "B6, B7, B8 and B10 take their candidate colours from the stylesheet, so independents are gold under geniots rather than a fixed purple. B10's Diff column is gold ahead and slate gray behind, as on B4 and B13." },
   { t: "2026-11-02T21:26:04Z", what: "The featured candidate's arrow, with its footer key, is on every chart whose list mixes our candidates with others: B2, B6, B9, B10, B14, C5, D5, D6, D9, D11 and the AP report tables, as on B5. B6 and B4's measure map hatch a county under 10% in, as B4 and B13 do; B6's footer loses its explanatory text. B6 outlines the six counties in its table in white. The names no longer carry a tint." },
   { t: "2026-11-02T21:20:37Z", what: "B5: the featured candidate's name is the normal colour, with a caret in the margin and a key in the footer; the caret, party tag and bar share one centre line. A suspended campaign is marked with a superscript dagger and an automatic footnote on every chart, in place of the word after the name." },
   { t: "2026-11-02T21:19:46Z", what: "B15 Race called (S131): built from the lookbook's B2 companion design. The history line defaults to the seat's last result; a producer can type their own." },
