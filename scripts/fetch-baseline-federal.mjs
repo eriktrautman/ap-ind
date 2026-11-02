@@ -9,7 +9,7 @@ import { writeFileSync, readFileSync } from "node:fs";
 const key = process.env.AP_API_KEY;
 if (!key) throw new Error("AP_API_KEY not set");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-// national["2022"] (C6) came from data/ap-history.sqlite by the same rule and is kept across runs of this script.
+// national["2022"] (C6, D10) came from data/ap-history.sqlite by the same rule and is kept across runs of this script.
 const PLACEHOLDER = new Set(["Total Write-ins", "Other", "Write-ins", "Blank", "Scattering"]);
 const NOT_IND = new Set(["Dem", "GOP", "NP", "Yes", "No"]);
 

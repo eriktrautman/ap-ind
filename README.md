@@ -118,7 +118,7 @@ Checking pages without a browser: `node scripts/browse.mjs "http://localhost:300
 - `config/candidates.json`: curated bios for the featured races, keyed by AP `candidateID`.
 - `config/photos.json`: photo manifest for every candidate in every race: source, licence, confidence, and the CDN URL. The resized set is not in the repository; only the fourteen hand-verified photos for the featured races are, under `public/photos/`.
 - `config/baseline-2024-pres.json`: 2024 presidential result by voting area for the featured states, from AP (B13).
-- `config/baseline-federal.json`: 2022 and 2024 national Senate and House totals by party and the last contest for each featured seat, from AP (B10, C6 on 2022, D10 on 2024).
+- `config/baseline-federal.json`: 2022 and 2024 national Senate and House totals by party and the last contest for each featured seat, from AP (B10; C6 and D10 use 2022).
 - `config/polls.json`: public polls for the featured races with a source on every row (B2, B3, B14, C7).
 - `config/party-codes.json`: party names for AP's party codes (C5, F7).
 - `config/independents-history.json`: independents in Congress since 1990 (C4).
