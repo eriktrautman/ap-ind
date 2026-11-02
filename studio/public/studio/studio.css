@@ -302,9 +302,24 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .gcard.minicard .gfoot { padding: 4px 8px; font-size: 11.5px; }
 .gcard.minicard .gfoot a.openbtn { padding: 2px 8px; font-size: 11.5px; }
 .gcard.minicard .bubble { display: none; }
-#charts .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */
-#charts .gcard .ghead .menu { right: 0; min-width: 190px; font-size: 12.5px; }
-#charts .gcard .ghead .menu button { font-size: 12.5px; white-space: nowrap; }
+#charts .gcard, #images .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */
+#charts .gcard .ghead .menu, #images .gcard .ghead .menu { right: 0; min-width: 190px; font-size: 12.5px; }
+#charts .gcard .ghead .menu button, #images .gcard .ghead .menu button { font-size: 12.5px; white-space: nowrap; }
+/* a menu may hang past the bottom of its section: these sections do not clip, so their header keeps its own rounded corners */
+main > section#playlists, main > section#images, main > section#charts { overflow: visible; }
+#playlists > .cardhead, #images > .cardhead, #charts > .cardhead { border-radius: 7px 7px 0 0; }
+#playlists.collapsed > .cardhead, #images.collapsed > .cardhead, #charts.collapsed > .cardhead { border-radius: 7px; }
+/* the + card closing a playlist */
+.pladdcard { position: relative; min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; box-sizing: border-box; text-align: center; border: 2px dashed var(--sand); border-radius: 8px; color: var(--muted); }
+.pladdcard:hover, #playlists.filedrag .pladdcard { border-color: var(--navy); background: var(--cream); }
+.pladdcard .plplus { position: static; width: 56px; height: 56px; border-radius: 50%; padding: 0; font-size: 34px; line-height: 1; font-weight: 300; color: var(--navy); background: #fff; border: 2px solid var(--sand); }
+.pladdcard:hover .plplus { border-color: var(--navy); }
+.pladdcard .plhint { font-size: 12.5px; line-height: 1.35; max-width: 190px; visibility: hidden; }
+.pladdcard:hover .plhint, #playlists.filedrag .pladdcard .plhint { visibility: visible; }
+.pladdcard .plplus[hidden], .pladdcard .plhint[hidden], .pladdcard .plchoose[hidden] { display: none; }
+.pladdcard .plchoose { display: flex; gap: 8px; }
+.pladdcard .plchoose button { padding: 8px 14px; font-weight: 600; }
+#playlists.filedrag { outline: 3px dashed var(--gold); outline-offset: -3px; }
 #charts .gcard.deprecated .ghead, #catalog .gcard.deprecated .ghead, #plbody .gcard.deprecated .ghead { opacity: .6; }
 #charts .gcard.deprecated .gname, #catalog .gcard.deprecated .gname, #plbody .gcard.deprecated .gname { text-decoration: line-through; }
 #charts .gcard.deprecated .thumb, #catalog .gcard.deprecated .thumb, #plbody .gcard.deprecated .thumb { position: relative; }

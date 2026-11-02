@@ -1029,6 +1029,49 @@ async function savePlaylists(mutate, { producerOnly = false } = {}) {
   renderPlaylists();
   return true;
 }
+// The + card closing every playlist: + offers a chart or an image, and an image file dropped anywhere on the section joins the playlist.
+$("plbody").addEventListener("click", (e) => {
+  const card = e.target.closest("#pladdcard"); if (!card) return;
+  const add = e.target.closest("[data-add]")?.dataset.add;
+  if (add) { closeAddChoice(); add === "chart" ? plAdd() : plAddImage(); return; }
+  const open = card.querySelector(".plchoose").hidden;
+  card.querySelector(".plchoose").hidden = !open; card.querySelector(".plplus").hidden = open; card.querySelector(".plhint").hidden = open;
+});
+function closeAddChoice() { const c = $("pladdcard"); if (!c) return; c.querySelector(".plchoose").hidden = true; c.querySelector(".plplus").hidden = false; c.querySelector(".plhint").hidden = false; }
+document.addEventListener("click", (e) => { if (!e.target.closest("#pladdcard")) closeAddChoice(); });
+const dragHasFile = (e) => [...(e.dataTransfer?.types ?? [])].includes("Files");
+const canDropImage = () => mayPublish() && !!plList() && !$("dlg").open;
+$("playlists").addEventListener("dragover", (e) => { if (!dragHasFile(e) || !canDropImage()) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; $("playlists").classList.add("filedrag"); });
+$("playlists").addEventListener("dragleave", (e) => { if (!$("playlists").contains(e.relatedTarget)) $("playlists").classList.remove("filedrag"); });
+$("playlists").addEventListener("drop", async (e) => {
+  if (!dragHasFile(e)) return;
+  e.preventDefault(); $("playlists").classList.remove("filedrag");
+  if (!canDropImage()) return;
+  const u = plUser(), p = plList();
+  for (const file of [...e.dataTransfer.files]) {
+    const up = await uploadImage(file);
+    if (up) await plPutSpec(specDef({ chart: IMAGE_CHART, race: "", state: "", params: { image: up.image.file, layout: up.layout }, bg: up.bg }), u, p);
+  }
+});
+// A file dropped anywhere else must not make the browser leave the Studio to open it. A file input still takes its own drop.
+for (const ev of ["dragover", "drop"]) document.addEventListener(ev, (e) => { if (dragHasFile(e) && !e.target.closest?.('input[type="file"]') && !e.defaultPrevented) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = "none"; } });
+/** What other people changed shows up on its own. Nothing redraws while someone is mid-action; the next tick catches up. */
+const sharedBusy = () => $("dlg").open || !!$("ploptions")?.open || $("pladdcard")?.querySelector(".plchoose")?.hidden === false || !!document.querySelector(".gcard.dragging, #playlists.filedrag") || [...document.querySelectorAll(".gcard .menu")].some((m) => !m.hidden) || /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? "");
+async function refreshShared() {
+  if (document.hidden || sharedBusy()) return;
+  let doc, lib;
+  try { [doc, lib] = await Promise.all([api("/api/playlists"), api("/api/images")]); } catch { return; }   // a blip: keep what is on screen
+  if (sharedBusy()) return;
+  doc = normalizePlaylists(doc); lib = normalizeLibrary(lib);
+  const older = (a, b) => a.updatedAt && b.updatedAt && Date.parse(a.updatedAt) < Date.parse(b.updatedAt);
+  const docNew = !!playlists && !older(doc, playlists) && JSON.stringify(doc) !== JSON.stringify(playlists);
+  const libNew = !older(lib, library) && JSON.stringify(lib) !== JSON.stringify(library);
+  if (docNew) { playlists = doc; plError = null; }
+  if (libNew) library = lib;
+  if (docNew || libNew) { renderPlaylists(); renderImages(); }
+  if (docNew && Object.values(screenMode).includes("playlist")) renderScreens();
+}
+addEventListener("focus", refreshShared);
 const specLine = (s) => [s.race || s.state, ...Object.entries(s.params ?? {}).map(([k, v]) => `${k}=${v}`), s.bg || "transparent"].filter(Boolean).join(" · ");
 /** The race object a spec names, for the card's tag and address; a state chart with only a state gets a stand-in. */
 function specRace(s) {
@@ -1076,8 +1119,9 @@ function renderPlaylists() {
     el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}">${s.chart === IMAGE_CHART ? esc(imageSpecLine(s)) : `<b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}`}</div>`);
     grid.appendChild(el);
   });
+  if (can) grid.insertAdjacentHTML("beforeend", `<div class="pladdcard" id="pladdcard"><button class="plplus" type="button" aria-label="Add to this playlist">+</button><div class="plhint">Add a chart or image, or drag and drop an image here</div><div class="plchoose" hidden><button type="button" data-add="chart">Chart…</button><button type="button" data-add="image">Image…</button></div></div>`);
   body.innerHTML = "";
-  if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart… or + Add image…, or add one from the Race Catalog, Chart Catalog or Image Library." : ""}</div>`;
+  if (!p.items.length && !can) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.</div>`;
   else { body.appendChild(grid); if (can) plDragDrop(grid); }
   cards.prune();
 }
@@ -1657,7 +1701,7 @@ async function boot() {
   await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists(), loadLibrary()]);
   renderAll();
   restoreScroll();
-  timers = [setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
+  timers = [setInterval(refreshShared, 5_000), setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

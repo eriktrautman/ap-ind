@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T22:35:33Z",
+  updated: "2026-11-02T22:48:12Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -263,7 +263,7 @@ const STORIES = [
   { id: "S124", epic: "E9", pts: 2, status: "done", title: "Candidate facebook at /facebook: every candidate in every race the feed carries (about 1,600, 1,010 with a cleared photo) as a card, rendered in batches as the page scrolls with search, state, office, photo, independent and featured-race filters (featured by default); the twenty-five curated candidates as full cards (cleared photo, party, incumbent, the independent we follow, age, home, work, prior office, military, education, notes, campaign and reference links, photo credit), grouped by race with featured races first and a jump bar; linked from the Studio footer", doneAt: "2026-10-29T07:20:00Z" },
   { id: "S125", epic: "E9", pts: 5, status: "done", title: "Stylesheets a producer can preview and push: themes in one shared module (/g/themes.js) read by the ticker, every graphic (through feed.js) and the live screens; theme is a published field, pushed only by a producer; the Studio's display bar has a Stylesheet dropdown that previews on every frame of that page (?theme= on preview addresses only) with Push stylesheet to make it live, and a link to the style guide; the style guide reads the same module and shows the PSD kit's two production sheets", doneAt: "2026-10-31T13:30:00Z" },
   { id: "S124", epic: "E8", pts: 2, status: "done", title: "Sign-in before the page: /studio and everything under it are served only to a browser with a valid Studio cookie (Vercel Routing Middleware, proxy.js; the same check in the laptop server). A signed-out browser is sent to /studio/login, a page of its own, so nothing of the Studio is on screen, in view-source or in the network log before signing in", note: "Until now the Studio's page and scripts were public static files with the app hidden by script until /api/login answered; the data was always behind the cookie, but the whole control room was readable before sign-in. The middleware checks the cookie's signature and expiry only; the Live rule for the rehearsal password stays with the APIs, and the page's first /api/login applies it.", deps: "S115", doneAt: "2026-10-29T03:20:00Z" },
-  { id: "S133", epic: "E6", pts: 5, status: "todo", title: "Images, phase 2 (waiting for the go-ahead): drag and drop onto a playlist, crop tools, captions and framing, replacing an image everywhere, star and deprecate." },
+  { id: "S133", epic: "E6", pts: 5, status: "todo", title: "Images, phase 2 (waiting for the go-ahead): crop tools, captions and framing, replacing an image everywhere, star and deprecate." },
   { id: "S132", epic: "E6", pts: 8, status: "done", title: "Images, phase 1: the image card type (chart id I1), browser-prepared uploads with server checks, an Image Library section, Show and Copy URL, laptop mirroring." },
   { id: "S131", epic: "E6", pts: 3, status: "done", title: "B15 Race called: the setup card's companion from the lookbook. The winner takes the frame, the final shares, margin, a flip pill and one line of history; until AP calls it says so and names no winner." },
   { id: "S130", epic: "E6", pts: 5, status: "done", title: "Everything goes through playlists. A person General with Slate, Race Overview and Movement Overview, seeded once into the stored document; the Slate, Races, Movement and Persistent Elements sections, their schema fields and every way of adding to them are gone; both catalogs carry + Add to playlist." },
@@ -285,6 +285,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T22:48:12Z", what: "Playlists: what other people change appears within 5 seconds with no refresh. A + card closes every playlist, offering a chart or an image, and an image file dropped on the section joins the playlist. Menus no longer clip at the bottom of the Playlists, Image Library and Chart Catalog sections." },
   { t: "2026-11-02T22:35:33Z", what: "Images in playlists, phase 1 (S132): + Add image… and an Image Library section. The playlist bar is now + Add chart, + Add image, + Add playlist, + Add person, Additional Options. Playlists and the library read through the same fresh copy as the published state, so a quick second edit cannot undo the first." },
   { t: "2026-11-02T22:06:24Z", what: "A starred race stays in its normal place in the Race Catalog and the race dropdowns as well as in the group at the top." },
   { t: "2026-11-02T21:54:18Z", what: "A starred chart's previews load first and stay loaded off screen, so scrolling to one never finds it empty." },

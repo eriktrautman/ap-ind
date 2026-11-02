@@ -141,17 +141,20 @@ function readBody(req) {
   return new Promise((resolve) => { let b = ""; req.on("data", (c) => (b += c)); req.on("end", () => resolve(b)); });
 }
 // ---- production over the wire (connected mode) ----
+// Shown to whoever is using the Studio on this computer, who may not know what a server or a settings file is.
+const NOT_SET_UP = () => `You are using the Studio on your own computer, and it saves changes to the live site (${GLOBAL}). This computer isn't set up to do that yet, so nothing was saved. Easiest fix: make this change on the live site instead. To save from this computer, add your own Studio password as GLOBAL_PASSWORD in the studio/.env file, then restart the Studio here (or ask whoever set it up to do that). After that, changes made here go to the live site for everyone.`;
+const WRONG_PASSWORD = () => `You are using the Studio on your own computer, and it saves changes to the live site (${GLOBAL}). The live site didn't accept the password this computer uses, so nothing was saved. Easiest fix: make this change on the live site instead. To save from this computer, correct GLOBAL_PASSWORD in the studio/.env file to your own Studio password, then restart the Studio here (or ask whoever set it up to do that).`;
 let upstreamCookie = null;
 async function upstreamLogin() {
   const r = await fetch(`${GLOBAL}/api/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: GLOBAL_PASSWORD }), signal: AbortSignal.timeout(10_000) });
-  if (!r.ok) throw Object.assign(new Error(r.status === 403 ? "production rejected GLOBAL_PASSWORD" : `production login failed (${r.status})`), { status: r.status === 403 ? 403 : 502 });
+  if (!r.ok) throw Object.assign(new Error(r.status === 403 ? WRONG_PASSWORD() : `This copy of the Studio on your computer could not reach the live site (${GLOBAL}) to save your change, so nothing was saved. Try again in a moment, or make the change on the live site instead.`), { status: r.status === 403 ? 403 : 502 });
   upstreamCookie = (r.headers.get("set-cookie") ?? "").split(";")[0];
 }
 /** GET or PUT the deployment's producer state (or its playlists). PUT logs in with GLOBAL_PASSWORD first (once per process). */
 async function upstreamProducer(method, body, path = "/api/producer") {
   const writing = method !== "GET";
   if (writing) {
-    if (!GLOBAL_PASSWORD) throw Object.assign(new Error("Can't save to production from this laptop: add GLOBAL_PASSWORD (your own production password) to studio/.env and restart the local server"), { status: 403 });
+    if (!GLOBAL_PASSWORD) throw Object.assign(new Error(NOT_SET_UP()), { status: 403 });
     if (!upstreamCookie) await upstreamLogin();
   }
   let r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", ...(writing ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(writing ? 60_000 : 10_000) });
