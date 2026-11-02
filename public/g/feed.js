@@ -243,16 +243,18 @@ export function candTag(c) {
   const k = partyKey(c);
   return { cls: k, text: k === "yes" ? "YES" : k === "no" ? "NO" : partyLetter(c) };
 }
-/** The markers after a candidate's name. * always means incumbent on air, and any page showing one gets the key in its
- *  footer automatically (below), only while a marked name is actually on screen. A suspended campaign says so in words. */
-export const incStar = (c) => (c?.incumbent ? '<span class="incstar">*</span>' : "") + (c?.suspended ? '<span class="susmark" style="margin-left:.5em;font-size:.6em;font-weight:400;letter-spacing:.06em;text-transform:uppercase;opacity:.7">suspended</span>' : "");
+/** The markers after a candidate's name. * always means incumbent and † a suspended campaign on air, and any page showing one
+ *  gets the key in its footer automatically (below), only while a marked name is actually on screen. */
+export const incStar = (c) => (c?.incumbent ? '<span class="incstar">*</span>' : "") + (c?.suspended ? '<span class="susmark" style="font-size:.6em;vertical-align:super;line-height:0">†</span>' : "");
 if (typeof document !== "undefined") {
   const syncIncNote = () => {
     const first = document.querySelector(".foot")?.firstElementChild;
     if (!first) return;
-    const note = first.querySelector(".incnote"), need = !!document.querySelector(".incstar");
-    if (need && !note) first.insertAdjacentHTML("beforeend", '<span class="incnote"> · * Incumbent</span>');
-    else if (!need && note) note.remove();
+    for (const [mark, cls, text] of [[".incstar", "incnote", "* Incumbent"], [".susmark", "susnote", "† Suspended campaign"]]) {
+      const note = first.querySelector(`.${cls}`), need = !!document.querySelector(mark);
+      if (need && !note) first.insertAdjacentHTML("beforeend", `<span class="${cls}"> · ${text}</span>`);
+      else if (!need && note) note.remove();
+    }
   };
   document.addEventListener("DOMContentLoaded", () => { syncIncNote(); new MutationObserver(syncIncNote).observe(document.body, { childList: true, subtree: true }); });
 }

@@ -71,8 +71,6 @@ export const FEATURED_RACES = [
  *     greys it out with a placeholder and refuses to add it, and existing selections drop it cleanly;
  *   - a new chart gets a NEW id at the end of its series (B14, C10, D12, ...), never a freed one;
  *   - renaming a chart's page is fine; renaming its id is not;
- *   - a chart that joins a DEFAULTS list after launch carries added: "YYYY-MM-DD": the Studio puts it into a browser's saved
- *     lists once (studio.knownCharts), so an existing workbench sees a new default without Restore All Default Settings.
  */
 /** Every background a page can show behind its graphic: a keying colour, or one of the backplates in public/g/bg/.
  *  The id is the ?bg= value and the body class (bg-capitol); the label is what the Studio's dropdowns say. */
@@ -102,6 +100,7 @@ export const CHARTS = [
   { id: "B12", kind: "race", name: "Who voted for the independent", page: null,                built: false, unavailable: "needs an AP VoteCast licence" },
   { id: "B13", kind: "race", name: "Versus the 2024 presidential ticket, by area", page: "/g/swing.html", built: true },
   { id: "B14", kind: "race", name: "Head-to-head",                  page: "/g/head-to-head.html", built: true },
+  { id: "B15", kind: "race", name: "Race called",                   page: "/g/called.html", built: true },
   // C: the independent movement
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: true },
   { id: "C2",  kind: "movement", name: "Independents across the map", page: "/g/ind-map.html",              built: true },

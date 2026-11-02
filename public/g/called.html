@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="/g/theme-boot.js"></script>
+<meta charset="utf-8">
+<title>Race Called</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* B15: the race after AP's call, setup's companion (B2): the winner takes the frame, the final shares, the margin, a flip pill
+     if the seat changed hands, one line of history. ?id=<raceID>; ?line=… replaces the history line, which otherwise is the last
+     result for this seat. Until AP calls the race the card says so and names no winner. */
+  .body { display: grid; grid-template-columns: 430px minmax(0, 1fr); gap: 64px; min-height: 0; align-items: center; }
+  .body.nophoto { grid-template-columns: minmax(0, 1fr); }
+  .pic { width: 430px; height: 430px; border-radius: 8px; border: 6px solid var(--win); background: #1b2a4a center top / cover; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 150px; font-weight: 700; color: var(--muted); }
+  .body.nophoto .pic { display: none; }
+  .main { display: grid; gap: 22px; min-width: 0; }
+  .name { font-size: 92px; font-weight: 700; line-height: 1.05; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name .check { color: var(--win); margin-left: 16px; }
+  .wins { font-size: 34px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--win); }
+  .stats { display: flex; gap: 72px; margin-top: 8px; }
+  .stat .big { font-size: 96px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat.win .big { color: var(--win); }
+  .stat .lab { font-size: 28px; color: var(--muted); margin-top: 8px; white-space: nowrap; }
+  .marg { display: flex; align-items: center; gap: 18px; font-size: 34px; }
+  .marg b { color: var(--fg); }
+  .flip { font-size: 26px; font-weight: 700; letter-spacing: .08em; padding: 4px 16px; border-radius: 4px; background: var(--call, var(--gold)); color: var(--ind-fg, #1a1600); }
+  .line { font-size: 30px; color: var(--muted); }
+  .apcall { font-size: 30px; font-weight: 700; letter-spacing: .06em; padding: 6px 18px; border-radius: 4px; background: var(--call, var(--gold)); color: var(--ind-fg, #1a1600); white-space: nowrap; }
+  .when { font-size: 28px; color: var(--muted); text-align: right; } .when b { color: var(--fg); font-size: 44px; }
+  .wait { font-size: 64px; font-weight: 700; } .wait + .line { font-size: 34px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Race called</div><div class="title" id="title">Loading…</div></div><div id="chip"></div></div>
+  <div class="body nophoto" id="body"></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, candName, candTag, officeText, isMeasure, clock, clockS, incStar } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const raceId = q.get("id");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  let race = null, prior = null;
+  const partyWord = (c) => { const k = partyKey(c); return k === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.partyLabel ?? c.party; };
+  const seatLetter = (p) => (p === "Dem" ? "D" : p === "GOP" ? "R" : "I");
+  async function loadStatic() { try { prior = (await (await fetch("./baseline-federal.json")).json()).races?.[raceId] ?? null; } catch {} }
+  function historyLine() {
+    if (q.get("line")) return esc(q.get("line"));
+    if (!prior?.candidates?.length) return "";
+    const note = String(prior.note ?? "").replace(/\s*\(.*\)\s*$/, "");   // the note may repeat the names in parentheses
+    return `Last time, ${esc(prior.date.slice(0, 4))}${note ? `, ${esc(note)}` : ""}: ${prior.candidates.slice(0, 2).map((c) => `${esc(c.last)} ${Number(c.pct).toFixed(1)}%`).join(", ")}`;
+  }
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
+    const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
+    const w = race.called ? race.candidates.find((c) => c.winner) : null;
+    const inPct = Math.round(race.eevp || race.precinctsPct || 0);
+    if (!w) {   // never name a winner before AP does
+      $("chip").innerHTML = "";
+      $("body").className = "body nophoto";
+      $("body").innerHTML = `<div class="main"><div class="wait">AP has not called this race</div><div class="line">${race.totalVotes ? `${inPct}% of expected vote in` : "No results yet"}</div></div>`;
+      return;
+    }
+    const measure = isMeasure(race);
+    const loser = cands.find((c) => c.id !== w.id);
+    const color = PARTY_COLOR[partyKey(w)];
+    $("chip").innerHTML = `<span class="apcall">AP CALL</span>`;
+    $("body").className = `body ${measure ? "nophoto" : ""}`;
+    $("body").style.setProperty("--win", color);
+    const margin = loser ? w.pct - loser.pct : null;
+    const name = measure ? esc(race.title) : `${esc(w.name)}${incStar(w)}`;
+    const wins = measure ? (w.party === "Yes" ? "Passes" : "Fails") : `Wins · ${esc(partyWord(w))}`;
+    const initials = String(w.name ?? "").split(/\s+/).map((s) => s[0]).slice(0, 2).join("");
+    const stat = (c, cls) => `<div class="stat ${cls}"><div class="big">${Number(c.pct).toFixed(1)}%</div><div class="lab">${esc(measure ? c.party : `${candName(c)} (${candTag(c).text})`)}</div></div>`;
+    const flip = race.flipped && race.currentParty && !measure ? `<span class="flip">FLIP</span><span>${seatLetter(race.currentParty)} → ${esc(candTag(w).text)}</span>` : "";
+    const line = measure ? "" : historyLine();
+    $("body").innerHTML = `<div class="pic" style="${w.photo ? `background-image:url('${esc(w.photo)}')` : ""}">${w.photo ? "" : esc(initials)}</div>
+      <div class="main">
+        <div class="name" ${measure ? 'style="font-size:64px;white-space:normal"' : ""}>${name}<span class="check">✓</span></div>
+        <div class="wins">${wins}</div>
+        <div class="stats">${stat(w, "win")}${loser ? stat(loser, "") : ""}</div>
+        <div class="marg">${flip}${margin !== null ? `<span>Margin <b>+${margin.toFixed(1)}</b></span>` : ""}</div>
+        ${line ? `<div class="line">${line}</div>` : ""}
+        <div class="when"><b>${inPct}%</b> of expected vote in${race.calledAt ? ` · Called ${esc(clock(race.calledAt))}` : ""}</div>
+      </div>`;
+  }
+  connectFeed({
+    onSnapshot: async (s) => { race = s.races.get(raceId); await loadStatic(); render(); },
+    onUpdate: (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

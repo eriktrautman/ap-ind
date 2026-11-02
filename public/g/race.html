@@ -42,7 +42,7 @@
   .rows { display: grid; align-content: start; gap: 28px; }
   .row { display: grid; grid-template-columns: 560px 1fr 200px 300px; align-items: center; gap: 32px; font-size: 40px; }
   .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .name .party { display: inline-block; min-width: 56px; text-align: center; margin-right: 18px; padding: 2px 10px; border-radius: 4px; font-size: 28px; font-weight: 700; color: #fff; }
+  .name .party { position: relative; top: -4.5px; display: inline-block; min-width: 56px; text-align: center; margin-right: 18px; padding: 2px 10px; border-radius: 4px; font-size: 28px; font-weight: 700; color: #fff; }
   .name .check { color: #2ecc71; margin-left: 12px; font-weight: 700; }
   .bar { height: 48px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
   .bar i { display: block; height: 100%; width: 0; border-radius: 4px; transition: width 900ms cubic-bezier(.2,.8,.2,1); }
@@ -54,12 +54,13 @@
   .sus .party, .sus .bar i { background: #7b8494; color: #fff; }
   .yes .party, .yes .bar i { background: #22c55e; } .yes .party { color: #06230f; }   /* a measure's options */
   .no .party, .no .bar i { background: #f97316; } .no .party { color: #1a0d00; }
-  .row.featured .name { color: #e9d5ff; }
 
   .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 24px; border-top: 2px solid var(--rule); padding-top: 20px; }
   .dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #22c55e; margin-right: 10px; vertical-align: middle; }
   .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
   .empty { font-size: 40px; color: var(--muted); }
+  .row.featured { position: relative; }
+  .row.featured::before { content: ""; position: absolute; left: -32px; top: 50%; margin-top: -10px; border-left: 16px solid var(--fg); border-top: 10px solid transparent; border-bottom: 10px solid transparent; }   /* our candidate: a caret in the margin, keyed in the footer */
 </style>
 </head>
 <body>
@@ -70,7 +71,7 @@
   </div>
   <div class="rows" id="rows"></div>
   <div class="foot">
-    <span><span class="dot" id="dot"></span>Source: AP via lightship.media <span id="rtype"></span></span>
+    <span><span class="dot" id="dot"></span>Source: AP via lightship.media <span id="rtype"></span><span id="caretnote" hidden> · ▸ Featured candidate</span></span>
     <span id="updated"></span>
   </div>
 </div>
@@ -98,6 +99,7 @@
     const max = Math.max(1, ...race.candidates.map((c) => c.pct));
     const rows = $("rows");
     const seen = new Set();
+    let featuredShown = false;
     race.candidates.slice(0, MAX_ROWS).forEach((c) => {
       seen.add(c.id);
       let row = rows.querySelector(`[data-id="${c.id}"]`);
@@ -108,6 +110,7 @@
         rows.appendChild(row);
       }
       row.className = `row ${c.suspended ? "sus" : partyClass(c.party)} ${c.featured && !c.suspended ? "featured" : ""}`;
+      if (c.featured && !c.suspended) featuredShown = true;
       row.querySelector(".name").innerHTML =
         `<span class="party">${escape(candTag(c).text)}</span>${escape(candName(c, true))}` +
         incStar(c) + (c.winner ? '<span class="check">✓</span>' : "");
@@ -115,6 +118,7 @@
       row.querySelector(".pct").textContent = `${c.pct.toFixed(1)}%`;
       row.querySelector(".votes").textContent = fmt(c.votes);
     });
+    $("caretnote").hidden = !featuredShown;
     for (const el of [...rows.children]) if (!seen.has(el.dataset.id)) el.remove();
     // keep DOM order matching vote order
     [...rows.children].sort((a, b) => race.candidates.findIndex((c) => c.id === a.dataset.id) - race.candidates.findIndex((c) => c.id === b.dataset.id)).forEach((el) => rows.appendChild(el));

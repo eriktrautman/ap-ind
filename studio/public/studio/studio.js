@@ -777,6 +777,7 @@ $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_bl
 // chart's own parameters, saved on this page), an arrow with Publish and Pull, and the published page on the right.
 const SCREEN_PARAMS = {
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
+  B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
   B13: [{ k: "who", label: "Who", options: [["ind", "the independent vs the 2024 Democratic vote"], ["main", "the Republican vs the 2024 Trump vote"]] }],
   B11: [{ k: "quote", label: "Quote", ph: "empty = the curated quotes in turn" }, { k: "who", label: "Attribution", ph: "" }],
