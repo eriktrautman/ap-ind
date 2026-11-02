@@ -1529,6 +1529,32 @@ for (const id of ["ticker", "screens", "playlists", "detail", "broad", "movement
 
 // ---------- boot ----------
 let timers = [];
+// ---------- a reload comes back to the same place ----------
+// The page is built after it loads, so the browser's own restore finds a short page and lands at the top. The position is
+// kept per tab and put back once the content is drawn, and again as previews and lists settle, until the person scrolls.
+const SCROLL_KEY = "studio.scrollY";
+try { history.scrollRestoration = "manual"; } catch {}
+function keepScroll() {
+  let queued = false;
+  const save = () => { try { sessionStorage.setItem(SCROLL_KEY, String(Math.round(scrollY))); } catch {} };
+  addEventListener("scroll", () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; save(); }); }, { passive: true });
+  addEventListener("pagehide", save);
+}
+function restoreScroll() {
+  let y = NaN;
+  try { y = Number(sessionStorage.getItem(SCROLL_KEY)); } catch {}
+  const reload = performance.getEntriesByType("navigation")[0]?.type === "reload";
+  if (!reload || !(y > 0)) { keepScroll(); return; }
+  const put = () => scrollTo({ top: y, behavior: "instant" });
+  const ro = new ResizeObserver(put);
+  const stop = () => { ro.disconnect(); clearTimeout(timer); for (const ev of USER_SCROLL) removeEventListener(ev, stop, true); keepScroll(); };
+  const USER_SCROLL = ["wheel", "touchstart", "keydown", "mousedown"];
+  for (const ev of USER_SCROLL) addEventListener(ev, stop, { capture: true, passive: true });
+  const timer = setTimeout(stop, 5000);
+  ro.observe(document.body);
+  put();
+}
+
 async function boot() {
   timers.forEach(clearInterval);
   draft = readLocal() ?? normalize(DEFAULTS);
@@ -1539,6 +1565,7 @@ async function boot() {
   await loadRuntime();
   await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists()]);
   renderAll();
+  restoreScroll();
   timers = [setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
