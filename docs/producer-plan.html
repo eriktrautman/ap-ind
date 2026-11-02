@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T20:52:51Z",
+  updated: "2026-11-02T20:55:47Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -282,6 +282,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T20:55:47Z", what: "B13: teal for ahead of the 2024 ticket and slate gray for behind, so neither reads as a party; the map's key is no longer clipped." },
   { t: "2026-11-02T20:52:51Z", what: "Chart Catalog cards lose their Copy URL button and gain a ⋯ menu: add to playlist, copy URL, star. A starred chart has a halo in the catalog and a small star on its cards and in the chart dropdowns, per browser." },
   { t: "2026-11-02T20:49:06Z", what: "A2 to A6 follow the geniots lower-third sheet under its stylesheet: square red tabs, the white-to-grey band in navy, navy lines; A2 and A4 carry the logo block where the sheet has it, with an optional live tab on A2. A4 no longer shows a sliver of its band with no call on screen. A producer's playlist actions move into one Options menu, which adds rename and delete for a person; deleting warns what goes and that it can't be undone." },
   { t: "2026-11-02T20:43:41Z", what: "Playlist cards are the Chart Catalog's size: five to a row on a full-width page, fewer on a narrow screen." },
