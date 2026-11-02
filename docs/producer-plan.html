@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T20:29:47Z",
+  updated: "2026-11-02T20:35:01Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -282,6 +282,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T20:35:01Z", what: "Race Catalog: closed by default, more room under the filters, and a star in place of the percent counted. A star keeps a race in a separate group at the top of the list and the race pickers, per browser, and changes nothing else; the slate's races start starred. It replaces the slate marks and filter there." },
   { t: "2026-11-02T20:29:47Z", what: "C6: short of 2022 the whole ring is 2022's share and gold fills toward it, with the center saying how far along. Past 2022 the whole ring is tonight's share, 2022 is the hatched part, the gold pushes beyond it and the center says +X% ahead of 2022. The key is centered under the ring." },
   { t: "2026-11-02T20:25:54Z", what: "Playlists replace the Slate, Races, Movement and Persistent Elements sections (S130). General -> Slate is the same as Ryan's, General -> Race Overview holds the D charts the Races section showed, General -> Movement Overview holds C1, C6 and C7. Production's stored playlists gain General once when read, and the next write records it so a removal sticks. Both catalogs add to a playlist directly; lower thirds take their inputs in the playlist's chart form. The slate stays a fixed set of six races: a star and a filter in the Race Catalog, nothing to edit." },
   { t: "2026-11-02T20:11:12Z", what: "Kevin Kiley no longer carries the incumbent mark: AP flags him, but CA-6 is a new district; the poller clears the flag for every output. Slate, Races, Movement and Persistent are closed by default in the Studio. The landing page ticker and its card thumbnail take the geniots look, with the Election Night logo." },

@@ -132,6 +132,11 @@ let draft = normalize(DEFAULTS);   // everything on this page, saved in this bro
 const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
 const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
 const SLATE_IDS = FEATURED_RACES.map((r) => r.id);
+// Starred races: a browser's own shortlist, the slate until it changes. A star only moves a race to the top of the Race
+// Catalog and of the race pickers; it is not part of any state, so no output or preview can tell.
+const STARS_KEY = "studio.starredRaces";
+let starred = (() => { try { const v = JSON.parse(localStorage.getItem(STARS_KEY) ?? "null"); return Array.isArray(v) ? new Set(v) : new Set(SLATE_IDS); } catch { return new Set(SLATE_IDS); } })();
+function saveStars() { try { localStorage.setItem(STARS_KEY, JSON.stringify([...starred])); } catch {} }
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
 const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
@@ -395,9 +400,10 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, and every Background and Opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races, and every Background and Opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
+  starred = new Set(SLATE_IDS); saveStars();
   display = { top: { bg: DEFAULT_BG, opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: the default background at 100%
   renderAll(); cards.broadcast(draft);
 }
@@ -512,9 +518,8 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
 // ---------- shared race rendering ----------
 const cands = (r) => r.candidates.slice(0, 3).map((c) => `${esc(c.last ?? c.name)} ${partyLetter(c) ? `(${partyLetter(c)})` : ""}${r.totalVotes ? ` ${Number(c.pct).toFixed(1)}%` : ""}`).join(" · ");
 const indName = (r) => FEATURED_RACES.find((f) => f.id === r.id)?.who ?? r.candidates.find((c) => c.featured)?.name ?? r.candidates.find((c) => c.independent)?.name ?? null;
-const ICON_FEAT = '<span class="sic feat" title="On the slate"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3 .8 4.4L8 11.5l-3.9 2.1.8-4.4-3.2-3 4.4-.6z" fill="currentColor"/></svg></span>';
 const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M1 4h14v8H1z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 8h6M11 8h1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
-const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${SLATE_IDS.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
+const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
 function raceBand(r) {
   const who = indName(r);
   return `<div class="raceband"><span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
@@ -569,7 +574,7 @@ function renderSeq() {
   const items = draft.tickerItems;
   const flat = expandTicker(draft);
   $("seqcount").textContent = `${items.length} element${items.length === 1 ? "" : "s"} · ${flat.length} piece${flat.length === 1 ? "" : "s"} crawl`;
-  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the slate's races crawl. Add races, text or a chunk below.</div>`;
+  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the default races crawl. Add races, text or a chunk below.</div>`;
   // Like the two boxes above it, the dropdown opens on its helper text; the chunks follow.
   $("chunkpick").innerHTML = `<option value="" selected>${draft.chunks.length ? "Add a chunk: choose one built below" : "Add a chunk: none built yet, build one below"}</option>` + draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
   $("addchunkref").querySelector("button").disabled = !draft.chunks.length;
@@ -754,9 +759,9 @@ function screenLiveUrl(key) { const s = displayParams({ bg: "", opacity: secDisp
 function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity }); }
 function raceOptions(selected) {
   if (!index) return "";
-  const feat = SLATE_IDS.map((id) => index.byId.get(id)).filter(Boolean);
+  const feat = index.races.filter((r) => starred.has(r.id)).sort((a, b) => a.label.localeCompare(b.label));
   const opt = (r) => `<option value="${esc(r.label)}" ${selected === r.label ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)} · ${esc(r.title)}</option>`;
-  return `<optgroup label="The slate">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
+  return `<optgroup label="Starred">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
 }
 function stateOptions(selected) {
   const states = index ? [...new Set(index.races.map((r) => r.state))].sort() : FEATURED_RACES.map((r) => r.state);
@@ -1164,7 +1169,7 @@ async function specDialog(spec, { title, ok }) {
     const q = input.value.trim().toLowerCase();
     let rows = index.races.filter((r) => !skip.has(r.id));
     if (q) rows = rows.filter((r) => `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase().includes(q));
-    else rows = rows.filter((r) => SLATE_IDS.includes(r.id) || r.hasIndependent).sort((a, b) => (SLATE_IDS.includes(b.id) - SLATE_IDS.includes(a.id)) || a.label.localeCompare(b.label));
+    else rows = rows.filter((r) => starred.has(r.id) || r.hasIndependent).sort((a, b) => (starred.has(b.id) - starred.has(a.id)) || a.label.localeCompare(b.label));
     rows = rows.slice(0, 12);
     box.hidden = false;
     box.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-id="${r.id}"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") + (!q ? `<div class="empty">Type to search all ${index.races.length} races.</div>` : "") : `<div class="empty">No races match.</div>`;
@@ -1189,7 +1194,7 @@ function cmatches(r) {
   if (st && r.state !== st) return false;
   if (off === "statewide" ? r.kind !== "statewide" : off && r.office !== off) return false;
   if (cfilters.has("ind") && !r.hasIndependent) return false;
-  if (cfilters.has("slate") && !SLATE_IDS.includes(r.id)) return false;
+  if (cfilters.has("starred") && !starred.has(r.id)) return false;
   if (cfilters.has("ticker") && !draft.pinnedRaceIds.includes(r.id)) return false;
   if (cfilters.has("called") && !r.called) return false;
   if (cfilters.has("counting") && (r.called || !r.totalVotes)) return false;
@@ -1198,14 +1203,17 @@ function cmatches(r) {
 }
 function renderCatalog() {
   if (!index) return;
-  const rows = index.races.filter(cmatches).sort((a, b) => a.state.localeCompare(b.state) || a.label.localeCompare(b.label));
+  const rows = index.races.filter(cmatches).sort((a, b) => (starred.has(b.id) - starred.has(a.id)) || a.state.localeCompare(b.state) || a.label.localeCompare(b.label));
   $("ccount").textContent = `${rows.length} of ${index.races.length} races`;
   const list = $("catalogList"); list.innerHTML = "";
+  let wasStarred = false;
   for (const r of rows.slice(0, 300)) {
+    if (wasStarred && !starred.has(r.id)) list.insertAdjacentHTML("beforeend", `<div class="cgap"></div>`);
+    wasStarred = starred.has(r.id);
     const crow = document.createElement("div"); crow.className = `crow ${openRaces.has(r.id) ? "open" : ""}`; crow.dataset.id = r.id;
     const onTicker = draft.pinnedRaceIds.includes(r.id);
     crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
-      <div class="btns"><span class="nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</span><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button></div></div>`;
+      <div class="btns"><button class="starbtn ${starred.has(r.id) ? "on" : ""}" data-star="${r.id}" aria-pressed="${starred.has(r.id)}" title="${starred.has(r.id) ? "Starred: kept at the top of this list. Press to unstar" : "Star: keep this race at the top of this list"}">${starred.has(r.id) ? "★" : "☆"}</button><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button></div></div>`;
     if (openRaces.has(r.id)) crow.appendChild(catalogBody(r));
     list.appendChild(crow);
   }
@@ -1226,6 +1234,8 @@ function catalogBody(r) {
   return body;
 }
 $("catalogList").addEventListener("click", (e) => {
+  const star = e.target.closest("[data-star]");
+  if (star) { const id = star.dataset.star; starred.has(id) ? starred.delete(id) : starred.add(id); saveStars(); renderCatalog(); cards.prune(); return; }
   if (e.target.closest("[data-pin], .gcard")) return;
   const crow = e.target.closest(".crow"); if (!crow || !e.target.closest(".row")) return;
   const id = crow.dataset.id;
@@ -1253,7 +1263,7 @@ function renderChartCatalog() {
       grid.appendChild(el);
     }
   }
-  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="muted small" style="grid-column:1/-1">Previews use ${esc(sample.label)}, the first race on the slate.</div>`);
+  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="muted small" style="grid-column:1/-1">Previews use ${esc(sample.label)}.</div>`);
 }
 
 // ---------- the (i) panels: what the strips' controls do, in plain English (the same words as their hover titles) ----------
