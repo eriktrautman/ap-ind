@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T20:43:41Z",
+  updated: "2026-11-02T20:44:16Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -282,7 +282,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
-  { t: "2026-11-02T20:43:41Z", what: "Playlists show six cards to a row, at whatever size that makes; fewer on a narrow screen." },
+  { t: "2026-11-02T20:43:41Z", what: "Playlist cards are the Chart Catalog's size: five to a row on a full-width page, fewer on a narrow screen." },
   { t: "2026-11-02T20:40:27Z", what: "C6: one lap of the ring is 2022's share. Chasing it, the fat gold arc fills the gray track; past it, the finished lap becomes a thin gold circle in the middle of the band and the fat arc starts again from the top with whatever is beyond. No hatching. Race Catalog: the starred races sit inside a star-colored border instead of above a filled gap." },
   { t: "2026-11-02T20:36:57Z", what: "Mike Marvin (NE-SEN) is marked suspended: the poller flags him, his tag and bar go gray, and the word suspended follows his name wherever names carry the incumbent mark. He stays on the ballot and his votes still count." },
   { t: "2026-11-02T20:35:01Z", what: "Race Catalog: closed by default, more room under the filters, and a star in place of the percent counted. A star keeps a race in a separate group at the top of the list and the race pickers, per browser, and changes nothing else; the slate's races start starred. It replaces the slate marks and filter there." },

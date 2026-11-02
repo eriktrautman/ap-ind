@@ -205,9 +205,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .plbar button { padding: 4px 10px; font-size: 12.5px; }
 .plbar button.primary { background: var(--navy); color: #fff; border-color: var(--navy); }
 .plbar .plmeta { color: var(--muted); font-size: 12px; }
-#plbody .cardgrid { padding: 10px 0 0; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 22px 8px; }   /* six to a row, air between rows */
-@media (max-width: 900px) { #plbody .cardgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 560px) { #plbody .cardgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+#plbody .cardgrid { padding: 10px 0 0; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 22px 10px; }   /* the Chart Catalog's card size, air between rows */
 #plbody .gcard, .splist .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */
 #plbody .gcard .thumb, .splist .gcard .thumb { border-radius: 0 0 8px 8px; }
 #plbody .gcard .ghead .menu { right: 0; min-width: 180px; font-size: 12px; }
