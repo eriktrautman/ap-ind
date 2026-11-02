@@ -19,7 +19,7 @@
   .title { font-size: 56px; font-weight: 700; letter-spacing: -0.01em; }
   .title small { font-size: 30px; font-weight: 400; color: var(--muted); margin-left: 18px; }
   .reporting { font-size: 30px; color: var(--muted); } .reporting b { color: var(--fg); }
-  .side { display: grid; grid-template-rows: auto auto 1fr; gap: 18px; min-height: 0; min-width: 0; overflow: hidden; }
+  .side { display: grid; gap: 18px; align-content: start; min-height: 0; min-width: 0; overflow: hidden; }
   .headline { font-size: 34px; line-height: 1.2; }
   .ahead { color: var(--gold); } .behind { color: #B4BDD3; }   /* ahead of the 2024 ticket gold, the independents' colour; behind slate gray (lighter as text, so it reads on the panel). Neither can read as Democrat or Republican */
   .body { display: grid; grid-template-columns: 1fr 600px; grid-template-rows: minmax(0, 1fr); gap: 56px; min-height: 0; overflow: hidden; }
@@ -37,15 +37,14 @@
   .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
   .empty { font-size: 36px; color: var(--muted); align-self: center; text-align: center; }
   .foot > span { white-space: nowrap; }
-  .side .reporting { align-self: end; justify-self: end; font-size: 28px; color: var(--muted); white-space: nowrap; } .side .reporting b { font-size: 44px; color: var(--fg); }
 </style>
 </head>
 <body>
 <div class="panel">
-  <div class="head"><div><div class="kicker">Historical comparison</div><div class="title" id="title">Loading…</div></div></div>
+  <div class="head"><div><div class="kicker">Historical comparison</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="map"><svg id="map" viewBox="0 0 900 560"></svg><div class="legend" id="legend"></div></div>
-    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:40%">County</th><th class="r" id="th-then">2024</th><th class="r">In</th><th class="r" id="th-now">2026</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div><div class="reporting" id="reporting"></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:40%">County</th><th class="r" id="th-then">2024</th><th class="r">In</th><th class="r" id="th-now">2026</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, tonight and 2024 · like-for-like over areas reporting</span><span id="updated"></span></div>
 </div>

@@ -16,7 +16,6 @@
   .row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row .bar { height: 30px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; } .row .bar i { display: block; height: 100%; border-radius: 4px; }
   .row .pc { text-align: right; font-weight: 700; }
-  .row.lane .nm { color: #fde68a; }
   .headline { font-size: 40px; font-weight: 700; line-height: 1.2; }
   .headline b { color: var(--gold); } .headline small { display: block; font-size: 24px; font-weight: 400; color: var(--muted); margin-top: 4px; }
   table { font-size: 25px; } th, td { padding: 5px 8px; }
@@ -36,7 +35,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · same counties, 10%+ of the expected vote in</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, candTag, candName, isMeasure, officeText, normName, isFeaturedCand, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, partyClass, candTag, candName, isMeasure, officeText, normName, isFeaturedCand, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), who = q.get("who") ?? "ind", bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -58,7 +57,7 @@
       ?? pc.find((c) => c.independent) ?? pc.find((c) => c.party !== pc[0].party) ?? pc[1] ?? pc[0];
   }
   const isInd = (c) => c.featured || c.independent || isFeaturedCand(c.id);
-  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm"><span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
+  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm">${featArrow(c)}<span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
 
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }

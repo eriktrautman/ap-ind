@@ -246,11 +246,22 @@ export function candTag(c) {
 /** The markers after a candidate's name. * always means incumbent and † a suspended campaign on air, and any page showing one
  *  gets the key in its footer automatically (below), only while a marked name is actually on screen. */
 export const incStar = (c) => (c?.incumbent ? '<span class="incstar">*</span>' : "") + (c?.suspended ? '<span class="susmark" style="font-size:.6em;vertical-align:super;line-height:0">†</span>' : "");
+/** The arrow beside our candidate wherever a list mixes them with others; keyed in the footer automatically (below). An empty
+ *  vertical-align:middle box puts it on the same centre line as the party tags. Hanging, the shape is position:absolute with no
+ *  offsets, so it stays on that line, sits left of the name's start so tags stay aligned down the list, and escapes a name cell's
+ *  overflow. hang=false takes up room in the line instead, for a list with no margin to hang in. beforeText lifts it a touch for a
+ *  name with no tag beside it: capitals centre higher than the tag line does. */
+export function featArrow(c, hang = true, beforeText = false) {
+  if (!c || c.suspended || isOption(c) || !isFeaturedCand(c.id)) return "";   // the slate's six only: c.featured also covers every independent in other races
+  const shape = "display:block;width:0;height:0;border-left:.42em solid var(--fg,#f4f6fa);border-top:.26em solid transparent;border-bottom:.26em solid transparent;";
+  const top = beforeText ? "-.36em" : "-.26em";
+  return `<span class="featmark" style="display:inline-block;width:${hang ? "0" : ".72em"};height:0;vertical-align:middle"><span class="featshape" style="${shape}margin-top:${top};${hang ? "position:absolute;margin-left:-.72em" : ""}"></span></span>`;
+}
 if (typeof document !== "undefined") {
   const syncIncNote = () => {
     const first = document.querySelector(".foot")?.firstElementChild;
     if (!first) return;
-    for (const [mark, cls, text] of [[".incstar", "incnote", "* Incumbent"], [".susmark", "susnote", "† Suspended campaign"]]) {
+    for (const [mark, cls, text] of [[".featmark", "featnote", "▸ Featured candidate"], [".incstar", "incnote", "* Incumbent"], [".susmark", "susnote", "† Suspended campaign"]]) {
       const note = first.querySelector(`.${cls}`), need = !!document.querySelector(mark);
       if (need && !note) first.insertAdjacentHTML("beforeend", `<span class="${cls}"> · ${text}</span>`);
       else if (!need && note) note.remove();

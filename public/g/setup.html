@@ -30,7 +30,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · public polls</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand, isMeasure, clock, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, partyKey, PARTY_COLOR, officeText, isFeaturedCand, isMeasure, clock, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id");
@@ -50,7 +50,7 @@
     $("cands").innerHTML = cands.map((c) => {
       const b = bios?.get(c.id) ?? {};
       const lab = b.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : partyKey(c) === "yes" ? "Vote Yes" : partyKey(c) === "no" ? "Vote No" : c.party);
-      return `<div class="cand"><div class="pic" style="${c.photo ? `background-image:url('${c.photo}')` : ""}"></div><div><div class="nm" style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.name)}${incStar(c)}<small>${esc(lab)}</small></div><div class="sub">${esc(b.occupation ?? b.priorOffices ?? "")}</div></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) + "%" : ""}</div></div>`;
+      return `<div class="cand"><div class="pic" style="${c.photo ? `background-image:url('${c.photo}')` : ""}"></div><div><div class="nm" style="color:${PARTY_COLOR[partyKey(c)]}">${featArrow(c, false, true)}${esc(c.name)}${incStar(c)}<small>${esc(lab)}</small></div><div class="sub">${esc(b.occupation ?? b.priorOffices ?? "")}</div></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) + "%" : ""}</div></div>`;
     }).join("");
     const holder = race.currentParty ? `${race.currentParty === "Dem" ? "Democratic" : race.currentParty === "GOP" ? "Republican" : race.currentParty}-held seat` : "Open seat";
     const inc = race.candidates.find((c) => c.incumbent);

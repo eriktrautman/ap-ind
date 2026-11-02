@@ -15,7 +15,6 @@
   .row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .row .bar { height: 40px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; } .row .bar i { display: block; height: 100%; }
   .row .pc { text-align: right; font-weight: 700; }
-  .row.ind .nm { color: #fde68a; }
   .meta { margin-top: 20px; display: flex; gap: 16px; align-items: center; font-size: 26px; color: var(--muted); }
   .pill { display: inline-block; font-size: 22px; font-weight: 700; padding: 4px 14px; border-radius: 4px; letter-spacing: .04em; }
   .pill.call { background: var(--gold); color: #1a1600; } .pill.counting { background: #2a3a5c; color: #fff; } .pill.open { background: #16213a; color: var(--muted); border: 1px solid var(--rule); }
@@ -35,7 +34,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · too close: under 3 points, over 25% in</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, candTag, candName, officeText, PARTY_COLOR, raceState, fmt, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, partyKey, candTag, candName, officeText, PARTY_COLOR, raceState, fmt, clockS, incStar } from "./feed.js";
   import { watchState } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -52,14 +51,14 @@
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("k").textContent = `${race.label} · ${race.stateName} · ${officeText(race)}`;
-    $("rows").innerHTML = cands.map((c) => `<div class="row ${partyKey(c)}"><div class="nm"><span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}">${esc(candTag(c).text)}</span>${esc(candName(c))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${c.pct / max * 100}%;background:${PARTY_COLOR[partyKey(c)]}"></i></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) : "—"}</div></div>`).join("");
+    $("rows").innerHTML = cands.map((c) => `<div class="row ${partyKey(c)}"><div class="nm">${featArrow(c)}<span class="tag ${partyKey(c) === "oth" ? "ind" : partyKey(c)}">${esc(candTag(c).text)}</span>${esc(candName(c))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${c.pct / max * 100}%;background:${PARTY_COLOR[partyKey(c)]}"></i></div><div class="pc">${race.totalVotes ? Number(c.pct).toFixed(1) : "—"}</div></div>`).join("");
     const pill = st.status === "called" ? `<span class="pill call">AP CALL</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(race.eevp || race.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">POLLS CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
     $("meta").innerHTML = `${pill}<span>${st.margin !== null ? `${esc(st.cand.last)} ${st.margin >= 0 ? "+" : ""}${st.margin.toFixed(1)} · ${fmt(race.totalVotes)} votes` : ""}</span>`;
     const inPct = race.eevp || race.precinctsPct || 0;
     const head = st.status === "called" ? `AP calls it for ${st.cand.last}${race.flipped ? " · a flip" : ""}` : st.status === "leading" ? (Math.abs(st.margin) < 3 && inPct > 25 ? "Too close to call" : inPct < 25 ? "Early returns" : `${st.cand.last} leads`) : st.status === "closed" ? "Polls closed, counting to begin" : "Polls open";
     $("h").textContent = head;
     $("ctx").className = `ctx ${context ? "" : "none"}`;
-    $("ctx").textContent = context || "No context line set. Type one in the Studio under Race Detail.";
+    $("ctx").textContent = context || "";
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   watchState({ onState: (s) => { context = s.contextLines?.[raceId] ?? ""; render(); } });

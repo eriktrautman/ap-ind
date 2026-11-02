@@ -18,21 +18,22 @@
   .map svg { width: 100%; height: 100%; display: block; }
   .legend { position: absolute; left: 24px; bottom: 18px; display: flex; gap: 22px; font-size: 22px; color: var(--muted); }
   .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; vertical-align: -3px; margin-right: 8px; }
-  .side { display: grid; grid-template-rows: auto auto 1fr; gap: 18px; min-height: 0; min-width: 0; overflow: hidden; }
+  .side { display: grid; gap: 18px; align-content: start; min-height: 0; min-width: 0; overflow: hidden; }
   .headline { font-size: 34px; line-height: 1.2; } .headline b { color: var(--gold); }
   table { font-size: 24px; table-layout: fixed; } th, td { padding: 7px 6px; overflow: hidden; text-overflow: ellipsis; }
   .foot > span { white-space: nowrap; }
-  .side .reporting { align-self: end; justify-self: end; font-size: 28px; color: var(--muted); white-space: nowrap; } .side .reporting b { font-size: 44px; color: var(--fg); }
+  .panel { grid-template-columns: minmax(0, 1fr); } .head > div:first-child { min-width: 0; }   /* a long measure title shortens rather than pushing the panel wide */
+  .body { grid-template-columns: minmax(0, 1fr) 600px; }
 </style>
 </head>
 <body>
 <div class="panel">
-  <div class="head"><div><div class="kicker">Path to victory</div><div class="title" id="title">Loading…</div></div></div>
+  <div class="head"><div><div class="kicker">Path to victory</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="map"><svg id="map" viewBox="0 0 980 640"></svg><div class="legend" id="legend"></div></div>
-    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:40%">County</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th><th class="r" id="th-diff">Diff</th></tr></thead><tbody id="rows"></tbody></table></div><div class="reporting" id="reporting"></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:40%">County</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th><th class="r" id="th-diff">Diff</th></tr></thead><tbody id="rows"></tbody></table></div></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · <span id="foot-note"></span></span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media<span id="foot-note"></span></span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -44,6 +45,13 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const MIN_IN = 10;   // as B13: a county counts as reporting once this much of its vote is in
+  /** Fine diagonal lines on the empty colour: the same on every county map, for a county without enough of the vote in. */
+  function ensureHatch(svg) {
+    if (!svg.select("#notcounted").empty()) return;
+    const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
+    pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a");
+    pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
+  }
   let race = null, counties = null, prior = null, geo = null;
   const unitKey = (u) => geo.kind === "county" ? String(u.fips) : normName(u.name);
   const featKey = (d) => geo.kind === "county" ? String(d.id) : normName(d.properties.name);
@@ -58,16 +66,16 @@
     $("title").innerHTML = `${esc(race.title || race.officeName)} <small>${esc(race.stateName)} · path to passage</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("th-area").textContent = "Biggest county"; $("th-then").textContent = "Yes"; $("th-now").textContent = "No"; $("th-diff").hidden = true;
-    $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.yes}"></i>Yes leading</span><span><i style="background:${PARTY_COLOR.no}"></i>No leading</span><span><i style="background:#1b2a4a"></i>no results</span>`;
+    $("legend").innerHTML = `<span><i style="background:${PARTY_COLOR.yes}"></i>Yes leading</span><span><i style="background:${PARTY_COLOR.no}"></i>No leading</span><span><i class="none"></i>under ${MIN_IN}% in</span>`;
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     const rows = (counties ?? []).map((u) => { const y = u.votes[yes?.id] ?? 0, n = u.votes[no?.id] ?? 0, tot = y + n; return { k: unitKey(u), name: u.name, yes: tot ? y / tot * 100 : null, no: tot ? n / tot * 100 : null, tot, inPct: u.eevp || u.precinctsPct || 0 }; });
     const byKey = new Map(rows.map((r) => [r.k, r]));
     if (geo) {
       const svg = d3.select("#map");
+      ensureHatch(svg);
       const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
       sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
-        .attr("fill", (d) => { const r = byKey.get(featKey(d)); return r?.tot ? (r.yes >= 50 ? PARTY_COLOR.yes : PARTY_COLOR.no) : "#1b2a4a"; })
-        .attr("fill-opacity", (d) => { const r = byKey.get(featKey(d)); return r?.tot ? 0.35 + Math.min(1, r.inPct / 100) * 0.65 : 1; });
+        .style("fill", (d) => { const r = byKey.get(featKey(d)); return r?.tot && r.inPct >= MIN_IN ? (r.yes >= 50 ? PARTY_COLOR.yes : PARTY_COLOR.no) : "url(#notcounted)"; });
     }
     const reporting = rows.filter((r) => r.tot > 0);
     $("headline").innerHTML = !race.totalVotes ? `<span class="note">Passes with a majority of votes cast. No results yet.</span>`
@@ -86,7 +94,7 @@
     if (!prior || !geo) { $("headline").innerHTML = `<span class="note">No county-level prior result on file for this seat.</span>`; $("rows").innerHTML = ""; return; }
     const lane = laneFor(cand);
     const year = prior.date.slice(0, 4);
-    $("th-then").textContent = year; $("th-now").textContent = "2026"; $("foot-note").textContent = lane.last === cand.last ? `Both years are ${cand.last}'s share` : `${year} is ${lane.last}'s share, 2026 is ${cand.last}'s`;
+    $("th-then").textContent = year; $("th-now").textContent = "2026"; $("foot-note").textContent = lane.last === cand.last ? ` · Both years are ${cand.last}'s share` : ` · ${year} is ${lane.last}'s share, 2026 is ${cand.last}'s`;
     const byKey = new Map(Object.entries(prior.units).map(([fips, u]) => [geo.kind === "county" ? String(fips) : normName(u.name), { ...u, fips }]));
     const nowBy = new Map((counties ?? []).map((u) => [unitKey(u), u]));
     const rows = [...byKey.entries()].map(([k, b]) => {
@@ -104,11 +112,7 @@
     const scale = d3.scaleLinear().domain([0, maxShare]).range([0.12, 1]);
     const rowOf = (d) => rows.find((x) => x.k === featKey(d));
     const svg = d3.select("#map");
-    if (svg.select("#notcounted").empty()) {   // the same hatching as B13: fine diagonal lines on the empty colour
-      const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
-      pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a");
-      pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
-    }
+    ensureHatch(svg);
     const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
     sel.enter().append("path").attr("d", geo.path).merge(sel)
       .style("fill", (d) => { const r = rowOf(d); if (!r) return "#1b2a4a"; if (!counting) return color; return r.counted ? (r.ahead ? "var(--gold)" : "#6B7694") : "url(#notcounted)"; })

@@ -76,7 +76,7 @@
   </div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, candTag, candName, officeText, fmt, clockS, incStar } from "./feed.js";
+  import { isFeaturedCand, connectFeed, freshness, partyClass, candTag, candName, officeText, fmt, clockS, incStar } from "./feed.js";
 
   const params = new URLSearchParams(location.search);
   const raceId = params.get("id");
@@ -109,8 +109,8 @@
         row.innerHTML = `<div class="name"></div><div class="bar"><i></i></div><div class="pct"></div><div class="votes"></div>`;
         rows.appendChild(row);
       }
-      row.className = `row ${c.suspended ? "sus" : partyClass(c.party)} ${c.featured && !c.suspended ? "featured" : ""}`;
-      if (c.featured && !c.suspended) featuredShown = true;
+      row.className = `row ${c.suspended ? "sus" : partyClass(c.party)} ${isFeaturedCand(c.id) && !c.suspended ? "featured" : ""}`;
+      if (isFeaturedCand(c.id) && !c.suspended) featuredShown = true;
       row.querySelector(".name").innerHTML =
         `<span class="party">${escape(candTag(c).text)}</span>${escape(candName(c, true))}` +
         incStar(c) + (c.winner ? '<span class="check">✓</span>' : "");

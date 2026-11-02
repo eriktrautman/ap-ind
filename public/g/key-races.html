@@ -15,7 +15,6 @@
   .kc .cands { display: grid; gap: 8px; align-content: start; }
   .kc .c { display: grid; grid-template-columns: 1fr auto; font-size: 28px; gap: 10px; }
   .kc .c .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .kc .c.ind .nm { color: #fde68a; font-weight: 600; }
   .kc .c .pc { font-weight: 700; }
   .pill { display: inline-block; font-size: 20px; font-weight: 700; padding: 3px 12px; border-radius: 4px; letter-spacing: .04em; justify-self: start; }
   .pill.call { background: var(--gold); color: #1a1600; } .pill.counting { background: #2a3a5c; color: #fff; } .pill.open { background: #16213a; color: var(--muted); border: 1px solid var(--rule); }
@@ -25,10 +24,10 @@
 <div class="panel">
   <div class="head"><div><div class="kicker">Key races</div><div class="title" id="title">Where it stands</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body" id="grid"></div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · gold edge = featured race · the producer picks these eight in the Studio</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · gold edge = featured race</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, raceState, partyKey, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, raceState, partyKey, clockS, incStar } from "./feed.js";
   import { watchState } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -44,7 +43,7 @@
       const st = raceState(r);
       const cands = [...r.candidates].sort((a, b) => b.votes - a.votes).slice(0, 2);
       const pill = st.status === "called" ? `<span class="pill call">AP CALL</span>` : st.status === "leading" ? `<span class="pill counting">${Math.round(r.eevp || r.precinctsPct)}% IN</span>` : st.status === "closed" ? `<span class="pill open">CLOSED</span>` : `<span class="pill open">POLLS OPEN</span>`;
-      return `<div class="kc ${featured.has(r.id) ? "featured" : ""}"><div class="lab">${esc(r.label)}<small>${esc(r.stateName)}</small></div><div class="cands">${cands.map((c) => `<div class="c ${partyKey(c)}"><span class="nm">${esc(c.last)}${incStar(c)}${c.winner ? " ✓" : ""}</span><span class="pc">${r.totalVotes ? Number(c.pct).toFixed(1) : ""}</span></div>`).join("")}</div>${pill}</div>`;
+      return `<div class="kc ${featured.has(r.id) ? "featured" : ""}"><div class="lab">${esc(r.label)}<small>${esc(r.stateName)}</small></div><div class="cands">${cands.map((c) => `<div class="c ${partyKey(c)}"><span class="nm">${featArrow(c, true, true)}${esc(c.last)}${incStar(c)}${c.winner ? " ✓" : ""}</span><span class="pc">${r.totalVotes ? Number(c.pct).toFixed(1) : ""}</span></div>`).join("")}</div>${pill}</div>`;
     }).join("") || `<div class="empty" style="grid-column:1/-1">No key races selected.</div>`;
     $("updated").textContent = `Updated ${clockS()}`;
   }

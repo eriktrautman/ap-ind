@@ -13,13 +13,13 @@
   .map svg { width: 100%; height: 100%; display: block; }
   .legend { position: absolute; left: 24px; bottom: 18px; display: flex; gap: 22px; font-size: 22px; color: var(--muted); flex-wrap: wrap; }
   .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; vertical-align: -3px; margin-right: 8px; }
-  .legend i.pale { opacity: .4; }
+  .legend i.must { box-sizing: border-box; border: 3px solid #fff; }
+  .legend i.none { background: repeating-linear-gradient(45deg, #3a4c74 0 2px, #1b2a4a 2px 7px); }
   .side { display: grid; grid-template-rows: auto 1fr; gap: 18px; min-height: 0; overflow: hidden; }
   .totals { display: grid; gap: 10px; }
   .trow { display: grid; grid-template-columns: 1fr 120px 170px; align-items: center; gap: 14px; font-size: 28px; }
   .trow .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .trow .pct { text-align: right; font-weight: 700; } .trow .v { text-align: right; color: var(--muted); font-size: 26px; }
-  .trow.featured .nm { color: #e9d5ff; }
   .cnt { font-size: 22px; color: var(--muted); }
 </style>
 </head>
@@ -33,12 +33,12 @@
       <div><table><thead><tr><th id="th-area">County</th><th class="r">In</th><th class="r">Leader</th><th class="r" id="th-ind">Ind.</th></tr></thead><tbody id="rows"></tbody></table><div class="cnt" id="cnt"></div></div>
     </div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · county-level results · colour = leader · pale = little of the vote in · dark = no results</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media</span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script type="module">
-  import { connectFeed, freshness, partyClass, candTag, candName, isMeasure, fmt, officeText, normName, loadGeo, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, partyClass, candTag, candName, isMeasure, fmt, officeText, normName, loadGeo, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -61,10 +61,10 @@
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
-    $("totals").innerHTML = race.candidates.slice(0, 4).map((c) => `<div class="trow ${c.suspended ? "sus" : partyClass(c.party)} ${c.featured ? "featured" : ""}"><div class="nm"><span class="tag ${c.suspended ? "sus" : c.featured ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c, true))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="pct">${Number(c.pct).toFixed(1)}%</div><div class="v">${fmt(c.votes)}</div></div>`).join("");
+    $("totals").innerHTML = race.candidates.slice(0, 4).map((c) => `<div class="trow ${c.suspended ? "sus" : partyClass(c.party)} ${c.featured ? "featured" : ""}"><div class="nm">${featArrow(c)}<span class="tag ${c.suspended ? "sus" : c.featured ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c, true))}${incStar(c)}${c.winner ? " ✓" : ""}</div><div class="pct">${Number(c.pct).toFixed(1)}%</div><div class="v">${fmt(c.votes)}</div></div>`).join("");
     const seen = new Set();
     const legend = race.candidates.slice(0, 4).filter((c) => { const k = c.featured ? "ind" : partyClass(c.party); if (seen.has(k)) return false; seen.add(k); return true; });
-    $("legend").innerHTML = legend.map((c) => `<span><i style="background:${colorFor(c)}"></i>${esc(c.last)} leads</span>`).join("") + `<span><i class="pale" style="background:#fff"></i>few votes in</span><span><i style="background:var(--none)"></i>no results</span>`;
+    $("legend").innerHTML = legend.map((c) => `<span><i style="background:${colorFor(c)}"></i>${esc(c.last)} leads</span>`).join("") + `<span><i class="none"></i>under ${MIN_IN}% in</span><span><i class="must"></i>in the table</span>`;
     $("th-ind").textContent = ind ? ind.last : "—";
     const label = geo?.kind === "town" ? "Town" : geo?.kind === "house-district" ? "District" : "County";
     $("th-area").textContent = label;
@@ -75,15 +75,26 @@
     $("rows").innerHTML = rows.map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r">${r.l ? `<span style="color:${colorFor(r.l.cand)}">${esc(r.l.cand.last)}</span> ${(r.l.votes / r.l.total * 100).toFixed(1)}%` : "—"}</td><td class="r b">${r.indPct === null ? "—" : r.indPct.toFixed(1) + "%"}</td></tr>`).join("");
     const reporting = counties.filter((u) => Object.values(u.votes).some((v) => v > 0)).length;
     $("cnt").textContent = `${reporting} of ${counties.length} ${label.toLowerCase() === "county" ? "counties" : label.toLowerCase() + "s"} reporting · biggest ${rows.length} by votes counted`;
-    drawMap(byKey);
+    drawMap(byKey, new Set(rows.map((r) => unitKey(r.u))));
   }
-  function drawMap(byKey) {
+  const MIN_IN = 10;   // as B4 and B13: below this a county is hatched rather than coloured
+  /** Fine diagonal lines on the empty colour: the same on every county map, for a county without enough of the vote in. */
+  function ensureHatch(svg) {
+    if (!svg.select("#notcounted").empty()) return;
+    const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
+    pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a");
+    pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
+  }
+  function drawMap(byKey, listed = new Set()) {
     if (!geo) return;
     const svg = d3.select("#map");
+    ensureHatch(svg);
     const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
-    sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
-      .attr("fill", (d) => { const u = byKey.get(featKey(d)); const l = u && leaderIn(u); return l ? colorFor(l.cand) : "#1b2a4a"; })
-      .attr("fill-opacity", (d) => { const u = byKey.get(featKey(d)); const l = u && leaderIn(u); if (!l) return 1; const inPct = (u.eevp || u.precinctsPct) / 100; return 0.35 + Math.min(1, inPct) * 0.65; });
+    sel.enter().append("path").attr("d", geo.path).merge(sel)
+      .attr("stroke", (d) => (listed.has(featKey(d)) ? "#fff" : "#071222"))
+      .attr("stroke-width", (d) => (listed.has(featKey(d)) ? 3 : 0.8))
+      .style("fill", (d) => { const u = byKey.get(featKey(d)); const l = u && leaderIn(u); return l && (u.eevp || u.precinctsPct) >= MIN_IN ? colorFor(l.cand) : "url(#notcounted)"; })
+      .filter((d) => listed.has(featKey(d))).raise();   // on top, so a neighbour's border cannot cut the outline
   }
   const feed = connectFeed({
     onSnapshot: async (s) => { race = s.races.get(raceId); if (race) { geo ??= await loadGeo(race.state, [980, 640]); counties = await feed.counties(raceId); } render(); },
