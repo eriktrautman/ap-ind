@@ -323,7 +323,9 @@ export function normalizePlaylists(raw) {
       .map((p) => ({ id: p.id, name: plName(p.name), items: (Array.isArray(p.items) ? p.items : []).map(specDef).filter(Boolean).slice(0, PLAYLIST_LIMITS.items) }));
     return { id: u.id, name: plName(u.name), playlists };
   });
-  return { users, generalSeeded: r.generalSeeded === true, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
+  // Charts a producer has marked as on the way out: grayed in the Studio's catalogs and playlists, and still fully usable.
+  const deprecatedCharts = [...new Set((Array.isArray(r.deprecatedCharts) ? r.deprecatedCharts : []).filter((id) => CHARTS.some((c) => c.id === id && !c.retired && id !== "A1")))];
+  return { users, deprecatedCharts, generalSeeded: r.generalSeeded === true, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
 }
 export const PLAYLIST_RACE_OVERVIEW = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"];
 export const PLAYLIST_MOVEMENT_OVERVIEW = ["C1", "C6", "C7"];

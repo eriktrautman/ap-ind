@@ -142,7 +142,27 @@ const CHART_STARS_KEY = "studio.starredCharts";
 let chartStars = (() => { try { const v = JSON.parse(localStorage.getItem(CHART_STARS_KEY) ?? "null"); return new Set(Array.isArray(v) ? v : []); } catch { return new Set(); } })();
 function saveChartStars() { try { localStorage.setItem(CHART_STARS_KEY, JSON.stringify([...chartStars])); } catch {} }
 const starLabel = (id) => (chartStars.has(id) ? "Remove star" : "Star");
-const chartOptionText = (c) => `${chartStars.has(c.id) ? "★ " : ""}${c.id} ${c.name}`;
+const chartOptionText = (c) => `${chartStars.has(c.id) ? "★ " : ""}${c.id} ${c.name}${isDeprecated(c.id) ? " (deprecated)" : ""}`;
+// Deprecated charts are everyone's concern, so they are shared: kept with the playlists, set by a producer. A deprecated chart
+// grays out in the catalogs and playlists and carries the word on its preview. It can still be added and it displays normally.
+const isDeprecated = (id) => !!playlists?.deprecatedCharts?.includes(id);
+const depLabel = (id) => (isDeprecated(id) ? "Restore…" : "Deprecate…");
+/** In place, so no preview reloads: run after the shared playlists change. */
+function syncDeprecated() {
+  for (const el of document.querySelectorAll(".gcard[data-chart]")) { el.classList.toggle("deprecated", isDeprecated(el.dataset.chart)); const b = el.querySelector("[data-dep-item]"); if (b) b.textContent = depLabel(el.dataset.chart); }
+  for (const c of CHARTS) for (const o of document.querySelectorAll(`select[data-f="chart"] option[value="${c.id}"]`)) o.textContent = chartOptionText(c);
+}
+async function toggleDeprecated(chart) {
+  if (!playlists) await loadPlaylists();
+  const on = isDeprecated(chart.id);
+  const lists = (playlists?.users ?? []).flatMap((u) => u.playlists.filter((p) => p.items.some((it) => it.chart === chart.id)).map((p) => `${u.name || u.id}: ${p.name || p.id}`));
+  const where = lists.length ? `<p>It is in ${lists.length} playlist${lists.length === 1 ? "" : "s"}, and stays there:</p><ul>${lists.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : "<p>It is in no playlist right now.</p>";
+  const ok = await ask(on
+    ? { title: `Restore ${chart.id} ${chart.name}?`, body: "<p>It stops being grayed out, for everyone in the Studio.</p>", ok: "Restore chart" }
+    : { title: `Deprecate ${chart.id} ${chart.name}?`, body: `<div class="warnline bad"><b>This grays the chart out for everyone in the Studio</b>, in the catalogs and in every playlist.</div>${where}<p class="small muted">It can still be added to playlists, its address keeps working, and it displays normally on air. A producer can restore it from this menu.</p>`, ok: "Deprecate chart", danger: true });
+  if (!ok) return;
+  await savePlaylists((doc) => { const set = new Set(doc.deprecatedCharts); on ? set.delete(chart.id) : set.add(chart.id); doc.deprecatedCharts = [...set]; }, { producerOnly: true });
+}
 /** In place, so no preview reloads: every card of this chart, its menu label, and every chart dropdown. */
 function toggleChartStar(chart) {
   chartStars.has(chart.id) ? chartStars.delete(chart.id) : chartStars.add(chart.id); saveChartStars();
@@ -203,7 +223,7 @@ $("applyall").addEventListener("click", async () => {
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
-const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), isChartStarred: (id) => chartStars.has(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), isChartStarred: (id) => chartStars.has(id), isChartDeprecated: (id) => isDeprecated(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
@@ -1000,7 +1020,7 @@ async function savePlaylists(mutate, { producerOnly = false } = {}) {
   let doc;
   try { doc = normalizePlaylists(await api("/api/playlists")); } catch (e) { await ask({ title: "Can't read the playlists", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return false; }
   if (mutate(doc) === false) return false;
-  try { playlists = normalizePlaylists(await api("/api/playlists", { method: "PUT", body: JSON.stringify({ users: doc.users }) })); plError = null; }
+  try { playlists = normalizePlaylists(await api("/api/playlists", { method: "PUT", body: JSON.stringify({ users: doc.users, deprecatedCharts: doc.deprecatedCharts }) })); plError = null; }
   catch (e) { await ask({ title: "The change was not saved", body: `<div class="warnline bad">${esc(e.message)}</div><p>The playlists are as they were.</p>`, ok: "OK", info: true }); await loadPlaylists(); return false; }
   renderPlaylists();
   return true;
@@ -1016,6 +1036,7 @@ function specRace(s) {
   return null;
 }
 function renderPlaylists() {
+  syncDeprecated();
   const bar = $("plbar"), body = $("plbody");
   if (!playlists) { bar.innerHTML = ""; body.innerHTML = `<div class="empty">${plError ? `Cannot read the playlists: ${esc(plError)}` : "Reading the playlists…"}</div>`; return; }
   const u = plUser(), p = plList();
@@ -1299,6 +1320,7 @@ function renderChartCatalog() {
         ...(mayAddToPlaylist(chart) ? [{ label: "Add to playlist…", onClick: () => addToPlaylistFromCatalog(chart) }] : []),
         ...(live ? [{ label: race ? `Copy URL (${race.label})` : "Copy URL", onClick: () => copyChartUrl(el) }] : []),
         ...(chart.retired ? [] : [{ label: starLabel(chart.id), star: true, onClick: () => toggleChartStar(chart) }]),
+        ...(live && chart.id !== "A1" && isProducer() ? [{ label: depLabel(chart.id), deprecate: true, onClick: () => toggleDeprecated(chart) }] : []),
       ];
       const el = cards.card({ chart, race, section: "charts", priority: 6, showRace: false, menu, copyButton: false });
       el.classList.add("minicard");

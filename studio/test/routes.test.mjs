@@ -145,6 +145,9 @@ test("playlists: General and the slate playlist are served, a publisher changes 
   const producer = await signIn(S.base, PASSWORDS.producer);
   const r2 = await put(url("/api/playlists"), { users: doc.users }, { cookie: producer });
   assert.equal(r2.status, 200); assert.deepEqual(r2.json.users.map((u) => u.name), ["General", "Ryan", "Bob"]);
+  assert.equal((await put(url("/api/playlists"), { users: r2.json.users, deprecatedCharts: ["B3"] }, { cookie: publisher })).status, 403, "a publisher cannot deprecate a chart");
+  assert.deepEqual((await put(url("/api/playlists"), { users: r2.json.users, deprecatedCharts: ["B3"] }, { cookie: producer })).json.deprecatedCharts, ["B3"]);
+  assert.deepEqual((await put(url("/api/playlists"), { users: r2.json.users }, { cookie: publisher })).json.deprecatedCharts, ["B3"], "a publisher's save keeps it");
   assert.equal((await get(url("/api/playlists"))).json.users.length, 3, "everyone reads the same document");
 });
 test("publishing a live screen: screen one shows the new chart at an address the router serves, screen two is untouched, and a bad publish is cleaned up", async (t) => {

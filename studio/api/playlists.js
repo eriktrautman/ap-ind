@@ -6,6 +6,7 @@ import { readJson, writeJson } from "../lib/store.js";
 import { normalizePlaylists, defaultPlaylists, seedPlaylists } from "../lib/control.js";
 
 export const PRODUCER_SHAPE = "producer only: adding, renaming or removing people and playlists needs a producer's password; a publisher changes what is in them";
+export const PRODUCER_DEPRECATE = "producer only: deprecating a chart or restoring it needs a producer's password";
 const shape = (d) => JSON.stringify(d.users.map((u) => [u.id, u.name, u.playlists.map((p) => [p.id, p.name])]));
 
 export async function currentPlaylists() {
@@ -25,8 +26,9 @@ export default async function handler(req, res) {
     try {
       const body = readBody(req);
       const prev = await currentPlaylists();
-      const next = normalizePlaylists({ users: body?.users });
+      const next = normalizePlaylists({ users: body?.users, deprecatedCharts: body?.deprecatedCharts ?? prev.deprecatedCharts });
       if (who.role !== "producer" && shape(prev) !== shape(next)) { res.status(403).json({ error: PRODUCER_SHAPE }); return; }
+      if (who.role !== "producer" && JSON.stringify(prev.deprecatedCharts) !== JSON.stringify(next.deprecatedCharts)) { res.status(403).json({ error: PRODUCER_DEPRECATE }); return; }
       const doc = { ...next, generalSeeded: true, updatedAt: new Date().toISOString(), updatedBy: who.name };
       await writeJson("playlists.json", doc);
       res.status(200).json(doc);

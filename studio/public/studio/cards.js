@@ -19,7 +19,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, isChartStarred = () => false, getTheme = () => "" } = {}) {
+export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, isChartStarred = () => false, isChartDeprecated = () => false, getTheme = () => "" } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -139,11 +139,11 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
 
   function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null, open = "preview", section = "charts", copyButton = true }) {
     const el = document.createElement("div");
-    el.className = `gcard${isChartStarred(chart.id) ? " chartstar" : ""}`;
+    el.className = `gcard${isChartStarred(chart.id) ? " chartstar" : ""}${isChartDeprecated(chart.id) ? " deprecated" : ""}`;
     el.dataset.chart = chart.id;
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
     el.innerHTML = `
-      <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}"${m.star ? " data-star-item" : ""}>${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
+      <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}"${m.star ? " data-star-item" : ""}${m.deprecate ? " data-dep-item" : ""}>${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
       <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span>${copyButton && chart.built && !chart.retired && chart.page ? `<button class="copybtn" type="button" title="Copy this graphic's address (chart id and race id, with the Global settings) for a switcher or rundown">Copy URL</button>` : ""}<a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
     const c = { el, chart, race, params, open, priority, section, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,

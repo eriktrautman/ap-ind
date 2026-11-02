@@ -294,6 +294,11 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 #charts .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */
 #charts .gcard .ghead .menu { right: 0; min-width: 190px; font-size: 12.5px; }
 #charts .gcard .ghead .menu button { font-size: 12.5px; white-space: nowrap; }
+#charts .gcard.deprecated .ghead, #catalog .gcard.deprecated .ghead, #plbody .gcard.deprecated .ghead { opacity: .6; }
+#charts .gcard.deprecated .gname, #catalog .gcard.deprecated .gname, #plbody .gcard.deprecated .gname { text-decoration: line-through; }
+#charts .gcard.deprecated .thumb, #catalog .gcard.deprecated .thumb, #plbody .gcard.deprecated .thumb { position: relative; }
+#charts .gcard.deprecated .thumb > *, #catalog .gcard.deprecated .thumb > *, #plbody .gcard.deprecated .thumb > * { filter: grayscale(1) opacity(.45); }
+#charts .gcard.deprecated .thumb::after, #catalog .gcard.deprecated .thumb::after, #plbody .gcard.deprecated .thumb::after { content: "Deprecated"; position: absolute; left: 6px; top: 6px; z-index: 3; padding: 1px 7px; border-radius: 4px; background: rgba(40, 40, 40, .8); color: #e5e5e5; font-size: 11px; font-weight: 600; pointer-events: none; }
 .gcard.chartstar .cid::after { content: " ★"; color: #c9a227; }
 #charts .gcard.chartstar { outline: 2px solid #c9a227; outline-offset: -1px; box-shadow: 0 0 12px 2px rgba(201, 162, 39, .55); }
 .gcard.minicard.inuse { outline: 2px solid var(--gold); outline-offset: -1px; }
@@ -303,7 +308,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .gcard .ghead .cid { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
 .gcard .ghead .gname { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gcard .ghead { position: relative; }
-.gcard .ghead .kebab { margin-left: 4px; padding: 0 6px; font-size: 16px; line-height: 1; border: 0; background: none; color: var(--muted); }
+.gcard .ghead .kebab { margin-left: auto; flex: none; padding: 0 6px; font-size: 16px; line-height: 1; border: 0; background: none; color: var(--muted); }
 .gcard .ghead .kebab:hover { color: var(--ink); }
 .gcard .ghead .menu { position: absolute; right: 6px; top: 100%; z-index: 6; background: #fff; border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 6px 20px #0002; padding: 4px; display: grid; min-width: 220px; }
 .gcard .ghead .menu button { border: 0; background: none; text-align: left; padding: 7px 10px; font-size: 13px; border-radius: 6px; }
