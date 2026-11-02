@@ -215,6 +215,17 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .plmenu button:hover:not(:disabled) { background: var(--cream); }
 .plmenu button.dangerous { color: var(--bad); }
 .plmenu button:disabled { color: var(--muted); opacity: .6; cursor: default; }
+.imagecard .gfoot .bubble { visibility: hidden; }
+.gcard .thumb .ph.imgph { padding: 0; overflow: hidden; }
+.imgl { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.imgl.fit { object-fit: contain; } .imgl.lower { object-fit: contain; object-position: bottom; }
+.imgl.corner { left: auto; right: 5%; top: 7.4%; width: 29%; height: 39%; object-fit: contain; object-position: top right; }
+.imgframe { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+.imgmeta { padding: 5px 8px 2px; font-size: 11.5px; line-height: 1.35; } .imgmeta > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.imgpick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 300px; overflow-y: auto; }
+.imgpick button { display: grid; gap: 4px; padding: 4px; font-size: 11.5px; background: #fff; border: 2px solid var(--sand); border-radius: 6px; }
+.imgpick button.on { border-color: var(--gold); background: #fbf8ef; }
+.imgpick img { width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #1b2a4a; } .imgpick span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plbar .plmeta { color: var(--muted); font-size: 12px; }
 #plbody .cardgrid { padding: 10px 0 0; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 22px 10px; }   /* the Chart Catalog's card size, air between rows */
 #plbody .gcard, .splist .gcard { overflow: visible; }   /* so the ⋯ menu can hang below a small card */

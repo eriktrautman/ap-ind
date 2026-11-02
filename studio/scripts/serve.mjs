@@ -24,8 +24,8 @@
 // unset) and never writes the deployment's Blob store from here; BLOB_READ_WRITE_TOKEN belongs on a laptop only for
 // `npm run poll`, the stand-in for a dead cron while the deployment's pages are up.
 import { createServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
-import { join, extname } from "node:path";
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { dirname, join, extname } from "node:path";
 import { networkInterfaces } from "node:os";
 import { isLocalStore, localPath, readJson, writeJson, BLOB_BASE } from "../lib/store.js";
 import { pollOnce } from "../lib/poll.js";
@@ -62,7 +62,7 @@ const mode = {
   mirror: { lastOk: null, lastError: null, lastTry: null, indexGenerated: null, files: 0, runs: 0 },
   poll: { lastRun: null, lastError: null },
 };
-const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json", "playlists.json"];
+const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json", "playlists.json", "images.json"];
 async function fetchData(p) {
   const r = await fetch(`${GLOBAL}/data/${p}?t=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
   if (r.status === 404) return null;
@@ -81,6 +81,17 @@ async function mirrorOnce() {
     for (const [st, at] of Object.entries(status.countyFreshness ?? {})) {
       if (had[st] === at && (await file(localPath(`state/${st}.json`)))) continue;
       const d = await fetchData(`state/${st}.json`); if (d) { await writeJson(`state/${st}.json`, d); n++; }
+    }
+    // The library's image files: written once, so a file this laptop already holds is never fetched again. After a promote the
+    // playlists still point at something that exists.
+    for (const im of (await readJson("images.json").catch(() => null))?.images ?? []) {
+      for (const f of [im.file, im.thumb]) {
+        if (await file(localPath(`images/${f}`))) continue;
+        const r = await fetch(`${GLOBAL}/data/images/${f}`, { cache: "no-store", signal: AbortSignal.timeout(30_000) });
+        if (!r.ok) throw new Error(`images/${f}: ${r.status}`);
+        const p = localPath(`images/${f}`);
+        await mkdir(dirname(p), { recursive: true }); await writeFile(p, Buffer.from(await r.arrayBuffer())); n++;
+      }
     }
     await writeJson("status.json", status); n++;   // last, so a half-finished pass is retried in full
     Object.assign(mode.mirror, { lastOk: Date.now(), lastError: null, files: n, indexGenerated: status.generated ?? null, runs: mode.mirror.runs + 1 });
@@ -117,7 +128,7 @@ const lanOrigin = () => { const l = lan(); return l ? `http://${l.ip}:${PORT}` :
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
 
 const handlers = {};
-for (const name of ["login", "poll", "producer", "settings", "playlists"]) handlers[name] = (await import(`../api/${name}.js`)).default;
+for (const name of ["login", "poll", "producer", "settings", "playlists", "images"]) handlers[name] = (await import(`../api/${name}.js`)).default;
 
 async function file(p) { try { const s = await stat(p); return s.isFile() ? p : null; } catch { return null; } }
 async function resolve(pathname) {
@@ -138,12 +149,13 @@ async function upstreamLogin() {
 }
 /** GET or PUT the deployment's producer state (or its playlists). PUT logs in with GLOBAL_PASSWORD first (once per process). */
 async function upstreamProducer(method, body, path = "/api/producer") {
-  if (method === "PUT") {
+  const writing = method !== "GET";
+  if (writing) {
     if (!GLOBAL_PASSWORD) throw Object.assign(new Error("Can't save to production from this laptop: add GLOBAL_PASSWORD (your own production password) to studio/.env and restart the local server"), { status: 403 });
     if (!upstreamCookie) await upstreamLogin();
   }
-  let r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", ...(method === "PUT" ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) });
-  if (method === "PUT" && r.status === 401) { await upstreamLogin(); r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", cookie: upstreamCookie }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) }); }
+  let r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", ...(writing ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(writing ? 60_000 : 10_000) });
+  if (writing && r.status === 401) { await upstreamLogin(); r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", cookie: upstreamCookie }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) }); }
   return r;
 }
 async function reachable() {
@@ -186,13 +198,13 @@ createServer(async (req, res) => {
       res.status(200).json({ ok: true, mode: mode.kind, production: CONNECTED ? "deployment" : "self", lan: lanOrigin() });
       return;
     }
-    if ((url.pathname === "/api/producer" || url.pathname === "/api/playlists") && CONNECTED) {
+    if ((url.pathname === "/api/producer" || url.pathname === "/api/playlists" || url.pathname === "/api/images") && CONNECTED) {
       // Production lives on the deployment: this machine's outputs and Studio read it from
       // there, and a push goes there (after the local sign-in check, then the deployment's). Playlists likewise.
-      if (req.method === "PUT") {
+      if (req.method !== "GET") {
         const body = await readBody(req); shim(req, res, body);
         if (!(await (await import("../lib/auth.js")).isAuthed(req))) { res.status(401).json({ error: "not signed in" }); return; }
-        try { const r = await upstreamProducer("PUT", body, url.pathname); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
+        try { const r = await upstreamProducer(req.method, body, url.pathname); res.writeHead(r.status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await r.text()); }
         catch (e) { res.writeHead(e.status ?? 502, { "content-type": "application/json" }); res.end(JSON.stringify({ error: e.message })); }
         return;
       }
@@ -217,8 +229,12 @@ createServer(async (req, res) => {
       }
       if (isLocalStore()) {
         const p = await file(localPath(rel));
+        if (!p && CONNECTED && rel.startsWith("images/")) {   // uploaded a moment ago; the next mirror pass brings it here
+          const r = await fetch(`${GLOBAL}/data/${rel}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+          res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/octet-stream", "cache-control": "no-store" }); res.end(Buffer.from(await r.arrayBuffer())); return;
+        }
         if (!p) { res.writeHead(404, { "content-type": "application/json" }); res.end("{}"); return; }
-        res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" }); res.end(await readFile(p)); return;
+        res.writeHead(200, { "content-type": TYPES[extname(p)] ?? "application/json", "cache-control": "no-store" }); res.end(await readFile(p)); return;
       }
       const r = await fetch(`${BLOB_BASE}/${rel}`, { cache: "no-store" });
       res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json", "cache-control": "no-store" });

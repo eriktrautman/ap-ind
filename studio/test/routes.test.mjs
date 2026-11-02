@@ -150,6 +150,36 @@ test("playlists: General and the slate playlist are served, a publisher changes 
   assert.deepEqual((await put(url("/api/playlists"), { users: r2.json.users }, { cookie: publisher })).json.deprecatedCharts, ["B3"], "a publisher's save keeps it");
   assert.equal((await get(url("/api/playlists"))).json.users.length, 3, "everyone reads the same document");
 });
+test("images: a publisher uploads, the file is served, an SVG is refused, and only a producer deletes, never one on a live screen", async (t) => {
+  if (localOnly(t)) return;
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(40, 1)]).toString("base64");
+  const send = async (method, body, cookie) => { const r = await fetch(url("/api/images"), { method, headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body) }); return { status: r.status, json: await r.json() }; };
+  const one = { name: "Studio shot", credit: "Photo: test", w: 1920, h: 1080, file: png, thumb: png };
+  const publisher = await signIn(S.base, PASSWORDS.publisher), producer = await signIn(S.base, PASSWORDS.producer);
+  assert.equal((await send("POST", one)).status, 401, "signed out cannot upload");
+  assert.equal((await send("POST", { ...one, file: Buffer.from("<svg onload=alert(1)>").toString("base64") }, publisher)).status, 400, "not an image");
+  assert.equal((await send("POST", { ...one, credit: " " }, publisher)).status, 400, "a credit is required");
+  const up = await send("POST", one, publisher);
+  assert.equal(up.status, 200); const file = up.json.image.file; assert.match(file, /\.png$/);
+  const served = await fetch(url(`/data/images/${file}`));
+  assert.equal(served.status, 200); assert.equal(served.headers.get("content-type"), "image/png");
+  assert.equal((await get(url(`/g/I1?image=${file}`))).status, 200);
+  assert.equal((await send("DELETE", { file }, publisher)).status, 403, "a publisher cannot delete");
+  const doc = (await get(url("/api/playlists"))).json;
+  doc.users[0].playlists[0].items.push({ chart: "I1", params: { image: file, layout: "fit" }, bg: "green" });
+  const saved = await put(url("/api/playlists"), { users: doc.users }, { cookie: producer });
+  assert.equal(saved.json.users[0].playlists[0].items.at(-1).params.image, file, "an image card survives the playlist's validation");
+  const used = await send("DELETE", { file }, producer);
+  assert.equal(used.status, 409); assert.equal(used.json.usedIn.length, 1, "it says which playlists");
+  const live = (await get(url("/api/producer"))).json;
+  await put(url("/api/producer"), { ...live, screenA: { chart: "I1", race: "", state: "", params: { image: file }, bg: "green" } }, { cookie: producer });
+  assert.equal((await send("DELETE", { file, force: true }, producer)).json.onAir, true, "not while a live screen shows it");
+  await put(url("/api/producer"), { ...live }, { cookie: producer });
+  assert.equal((await send("DELETE", { file, force: true }, producer)).status, 200);
+  assert.equal((await fetch(url(`/data/images/${file}`))).status, 404);
+  assert.equal((await get(url("/api/playlists"))).json.users[0].playlists[0].items.some((i) => i.chart === "I1"), false, "it leaves the playlists");
+});
+
 test("publishing a live screen: screen one shows the new chart at an address the router serves, screen two is untouched, and a bad publish is cleaned up", async (t) => {
   if (localOnly(t)) return;
   const cookie = await signIn(S.base, PASSWORDS.producer);

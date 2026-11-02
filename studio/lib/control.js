@@ -85,6 +85,8 @@ export const CHARTS = [
   { id: "A4",  kind: "other", name: "AP call alert",                page: "/g/call-alert.html", built: true, needsRace: true },
   { id: "A5",  kind: "other", name: "Poll-closing strip",           page: "/g/poll-closing.html",                built: true },
   { id: "A6",  kind: "other", name: "Featured races strip",         page: "/g/featured-strip.html",                built: true },
+  // I: a static image from the Studio's image library, in a playlist or on a live screen like any chart. Not listed in the Chart Catalog.
+  { id: "I1",  kind: "other", name: "Static image",                 page: "/g/image.html",  built: true },
   // B: featured race deep dives
   { id: "B1",  kind: "race", name: "Candidate profile",             page: "/g/profile.html",                built: true },
   { id: "B2",  kind: "race", name: "Race setup",                    page: "/g/setup.html",                built: true },
@@ -347,6 +349,21 @@ export function seedPlaylists(doc) {
   if (doc.generalSeeded) return doc;
   const users = doc.users.some((u) => u.id === "general") ? doc.users : [generalPerson(), ...doc.users];
   return normalizePlaylists({ ...doc, users, generalSeeded: true });
+}
+
+// The image library (images.json, /api/images). A file's name is random and is written once, so an address never changes what it shows.
+export const IMAGE_CHART = "I1";
+export const IMAGE_LAYOUTS = [["fill", "Fill the frame (crops the edges)"], ["fit", "Fit the whole image (bars)"], ["lower", "Across the bottom (lower third)"], ["corner", "Top right corner"]];
+export const IMAGE_LIMITS = { count: 500, name: 80, credit: 160, bytes: 3_000_000, thumbBytes: 150_000 };   // a Vercel function takes 4.5 MB, and base64 adds a third
+export const imageNameOk = (s) => typeof s === "string" && /^[a-zA-Z0-9]{1,24}(-t)?\.(jpg|png|webp)$/.test(s);
+export function normalizeLibrary(raw) {
+  const r = raw && typeof raw === "object" ? raw : {};
+  const images = (Array.isArray(r.images) ? r.images : []).filter((x) => x && imageNameOk(x.file) && imageNameOk(x.thumb)).slice(0, IMAGE_LIMITS.count).map((x) => ({
+    file: x.file, thumb: x.thumb, name: String(x.name ?? "").slice(0, IMAGE_LIMITS.name), credit: String(x.credit ?? "").slice(0, IMAGE_LIMITS.credit),
+    w: Number(x.w) || 0, h: Number(x.h) || 0, bytes: Number(x.bytes) || 0, alpha: x.alpha === true,
+    uploadedBy: typeof x.uploadedBy === "string" ? x.uploadedBy.slice(0, 40) : null, uploadedAt: typeof x.uploadedAt === "string" ? x.uploadedAt : null,
+  }));
+  return { images, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" ? r.updatedBy.slice(0, 40) : null };
 }
 
 /** The letter after a candidate's name: D, R, L (Libertarian), G (Green); I for the slate's independents and every other

@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -174,7 +174,7 @@ function saveStars() { try { localStorage.setItem(STARS_KEY, JSON.stringify([...
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
 const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
-const SECTIONS = ["ticker", "screens", "playlists", "catalog", "charts"];
+const SECTIONS = ["ticker", "screens", "playlists", "images", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
 function loadDisplay() {
   let d = null;
@@ -224,7 +224,7 @@ $("applyall").addEventListener("click", async () => {
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
-const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), isChartStarred: (id) => chartStars.has(id), isChartDeprecated: (id) => isDeprecated(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getImage: (file) => library.images.find((x) => x.file === file) ?? null, isChartStarred: (id) => chartStars.has(id), isChartDeprecated: (id) => isDeprecated(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
@@ -777,6 +777,7 @@ $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_bl
 // Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
 // chart's own parameters, saved on this page), an arrow with Publish and Pull, and the published page on the right.
 const SCREEN_PARAMS = {
+  I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }],
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
   B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
@@ -807,7 +808,7 @@ function stateOptions(selected) {
  *  their handler (data-sk="screenA" for a Live Screen draft, data-ps="1" for the playlist dialog); bgAttr the Background. */
 function specFormHtml(s, attr, bgAttr, bg) {
   const chart = CHARTS.find((c) => c.id === s.chart);
-  const groups = [["A", "Lower thirds and strips"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Many races at once"], ["F", "AP reports"]];
+  const groups = [["A", "Lower thirds and strips"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Many races at once"], ["F", "AP reports"], ...(s.chart === IMAGE_CHART ? [["I", "Images"]] : [])];
   const chartSel = `<label>Chart<select ${attr} data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${esc(chartOptionText(c))}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
   const needsRace = chart && (chart.kind === "race" || chart.needsRace);
   // The form keeps the same shape whatever the chart: Chart, Race, Background. A chart that draws no single race shows Race greyed out.
@@ -922,7 +923,7 @@ function renderScreenPlaylist(key, sp) {
     el.classList.add("minicard"); el.dataset.i = i; el.classList.toggle("chosen", JSON.stringify(s) === current);
     el.title = ""; el.querySelector(".thumb").title = `Click to make this the draft: ${describeScreen(s)}`;   // a tile is picked, not opened
     el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="pos" title="Position ${i + 1}">${i + 1}</span>`);
-    el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}"><b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}</div>`);
+    el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}">${s.chart === IMAGE_CHART ? esc(imageSpecLine(s)) : `<b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}`}</div>`);
     grid.appendChild(el);
   });
   sp.appendChild(grid);
@@ -1007,6 +1008,7 @@ async function pullScreen(key) {
 // Shared state from /api/playlists: people, each with playlists of chart specs. Every edit re-reads the document, applies the
 // change and writes the whole thing back, so two people editing different playlists do not overwrite each other by much.
 let playlists = null, plError = null;
+let library = { images: [] }, libraryError = null;
 let plSel = (() => { try { return JSON.parse(localStorage.getItem("studio.playlist") ?? "null") ?? {}; } catch { return {}; } })();
 const plUser = () => playlists?.users.find((u) => u.id === plSel.user) ?? playlists?.users[0] ?? null;
 const plList = () => { const u = plUser(); return u?.playlists.find((p) => p.id === plSel.playlist) ?? u?.playlists[0] ?? null; };
@@ -1046,16 +1048,17 @@ function renderPlaylists() {
   bar.innerHTML = `
     <label>Person <select id="pluser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("") || `<option value="">nobody yet</option>`}</select></label>
     <label>Playlist <select id="pllist" ${u ? "" : "disabled"}>${(u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === p?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}</select></label>
-    ${can && p ? `<button class="primary" id="pladd" title="Add a chart to this playlist: pick the chart, then its race and settings">+ Add chart…</button>` : ""}
-    ${prod ? `<details class="ploptions" id="ploptions"><summary title="Add, rename or delete people and playlists">Options</summary><div class="plmenu">
+    ${can && p ? `<button class="primary" id="pladd" title="Add a chart to this playlist: pick the chart, then its race and settings">+ Add chart…</button><button class="primary" id="pladdimg" title="Add an image to this playlist: from the library, or upload a new one">+ Add image…</button>` : ""}
+    ${prod ? `<button id="plnewlist" ${u ? "" : "disabled"} title="A new playlist for ${esc(u?.name ?? "this person")}">+ Add playlist…</button><button id="plnewuser" title="A new person with their own playlists">+ Add person…</button>
+    <details class="ploptions" id="ploptions"><summary title="Rename or delete this person or playlist">Additional Options</summary><div class="plmenu">
       <div class="plmenuhead">${u ? `Person: ${esc(u.name || u.id)}` : "People"}</div>
-      <button id="plnewuser">New person…</button><button id="plrenameuser" ${u ? "" : "disabled"}>Rename person…</button><button id="pldeleteuser" class="dangerous" ${u ? "" : "disabled"}>Delete person…</button>
+      <button id="plrenameuser" ${u ? "" : "disabled"}>Rename person…</button><button id="pldeleteuser" class="dangerous" ${u ? "" : "disabled"}>Delete person…</button>
       <div class="plmenuhead">${p ? `Playlist: ${esc(p.name || p.id)}` : "Playlists"}</div>
-      <button id="plnewlist" ${u ? "" : "disabled"}>New playlist…</button><button id="plrename" ${p ? "" : "disabled"}>Rename playlist…</button><button id="pldelete" class="dangerous" ${p ? "" : "disabled"}>Delete playlist…</button>
+      <button id="plrename" ${p ? "" : "disabled"}>Rename playlist…</button><button id="pldelete" class="dangerous" ${p ? "" : "disabled"}>Delete playlist…</button>
     </div></details>` : ""}
     <span class="spacer"></span>
     <span class="plmeta" title="Playlists are shared: everyone in the Studio sees the same ones">${playlists.updatedAt ? `Changed ${esc(ago(playlists.updatedAt))}${playlists.updatedBy ? " by " + esc(playlists.updatedBy) : ""}` : "Shipped playlists; nothing changed yet"}${can ? "" : " · read only"}</span>`;
-  if (!p) { body.innerHTML = `<div class="empty">${u ? `${esc(u.name || u.id)} has no playlist yet.${prod ? " Press New playlist…" : ""}` : `No people yet.${prod ? " Press New person…" : ""}`}</div>`; return; }
+  if (!p) { body.innerHTML = `<div class="empty">${u ? `${esc(u.name || u.id)} has no playlist yet.${prod ? " Press + Add playlist…" : ""}` : `No people yet.${prod ? " Press + Add person…" : ""}`}</div>`; return; }
   const grid = document.createElement("div"); grid.className = "cardgrid";
   p.items.forEach((s, i) => {
     const chart = CHARTS.find((c) => c.id === s.chart); if (!chart) return;
@@ -1063,17 +1066,18 @@ function renderPlaylists() {
     const menu = can ? [
       ...(i > 0 ? [{ label: "Move earlier", onClick: () => plMove(i, -1) }] : []),
       ...(i < p.items.length - 1 ? [{ label: "Move later", onClick: () => plMove(i, 1) }] : []),
+      ...(s.chart === IMAGE_CHART ? [{ label: "Copy URL", onClick: () => copyChartUrl(el) }] : []),
       { label: "Edit…", onClick: () => plEdit(i) },
       { label: "Remove from playlist", onClick: () => plRemove(i) },
     ] : [];
     const el = cards.card({ chart, race, params: { ...s.params, ...(s.bg ? { bg: s.bg } : {}) }, section: "playlists", priority: 4, open: "show", showRace: !!race?.id, menu });
     el.classList.add("minicard"); el.dataset.i = i;
     el.querySelector(".ghead").insertAdjacentHTML("afterbegin", `<span class="handle" title="Drag to reorder">⠿</span><span class="pos" title="Position ${i + 1} in ${esc(p.name || "this playlist")}">${i + 1}</span>`);
-    el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}"><b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}</div>`);
+    el.querySelector(".thumb").insertAdjacentHTML("beforebegin", `<div class="spec" title="${esc(describeScreen(s))}">${s.chart === IMAGE_CHART ? esc(imageSpecLine(s)) : `<b>${esc(s.race || s.state || "")}</b>${s.race || s.state ? " · " : ""}${esc(specLine(s).replace(/^[^·]*· /, ""))}`}</div>`);
     grid.appendChild(el);
   });
   body.innerHTML = "";
-  if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart…, or add one from the Race Catalog or Chart Catalog." : ""}</div>`;
+  if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart… or + Add image…, or add one from the Race Catalog, Chart Catalog or Image Library." : ""}</div>`;
   else { body.appendChild(grid); if (can) plDragDrop(grid); }
   cards.prune();
 }
@@ -1108,8 +1112,11 @@ async function plEdit(i) {
 }
 async function plAdd(preset = null, target = null) {
   const u = target?.user ?? plUser(), p = target?.playlist ?? plList(); if (!u || !p) return;
-  const spec = await specDialog(preset ?? { chart: "B5", race: "", state: "", params: {}, bg: DEFAULT_BG }, { title: `Add a chart to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Add to playlist" });
+  const spec = await specDialog(preset ?? { chart: "B5", race: "", state: "", params: {}, bg: DEFAULT_BG }, { title: `Add ${preset?.chart === IMAGE_CHART ? "an image" : "a chart"} to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Add to playlist" });
   if (!spec) return;
+  return plPutSpec(spec, u, p);
+}
+async function plPutSpec(spec, u, p) {
   const ok = await savePlaylists((doc) => { const list = doc.users.find((x) => x.id === u.id)?.playlists.find((x) => x.id === p.id); if (!list) return false; list.items.push(spec); });
   if (ok) plSelect(u.id, p.id);
 }
@@ -1161,7 +1168,7 @@ $("plbar").addEventListener("change", (e) => {
 $("plbar").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   $("ploptions")?.removeAttribute("open");
-  ({ pladd: () => plAdd(), plnewuser: plNewUser, plrenameuser: plRenameUser, pldeleteuser: plDeleteUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
+  ({ pladd: () => plAdd(), pladdimg: () => plAddImage(), plnewuser: plNewUser, plrenameuser: plRenameUser, pldeleteuser: plDeleteUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
 });
 document.addEventListener("click", (e) => { if (!e.target.closest("#ploptions")) $("ploptions")?.removeAttribute("open"); });
 /** From either catalog: choose the person and playlist, then finish the chart's spec. preset carries what the card
@@ -1173,7 +1180,7 @@ async function addToPlaylistFromCatalog(chart, preset = {}) {
   if (!playlists) await loadPlaylists();
   if (!playlists?.users.length) { await ask({ title: "No playlists yet", body: `<p>A producer adds a person and a playlist in the Playlists section first.</p>`, ok: "OK", info: true }); return; }
   const u0 = plUser();
-  const body = `<p class="small muted">Chart <b>${esc(chart.id)} ${esc(chart.name)}</b>. Pick where it goes; the next step sets its race and settings.</p>
+  const body = `<p class="small muted"><b>${esc(preset.label ?? `Chart ${chart.id} ${chart.name}`)}</b>. Pick where it goes; the next step sets its ${preset.label ? "layout and background" : "race and settings"}.</p>
     <div class="psform"><label>Person<select id="pickuser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u0?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("")}</select></label>
     <label>Playlist<select id="picklist"></select></label></div>`;
   const fill = () => { const u = playlists.users.find((x) => x.id === $("pickuser").value); $("picklist").innerHTML = (u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === plSel.playlist ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">no playlist yet</option>`; };
@@ -1182,7 +1189,7 @@ async function addToPlaylistFromCatalog(chart, preset = {}) {
   const ok = await pending;
   const user = playlists.users.find((x) => x.id === $("pickuser").value), list = user?.playlists.find((x) => x.id === $("picklist").value);
   if (!ok || !user || !list) return;
-  await plAdd({ chart: chart.id, race: preset.race ?? "", state: preset.state ?? "", params: {}, bg: DEFAULT_BG }, { user, playlist: list });
+  await plAdd({ chart: chart.id, race: preset.race ?? "", state: preset.state ?? "", params: preset.params ?? {}, bg: preset.bg ?? DEFAULT_BG }, { user, playlist: list });
 }
 // The chart specifier dialog: the same form as a Live Screen draft, editing a pending spec until OK.
 let pendingSpec = null;
@@ -1210,10 +1217,158 @@ async function specDialog(spec, { title, ok }) {
     const chart = CHARTS.find((c) => c.id === pendingSpec.chart);
     const needsRace = chart && (chart.kind === "race" || chart.needsRace);
     if (needsRace && !pendingSpec.race) { warn = `<div class="warnline bad">${esc(chart.name)} draws one race: choose the race.</div>`; continue; }
+    if (chart?.id === IMAGE_CHART && !pendingSpec.params.image) { warn = `<div class="warnline bad">Choose the image.</div>`; continue; }
     if (chart?.needsState && !pendingSpec.race && !pendingSpec.state) { warn = `<div class="warnline bad">${esc(chart.name)} draws one state: choose a race or a state.</div>`; continue; }
     const out = specDef(pendingSpec); pendingSpec = null;
     return out;
   }
+}
+
+// ---------- Image Library ----------
+// images.json through /api/images. The browser decodes and re-encodes every upload: that proves it is an image, strips its metadata,
+// and brings it to what the frame can use (no more than covers 1920x1080, within the size a function accepts). Files are never overwritten.
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const canvasOf = (bmp, w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(bmp, 0, 0, w, h); return c; };
+const toBlob = (canvas, type, q) => new Promise((res) => canvas.toBlob(res, type, q));
+function hasAlpha(bmp) {
+  const c = canvasOf(bmp, Math.min(bmp.width, 256), Math.min(bmp.height, 256));
+  const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+  for (let i = 3; i < d.length; i += 4) if (d[i] < 255) return true;
+  return false;
+}
+/** A canvas encoded small enough to send: WebP where the browser can, else JPEG, or PNG when it has transparency. */
+async function encode(canvas, alpha, maxBytes) {
+  for (const q of [0.92, 0.85, 0.75, 0.65]) {
+    const webp = await toBlob(canvas, "image/webp", q);
+    if (webp?.type === "image/webp") { if (webp.size <= maxBytes) return webp; continue; }
+    const other = alpha ? await toBlob(canvas, "image/png") : await toBlob(canvas, "image/jpeg", q);
+    if (other?.size <= maxBytes) return other;
+  }
+  return null;
+}
+async function prepareImage(file) {
+  if (!IMAGE_TYPES.includes(file.type)) throw new Error("Upload a JPEG, PNG or WebP image.");
+  if (file.size > 60_000_000) throw new Error("That file is over 60 MB.");
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); } catch { throw new Error("That file could not be read as an image."); }
+  const alpha = hasAlpha(bmp);
+  let scale = Math.min(1, Math.max(1920 / bmp.width, 1080 / bmp.height), 3840 / Math.max(bmp.width, bmp.height));
+  let main = null, w, h;
+  for (let tries = 0; tries < 5 && !main; tries++, scale *= 0.8) {
+    w = Math.round(bmp.width * scale); h = Math.round(bmp.height * scale);
+    main = await encode(canvasOf(bmp, w, h), alpha, IMAGE_LIMITS.bytes);
+  }
+  if (!main) throw new Error("That image would not compress small enough to upload.");
+  const tw = Math.min(480, w), th = Math.max(1, Math.round(h * tw / w));
+  const thumb = await encode(canvasOf(bmp, tw, th), alpha, IMAGE_LIMITS.thumbBytes);
+  if (!thumb) throw new Error("That image would not compress small enough to upload.");
+  return { main, thumb, w, h, alpha, srcW: bmp.width, srcH: bmp.height, url: URL.createObjectURL(thumb) };
+}
+const base64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(new Error("could not read the image")); r.readAsDataURL(blob); });
+const bgStyle = (bg) => (!bg ? "" : bg === "green" ? "background:#00ff00" : bg === "black" ? "background:#000" : `background:#000 url(/g/bg/${bg}.jpg) center / cover`);
+const layoutWord = (v) => (IMAGE_LAYOUTS.find(([k]) => k === (v || "fill"))?.[1] ?? "").split(" (")[0];
+const imageSpecLine = (s) => [layoutWord(s.params?.layout), s.bg || "transparent"].join(" · ");
+const imageUses = (file) => (playlists?.users ?? []).flatMap((u) => u.playlists.filter((p) => p.items.some((it) => it.chart === IMAGE_CHART && it.params?.image === file)).map((p) => `${u.name || u.id}: ${p.name || p.id}`));
+function imageWarnings(im) {
+  const out = [];
+  if (im.srcW < 1920 || im.srcH < 1080) out.push(`It is ${im.srcW}×${im.srcH}, smaller than the 1920×1080 frame, so it will look soft at full size.`);
+  if (Math.abs(im.w / im.h - 16 / 9) > 0.04) out.push("It is not 16:9: Fill crops its edges, and Fit leaves bars.");
+  if (im.alpha) out.push("It has transparency, which suits a lower third or corner over video.");
+  return out;
+}
+/** Chooses a file, prepares it, takes its details, uploads it. Resolves to { image, layout, bg }, or null. */
+async function uploadImage(file = null) {
+  if (!file) {
+    const pending = ask({ title: "Upload an image", body: `<p><input type="file" id="imgfile" accept="${IMAGE_TYPES.join(",")}"></p><p class="small muted">JPEG, PNG or WebP. It is resized to what the 1920×1080 frame can use, and its metadata is removed.</p>`, ok: "Next" });
+    const ok = await pending;
+    file = $("imgfile")?.files?.[0] ?? null;
+    if (!ok || !file) return null;
+  }
+  let im;
+  try { im = await prepareImage(file); } catch (e) { await ask({ title: "That image can't be used", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return null; }
+  let name = file.name.replace(/\.[^.]+$/, "").slice(0, IMAGE_LIMITS.name), credit = "", layout = im.alpha ? "lower" : "fill", bg = im.alpha ? "" : DEFAULT_BG, warn = "";
+  for (;;) {
+    const notes = imageWarnings(im).map((t) => `<div class="warnline">${esc(t)}</div>`).join("");
+    const pending = ask({ title: "Image details", ok: "Upload", body: `${warn}<div class="imgframe ${bg ? "" : "checker"}" id="imgframe" style="${bgStyle(bg)}"><img class="imgl ${layout}" id="imgprev" src="${im.url}" alt=""></div>${notes}
+      <div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(name)}"></label>
+      <label>Credit and rights<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(credit)}" placeholder="e.g. Photo: AP, licensed for broadcast"></label>
+      <label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}</label><label>Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label></div>` });
+    $("imglayout").addEventListener("change", (e) => { $("imgprev").className = `imgl ${e.target.value}`; });
+    $("imgbg").addEventListener("change", (e) => { const f = $("imgframe"); f.style.cssText = bgStyle(e.target.value); f.classList.toggle("checker", !e.target.value); });
+    const ok = await pending;
+    if (!ok) { URL.revokeObjectURL(im.url); return null; }
+    name = $("imgname").value.trim(); credit = $("imgcredit").value.trim(); layout = $("imglayout").value; bg = $("imgbg").value;
+    if (name && credit) break;
+    warn = `<div class="warnline bad">An image needs a name and a credit, so everyone can see where it came from.</div>`;
+  }
+  URL.revokeObjectURL(im.url);
+  try {
+    const r = await api("/api/images", { method: "POST", body: JSON.stringify({ name, credit, w: im.w, h: im.h, alpha: im.alpha, file: await base64(im.main), thumb: await base64(im.thumb) }) });
+    library = normalizeLibrary(r.library); renderImages(); renderPlaylists();
+    return { image: r.image, layout, bg };
+  } catch (e) { await ask({ title: "The image was not uploaded", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return null; }
+}
+/** + Add image: pick from the library or upload, then it joins this playlist. */
+async function plAddImage() {
+  const u = plUser(), p = plList(); if (!u || !p) return;
+  let picked = null;
+  const pending = ask({ title: `Add an image to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Next", body: `<p><input type="file" id="imgfile" accept="${IMAGE_TYPES.join(",")}"> <span class="small muted">Upload a new image</span></p>
+    ${library.images.length ? `<p class="small muted">Or choose one from the library:</p><div class="imgpick" id="imgpick">${library.images.map((x) => `<button type="button" data-file="${esc(x.file)}" title="${esc(x.name)}"><img src="/data/images/${esc(x.thumb)}" alt=""><span>${esc(x.name)}</span></button>`).join("")}</div>` : ""}` });
+  $("imgpick")?.addEventListener("click", (e) => { const b = e.target.closest("[data-file]"); if (!b) return; picked = b.dataset.file; $("imgfile").value = ""; for (const x of $("imgpick").children) x.classList.toggle("on", x === b); });
+  $("imgfile").addEventListener("change", () => { picked = null; for (const x of $("imgpick")?.children ?? []) x.classList.remove("on"); });
+  const ok = await pending;
+  const file = $("imgfile")?.files?.[0] ?? null;
+  if (!ok || (!file && !picked)) return;
+  if (picked) return plAdd({ chart: IMAGE_CHART, race: "", state: "", params: { image: picked, layout: "fill" }, bg: DEFAULT_BG });
+  const up = await uploadImage(file);
+  if (up) return plPutSpec(specDef({ chart: IMAGE_CHART, race: "", state: "", params: { image: up.image.file, layout: up.layout }, bg: up.bg }), u, p);
+}
+async function loadLibrary() { try { library = normalizeLibrary(await api("/api/images")); libraryError = null; } catch (e) { libraryError = e.message; } }
+function renderImages() {
+  $("imgupload").hidden = !mayPublish();
+  const q = $("imgq").value.trim().toLowerCase();
+  const rows = library.images.filter((x) => !q || `${x.name} ${x.credit} ${x.uploadedBy ?? ""}`.toLowerCase().includes(q));
+  $("imgcount").textContent = `${rows.length} of ${library.images.length} image${library.images.length === 1 ? "" : "s"}`;
+  const host = $("imggrid"); host.innerHTML = "";
+  if (libraryError) { host.innerHTML = `<div class="empty">Cannot read the library: ${esc(libraryError)}</div>`; return; }
+  if (!rows.length) { host.innerHTML = `<div class="empty">${library.images.length ? "No images match." : "No images yet."}</div>`; return; }
+  const chart = CHARTS.find((c) => c.id === IMAGE_CHART);
+  const grid = document.createElement("div"); grid.className = "cardgrid dense";
+  for (const x of rows) {
+    const menu = [
+      ...(mayPublish() ? [{ label: "Add to playlist…", onClick: () => addToPlaylistFromCatalog(chart, { label: `Image: ${x.name}`, params: { image: x.file, layout: x.alpha ? "lower" : "fill" }, bg: x.alpha ? "" : DEFAULT_BG }) }, { label: "Edit name and credit…", onClick: () => editImage(x) }] : []),
+      ...(isProducer() ? [{ label: "Delete…", onClick: () => deleteImage(x) }] : []),
+    ];
+    const el = cards.card({ chart, params: { image: x.file, layout: "fit" }, section: "images", priority: 8, open: "show", showRace: false, menu });
+    el.classList.add("minicard");
+    const uses = imageUses(x.file).length;
+    el.querySelector(".thumb").insertAdjacentHTML("afterend", `<div class="imgmeta" title="${esc(x.credit)}"><div>${esc(x.credit)}</div><div class="muted">${x.w}×${x.h}${x.uploadedBy ? ` · ${esc(x.uploadedBy)}` : ""}${uses ? ` · in ${plural(uses, "playlist")}` : ""}</div></div>`);
+    grid.appendChild(el);
+  }
+  host.appendChild(grid);
+  cards.prune();
+}
+$("imgq").addEventListener("input", renderImages);
+$("imgupload").addEventListener("click", () => uploadImage());
+async function editImage(x) {
+  let warn = "";
+  for (;;) {
+    const ok = await (() => { const p = ask({ title: "Edit the image's details", ok: "Save", body: `${warn}<div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(x.name)}"></label><label>Credit and rights<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(x.credit)}"></label></div>` }); return p; })();
+    if (!ok) return;
+    const name = $("imgname").value.trim(), credit = $("imgcredit").value.trim();
+    if (!name || !credit) { warn = `<div class="warnline bad">An image needs a name and a credit.</div>`; continue; }
+    try { library = normalizeLibrary((await api("/api/images", { method: "PATCH", body: JSON.stringify({ file: x.file, name, credit }) })).library); renderImages(); renderPlaylists(); }
+    catch (e) { await ask({ title: "The change was not saved", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); }
+    return;
+  }
+}
+async function deleteImage(x) {
+  const uses = imageUses(x.file);
+  const where = uses.length ? `<p>It comes out of ${plural(uses.length, "playlist")}:</p><ul>${uses.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : "<p>No playlist uses it.</p>";
+  const ok = await ask({ title: `Delete ${x.name}?`, danger: true, ok: "Delete image", body: `<div class="warnline bad"><b>This can't be undone, and it goes for everyone in the Studio.</b></div>${where}<p class="small muted">Its address stops working, including any copy of it pasted elsewhere. An image on a live screen can't be deleted until something else is published there.</p>` });
+  if (!ok) return;
+  try { library = normalizeLibrary((await api("/api/images", { method: "DELETE", body: JSON.stringify({ file: x.file, force: true }) })).library); await loadPlaylists(); renderImages(); }
+  catch (e) { await ask({ title: "The image was not deleted", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); }
 }
 
 // ---------- race pickers ----------
@@ -1430,7 +1585,7 @@ function renderAll() {
   renderStatus();
   renderTheme();
   renderLive();
-  renderSeq(); renderChunks(); sendPreview(); renderScreens(); renderPlaylists();
+  renderSeq(); renderChunks(); sendPreview(); renderScreens(); renderPlaylists(); renderImages();
   renderCatalog(); renderChartCatalog();
   cards.prune();
 }
@@ -1499,7 +1654,7 @@ async function boot() {
   scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();
-  await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists()]);
+  await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists(), loadLibrary()]);
   renderAll();
   restoreScroll();
   timers = [setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];

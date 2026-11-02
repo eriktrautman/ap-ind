@@ -19,7 +19,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, isChartStarred = () => false, isChartDeprecated = () => false, getTheme = () => "" } = {}) {
+export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, getImage = () => null, isChartStarred = () => false, isChartDeprecated = () => false, getTheme = () => "" } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -71,7 +71,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
   function reconcile() {
     // A starred chart's previews come first and stay loaded off screen, so scrolling to one never finds it empty. What is on
     // screen still outranks a starred preview that is not, and a closed section's cards load nothing.
-    const canRun = (c) => c.chart.built && !c.chart.retired;
+    const canRun = (c) => c.chart.built && !c.chart.retired && !c.image;   // an image card is a plain thumbnail and takes no slot
     const starred = (c) => isChartStarred(c.chart.id);
     const byOrder = (a, b) => a.priority - b.priority || a.seq - b.seq;
     const all = [...cards].filter(canRun);
@@ -99,7 +99,19 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
     c.frame = f;
     scaleThumb(c.thumb);
   }
+  /** An image card's thumbnail: the small file, laid out as the image will be, on the card's background. */
+  function imageThumb(c) {
+    const meta = getImage(c.params?.image), bg = c.params?.bg ?? getDisplay(c.section).bg ?? "", layout = c.params?.layout || "fill";
+    const key = `${meta?.thumb}|${bg}|${layout}`;
+    if (c.thumb.dataset.img === key) return;
+    c.thumb.dataset.img = key;
+    c.thumb.classList.toggle("checker", !bg);
+    c.thumb.style.background = !bg ? "" : bg === "green" ? "#00ff00" : bg === "black" ? "#000" : `#000 url(/g/bg/${bg}.jpg) center / cover`;
+    if (!meta) { placeholder(c, `<span>Image not in the library</span>`, "retired"); return; }
+    placeholder(c, `<img class="imgl ${esc(layout)}" src="/data/images/${esc(meta.thumb)}" alt="">`, "imgph");
+  }
   function unmount(c, reason) {
+    if (c.image) { imageThumb(c); return; }
     if (c.frame) { c.frame.remove(); c.frame = null; }
     if (c.chart.retired) { placeholder(c, `<span>Retired</span><span class="small">${esc(c.chart.name)}${c.chart.retiredNote ? " · " + esc(c.chart.retiredNote) : ""}</span><span class="small">The id ${esc(c.chart.id)} stays reserved.</span>`, "retired"); return; }
     if (c.chart.unavailable) { placeholder(c, `<span>Not available</span><span class="small">${esc(c.chart.name)} · ${esc(c.chart.unavailable)}</span>`, "retired"); return; }
@@ -147,14 +159,15 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
 
   function card({ chart, race = null, priority = 5, isStatic = false, showRace = true, menu = [], params = null, open = "preview", section = "charts", copyButton = true }) {
     const el = document.createElement("div");
-    el.className = `gcard${isChartStarred(chart.id) ? " chartstar" : ""}${isChartDeprecated(chart.id) ? " deprecated" : ""}`;
+    const isImage = chart.id === "I1", imgMeta = isImage ? getImage(params?.image) : null;
+    el.className = `gcard${isImage ? " imagecard" : ""}${isChartStarred(chart.id) ? " chartstar" : ""}${isChartDeprecated(chart.id) ? " deprecated" : ""}`;
     el.dataset.chart = chart.id;
     const title = race ? `${chart.id} ${chart.name} · ${race.label}` : `${chart.id} ${chart.name}`;
     el.innerHTML = `
-      <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${esc(chart.id)}</span><span class="gname" title="${esc(chart.name)}">${esc(chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}"${m.star ? " data-star-item" : ""}${m.deprecate ? " data-dep-item" : ""}>${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
+      <div class="ghead"><span class="cid" title="Chart id ${esc(chart.id)}: /g/${esc(chart.id)} in any address">${isImage ? "Image" : esc(chart.id)}</span><span class="gname" title="${esc(imgMeta?.name ?? chart.name)}">${esc(imgMeta?.name ?? chart.name)}</span>${race && showRace ? `<span class="racetag" title="Race id ${esc(race.label)} (AP race ${esc(race.id)}) · ${esc(race.stateName)} · ${esc(race.title)}">${esc(race.label)}</span>` : ""}${menu.length ? `<button class="kebab" title="More" aria-label="More">⋯</button><div class="menu" hidden>${menu.map((m, i) => `<button data-mi="${i}"${m.star ? " data-star-item" : ""}${m.deprecate ? " data-dep-item" : ""}>${esc(m.label)}</button>`).join("")}</div>` : ""}</div>
       <div class="thumb"></div>
       <div class="gfoot"><span class="bubble off"><span class="dot off"></span>…</span><span class="spacer"></span>${copyButton && chart.built && !chart.retired && chart.page ? `<button class="copybtn" type="button" title="Copy this graphic's address (chart id and race id, with the Global settings) for a switcher or rundown">Copy URL</button>` : ""}<a class="openbtn" target="_blank" rel="noopener" title="Open this graphic in a new tab, scaled to fit the window"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 2h5v5M14 2L7.5 8.5M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>${open === "show" ? "Show 1920×1080" : "Preview"}</a></div>`;
-    const c = { el, chart, race, params, open, priority, section, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
+    const c = { image: isImage, el, chart, race, params, open, priority, section, static: isStatic, visible: false, frame: null, seq: card.seq = (card.seq ?? 0) + 1,
       title, thumb: el.querySelector(".thumb"), bubble: el.querySelector(".bubble"), link: el.querySelector("a"), copy: el.querySelector(".copybtn") };
     el._card = c; c.thumb._card = c;
     c.link.href = pageUrl(c, true);
@@ -208,7 +221,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
   }
   function refreshLinks() { for (const c of cards) if (c.chart.built) { c.link.href = pageUrl(c, true); if (c.copy) c.copy.dataset.url = copyUrl(c); } }
   /** Display settings changed: live previews whose address changed reload. */
-  function refreshFrames() { for (const c of cards) { c.thumb.classList.toggle("checker", !getDisplay(c.section).bg); if (c.frame) { const u = pageUrl(c, false); if (c.frame.dataset.u !== u) { c.frame.dataset.u = u; c.frame.src = u; } } } }
+  function refreshFrames() { for (const c of cards) { if (c.image) { imageThumb(c); continue; } c.thumb.classList.toggle("checker", !getDisplay(c.section).bg); if (c.frame) { const u = pageUrl(c, false); if (c.frame.dataset.u !== u) { c.frame.dataset.u = u; c.frame.src = u; } } } }
   setInterval(() => { for (const c of cards) renderFresh(c); reconcile(); }, 15_000);
   document.addEventListener("click", (e) => { if (!e.target.closest(".kebab, .menu")) for (const m of document.querySelectorAll(".gcard .menu")) m.hidden = true; });
   window.addEventListener("scroll", schedule, { passive: true });
