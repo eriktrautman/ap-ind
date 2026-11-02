@@ -796,8 +796,8 @@ function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg:
 function raceOptions(selected) {
   if (!index) return "";
   const feat = index.races.filter((r) => starred.has(r.id)).sort((a, b) => a.label.localeCompare(b.label));
-  const opt = (r) => `<option value="${esc(r.label)}" ${selected === r.label ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)} · ${esc(r.title)}</option>`;
-  return `<optgroup label="Starred">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
+  const opt = (r, mark = true) => `<option value="${esc(r.label)}" ${mark && selected === r.label ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)} · ${esc(r.title)}</option>`;
+  return `<optgroup label="Starred">${feat.map((r) => opt(r)).join("")}</optgroup><optgroup label="Every race">${[...index.races].sort((a, b) => a.label.localeCompare(b.label)).map((r) => opt(r, !feat.includes(r))).join("")}</optgroup>`;   // a starred race is in both groups; its first copy carries the selection
 }
 function stateOptions(selected) {
   const states = index ? [...new Set(index.races.map((r) => r.state))].sort() : FEATURED_RACES.map((r) => r.state);
@@ -1262,19 +1262,24 @@ function cmatches(r) {
 }
 function renderCatalog() {
   if (!index) return;
-  const rows = index.races.filter(cmatches).sort((a, b) => (starred.has(b.id) - starred.has(a.id)) || a.state.localeCompare(b.state) || a.label.localeCompare(b.label));
+  const rows = index.races.filter(cmatches).sort((a, b) => a.state.localeCompare(b.state) || a.label.localeCompare(b.label));
+  const stars = rows.filter((r) => starred.has(r.id));
   $("ccount").textContent = `${rows.length} of ${index.races.length} races`;
   const list = $("catalogList"); list.innerHTML = "";
-  let starGroup = null;
-  for (const r of rows.slice(0, 300)) {
-    if (starred.has(r.id) && !starGroup) { starGroup = document.createElement("div"); starGroup.className = "cstarred"; list.appendChild(starGroup); }
-    const crow = document.createElement("div"); crow.className = `crow ${openRaces.has(r.id) ? "open" : ""}`; crow.dataset.id = r.id;
+  // A starred race is in the group at the top and again in its normal place; each copy opens on its own, so a preview never runs twice
+  // unless both are opened. With the Starred filter on, the group is the whole list.
+  const starGroup = stars.length ? document.createElement("div") : null;
+  if (starGroup) { starGroup.className = "cstarred"; list.appendChild(starGroup); }
+  const addRow = (r, parent, key) => {
+    const crow = document.createElement("div"); crow.className = `crow ${openRaces.has(key) ? "open" : ""}`; crow.dataset.id = r.id; crow.dataset.key = key;
     const onTicker = draft.pinnedRaceIds.includes(r.id);
     crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
-      <div class="btns"><button class="starbtn ${starred.has(r.id) ? "on" : ""}" data-star="${r.id}" aria-pressed="${starred.has(r.id)}" title="${starred.has(r.id) ? "Starred: kept at the top of this list. Press to unstar" : "Star: keep this race at the top of this list"}">${starred.has(r.id) ? "★" : "☆"}</button><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button></div></div>`;
-    if (openRaces.has(r.id)) crow.appendChild(catalogBody(r));
-    (starred.has(r.id) ? starGroup : list).appendChild(crow);
-  }
+      <div class="btns"><button class="starbtn ${starred.has(r.id) ? "on" : ""}" data-star="${r.id}" aria-pressed="${starred.has(r.id)}" title="${starred.has(r.id) ? "Starred: also kept at the top of this list. Press to unstar" : "Star: also keep this race at the top of this list"}">${starred.has(r.id) ? "★" : "☆"}</button><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button></div></div>`;
+    if (openRaces.has(key)) crow.appendChild(catalogBody(r));
+    parent.appendChild(crow);
+  };
+  for (const r of stars) addRow(r, starGroup, `star:${r.id}`);
+  if (!cfilters.has("starred")) for (const r of rows.slice(0, 300)) addRow(r, list, r.id);
   if (rows.length > 300) list.insertAdjacentHTML("beforeend", `<div class="empty">Showing 300. Narrow the search.</div>`);
   if (!rows.length) list.innerHTML = `<div class="empty">No races match.</div>`;
 }
@@ -1296,7 +1301,7 @@ $("catalogList").addEventListener("click", (e) => {
   if (star) { const id = star.dataset.star; starred.has(id) ? starred.delete(id) : starred.add(id); saveStars(); renderCatalog(); cards.prune(); return; }
   if (e.target.closest("[data-pin], .gcard")) return;
   const crow = e.target.closest(".crow"); if (!crow || !e.target.closest(".row")) return;
-  const id = crow.dataset.id;
+  const id = crow.dataset.key;
   openRaces.has(id) ? openRaces.delete(id) : openRaces.add(id);
   renderCatalog(); cards.prune();
 });
