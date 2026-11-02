@@ -329,7 +329,7 @@ main > section#playlists, main > section#images, main > section#charts { overflo
 .pladdcard .plplus[hidden], .pladdcard .plhint[hidden], .pladdcard .plchoose[hidden] { display: none; }
 .pladdcard .plchoose { display: flex; gap: 8px; }
 .pladdcard .plchoose button { padding: 8px 14px; font-weight: 600; }
-#imgaddcard { cursor: pointer; min-height: 0; }
+#imgaddcard { cursor: pointer; }
 #playlists.filedrag, #images.filedrag { outline: 3px dashed var(--gold); outline-offset: -3px; }
 #images .gcard.deprecated .ghead, #charts .gcard.deprecated .ghead, #catalog .gcard.deprecated .ghead, #plbody .gcard.deprecated .ghead { opacity: .6; }
 #images .gcard.deprecated .gname, #charts .gcard.deprecated .gname, #catalog .gcard.deprecated .gname, #plbody .gcard.deprecated .gname { text-decoration: line-through; }
