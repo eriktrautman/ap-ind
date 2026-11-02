@@ -77,11 +77,12 @@
     return [first, second].filter(Boolean);
   }
 
+  const firstClause = (s) => { const t = String(s).split(";")[0].trim(); return t.length > 44 ? t.split(",")[0].trim() : t; };
   function card(c, st, p) {
     if (!c) return `<div class="nm" style="color:var(--muted)">—</div>`;
     const b = bios?.get(c.id) ?? {};
     const col = PARTY_COLOR[partyKey(c)];
-    const sub = b.occupation ?? b.priorOffices ?? "";
+    const sub = b.bio ?? firstClause(b.occupation ?? b.priorOffices ?? "");   // the six carry a short bio; opponents get the first clause of their occupation
     const counting = race.totalVotes > 0;
     const pill = st.status === "called" && st.cand?.id === c.id ? `<span class="pill call">AP CALL · WINS</span>` : st.status === "leading" && st.cand?.id === c.id ? `<span class="pill lead">LEADING</span>` : "";
     const num = counting

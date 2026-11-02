@@ -28,13 +28,13 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · a candidate needs more than 50% to win; the last-placed candidate is eliminated and their ballots transfer</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, fmt, officeText, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyClass, candTag, fmt, officeText, clockS } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const tag = (c) => `<span class="tag ${c.featured || c.independent ? "ind" : partyClass(c.party)}">${c.featured || c.independent ? "I" : c.party === "Dem" ? "D" : c.party === "GOP" ? "R" : esc(c.party)}</span>`;
+  const tag = (c) => `<span class="tag ${c.featured || c.independent ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>`;
   let race = null;
 
   function render() {

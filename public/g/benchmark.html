@@ -49,7 +49,7 @@
 </div>
 <script type="module">
   import { connectFeed, freshness, raceState, clockS } from "./feed.js";
-  import { watchState, FEATURED_RACES } from "./control.js";
+  import { watchState, FEATURED_RACES, partyLetter } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -76,7 +76,7 @@
       const delta = share !== null && b?.pct != null ? share - b.pct : null;
       const won = r.called && !!ind.winner, lost = r.called && !ind.winner;
       const winner = lost ? r.candidates.find((c) => c.winner) : null;
-      const pl = (c) => c?.party === "Dem" ? "D" : c?.party === "GOP" ? "R" : c?.independent ? "I" : (c?.party ?? "")[0] ?? "";
+      const pl = partyLetter;
       const rec = share !== null && b?.pct != null && share > b.pct;   // a FIRST is already named in the delta column
       const chips = rec ? `<span class="pill rec">RECORD</span>` : "";   // the AP call sits under the share, where "x% in" was
       const line2 = `${recordLine(b)}${winner ? ` · <span class="winner">${esc(winner.last ?? winner.name)} (${pl(winner)}) wins</span>` : ""}`;

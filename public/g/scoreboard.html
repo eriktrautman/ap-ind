@@ -54,7 +54,7 @@
 </div>
 <script type="module">
   import { connectFeed, freshness, raceState, clockS } from "./feed.js";
-  import { watchState, FEATURED_RACES } from "./control.js";
+  import { watchState, FEATURED_RACES, partyLetter } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -87,7 +87,7 @@
       else if (leading) pill = { cls: record ? "record" : "lead", text: `Leading${record ? mark : ""}` };
       else pill = { cls: record ? "record" : "behind", text: record ? `Trailing${mark}` : "Counting" };
       const winner = lost ? sorted.find((c) => c.winner) : null;
-      const pl = (c) => c?.party === "Dem" ? "D" : c?.party === "GOP" ? "R" : c?.independent ? "I" : (c?.party ?? "")[0] ?? "";
+      const pl = partyLetter;
       return { r, ind, b, share, inPct, won, lost, leading, record, pill, have, winner: winner ? `${winner.last ?? winner.name} (${pl(winner)})` : null };
     }).filter(Boolean);
     const n = { lead: rows.filter((x) => x.leading || x.won).length, record: rows.filter((x) => x.record).length, counting: rows.filter((x) => !x.r.called).length, decided: rows.filter((x) => x.r.called).length };

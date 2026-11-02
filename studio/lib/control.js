@@ -343,6 +343,18 @@ export function defaultPlaylists() {
   return normalizePlaylists({ users: [{ id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items }] }] });
 }
 
+/** The letter after a candidate's name: D, R, L (Libertarian), G (Green); I for the slate's independents and every other
+ *  non-major label (NP, NPA, Una, minor parties), so the only I in a race is normally our independent; nothing for a
+ *  measure's Yes/No options. The colour classes (partyKey in feed.js) are a separate question and unchanged. */
+export function partyLetter(c) {
+  if (!c || c.party === "Yes" || c.party === "No") return "";
+  if (c.party === "Dem") return "D";
+  if (c.party === "GOP") return "R";
+  if (c.party === "Lib") return "L";
+  if (c.party === "Grn") return "G";
+  return "I";
+}
+
 /** True when two states would produce the same ticker and graphics. */
 export function sameState(a, b) {
   const A = normalize(a), B = normalize(b);

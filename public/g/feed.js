@@ -12,7 +12,7 @@
 //             message within 5 s falls back to polling on its own.
 // Usage: const feed = connectFeed({ onSnapshot, onUpdate, onStatus });
 
-import { FEATURED_RACES, canonicalAddress } from "./control.js";
+import { FEATURED_RACES, canonicalAddress, partyLetter } from "./control.js";
 import { watchTheme } from "./themes.js";
 watchTheme();   // the published stylesheet, or the address's ?theme=; repainted within seconds of a push
 
@@ -241,7 +241,7 @@ export const isOption = (c) => !!c && (c.party === "Yes" || c.party === "No");
 /** The small box before a name: YES / NO for a measure's options, else the party letter. */
 export function candTag(c) {
   const k = partyKey(c);
-  return { cls: k, text: k === "yes" ? "YES" : k === "no" ? "NO" : k === "ind" ? "I" : k === "dem" ? "D" : k === "gop" ? "R" : String(c?.party ?? "") };
+  return { cls: k, text: k === "yes" ? "YES" : k === "no" ? "NO" : partyLetter(c) };
 }
 /** The name after the tag: nothing for a measure's options (the tag says Yes or No), else the candidate's name. */
 export const candName = (c, full = false) => (isOption(c) ? "" : (full ? c?.name : c?.last ?? c?.name) ?? "");

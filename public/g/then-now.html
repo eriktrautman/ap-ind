@@ -58,7 +58,7 @@
       ?? pc.find((c) => c.independent) ?? pc.find((c) => c.party !== pc[0].party) ?? pc[1] ?? pc[0];
   }
   const isInd = (c) => c.featured || c.independent || isFeaturedCand(c.id);
-  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm"><span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${isInd(c) ? "I" : esc(candTag(c).text)}</span>${esc(candName(c))}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
+  const rowHtml = (c, max, lane) => `<div class="row ${partyClass(c.party)} ${lane ? "lane" : ""}"><div class="nm"><span class="tag ${isInd(c) ? "ind" : partyClass(c.party)}">${esc(candTag(c).text)}</span>${esc(candName(c))}${c.winner ? " ✓" : ""}</div><div class="bar"><i style="width:${Math.max(1, c.pct / max * 100)}%;background:${colorFor(c)}"></i></div><div class="pc">${Number(c.pct).toFixed(1)}</div></div>`;
 
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
