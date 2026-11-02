@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T19:39:04Z",
+  updated: "2026-11-02T19:42:46Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -281,6 +281,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T19:42:46Z", what: "C6: a full ring now stands for 5% of the vote instead of 20%, so a real result near 2% fills a visible share of it. C2, C6 and D10 footers say \"Ind = not Dem or Rep\"." },
   { t: "2026-11-02T19:39:04Z", what: "D10 National popular vote compares against 2022 instead of 2024. C2, C6 and D10 footers say \"Independent = not D or R\" in place of the long definition." },
   { t: "2026-11-02T19:35:03Z", what: "C6 National independent vote compares against 2022, the last midterm (1.64% of federal votes went outside the two major parties), instead of 2024 (1.94%). 2022 Senate and House totals added to config/baseline-federal.json from the AP history database, by the rule used for 2024. Its footer is cut to one line." },
   { t: "2026-11-02T19:14:05Z", what: "Studio: every section opens and closes from a triangle in its head. Slate is closed by default, the rest open; Races is back to open (closing it was a mix-up for Slate). The choice is remembered per browser, a link to a section opens it, and a closed section loads no previews." },

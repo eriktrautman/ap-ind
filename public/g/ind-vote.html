@@ -23,7 +23,7 @@
     <div><div class="big" id="big">—</div><div class="sub" id="sub">votes for independent and third-party candidates so far</div><div class="cmp" id="cmp"></div></div>
     <div><svg class="ring" id="ring" viewBox="0 0 400 400"></svg><div class="legend"><span><i style="background:var(--gold)"></i>tonight</span><span><i style="background:#3a4f7a"></i>2022 share</span></div></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · Independent = not D or R</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · Ind = not Dem or Rep</span><span id="updated"></span></div>
 </div>
 <script type="module">
   import { connectFeed, freshness, clockS } from "./feed.js";
@@ -53,12 +53,12 @@
     $("sub").textContent = `votes for independent and third-party candidates so far · ${withInd} of ${list.length} races have one on the ballot`;
     $("cmp").innerHTML = share === null ? "" : `<b>${share.toFixed(1)}%</b> of all votes counted ${sharePrior !== null ? `<span class="m">· 2022: ${sharePrior.toFixed(1)}%</span>` : ""}`;
     const svg = d3.select("#ring"); svg.selectAll("*").remove();
-    const arc = (v, r, color, w) => svg.append("path").attr("transform", "translate(200,200)").attr("fill", color).attr("d", d3.arc()({ innerRadius: r - w, outerRadius: r, startAngle: 0, endAngle: Math.min(1, v / 20) * 2 * Math.PI }));
+    const arc = (v, r, color, w) => svg.append("path").attr("transform", "translate(200,200)").attr("fill", color).attr("d", d3.arc()({ innerRadius: r - w, outerRadius: r, startAngle: 0, endAngle: Math.min(1, v / 5) * 2 * Math.PI }));
     svg.append("circle").attr("cx", 200).attr("cy", 200).attr("r", 150).attr("fill", "none").attr("stroke", "#1b2a4a").attr("stroke-width", 44);
     if (sharePrior !== null) arc(sharePrior, 172, "#3a4f7a", 44);
     if (share !== null) arc(share, 172, "#facc15", 44);
     svg.append("text").attr("x", 200).attr("y", 215).attr("text-anchor", "middle").attr("font-size", 64).text(share === null ? "—" : `${share.toFixed(1)}%`);
-    svg.append("text").attr("x", 200).attr("y", 260).attr("text-anchor", "middle").attr("font-size", 22).attr("fill", "#9aa7bd").attr("font-weight", 400).text("ring = share of 20%");
+    svg.append("text").attr("x", 200).attr("y", 260).attr("text-anchor", "middle").attr("font-size", 22).attr("fill", "#9aa7bd").attr("font-weight", 400).text("ring = share of 5%");
     $("updated").textContent = `Updated ${clockS()}`;
   }
   const feed = connectFeed({
