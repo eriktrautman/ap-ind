@@ -135,8 +135,6 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .seg button.on[data-rt="l"] { background: var(--ok); color: #fff; } /* green: we are live */
 .note { font-size: 13px; color: var(--muted); }
 .note.ok { color: var(--ok); } .note.bad { color: var(--bad); }
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
-@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
 .toggle { font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---- lists (race pickers) ---- */
@@ -172,7 +170,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .addfeat input { flex: 1; }
 .suggest { position: absolute; top: 100%; left: 0; right: 0; z-index: 8; background: #fff; border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 6px 20px #0002; max-height: 300px; overflow: auto; }
 .suggest .row { cursor: pointer; } .suggest .row:hover { background: var(--cream); }
-.ro .list button, .ro .chartpick input, .ro #callhl, .ro .addmanual, .ro #idletext, .ro .addfeat, .ro .gcard .featbtn { pointer-events: none; opacity: .55; }
+.ro .list button, .ro #callhl, .ro .addmanual, .ro #idletext, .ro .addfeat, .ro .gcard .featbtn { pointer-events: none; opacity: .55; }
 .ro .addmanual, .ro .addfeat, .ro #newchunk, .ro .chunk .chunktop button { display: none; }
 .ro .chunk .chunkname { pointer-events: none; }
 /* The crawl order and a chunk's contents: one list of race, text and chunk rows */
@@ -256,11 +254,6 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 #addchunkref select option { color: var(--ink); }
 
 /* ---- chart pickers ---- */
-.chartpick { display: flex; flex-wrap: wrap; gap: 6px; }
-.chartpick label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; border: 1px solid var(--sand); border-radius: 6px; padding: 4px 10px 4px 6px; background: #fff; cursor: pointer; }
-.chartpick label.on { background: #fbf8ef; border-color: var(--gold); }
-.chartpick label .cid { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
-.chartpick label.unbuilt { color: var(--muted); } .chartpick label .soon { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--warn); }
 
 /* ---- preview (ticker) ---- */
 .preview { background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--sand); }
@@ -274,19 +267,14 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .preview iframe { position: absolute; left: 0; bottom: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 100%; pointer-events: none; }
 
 /* ---- graphic cards ---- */
-.racegrid { display: grid; gap: 18px; margin-top: 16px; }
-.racerow { border: 3px solid #9aa7bd; border-radius: 10px; overflow: hidden; background: #f3f5fa; margin-top: 14px; }
-.racerow .raceband { border: 0; border-bottom: 2px solid #c9d0dd; border-radius: 0; }
-/* Featured race bands: dark on light, lighter than the section headers above them. */
+/* Race bands: dark on light, lighter than the section headers above them. */
 .raceband { display: flex; align-items: baseline; gap: 12px; padding: 8px 14px; background: #f6f3ec; color: var(--navy); border: 1px solid var(--sand); border-radius: 6px 6px 0 0; flex-wrap: wrap; }
-.raceband .pos { font-family: var(--mono); font-size: 16px; font-weight: 700; color: #fff; background: var(--navy); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; align-self: center; }
 .raceband .lab { font-size: 18px; font-weight: 700; background: var(--gold); color: #1a1600; padding: 1px 9px; margin: 0; }
 .raceband .ttl { font-family: var(--serif); font-size: 17px; }
 .raceband .who { color: #6d28d9; }
 .raceband .meta { margin-left: auto; font-size: 12.5px; color: var(--muted); }
 .raceband .featbtn { background: #fff; color: var(--navy); border-color: var(--sand); padding: 2px 8px; font-size: 12px; }
 .cardgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; padding: 12px; }
-.movement .cardgrid, #movegrid { padding: 12px 0 0; }
 .cardgrid.dense { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; padding: 8px 0 14px; }
 .gcard.minicard .ghead { padding: 4px 8px; font-size: 12px; }
 .gcard.minicard .gfoot { padding: 4px 8px; font-size: 11.5px; }
@@ -335,16 +323,14 @@ button.copybtn:hover { border-color: var(--navy); background: var(--cream); }
 .catalog .crow > .row:hover { background: var(--cream); }
 .catalog .crow.open > .row { background: #fbf8ef; }
 .catalog .cbody { padding: 0 0 6px; background: #fcfbf8; border-top: 1px dashed var(--sand); }
-.catalog .cbody .raceband { background: var(--navy); }
+.catalog .cbody .gfoot { flex-wrap: wrap; }
+.toplaylist { white-space: nowrap; }
 .catalog .nums { font-variant-numeric: tabular-nums; margin-right: 6px; }
 .catalog .btns { align-items: center; }
 button.mini { padding: 2px 8px; font-size: 11.5px; }
 button.mini.on, a.mini.on { background: #fbf8ef; border-color: var(--gold); }
 a.mini { display: inline-block; padding: 2px 8px; font-size: 11.5px; border: 1px solid var(--sand); border-radius: 6px; text-decoration: none; color: var(--ink); }
 .gcard.inuse { outline: 2px solid var(--gold); outline-offset: -1px; }
-.pform { display: grid; gap: 6px; padding: 8px 10px 10px; border-top: 1px solid var(--sand); background: #fcfbf8; font-size: 12px; }
-.pform label { display: grid; gap: 3px; color: var(--muted); }
-.pform input, .pform select { font-size: 12.5px; padding: 4px 7px; width: 100%; }
 
 /* ---- quick tooltip ---- */
 .qtip { position: fixed; z-index: 50; max-width: 360px; background: #0e1a33; color: #eef2f9; font-size: 12.5px; line-height: 1.4; padding: 7px 10px; border-radius: 6px; box-shadow: 0 6px 20px #0004; white-space: pre-line; pointer-events: none; }
@@ -381,14 +367,13 @@ dialog::backdrop { background: #071222aa; }
   .cardhead { margin: -10px -12px 14px; padding: 12px 12px 10px; }
   .cardhead h2 { font-size: 19px; }
   /* Nothing may push past the right edge: two-column layouts stack, list rows put their buttons on a second line. */
-  .cols { grid-template-columns: 1fr; gap: 14px; }
   .catalog .crow > .row { grid-template-columns: minmax(0, 1fr); }
   .catalog .crow > .row .btns { justify-content: flex-end; flex-wrap: wrap; }
   .catalog .nums { margin-right: auto; }
   .row .btns button { padding: 3px 7px; }
   .raceband { gap: 8px; padding: 7px 10px; } .raceband .lab { font-size: 15px; } .raceband .ttl { font-size: 14px; }
   .filters { gap: 5px; }
-  .racegrid, .chartsgrid, .persistgrid { grid-template-columns: 1fr; }
+  .chartsgrid { grid-template-columns: 1fr; }
     body { overflow-x: hidden; }
 }
 

@@ -1,5 +1,5 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
-// published), and the sections that organise this browser's view of the graphics (Slate, Races, Movement, catalogs).
+// published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
 import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
@@ -131,12 +131,11 @@ let lastPublished = null;     // { updatedAt, blocks: ["ticker"] | ["screenA"] |
 let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
 const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
 const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
-/** The page's featured races as race ids for chart addresses, or null when they are the shipped ones (then addresses stay short). */
-const featuredLabels = () => draft.featuredRaceIds.join() === DEFAULTS.featuredRaceIds.join() ? null : draft.featuredRaceIds.map((id) => index?.byId?.get(id)?.label ?? id);
+const SLATE_IDS = FEATURED_RACES.map((r) => r.id);
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
 const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
-const SECTIONS = ["ticker", "screens", "playlists", "detail", "broad", "movement", "persistent", "catalog", "charts"];
+const SECTIONS = ["ticker", "screens", "playlists", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
 function loadDisplay() {
   let d = null;
@@ -186,7 +185,7 @@ $("applyall").addEventListener("click", async () => {
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
-const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getRaces: featuredLabels, getDraft: () => draft , getTheme: () => previewThemeParam() });
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getDraft: () => draft , getTheme: () => previewThemeParam() });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
@@ -306,7 +305,7 @@ function renderHow() {
     `<b>Every chart is a link.</b> Show or Copy URL on any card gives an address carrying the chart, the race and the display settings. It always shows the same thing and can be shared with other authorized people.`,
     `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a crawl order of races, text and chunks (packages of races and text, built once under the ticker and placed anywhere), use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
     `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the published screen on the right.`,
-    `<b>Collect what you need.</b> Feature races and charts to keep them close in the sections above the catalogs. This organises your view only and is never published.`,
+    `<b>Playlists.</b> Runs of charts for a segment, by person, shared with everyone here. Add any chart to one from the catalogs. They are never published to an output.`,
     `<b>Producer actions</b> (poll, Test/Live, pause) need a producer password. A publisher password publishes the ticker and the live screens but cannot use them; a read-only password (and the rehearsal one) can look but not change anything published.`,
     `<b>Restore All Default Settings</b> resets this page, never the live ticker or screens.`,
   ].map((x) => `<li>${x}</li>`).join("");
@@ -396,7 +395,7 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, featured races and charts, overview charts, persistent elements and their inputs, and every Background and Opacity dropdown (Black at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER is not touched.</b> It keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, and every Background and Opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   display = { top: { bg: DEFAULT_BG, opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: the default background at 100%
@@ -513,25 +512,20 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
 // ---------- shared race rendering ----------
 const cands = (r) => r.candidates.slice(0, 3).map((c) => `${esc(c.last ?? c.name)} ${partyLetter(c) ? `(${partyLetter(c)})` : ""}${r.totalVotes ? ` ${Number(c.pct).toFixed(1)}%` : ""}`).join(" · ");
 const indName = (r) => FEATURED_RACES.find((f) => f.id === r.id)?.who ?? r.candidates.find((c) => c.featured)?.name ?? r.candidates.find((c) => c.independent)?.name ?? null;
-const ICON_FEAT = '<span class="sic feat" title="Featured race"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3 .8 4.4L8 11.5l-3.9 2.1.8-4.4-3.2-3 4.4-.6z" fill="currentColor"/></svg></span>';
+const ICON_FEAT = '<span class="sic feat" title="On the slate"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.6l1.9 4 4.4.6-3.2 3 .8 4.4L8 11.5l-3.9 2.1.8-4.4-3.2-3 4.4-.6z" fill="currentColor"/></svg></span>';
 const ICON_TICK = '<span class="sic tick" title="On the ticker"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M1 4h14v8H1z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 8h6M11 8h1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>';
-const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${draft.featuredRaceIds.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
-function raceBand(r, { featured, position = null }) {
+const raceLine = (r) => `<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span>${kindBadge(r)}${esc(r.title)}${r.called ? ' <span class="pill call">AP CALL</span>' : ""}${SLATE_IDS.includes(r.id) ? ICON_FEAT : ""}${draft.pinnedRaceIds.includes(r.id) ? ICON_TICK : ""}`;
+function raceBand(r) {
   const who = indName(r);
-  return `<div class="raceband">${position ? `<span class="pos" title="Position ${position} on the Slate">${position}</span>` : ""}<span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
+  return `<div class="raceband"><span class="lab" title="Race id ${esc(r.label)} · AP race ${esc(r.id)}">${esc(r.label)}</span><span class="ttl">${esc(r.stateName)} · ${esc(r.title)}</span>${who ? `<span class="who">${esc(who)}</span>` : ""}
     <span class="meta">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results yet"}${r.called ? " · AP CALL" : ""}${r.rankedChoice ? " · ranked choice" : ""}</span>
-    <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button><button class="featbtn" data-feat="${r.id}">${featured ? "Remove from Slate" : "Put on the Slate"}</button></div>`;
+    <button class="featbtn" data-pin="${r.id}">${draft.pinnedRaceIds.includes(r.id) ? "Remove from ticker" : "Add to ticker"}</button></div>`;
 }
 const raceName = (id) => { const r = index?.byId?.get(id); return r ? `${r.label} (${r.stateName}, ${r.title})` : `race ${id}`; };
 /** Adding or removing a race or chart is a real action: confirm it, then commit. Reorders need no confirmation. */
 async function confirmThen(title, body, fn) {
   const ok = await ask({ title, body: `<p>${body}</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: title.replace(/\?$/, "") });
   if (ok) { fn(); commit(); }
-}
-function toggleFeatured(id) {
-  const on = draft.featuredRaceIds.includes(id);
-  confirmThen(on ? "Remove from the Slate?" : "Put this race on the Slate?", `${esc(raceName(id))} ${on ? "leaves the Slate." : "gets a row on the Slate with every featured chart."}`,
-    () => { draft.featuredRaceIds = on ? draft.featuredRaceIds.filter((x) => x !== id) : [...draft.featuredRaceIds, id]; });
 }
 /** The catalogs' Add to / Remove from ticker: a race joins the end of the crawl order, or every top-level entry of it goes.
  *  A race that crawls only inside a chunk is removed by editing the chunk. */
@@ -544,15 +538,6 @@ function toggleTicker(id) {
   }
   confirmThen(on ? "Remove from the ticker?" : "Add to the ticker?", `${esc(raceName(id))} ${on ? "leaves the crawl order." : "joins the end of the crawl order."}`,
     () => { draft.tickerItems = on ? draft.tickerItems.filter((it) => !(it.t === "race" && it.id === id)) : [...draft.tickerItems, { t: "race", id }]; });
-}
-function toggleChart(id) {
-  const chart = CHARTS.find((c) => c.id === id); if (!chart || id === "A1") return;
-  const key = chart.kind === "race" ? "featuredCharts" : chart.kind === "other" ? "persistentCharts" : "movementCharts";
-  const on = draft[key].includes(id);
-  const target = chart.kind === "race" ? "Featured Charts" : chart.kind === "other" ? "Persistent Elements" : overviewName(chart);
-  const where = chart.kind === "race" ? "the Slate's chart set (every race on it)" : `the ${target}${chart.kind === "other" ? " section, where its inputs are set" : ""}`;
-  confirmThen(on ? `Remove ${id} from ${target}?` : `Add ${id} to ${target}?`, `${esc(chart.id)} ${esc(chart.name)} ${on ? "leaves" : "joins"} ${where}.`,
-    () => { const set = new Set(draft[key]); on ? set.delete(id) : set.add(id); draft[key] = CHARTS.filter((c) => set.has(c.id)).map((c) => c.id); if (on && key === "persistentCharts") delete draft.persistentSettings[id]; });
 }
 
 // ---------- Ticker section: the crawl order and the chunks ----------
@@ -584,7 +569,7 @@ function renderSeq() {
   const items = draft.tickerItems;
   const flat = expandTicker(draft);
   $("seqcount").textContent = `${items.length} element${items.length === 1 ? "" : "s"} · ${flat.length} piece${flat.length === 1 ? "" : "s"} crawl`;
-  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the featured races crawl. Add races, text or a chunk below.</div>`;
+  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the slate's races crawl. Add races, text or a chunk below.</div>`;
   // Like the two boxes above it, the dropdown opens on its helper text; the chunks follow.
   $("chunkpick").innerHTML = `<option value="" selected>${draft.chunks.length ? "Add a chunk: choose one built below" : "Add a chunk: none built yet, build one below"}</option>` + draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
   $("addchunkref").querySelector("button").disabled = !draft.chunks.length;
@@ -769,9 +754,9 @@ function screenLiveUrl(key) { const s = displayParams({ bg: "", opacity: secDisp
 function screenDraftUrl(key) { return origin() + screenAddress(draft[key], { bg: pageBg(key), opacity: secDisplay("screens").opacity }); }
 function raceOptions(selected) {
   if (!index) return "";
-  const feat = draft.featuredRaceIds.map((id) => index.byId.get(id)).filter(Boolean);
+  const feat = SLATE_IDS.map((id) => index.byId.get(id)).filter(Boolean);
   const opt = (r) => `<option value="${esc(r.label)}" ${selected === r.label ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)} · ${esc(r.title)}</option>`;
-  return `<optgroup label="On the Slate">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
+  return `<optgroup label="The slate">${feat.map(opt).join("")}</optgroup><optgroup label="Every race">${index.races.filter((r) => !feat.includes(r)).sort((a, b) => a.label.localeCompare(b.label)).map(opt).join("")}</optgroup>`;
 }
 function stateOptions(selected) {
   const states = index ? [...new Set(index.races.map((r) => r.state))].sort() : FEATURED_RACES.map((r) => r.state);
@@ -781,7 +766,7 @@ function stateOptions(selected) {
  *  their handler (data-sk="screenA" for a Live Screen draft, data-ps="1" for the playlist dialog); bgAttr the Background. */
 function specFormHtml(s, attr, bgAttr, bg) {
   const chart = CHARTS.find((c) => c.id === s.chart);
-  const groups = [["A", "Persistent elements"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Broad races"], ["F", "AP reports"]];
+  const groups = [["A", "Lower thirds and strips"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Many races at once"], ["F", "AP reports"]];
   const chartSel = `<label>Chart<select ${attr} data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${c.id} ${esc(c.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
   const needsRace = chart && (chart.kind === "race" || chart.needsRace);
   // The form keeps the same shape whatever the chart: Chart, Race, Background. A chart that draws no single race shows Race greyed out.
@@ -1041,7 +1026,7 @@ function renderPlaylists() {
     grid.appendChild(el);
   });
   body.innerHTML = "";
-  if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart…, or send a chart here from the Chart Catalog's ⋯ menu." : ""}</div>`;
+  if (!p.items.length) body.innerHTML = `<div class="empty">Nothing in ${esc(p.name || "this playlist")} yet.${can ? " Press + Add chart…, or add one from the Race Catalog or Chart Catalog." : ""}</div>`;
   else { body.appendChild(grid); if (can) plDragDrop(grid); }
   cards.prune();
 }
@@ -1076,7 +1061,7 @@ async function plEdit(i) {
 }
 async function plAdd(preset = null, target = null) {
   const u = target?.user ?? plUser(), p = target?.playlist ?? plList(); if (!u || !p) return;
-  const spec = await specDialog(preset ?? { chart: "B5", race: "", state: "", params: {}, bg: "black" }, { title: `Add a chart to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Add to playlist" });
+  const spec = await specDialog(preset ?? { chart: "B5", race: "", state: "", params: {}, bg: DEFAULT_BG }, { title: `Add a chart to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Add to playlist" });
   if (!spec) return;
   const ok = await savePlaylists((doc) => { const list = doc.users.find((x) => x.id === u.id)?.playlists.find((x) => x.id === p.id); if (!list) return false; list.items.push(spec); });
   if (ok) plSelect(u.id, p.id);
@@ -1115,8 +1100,11 @@ $("plbar").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   ({ pladd: () => plAdd(), plnewuser: plNewUser, plnewlist: plNewList, plrename: plRename, pldelete: plDelete })[b.id]?.();
 });
-/** From a card's ⋯ menu (Chart Catalog, Slate, Races, Movement): choose the person and playlist, then finish the chart's
- *  spec. preset carries what the card already knows, e.g. the Slate card's race. */
+/** From either catalog: choose the person and playlist, then finish the chart's spec. preset carries what the card
+ *  already knows, e.g. the race a Race Catalog card belongs to. */
+const mayAddToPlaylist = (chart) => chart.built && !chart.retired && chart.page && chart.id !== "A1" && mayPublish();
+const playlistBtn = (chart, race = "") => (mayAddToPlaylist(chart) ? `<button class="mini toplaylist" data-chart="${chart.id}" data-race="${esc(race)}" title="Add this chart to a person's playlist">+ Add to playlist</button>` : "");
+document.addEventListener("click", (e) => { const b = e.target.closest(".toplaylist"); if (b) addToPlaylistFromCatalog(CHARTS.find((c) => c.id === b.dataset.chart), { race: b.dataset.race }); });
 async function addToPlaylistFromCatalog(chart, preset = {}) {
   if (!playlists) await loadPlaylists();
   if (!playlists?.users.length) { await ask({ title: "No playlists yet", body: `<p>A producer adds a person and a playlist in the Playlists section first.</p>`, ok: "OK", info: true }); return; }
@@ -1130,12 +1118,12 @@ async function addToPlaylistFromCatalog(chart, preset = {}) {
   const ok = await pending;
   const user = playlists.users.find((x) => x.id === $("pickuser").value), list = user?.playlists.find((x) => x.id === $("picklist").value);
   if (!ok || !user || !list) return;
-  await plAdd({ chart: chart.id, race: preset.race ?? "", state: preset.state ?? "", params: {}, bg: "black" }, { user, playlist: list });
+  await plAdd({ chart: chart.id, race: preset.race ?? "", state: preset.state ?? "", params: {}, bg: DEFAULT_BG }, { user, playlist: list });
 }
 // The chart specifier dialog: the same form as a Live Screen draft, editing a pending spec until OK.
 let pendingSpec = null;
 function renderSpecDialog() {
-  $("psform").innerHTML = specFormHtml(pendingSpec, 'data-ps="1"', 'data-ps="1" data-f="bg"', pendingSpec.bg ?? "black");
+  $("psform").innerHTML = specFormHtml(pendingSpec, 'data-ps="1"', 'data-ps="1" data-f="bg"', pendingSpec.bg ?? DEFAULT_BG);
   $("psdesc").textContent = describeScreen(pendingSpec);
 }
 document.addEventListener("input", (e) => {
@@ -1148,7 +1136,7 @@ document.addEventListener("input", (e) => {
   $("psdesc").textContent = describeScreen(pendingSpec);
 });
 async function specDialog(spec, { title, ok }) {
-  pendingSpec = { chart: spec.chart, race: spec.race ?? "", state: spec.state ?? "", params: { ...(spec.params ?? {}) }, bg: spec.bg ?? "black" };
+  pendingSpec = { chart: spec.chart, race: spec.race ?? "", state: spec.state ?? "", params: { ...(spec.params ?? {}) }, bg: spec.bg ?? DEFAULT_BG };
   let warn = "";
   for (;;) {
     const pending = ask({ title, body: `${warn}<div class="psform" id="psform"></div><p class="psdesc muted" id="psdesc"></p>`, ok });
@@ -1164,84 +1152,7 @@ async function specDialog(spec, { title, ok }) {
   }
 }
 
-// ---------- Race Detail section ----------
-function renderDetail() {
-  if (!index) return;
-  $("featcount").textContent = `${draft.featuredRaceIds.length}`;
-  $("featured").innerHTML = draft.featuredRaceIds.length ? draft.featuredRaceIds.map((id, i) => {
-    const r = index.byId.get(id);
-    return `<div class="row" data-id="${id}"><div><div class="nm"><span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(id)}</span><span class="muted">not in the current AP feed</span>`}</div>${r ? `<div class="sub">${esc(r.stateName)}${indName(r) ? " · " + esc(indName(r)) : ""} · ${cands(r)}</div>` : ""}</div>
-      <div class="btns"><button class="up" ${i === 0 ? "disabled" : ""}>▲</button><button class="down" ${i === draft.featuredRaceIds.length - 1 ? "disabled" : ""}>▼</button><button class="rm">✕</button></div></div>`;
-  }).join("") : `<div class="empty">No featured races. Add one below or from the catalog.</div>`;
-  $("chartcount").textContent = `${draft.featuredCharts.length}`;
-  $("featcharts").innerHTML = draft.featuredCharts.length ? draft.featuredCharts.map((id, i) => {
-    const c = CHARTS.find((x) => x.id === id); if (!c) return "";
-    return `<div class="row" data-id="${id}"><div><div class="nm"><span class="ord">${i + 1}</span><span class="lab">${esc(c.id)}</span>${esc(c.name)}${c.built ? "" : ' <span class="pill" style="background:#fdf6ea;color:#8a5a0e">not built yet</span>'}</div></div>
-      <div class="btns"><button class="rm" title="Remove from Featured Charts">✕</button></div></div>`;
-  }).join("") : `<div class="empty">No featured charts. Add one above or from the Chart Catalog.</div>`;
-  const grid = $("racegrid");
-  grid.innerHTML = "";
-  draft.featuredRaceIds.forEach((id, i) => {
-    const r = index.byId.get(id);
-    const row = document.createElement("div"); row.className = "racerow";
-    if (!r) { row.innerHTML = `<div class="raceband"><span class="pos">${i + 1}</span><span class="lab">${esc(id)}</span><span class="ttl">Not in the current AP feed</span><button class="featbtn" data-feat="${esc(id)}">Remove from Slate</button></div>`; grid.appendChild(row); return; }
-    row.innerHTML = raceBand(r, { featured: true, position: i + 1 });
-    const cg = document.createElement("div"); cg.className = "cardgrid";
-    for (const cid of draft.featuredCharts) {
-      const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
-      if (chart.only && !chart.only(r)) continue;
-      cg.appendChild(cards.card({ chart, race: r, section: "detail", priority: i === 0 ? 1 : 2, open: "show", menu: [...(mayPublish() ? [{ label: "Add to a playlist…", onClick: () => addToPlaylistFromCatalog(chart, { race: r.label }) }] : []), { label: "Remove from Featured Charts (all races)…", onClick: () => toggleChart(chart.id) }] }));
-    }
-    if (!cg.children.length) cg.innerHTML = `<div class="empty">No featured charts selected.</div>`;
-    row.appendChild(cg); grid.appendChild(row);
-  });
-  if (!draft.featuredRaceIds.length) grid.innerHTML = `<div class="empty">No featured races. Feature one above or from the Race Catalog and its charts appear here.</div>`;
-}
-$("featured").addEventListener("click", (e) => {
-  const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!row || !b) return;
-  const a = draft.featuredRaceIds; const i = a.indexOf(row.dataset.id); if (i < 0) return;
-  if (b.classList.contains("rm")) { toggleFeatured(row.dataset.id); return; }
-  if (b.classList.contains("up") && i > 0) [a[i - 1], a[i]] = [a[i], a[i - 1]];
-  else if (b.classList.contains("down") && i < a.length - 1) [a[i + 1], a[i]] = [a[i], a[i + 1]];
-  commit();
-});
-$("featcharts").addEventListener("click", (e) => { const row = e.target.closest(".row"); if (row && e.target.closest(".rm")) toggleChart(row.dataset.id); });
-/** Type-to-add chart picker for the Featured Charts list: per-race charts not yet in the set. */
-(() => {
-  const input = $("chartq"), box = $("chartsuggest");
-  const render = () => {
-    const q = input.value.trim().toLowerCase();
-    let rows = CHARTS.filter((c) => c.kind === "race" && !c.retired && !draft.featuredCharts.includes(c.id));
-    if (q) rows = rows.filter((c) => `${c.id} ${c.name}`.toLowerCase().includes(q));
-    box.hidden = false;
-    box.innerHTML = rows.length ? rows.map((c) => `<div class="row" data-id="${c.id}"><div><div class="nm"><span class="lab" title="Chart id ${esc(c.id)}">${esc(c.id)}</span>${esc(c.name)}${c.built ? "" : ' <span class="muted small">not built yet</span>'}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") : `<div class="empty">${q ? "No charts match." : "Every per-race chart is already featured."}</div>`;
-  };
-  input.addEventListener("input", render); input.addEventListener("focus", render);
-  box.addEventListener("mousedown", (e) => { const row = e.target.closest(".row"); if (!row) return; e.preventDefault(); toggleChart(row.dataset.id); input.value = ""; box.hidden = true; });
-  input.addEventListener("keydown", (e) => { if (e.key === "Escape") { box.hidden = true; input.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box.querySelector(".row"); if (first) { toggleChart(first.dataset.id); input.value = ""; box.hidden = true; } } });
-  document.addEventListener("click", (e) => { if (!e.target.closest("#chartq, #chartsuggest")) box.hidden = true; });
-})();
-/** Type-to-add race picker shared by the ticker and Race Detail: matches label, state, office and
- *  candidate names; with nothing typed it suggests featured races, then races with an independent. */
-function racePicker(inputId, boxId, { exclude, onPick }) {
-  const input = $(inputId), box = $(boxId);
-  const render = () => {
-    if (!index) { box.hidden = true; return; }
-    const q = input.value.trim().toLowerCase();
-    const skip = new Set(exclude());
-    let rows = index.races.filter((r) => !skip.has(r.id));
-    if (q) rows = rows.filter((r) => `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase().includes(q));
-    else rows = rows.filter((r) => draft.featuredRaceIds.includes(r.id) || r.hasIndependent).sort((a, b) => (draft.featuredRaceIds.includes(b.id) - draft.featuredRaceIds.includes(a.id)) || a.label.localeCompare(b.label));
-    rows = rows.slice(0, 12);
-    box.hidden = false;
-    box.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-id="${r.id}"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") + (!q ? `<div class="empty">Type to search all ${index.races.length} races.</div>` : "") : `<div class="empty">No races match.</div>`;
-  };
-  input.addEventListener("input", render);
-  input.addEventListener("focus", render);
-  box.addEventListener("mousedown", (e) => { const row = e.target.closest(".row"); if (!row) return; e.preventDefault(); onPick(row.dataset.id); input.value = ""; render(); });
-  input.addEventListener("keydown", (e) => { if (e.key === "Escape") { box.hidden = true; input.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box.querySelector(".row"); if (first) { onPick(first.dataset.id); input.value = ""; render(); } } });
-  document.addEventListener("click", (e) => { if (!e.target.closest(`#${inputId}, #${boxId}`)) box.hidden = true; });
-}
+// ---------- race pickers ----------
 /** The same picker for the crawl order and every chunk (data-pick="seq" | "chunk:<id>"): one listener for all of them, since
  *  the chunk editors are redrawn on every change. A pick goes straight into that list, no confirmation: the list is right there. */
 (() => {
@@ -1253,7 +1164,7 @@ function racePicker(inputId, boxId, { exclude, onPick }) {
     const q = input.value.trim().toLowerCase();
     let rows = index.races.filter((r) => !skip.has(r.id));
     if (q) rows = rows.filter((r) => `${r.label} ${r.state} ${r.stateName} ${r.title} ${r.officeName} ${r.candidates.map((c) => c.name).join(" ")}`.toLowerCase().includes(q));
-    else rows = rows.filter((r) => draft.featuredRaceIds.includes(r.id) || r.hasIndependent).sort((a, b) => (draft.featuredRaceIds.includes(b.id) - draft.featuredRaceIds.includes(a.id)) || a.label.localeCompare(b.label));
+    else rows = rows.filter((r) => SLATE_IDS.includes(r.id) || r.hasIndependent).sort((a, b) => (SLATE_IDS.includes(b.id) - SLATE_IDS.includes(a.id)) || a.label.localeCompare(b.label));
     rows = rows.slice(0, 12);
     box.hidden = false;
     box.innerHTML = rows.length ? rows.map((r) => `<div class="row" data-id="${r.id}"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div><div class="btns"><button>+ Add</button></div></div>`).join("") + (!q ? `<div class="empty">Type to search all ${index.races.length} races.</div>` : "") : `<div class="empty">No races match.</div>`;
@@ -1265,48 +1176,9 @@ function racePicker(inputId, boxId, { exclude, onPick }) {
   document.addEventListener("keydown", (e) => { const i = e.target.closest("[data-pick]"); if (!i) return; const box = boxOf(i); if (e.key === "Escape") { box.hidden = true; i.blur(); } if (e.key === "Enter") { e.preventDefault(); const first = box?.querySelector(".row"); if (first) pick(i, first.dataset.id); } });
   document.addEventListener("click", (e) => { if (!e.target.closest(".addfeat")) document.querySelectorAll("[data-pick] ~ .suggest").forEach((b) => (b.hidden = true)); });
 })();
-racePicker("featq", "featsuggest", { exclude: () => draft.featuredRaceIds, onPick: toggleFeatured });
-document.addEventListener("click", (e) => { const b = e.target.closest("[data-feat]"); if (b) toggleFeatured(b.dataset.feat); });
 document.addEventListener("click", (e) => { const b = e.target.closest("[data-pin]"); if (b) toggleTicker(b.dataset.pin); });
 
-/** A chart added to a DEFAULTS list after this browser saved its workbench joins that list once. studio.knownCharts remembers which
- *  charts this browser has been offered; a browser seeing this code for the first time counts every chart without an `added`
- *  date as already known (they predate the mechanism), so nothing a producer removed on purpose comes back. */
-function adoptNewCharts() {
-  let known = null;
-  try { known = JSON.parse(localStorage.getItem("studio.knownCharts") ?? "null"); } catch {}
-  const first = !Array.isArray(known);
-  const seen = new Set(first ? CHARTS.filter((c) => !c.added).map((c) => c.id) : known);
-  let changed = false;
-  for (const c of CHARTS) {
-    if (seen.has(c.id) || !c.built || c.retired) continue;
-    const key = c.kind === "race" ? "featuredCharts" : c.kind === "other" ? "persistentCharts" : "movementCharts";
-    if (DEFAULTS[key].includes(c.id) && !draft[key].includes(c.id)) {
-      // keep the shipped order: insert before the first later default that the draft already has
-      const after = DEFAULTS[key].slice(DEFAULTS[key].indexOf(c.id) + 1).find((id) => draft[key].includes(id));
-      const at = after ? draft[key].indexOf(after) : draft[key].length;
-      draft[key].splice(at, 0, c.id); changed = true;
-    }
-  }
-  try { localStorage.setItem("studio.knownCharts", JSON.stringify(CHARTS.map((c) => c.id))); } catch {}
-  if (changed) draft = saveLocal(draft);
-}
-
-// ---------- Movement and Races ----------
-// movementCharts holds both series; the C charts render in Movement, the D charts in Races.
 const seriesOf = (id) => id[0];
-const overviewName = (chart) => (seriesOf(chart.id) === "D" ? "Races" : "Movement");
-function renderMovement() {
-  for (const [gridId, series] of [["movegrid", "C"], ["broadgrid", "D"]]) {
-    const grid = $(gridId); grid.className = "cardgrid"; grid.innerHTML = "";
-    for (const cid of draft.movementCharts.filter((id) => seriesOf(id) === series)) {
-      const chart = CHARTS.find((c) => c.id === cid); if (!chart) continue;
-      const params = chart.id === "D5" && draft.keyRaceIds.length ? { races: draft.keyRaceIds.map((id) => index?.byId?.get(id)?.label ?? id).join(",") } : null;
-      grid.appendChild(cards.card({ chart, params, section: series === "D" ? "broad" : "movement", priority: 3, open: "show", menu: [...(mayPublish() ? [{ label: "Add to a playlist…", onClick: () => addToPlaylistFromCatalog(chart) }] : []), { label: `Remove from ${overviewName(chart)}…`, onClick: () => toggleChart(chart.id) }] }));
-    }
-    if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add ${series} charts from the Chart Catalog below.</div>`;
-  }
-}
 
 // ---------- Full Catalog ----------
 const cfilters = new Set();
@@ -1317,7 +1189,7 @@ function cmatches(r) {
   if (st && r.state !== st) return false;
   if (off === "statewide" ? r.kind !== "statewide" : off && r.office !== off) return false;
   if (cfilters.has("ind") && !r.hasIndependent) return false;
-  if (cfilters.has("featured") && !draft.featuredRaceIds.includes(r.id)) return false;
+  if (cfilters.has("slate") && !SLATE_IDS.includes(r.id)) return false;
   if (cfilters.has("ticker") && !draft.pinnedRaceIds.includes(r.id)) return false;
   if (cfilters.has("called") && !r.called) return false;
   if (cfilters.has("counting") && (r.called || !r.totalVotes)) return false;
@@ -1331,34 +1203,30 @@ function renderCatalog() {
   const list = $("catalogList"); list.innerHTML = "";
   for (const r of rows.slice(0, 300)) {
     const crow = document.createElement("div"); crow.className = `crow ${openRaces.has(r.id) ? "open" : ""}`; crow.dataset.id = r.id;
-    const featured = draft.featuredRaceIds.includes(r.id);
     const onTicker = draft.pinnedRaceIds.includes(r.id);
     crow.innerHTML = `<div class="row"><div><div class="nm">${raceLine(r)}</div><div class="sub">${esc(r.stateName)} · ${cands(r)}</div></div>
-      <div class="btns"><span class="nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</span><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button><button class="mini ${featured ? "on" : ""}" data-feat="${r.id}" title="${featured ? "Remove from the Slate" : "Put on the Slate"}">${featured ? "★ Slate" : "☆ Slate"}</button></div></div>`;
-    if (openRaces.has(r.id)) crow.appendChild(catalogBody(r, featured));
+      <div class="btns"><span class="nums muted small">${r.totalVotes ? `${Math.round(r.eevp || r.precinctsPct)}% in` : "no results"}</span><button class="mini ${onTicker ? "on" : ""}" data-pin="${r.id}" title="${onTicker ? "Remove from the ticker" : "Add to the ticker"}">${onTicker ? "✓ Ticker" : "+ Ticker"}</button></div></div>`;
+    if (openRaces.has(r.id)) crow.appendChild(catalogBody(r));
     list.appendChild(crow);
   }
   if (rows.length > 300) list.insertAdjacentHTML("beforeend", `<div class="empty">Showing 300. Narrow the search.</div>`);
   if (!rows.length) list.innerHTML = `<div class="empty">No races match.</div>`;
 }
-function catalogBody(r, featured) {
+function catalogBody(r) {
   const body = document.createElement("div"); body.className = "cbody";
-  body.innerHTML = raceBand(r, { featured });
+  body.innerHTML = raceBand(r);
   const cg = document.createElement("div"); cg.className = "cardgrid";
   for (const chart of CHARTS.filter((c) => c.kind === "race")) {
     if (chart.only && !chart.only(r)) continue;
     const el = cards.card({ chart, race: r, section: "catalog", priority: 9, isStatic: true, open: "show" });
-    const on = draft.featuredCharts.includes(chart.id);
-    el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="featchart" data-chart="${chart.id}" title="Featured charts apply to every featured race">${on ? "★ Featured chart" : "☆ Make featured chart"}</button>`);
+    el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", playlistBtn(chart, r.label));
     cg.appendChild(el);
   }
   body.appendChild(cg);
   return body;
 }
 $("catalogList").addEventListener("click", (e) => {
-  const fc = e.target.closest(".featchart");
-  if (fc) { toggleChart(fc.dataset.chart); return; }
-  if (e.target.closest("[data-feat], [data-pin], .gcard")) return;
+  if (e.target.closest("[data-pin], .gcard")) return;
   const crow = e.target.closest(".crow"); if (!crow || !e.target.closest(".row")) return;
   const id = crow.dataset.id;
   openRaces.has(id) ? openRaces.delete(id) : openRaces.add(id);
@@ -1369,64 +1237,24 @@ document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventLi
   const f = c.dataset.cf; cfilters.has(f) ? cfilters.delete(f) : cfilters.add(f); c.classList.toggle("on", cfilters.has(f)); renderCatalog(); cards.prune();
 }));
 
-// ---------- Persistent Elements (A series, except the ticker) ----------
-// Each element's inputs live in draft.persistentSettings[id] and go into its preview and open URLs.
-const PERSIST_INPUTS = {
-  A2: [{ f: "name", label: "Name", ph: "e.g. Dan Osborn" }, { f: "title", label: "Title", ph: "e.g. Independent candidate, U.S. Senate" }],
-  A3: [{ f: "raceId", label: "Race", race: true }],
-  A4: [{ f: "raceId", label: "Race", race: true, ph: "latest featured call (leave empty)" }],
-};
-function renderPersistent() {
-  const grid = $("persistgrid"); grid.innerHTML = "";
-  for (const id of draft.persistentCharts) {
-    const chart = CHARTS.find((c) => c.id === id); if (!chart) continue;
-    const st = draft.persistentSettings[id] ?? {};
-    const race = st.raceId ? index?.byId?.get(st.raceId) ?? null : null;
-    const el = cards.card({ chart, race, params: id === "A2" ? { name: st.name, title: st.title } : null, section: "persistent", priority: 4, showRace: !!race, open: "show", menu: [{ label: "Remove from Persistent Elements…", onClick: () => toggleChart(chart.id) }] });
-    const inputs = PERSIST_INPUTS[id] ?? [];
-    if (inputs.length) {
-      const form = document.createElement("div"); form.className = "pform";
-      form.innerHTML = inputs.map((i) => i.race
-        ? `<label>${i.label}<select data-pid="${id}" data-f="${i.f}"><option value="">${esc(i.ph ?? "choose a race")}</option>${draft.featuredRaceIds.map((rid) => { const r = index?.byId?.get(rid); return r ? `<option value="${rid}" ${st.raceId === rid ? "selected" : ""}>${esc(r.label)} · ${esc(r.stateName)}</option>` : ""; }).join("")}${index ? `<optgroup label="Any race">${index.races.filter((r) => r.kind === "federal" && !draft.featuredRaceIds.includes(r.id)).slice(0, 500).map((r) => `<option value="${r.id}" ${st.raceId === r.id ? "selected" : ""}>${esc(r.label)}</option>`).join("")}</optgroup>` : ""}</select></label>`
-        : `<label>${i.label}<input data-pid="${id}" data-f="${i.f}" value="${esc(st[i.f] ?? "")}" placeholder="${esc(i.ph ?? "")}" maxlength="120"></label>`).join("");
-      el.appendChild(form);
-    }
-    grid.appendChild(el);
-  }
-  if (!grid.children.length) grid.innerHTML = `<div class="empty">Nothing selected. Add lower thirds and strips from the Chart Catalog below.</div>`;
-}
-let pformTimer = null;
-$("persistgrid").addEventListener("input", (e) => {
-  const i = e.target.closest("[data-pid]"); if (!i) return;
-  const id = i.dataset.pid; draft.persistentSettings[id] = { ...(draft.persistentSettings[id] ?? {}), [i.dataset.f]: i.value };
-  clearTimeout(pformTimer); pformTimer = setTimeout(() => { draft = saveLocal(normalize(draft)); renderPersistent(); cards.prune(); cards.broadcast(draft); }, i.tagName === "SELECT" ? 0 : 600);
-});
-$("persistgrid").addEventListener("change", (e) => { const i = e.target.closest("select[data-pid]"); if (i) i.dispatchEvent(new Event("input", { bubbles: true })); });
-
 // ---------- Chart Catalog ----------
 function renderChartCatalog() {
-  const sample = draft.featuredRaceIds.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
+  const sample = SLATE_IDS.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
   for (const [gridId, kind, series] of [["chartsA", "other", "A"], ["chartsRace", "race", "B"], ["chartsMove", "movement", "C"], ["chartsBroad", "movement", "D"], ["chartsF", "other", "F"]]) {
     const grid = $(gridId); grid.innerHTML = "";
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
-      const key = kind === "race" ? "featuredCharts" : kind === "other" ? "persistentCharts" : "movementCharts";
-      const on = draft[key].includes(chart.id);
-      const toPlaylist = chart.built && !chart.retired && chart.page && chart.id !== "A1" && mayPublish() ? [{ label: "Add to a playlist…", onClick: () => addToPlaylistFromCatalog(chart) }] : [];
-      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, section: "charts", priority: 6, showRace: false, menu: toPlaylist });
-      el.classList.add("minicard"); el.classList.toggle("inuse", on);
+      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, section: "charts", priority: 6, showRace: false });
+      el.classList.add("minicard");
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
       else if (chart.id === "A1") { el.classList.add("inuse"); el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<a class="mini on" href="#ticker">★ Managed in Ticker</a>`); }
-      else if (series === "F") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Reference page</span>`);
-      else if (series === "A") el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="Shown in Persistent Elements with its inputs">${on ? "✓ In Persistent" : "+ Add to Persistent"}</button>`);
-      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<button class="mini ${on ? "on" : ""} featchart" data-chart="${chart.id}" title="${kind === "race" ? "Featured charts apply to every featured race" : `Shown in the ${overviewName(chart)}`}">${on ? (kind === "race" ? "★ Featured" : "✓ In Overview") : (kind === "race" ? "☆ Feature" : "+ Add to Overview")}</button>`);
+      else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", playlistBtn(chart));
       if ("BCD".includes(series)) el.querySelector(".copybtn")?.remove();   // a catalog chart has no race of its own: its address would be worthless
       grid.appendChild(el);
     }
   }
-  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="muted small" style="grid-column:1/-1">Previews use ${esc(sample.label)}, the first featured race. Gold outline = in use.</div>`);
+  if (sample) $("chartsRace").insertAdjacentHTML("afterbegin", `<div class="muted small" style="grid-column:1/-1">Previews use ${esc(sample.label)}, the first race on the slate.</div>`);
 }
-$("charts").addEventListener("click", (e) => { const fc = e.target.closest(".featchart"); if (fc) toggleChart(fc.dataset.chart); });
 
 // ---------- the (i) panels: what the strips' controls do, in plain English (the same words as their hover titles) ----------
 function infoToggle(btnId, panelId, html) {
@@ -1518,14 +1346,14 @@ function renderAll() {
   renderTheme();
   renderLive();
   renderSeq(); renderChunks(); sendPreview(); renderScreens(); renderPlaylists();
-  renderDetail(); renderMovement(); renderPersistent(); renderCatalog(); renderChartCatalog();
+  renderCatalog(); renderChartCatalog();
   cards.prune();
 }
 // highlight the section in view
 const secObs = new IntersectionObserver((entries) => {
   for (const e of entries) if (e.isIntersecting) document.querySelectorAll("#sectionnav a").forEach((a) => a.classList.toggle("here", a.getAttribute("href") === `#${e.target.id}`));
 }, { rootMargin: "-120px 0px -60% 0px" });
-for (const id of ["ticker", "screens", "playlists", "detail", "broad", "movement", "persistent", "catalog", "charts"]) secObs.observe($(id));
+for (const id of SECTIONS) secObs.observe($(id));
 
 // ---------- boot ----------
 let timers = [];
@@ -1580,7 +1408,7 @@ function restoreScroll() {
 async function boot() {
   timers.forEach(clearInterval);
   draft = readLocal() ?? normalize(DEFAULTS);
-  adoptNewCharts();
+  draft.featuredRaceIds = [...DEFAULTS.featuredRaceIds];   // the slate is fixed now; a browser that once changed its own copy goes back to it
   renderDisplayControls(); renderTickerFrames();   // the builder frame is fed by postMessage; the live one reads what is published
   scalePreviews();
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };

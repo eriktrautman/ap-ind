@@ -6,8 +6,8 @@
 // are the full-size page.
 const THUMB_W = 960;
 // Thumbnail budget: only `maxLive` cards run a live iframe at once. Cards ask for a slot when
-// they scroll into view and give it up when they leave; lower `priority` wins (featured
-// sections use 1-2, movement 3, catalog 9). Catalog cards start static (numbers only) and
+// they scroll into view and give it up when they leave; lower `priority` wins (the
+// catalogs come last). Catalog cards start static (numbers only) and
 // join the queue only when the producer presses Preview.
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -19,7 +19,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getRaces = () => null, getDraft = () => null, getTheme = () => "" } = {}) {
+export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, getTheme = () => "" } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;
@@ -46,14 +46,10 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
     if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
     if (c.race && c.chart.needsState) p.set("state", c.race.state);
     else if (c.race) p.set("race", c.race.label);
-    racesParam(c, p);
     for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
     const s = p.toString();
     return `${getOrigin()}/g/${c.chart.id}${s ? "?" + s : ""}`;
   }
-  /** Charts that draw a list of races (the C, D and A series) carry the page's featured races as races=
-   *  when those differ from the shipped set; with the shipped set the address stays short and the page uses it. */
-  function racesParam(c, p) { if (c.chart.kind !== "race") { const r = getRaces(); if (r) p.set("races", r.join(",")); } }
   function pageUrl(c, forOpen) {
     const semantic = forOpen && (c.chart.page ?? "").startsWith("/g/");
     const u = new URL(semantic ? `/g/${c.chart.id}` : c.chart.page, location.origin);
@@ -66,7 +62,6 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
     for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts
     if (c.race && c.chart.needsState) p.set(semantic ? "state" : "st", c.race.state);
     else if (c.race) { if (semantic) p.set("race", c.race.label); else p.set("id", c.race.id); }
-    racesParam(c, p);
     for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
     if (!forOpen) p.set("preview", "1");
     p.set("sample", "auto");   // fabricated results until the count starts

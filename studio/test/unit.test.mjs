@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -82,4 +82,13 @@ test("vercel.json wires the Studio gate, the chart router, the data files and th
   if (!existsSync(`${ROOT}dist`)) return;   // npm test builds first; test:unit need not
   assert.equal(readFileSync(`${ROOT}dist/g/control.js`, "utf8"), readFileSync(`${ROOT}lib/control.js`, "utf8"), "dist/g/control.js is lib/control.js");
   for (const f of ["studio/login.html", "studio/index.html", "g/chart.html", "g/polls.json", "g/candidates.json", "ticker.html", "live-screen-one.html"]) assert.ok(existsSync(`${ROOT}dist/${f}`), f);
+});
+
+test("stored playlists from before General gain it once, keep what they had, and a producer's removal sticks", () => {
+  const old = normalizePlaylists({ users: [{ id: "ryan", name: "Ryan", playlists: [{ id: "seg", name: "Segment Test", items: [{ chart: "B5", race: "NE-SEN" }] }] }] });
+  const seeded = seedPlaylists(old);
+  assert.deepEqual(seeded.users.map((u) => u.name), ["General", "Ryan"]);
+  assert.equal(seeded.users[1].playlists[0].items.length, 1, "what was stored is untouched");
+  const removed = normalizePlaylists({ users: seeded.users.slice(1), generalSeeded: true });
+  assert.deepEqual(seedPlaylists(removed).users.map((u) => u.name), ["Ryan"], "General does not come back");
 });

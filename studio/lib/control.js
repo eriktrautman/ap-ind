@@ -63,7 +63,7 @@ export const FEATURED_RACES = [
 
 /**
  * Every graphic in the lookbook. kind: race (needs ?id=), movement (C and D series), or other (A and
- * F series, which have no section in the Studio and show only in the Chart Catalog). built: a page exists.
+ * F series). built: a page exists.
  *
  * CHART IDS ARE FIXED (from 27 October 2026). The lookbook ids (B5, C1, D7, ...) have been shared and are
  * used in rundowns and by other people, so an id never changes meaning and is never reused:
@@ -80,7 +80,7 @@ export const BACKGROUNDS = [["", "Transparent"], ["black", "Black"], ["green", "
 export const BG_IDS = BACKGROUNDS.map(([id]) => id);
 export const DEFAULT_BG = "green";   // the background a fresh state, a new draft and the Studio's display settings start on
 export const CHARTS = [
-  // A: persistent elements and lower thirds (the ticker is the one built)
+  // A: lower thirds and strips (the ticker is the one managed in its own section)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
   { id: "A2",  kind: "other", name: "Name and title lower third",   page: "/g/lower-third.html",                built: true },
   { id: "A3",  kind: "other", name: "Race-status bug",              page: "/g/bug.html",                built: true, needsRace: true },
@@ -173,11 +173,7 @@ export const DEFAULTS = Object.freeze({
   tickerBg: "green",          // the live ticker's background when its address names none ("" transparent, black, green)
   theme: "election-night-v1", // the stylesheet every output paints with (an id in /g/themes.js); pushed by a producer
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
-  featuredCharts: ["B5", "B6", "B7", "B8", "B9", "B10", "B13"],
-  movementCharts: ["C1", "C6", "C7", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"],
   keyRaceIds: [],            // D5; empty means "the ticker races"
-  persistentCharts: [],      // A series elements in the Persistent Elements section (never A1, the ticker)
-  persistentSettings: {},    // per element inputs: A2 {name, title}, A3 {raceId}, A4 {raceId}
   contextLines: {},          // D6: raceId -> one line the producer typed
   // Live Screens: two fixed pages (/live-screen-one, /live-screen-two), each showing one published chart. chart is a
   // chart id, race a race id (NE-SEN), state two letters for state charts, params the chart's extra address parameters.
@@ -223,10 +219,6 @@ export function describeScreen(s) {
 const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, chunks: 24, chunkItems: 40, chunkName: 60 };
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
-const chartIds = (arr, kind) => {
-  const known = new Set(CHARTS.filter((c) => c.kind === kind && !c.retired && c.id !== "A1").map((c) => c.id));
-  return [...new Set((Array.isArray(arr) ? arr : []).filter((id) => known.has(id)))];
-};
 
 // ---------- the ticker sequence ----------
 const chunkIdOk = (id) => typeof id === "string" && /^[a-zA-Z0-9]{1,24}$/.test(id);
@@ -297,11 +289,7 @@ export function normalize(raw) {
     tickerBg: BG_IDS.includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
     theme: typeof r.theme === "string" && /^[a-z0-9-]{1,40}$/.test(r.theme) ? r.theme : DEFAULTS.theme,
     featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
-    featuredCharts: Array.isArray(r.featuredCharts) ? chartIds(r.featuredCharts, "race") : [...DEFAULTS.featuredCharts],
-    movementCharts: Array.isArray(r.movementCharts) ? chartIds(r.movementCharts, "movement") : [...DEFAULTS.movementCharts],
     keyRaceIds: uniqIds(r.keyRaceIds, LIMITS.key),
-    persistentCharts: Array.isArray(r.persistentCharts) ? chartIds(r.persistentCharts, "other").filter((id) => id[0] === "A") : [],
-    persistentSettings: (() => { const out = {}; const src = r.persistentSettings && typeof r.persistentSettings === "object" ? r.persistentSettings : {}; for (const [k, v] of Object.entries(src)) { if (!/^A\d+$/.test(k) || !v || typeof v !== "object") continue; const o = {}; for (const [f, x] of Object.entries(v)) if (/^[a-zA-Z]+$/.test(f) && typeof x === "string") o[f] = x.trim().slice(0, LIMITS.context); out[k] = o; } return out; })(),
     contextLines: context,
     screenA: screenDef(r.screenA, DEFAULTS.screenA),
     screenB: screenDef(r.screenB, DEFAULTS.screenB),
@@ -314,7 +302,7 @@ export function normalize(raw) {
 // A playlist is one person's run of charts for a segment, in order. Each item is a chart spec of the same shape as a Live
 // Screen definition (chart, race, state, params, bg). Playlists are shared: they live in playlists.json beside the published
 // state and are edited through /api/playlists (publisher or producer; only a producer adds, renames or removes people and
-// playlists). The shipped set is one person, Ryan, with the slate's races and six charts each.
+// playlists). Every chart the Studio keeps close lives in one: the shipped set is General (Slate, Race Overview, Movement Overview) and Ryan.
 export const PLAYLIST_LIMITS = { users: 40, playlists: 40, items: 80, name: 60 };
 export const PLAYLIST_SLATE_CHARTS = ["B5", "B6", "B7", "B8", "B10", "B13"];   // B9 is ranked-choice only
 const plId = (s) => (typeof s === "string" && /^[a-zA-Z0-9]{1,24}$/.test(s) ? s : null);
@@ -335,12 +323,29 @@ export function normalizePlaylists(raw) {
       .map((p) => ({ id: p.id, name: plName(p.name), items: (Array.isArray(p.items) ? p.items : []).map(specDef).filter(Boolean).slice(0, PLAYLIST_LIMITS.items) }));
     return { id: u.id, name: plName(u.name), playlists };
   });
-  return { users, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
+  return { users, generalSeeded: r.generalSeeded === true, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
 }
-/** The shipped playlists: Ryan, one playlist "Slate", the slate's races in order with six charts each. */
+export const PLAYLIST_RACE_OVERVIEW = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"];
+export const PLAYLIST_MOVEMENT_OVERVIEW = ["C1", "C6", "C7"];
+const plSpec = (chart, race = "") => ({ chart, race, state: "", params: {}, bg: DEFAULT_BG });
+const slateItems = () => FEATURED_RACES.flatMap((r) => PLAYLIST_SLATE_CHARTS.map((chart) => plSpec(chart, r.label)));
+/** General: the slate's races with six charts each, the charts for many races at once, and the movement as a whole. */
+const generalPerson = () => ({ id: "general", name: "General", playlists: [
+  { id: "slate", name: "Slate", items: slateItems() },
+  // D6 draws one race, so it starts on the first of the slate
+  { id: "raceoverview", name: "Race Overview", items: PLAYLIST_RACE_OVERVIEW.map((chart) => plSpec(chart, chart === "D6" ? FEATURED_RACES[0].label : "")) },
+  { id: "movementoverview", name: "Movement Overview", items: PLAYLIST_MOVEMENT_OVERVIEW.map((chart) => plSpec(chart)) },
+] });
+/** The shipped playlists: General, then Ryan with the same slate. */
 export function defaultPlaylists() {
-  const items = FEATURED_RACES.flatMap((r) => PLAYLIST_SLATE_CHARTS.map((chart) => ({ chart, race: r.label, state: "", params: {}, bg: "green" })));
-  return normalizePlaylists({ users: [{ id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items }] }] });
+  return normalizePlaylists({ generalSeeded: true, users: [generalPerson(), { id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items: slateItems() }] }] });
+}
+/** A stored document from before General existed gains it once, in front. The flag goes back with the next write, so a
+ *  producer who later removes General does not see it return. */
+export function seedPlaylists(doc) {
+  if (doc.generalSeeded) return doc;
+  const users = doc.users.some((u) => u.id === "general") ? doc.users : [generalPerson(), ...doc.users];
+  return normalizePlaylists({ ...doc, users, generalSeeded: true });
 }
 
 /** The letter after a candidate's name: D, R, L (Libertarian), G (Green); I for the slate's independents and every other
@@ -388,14 +393,8 @@ export function diffState(from, to) {
     else if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ field: "chunks", text: `Chunk "${b.name || id}"${a.name !== b.name ? ` (was "${a.name || id}")` : ""}: ${itemsText(b)}` });
   }
   list("featuredRaceIds", "Featured races", true);
-  list("featuredCharts", "Featured charts", false);
-  list("movementCharts", "Movement charts", false);
   list("keyRaceIds", "Key races", true);
-  list("persistentCharts", "Persistent elements", false);
   for (const k of SCREENS) if (JSON.stringify(A[k]) !== JSON.stringify(B[k])) out.push({ field: k, text: `Live Screen ${k === "screenA" ? "One" : "Two"}: ${describeScreen(B[k])} (was ${describeScreen(A[k])})` });
-  for (const k of new Set([...Object.keys(A.persistentSettings), ...Object.keys(B.persistentSettings)])) {
-    if (JSON.stringify(A.persistentSettings[k] ?? {}) !== JSON.stringify(B.persistentSettings[k] ?? {})) out.push({ field: "persistentSettings", text: `${k} settings: ${Object.entries(B.persistentSettings[k] ?? {}).map(([f, v]) => `${f} "${v}"`).join(", ") || "(cleared)"}` });
-  }
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
   if (A.tickerBg !== B.tickerBg) out.push({ field: "tickerBg", text: `Ticker background: ${B.tickerBg || "transparent"}` });
