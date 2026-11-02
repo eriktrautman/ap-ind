@@ -101,7 +101,12 @@
     // Must-win: the counties that gave the lane the most votes last time.
     const must = [...rows].sort((a, b) => b.votesThen - a.votesThen).slice(0, 6);
     const needShare = must.reduce((s, r) => s + r.votesThen, 0) / Math.max(1, rows.reduce((s, r) => s + r.votesThen, 0)) * 100;
-    $("headline").innerHTML = `The ${must.length} biggest counties for ${esc(lane.last)} in ${year} gave <b>${needShare.toFixed(0)}%</b> of that vote. ${esc(cand.last)} ${rows.some((r) => r.now !== null) ? `is ahead of that pace in <b>${rows.filter((r) => r.ahead === true).length}</b> of ${rows.filter((r) => r.now !== null).length} counties reporting.` : "needs to match it there."}`;
+    // Two different measures, said plainly: the paragraph is how much of the candidate's statewide vote these counties held; the table is their share of each county's vote.
+    const reporting = rows.filter((r) => r.now !== null), mustIn = must.filter((r) => r.now !== null);
+    const aheadOf = (list) => list.filter((r) => r.ahead === true).length;
+    const inMust = mustIn.length === must.length ? "them" : `the ${mustIn.length} reporting`;
+    const inState = reporting.length === rows.length ? "statewide" : "reporting statewide";
+    $("headline").innerHTML = `<b>${needShare.toFixed(0)}%</b> of ${esc(lane.last)}'s ${year} votes came from these ${must.length} counties. ${esc(cand.last)} ${reporting.length ? `is ahead of that pace in <b>${aheadOf(mustIn)}</b> of ${inMust}, and in <b>${aheadOf(reporting)}</b> of ${reporting.length} ${inState}.` : "needs to match that pace there."}`;
     $("rows").innerHTML = must.map((r) => `<tr><td class="b">${esc(r.name)}</td><td class="r">${r.then.toFixed(1)}%</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b ${r.ahead === true ? "ahead" : r.ahead === false ? "behind" : ""}">${r.now === null ? "—" : r.now.toFixed(1) + "%"}</td></tr>`).join("");
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
