@@ -467,7 +467,7 @@
       "party": "NPP",
       "partyLabel": "Independent (No Party Preference)",
       "featured": true,
-      "incumbent": true,
+      "incumbent": false,
       "born": 1985,
       "residence": "Rocklin (verify it lies inside the new district before saying so)",
       "occupation": "U.S. Representative (CA-3) since 2023; attorney; former teacher",

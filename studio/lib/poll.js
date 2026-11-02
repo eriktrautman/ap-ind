@@ -21,6 +21,10 @@ const PHOTO_MANIFEST = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/con
 // laptop or the history fetcher on the same key. At 5 slots a run was 11 or 12 requests, over the limit.
 const COUNTY_SLOTS = 10;
 
+// AP flags these as incumbents, but the seat they are running for is new: Kevin Kiley sits in Congress, and CA-6 is a new
+// district under the 2025 map. The charts mark an incumbent of the seat, so the flag is cleared here for every output.
+const NOT_INCUMBENT_HERE = new Set(["69756"]);
+
 let curatedCache = null;
 let photoCache = null;
 
@@ -116,6 +120,7 @@ export async function pollOnce({ run = Date.now(), log = console.log, fresh = fa
       c.photo = m?.cdn && m.confidence !== "low" ? m.cdn : null;
       c.partyLabel = k?.partyLabel ?? null;
       c.featured = !!k?.featured;
+      if (NOT_INCUMBENT_HERE.has(c.id)) c.incumbent = false;
     }
   }
   status.apTimestamp = nat.timestamp;
