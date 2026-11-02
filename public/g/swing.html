@@ -15,6 +15,7 @@
   body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px no-repeat; }
   .panel { position: absolute; left: 96px; top: 80px; width: 1728px; height: 920px; background: linear-gradient(160deg, var(--panel), var(--panel-edge)); border-radius: 8px; padding: 52px 72px; box-sizing: border-box; display: grid; grid-template-rows: auto 1fr auto; gap: 28px; }
   .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--rule); padding-bottom: 20px; }
+  .kicker { font-size: 24px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
   .title { font-size: 56px; font-weight: 700; letter-spacing: -0.01em; }
   .title small { font-size: 30px; font-weight: 400; color: var(--muted); margin-left: 18px; }
   .reporting { font-size: 30px; color: var(--muted); } .reporting b { color: var(--fg); }
@@ -30,7 +31,7 @@
   table { border-collapse: collapse; width: 100%; font-size: 24px; align-self: start; }
   th { text-align: left; color: var(--muted); font-weight: 400; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 2px solid var(--rule); }
   td { padding: 7px 6px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-  td.r, th.r { text-align: right; } td.b { font-weight: 700; }
+  td.r, th.r { text-align: right; } td.b { font-weight: 700; } td.m { color: var(--muted); }
   .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 22px; border-top: 2px solid var(--rule); padding-top: 18px; }
   .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; margin-right: 10px; vertical-align: middle; }
   .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
@@ -39,10 +40,10 @@
 </head>
 <body>
 <div class="panel">
-  <div class="head"><div class="title" id="title">Loading…</div><div class="reporting" id="reporting"></div></div>
+  <div class="head"><div><div class="kicker">Historical comparison</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="map"><svg id="map" viewBox="0 0 900 560"></svg><div class="legend" id="legend"></div></div>
-    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th>Area</th><th class="r">In</th><th class="r" id="th-now">2026</th><th class="r" id="th-then">2024</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:40%">County</th><th class="r" id="th-then">2024</th><th class="r">In</th><th class="r" id="th-now">2026</th><th class="r">Diff</th></tr></thead><tbody id="rows"></tbody></table></div></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, tonight and 2024 · like-for-like over areas reporting</span><span id="updated"></span></div>
 </div>
@@ -118,12 +119,13 @@
     const agg = nowT && thenT ? (nowV / nowT * 100) - (thenV / thenT * 100) : null;
     const reportingAreas = rows.filter((r) => r.ok).length;
     const label = geo.kind === "town" ? "towns" : geo.kind === "house-district" ? "districts" : "counties";
+    $("th-area").textContent = geo.kind === "town" ? "Town" : geo.kind === "house-district" ? "District" : "County";
     $("headline").innerHTML = agg === null
       ? `<span style="color:var(--muted)">No ${label} with enough of the vote in yet.</span>`
       : `${esc(cand.last)} is running <b class="${agg >= 0 ? "ahead" : "behind"}">${agg >= 0 ? "+" : ""}${agg.toFixed(1)}</b> points ${agg >= 0 ? "ahead of" : "behind"} the ${esc(ticketName)} 2024 vote across ${reportingAreas} ${label} reporting`;
     // table: biggest areas by 2024 total
     rows.sort((a, b) => b.b.total - a.b.total);
-    $("rows").innerHTML = rows.slice(0, 6).map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r">${Math.round(r.inPct)}%</td><td class="r b">${r.share === null ? "—" : r.share.toFixed(1) + "%"}</td><td class="r">${r.base.toFixed(1)}%</td><td class="r b ${r.diff === null ? "" : r.diff >= 0 ? "ahead" : "behind"}">${r.diff === null ? "—" : (r.diff >= 0 ? "+" : "") + r.diff.toFixed(1)}</td></tr>`).join("");
+    $("rows").innerHTML = rows.slice(0, 6).map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r">${r.base.toFixed(1)}%</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r b">${r.share === null ? "—" : r.share.toFixed(1) + "%"}</td><td class="r b ${r.diff === null ? "" : r.diff >= 0 ? "ahead" : "behind"}">${r.diff === null ? "—" : (r.diff >= 0 ? "+" : "") + r.diff.toFixed(1)}</td></tr>`).join("");
     drawMap(new Map(rows.map((r) => [unitKey(r.u), r])), color);
   }
 
