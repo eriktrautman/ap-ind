@@ -24,9 +24,9 @@
   <div class="head"><div><div class="kicker">Path to victory</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
     <div class="map"><svg id="map" viewBox="0 0 980 640"></svg><div class="legend" id="legend"></div></div>
-    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area">Must-win county</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+    <div class="side"><div class="headline" id="headline"></div><div><table><thead><tr><th id="th-area" style="width:52%">County</th><th class="r" id="th-then">Then</th><th class="r">In</th><th class="r" id="th-now">Now</th></tr></thead><tbody id="rows"></tbody></table></div></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, tonight and the last contest for this seat · "then" is the comparison candidate's share in that county</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, tonight and the last contest for this seat · <span id="foot-note"></span></span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -79,7 +79,7 @@
     if (!prior || !geo) { $("headline").innerHTML = `<span class="note">No county-level prior result on file for this seat.</span>`; $("rows").innerHTML = ""; return; }
     const lane = laneFor(cand);
     const year = prior.date.slice(0, 4);
-    $("th-then").textContent = `${lane.last} ${year}`; $("th-now").textContent = `${cand.last} now`;
+    $("th-then").textContent = year; $("th-now").textContent = "2026"; $("foot-note").textContent = lane.last === cand.last ? `Both years are ${cand.last}'s share` : `${year} is ${lane.last}'s share, 2026 is ${cand.last}'s`;
     const byKey = new Map(Object.entries(prior.units).map(([fips, u]) => [geo.kind === "county" ? String(fips) : normName(u.name), { ...u, fips }]));
     const nowBy = new Map((counties ?? []).map((u) => [unitKey(u), u]));
     const rows = [...byKey.entries()].map(([k, b]) => {
