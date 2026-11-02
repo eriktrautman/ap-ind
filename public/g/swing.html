@@ -26,6 +26,7 @@
   .map svg { width: 100%; height: 100%; display: block; }
   .legend { position: absolute; left: 24px; bottom: 18px; display: flex; gap: 22px; font-size: 22px; color: var(--muted); }
   .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; vertical-align: -3px; margin-right: 8px; }
+  .legend i.none { background: repeating-linear-gradient(45deg, #3a4c74 0 2px, #1b2a4a 2px 7px); }
   table { border-collapse: collapse; width: 100%; font-size: 28px; align-self: start; }
   th { text-align: left; color: var(--muted); font-weight: 400; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 2px solid var(--rule); }
   td { padding: 9px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
@@ -95,7 +96,7 @@
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     $("updated").textContent = demo ? "SAMPLE: 2024 Senate result standing in for tonight" : `Updated ${clockS(race.lastUpdated)}`;
     const color = "var(--gold)";   // ahead: gold; behind: slate gray, whoever the candidate is
-    $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead of ${esc(ticketName)} 2024</span><span><i style="background:#6B7694"></i>behind</span><span><i style="background:#1b2a4a"></i>under ${MIN_IN}% in</span>`;
+    $("legend").innerHTML = `<span><i style="background:${color}"></i>ahead</span><span><i style="background:#6B7694"></i>behind</span><span><i class="none"></i>under ${MIN_IN}% in</span>`;
 
     if (!counties || !baseline) {
       $("headline").innerHTML = `<span style="color:var(--muted)">${!baseline ? "No 2024 area-level baseline for this state (statewide only)." : "Waiting for county results."}</span>`;
@@ -128,10 +129,16 @@
   }
 
   function drawMap(byKey, color) {
+    if (!geo) return;
     const svg = d3.select("#map");
+    if (svg.select("#notcounted").empty()) {   // a county without enough of the vote in: fine diagonal lines on the empty colour
+      const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
+      pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a");
+      pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
+    }
     const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
     sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
-      .style("fill", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return "#1b2a4a"; return r.diff >= 0 ? color : "#6B7694"; })
+      .style("fill", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return "url(#notcounted)"; return r.diff >= 0 ? color : "#6B7694"; })
       .attr("fill-opacity", (d) => { const r = byKey.get(featKey(d)); if (!r || !r.ok || r.diff === null) return 1; return 0.45 + Math.min(1, Math.abs(r.diff) / 15) * 0.55; });
   }
 
