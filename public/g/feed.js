@@ -243,6 +243,19 @@ export function candTag(c) {
   const k = partyKey(c);
   return { cls: k, text: k === "yes" ? "YES" : k === "no" ? "NO" : partyLetter(c) };
 }
+/** The incumbent marker after a candidate's name. * always means incumbent on air, and any page showing one gets the key
+ *  in its footer automatically (below), only while a marked name is actually on screen. */
+export const incStar = (c) => (c?.incumbent ? '<span class="incstar">*</span>' : "");
+if (typeof document !== "undefined") {
+  const syncIncNote = () => {
+    const first = document.querySelector(".foot")?.firstElementChild;
+    if (!first) return;
+    const note = first.querySelector(".incnote"), need = !!document.querySelector(".incstar");
+    if (need && !note) first.insertAdjacentHTML("beforeend", '<span class="incnote"> · * Incumbent</span>');
+    else if (!need && note) note.remove();
+  };
+  document.addEventListener("DOMContentLoaded", () => { syncIncNote(); new MutationObserver(syncIncNote).observe(document.body, { childList: true, subtree: true }); });
+}
 /** The name after the tag: nothing for a measure's options (the tag says Yes or No), else the candidate's name. */
 export const candName = (c, full = false) => (isOption(c) ? "" : (full ? c?.name : c?.last ?? c?.name) ?? "");
 export function partyKey(c) {

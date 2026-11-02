@@ -25,10 +25,10 @@
     <div><table id="tbl"><thead id="thead"></thead><tbody id="rows"></tbody></table></div>
     <div class="explain" id="explain"></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · a candidate needs more than 50% to win; the last-placed candidate is eliminated and their ballots transfer</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · under 50%, the last-placed candidate's ballots transfer</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyClass, candTag, fmt, officeText, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyClass, candTag, fmt, officeText, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   const raceId = q.get("id"), bg = q.get("bg");
   if (bg) document.body.classList.add(`bg-${bg}`);
@@ -47,7 +47,7 @@
     if (!rounds) {
       // First-choice totals only
       $("thead").innerHTML = `<tr><th>Candidate</th><th class="r">First choices</th><th class="r">Share</th></tr>`;
-      $("rows").innerHTML = cands.map((c) => `<tr class="${c.winner ? "winrow" : ""}"><td class="nm">${tag(c)}${esc(c.name)}${c.winner ? " ✓" : ""}</td><td class="r">${fmt(c.votes)}</td><td class="r ${c === cands[0] ? "lead" : ""}">${Number(c.pct).toFixed(1)}%</td></tr>`).join("");
+      $("rows").innerHTML = cands.map((c) => `<tr class="${c.winner ? "winrow" : ""}"><td class="nm">${tag(c)}${esc(c.name)}${incStar(c)}${c.winner ? " ✓" : ""}</td><td class="r">${fmt(c.votes)}</td><td class="r ${c === cands[0] ? "lead" : ""}">${Number(c.pct).toFixed(1)}%</td></tr>`).join("");
       const top = cands[0];
       $("explain").innerHTML = top && race.totalVotes
         ? (top.pct > 50 ? `<b>${esc(top.last)}</b> is above 50% of first choices, so no further rounds would be needed.` : `No candidate is above 50% of first choices. <b>${esc(cands[cands.length - 1].last)}</b> would be eliminated first and those ballots move to their next choice. Round-by-round results are published by the state after election night and appear here when AP carries them.`)
@@ -56,7 +56,7 @@
     }
     // rounds: [{round: 1, candidates: [{id, votes, pct, eliminated}]}]
     $("thead").innerHTML = `<tr><th>Candidate</th>${rounds.map((r, i) => `<th class="r">${i === rounds.length - 1 && rounds.length > 1 ? "Final" : `Round ${r.round ?? i + 1}`}</th>`).join("")}</tr>`;
-    $("rows").innerHTML = cands.map((c) => `<tr class="${c.winner ? "winrow" : ""}"><td class="nm">${tag(c)}${esc(c.name)}${c.winner ? " ✓" : ""}</td>${rounds.map((r) => {
+    $("rows").innerHTML = cands.map((c) => `<tr class="${c.winner ? "winrow" : ""}"><td class="nm">${tag(c)}${esc(c.name)}${incStar(c)}${c.winner ? " ✓" : ""}</td>${rounds.map((r) => {
       const x = r.candidates.find((k) => k.id === c.id);
       if (!x) return `<td class="r el">—</td>`;
       if (x.eliminated) return `<td class="r el">elim.</td>`;

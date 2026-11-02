@@ -48,7 +48,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · <span class="sw"></span>tonight's share <span class="tk"></span>the best an independent has ever done in that race <span class="hf"></span>50%</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, raceState, clockS } from "./feed.js";
+  import { connectFeed, freshness, raceState, clockS, incStar } from "./feed.js";
   import { watchState, FEATURED_RACES, partyLetter } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -79,14 +79,14 @@
       const pl = partyLetter;
       const rec = share !== null && b?.pct != null && share > b.pct;   // a FIRST is already named in the delta column
       const chips = rec ? `<span class="pill rec">RECORD</span>` : "";   // the AP call sits under the share, where "x% in" was
-      const line2 = `${recordLine(b)}${winner ? ` · <span class="winner">${esc(winner.last ?? winner.name)} (${pl(winner)}) wins</span>` : ""}`;
+      const line2 = `${recordLine(b)}${winner ? ` · <span class="winner">${esc(winner.last ?? winner.name)}${incStar(winner)} (${pl(winner)}) wins</span>` : ""}`;
       const deltaHtml = delta === null
         ? (b?.first ? `<div class="n">FIRST</div><div class="k">${share === null ? "no independent before" : "sets the benchmark"}</div>` : b?.pct == null ? `<div class="n">—</div><div class="k">Benchmark TBD</div>` : `<div class="n">—</div><div class="k">No votes yet</div>`)
         : `<div class="n">${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(1)}</div><div class="k">pts ${delta >= 0 ? "over record" : "under record"}</div>`;
       const deltaCls = delta === null ? (b?.first ? "first" : b?.pct == null ? "tbd" : "none") : delta >= 0 ? "over" : "under";
       return `<div class="row ${r.called ? "called" : ""}">
         <div class="st">${esc(r.state)}</div>
-        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${chips}</div><div class="rec">${line2.startsWith("<") ? line2 : esc(recordLine(b)) + line2.slice(recordLine(b).length)}</div></div>
+        <div class="nm"><div class="who">${esc(ind.name ?? ind.last)}${incStar(ind)}<span class="i">(I)</span><span class="race">${esc(r.label)}</span>${chips}</div><div class="rec">${line2.startsWith("<") ? line2 : esc(recordLine(b)) + line2.slice(recordLine(b).length)}</div></div>
         <div class="bar"><i style="width:${w.toFixed(1)}%"></i><span class="half" style="left:${(50 / scale * 100).toFixed(1)}%"></span>${b?.pct != null ? `<span class="tick" style="left:${(b.pct / scale * 100).toFixed(1)}%"><b>${Number(b.pct).toFixed(1)}%</b></span>` : ""}</div>
         <div class="num"><div class="pc">${share === null ? "—" : share.toFixed(1) + "%"}</div><div class="in">${share === null ? (st.status === "closed" ? "polls closed" : "polls open") : r.called ? `<span class="pill ap">AP CALL${won ? " ✓" : ""}</span>` : `${Math.round(r.eevp || r.precinctsPct)}% in`}</div></div>
         <div class="delta ${deltaCls}">${deltaHtml}</div></div>`;

@@ -29,7 +29,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: campaign and public records (config/candidates.json) · numbers from AP via lightship.media</span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), candId = q.get("cand");
@@ -59,7 +59,7 @@
     const bio = bios?.get(c.id) ?? {};
     const st = raceState(race);
     $("kicker").textContent = `${race.label} · ${race.stateName} · ${officeText(race)}`;
-    $("title").innerHTML = `${esc(c.name)} <small style="color:${PARTY_COLOR[partyKey(c)]}">${esc(bio.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.party))}</small>`;
+    $("title").innerHTML = `${esc(c.name)}${incStar(c)} <small style="color:${PARTY_COLOR[partyKey(c)]}">${esc(bio.partyLabel ?? (partyKey(c) === "ind" ? "Independent" : c.party === "Dem" ? "Democrat" : c.party === "GOP" ? "Republican" : c.party))}</small>`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
     const photo = $("photo");
     if (c.photo) { photo.style.backgroundImage = `url("${c.photo}")`; photo.classList.remove("none"); } else photo.classList.add("none");

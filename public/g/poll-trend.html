@@ -28,7 +28,7 @@
     <div class="empty" id="none" hidden>Polling unavailable<br><small style="font-size:26px">No public poll for this race is on file</small></div>
     <div><table><thead><tr><th>Poll</th><th>Dates</th><th class="r" id="th-a">A</th><th class="r" id="th-b">B</th></tr></thead><tbody id="rows"></tbody></table><div class="src" id="src"></div></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Public polls, newest first · * campaign-sponsored · (D)/(R) partisan pollster · a dot per poll, line through them</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Public polls, newest first · † campaign-sponsored · (D)/(R) partisan pollster · a dot per poll, line through them</span><span id="updated"></span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script type="module">
@@ -54,7 +54,7 @@
     const key = (c) => Object.keys(list[0]?.numbers ?? {}).find((k) => k === c.last || c.name.includes(k)) ?? c.last;
     const series = cands.map((c) => ({ c, k: key(c), pts: list.map((p) => ({ t: p.t, v: p.numbers[key(c)] ?? null, p })).filter((x) => x.v !== null) }));
     $("th-a").textContent = cands[0]?.last ?? ""; $("th-b").textContent = cands[1]?.last ?? "";
-    $("rows").innerHTML = [...list].reverse().slice(0, 9).map((p) => `<tr><td>${esc(p.pollster)}${p.sponsored ? "*" : p.partisan ? ` (${p.partisan})` : ""}</td><td class="m">${esc(fmtDates(p.dates))}</td><td class="r b">${p.numbers[series[0]?.k] ?? "—"}</td><td class="r b">${p.numbers[series[1]?.k] ?? "—"}</td></tr>`).join("") || `<tr><td colspan="4" class="m">No public polls on file for this race.</td></tr>`;
+    $("rows").innerHTML = [...list].reverse().slice(0, 9).map((p) => `<tr><td>${esc(p.pollster)}${p.sponsored ? "†" : p.partisan ? ` (${p.partisan})` : ""}</td><td class="m">${esc(fmtDates(p.dates))}</td><td class="r b">${p.numbers[series[0]?.k] ?? "—"}</td><td class="r b">${p.numbers[series[1]?.k] ?? "—"}</td></tr>`).join("") || `<tr><td colspan="4" class="m">No public polls on file for this race.</td></tr>`;
     $("src").textContent = list.length ? "Sources on every row in config/polls.json." : "";
     const svg = d3.select("#chart"); svg.selectAll("*").remove();
     if (!list.length) return;

@@ -38,7 +38,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP via lightship.media · bios and photos from config/candidates.json · public polls (config/polls.json)</span></span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clock, clockS } from "./feed.js";
+  import { connectFeed, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clock, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), forceA = q.get("a"), forceB = q.get("b");
@@ -90,8 +90,8 @@
       : pollNumber(p, c) != null ? `<div class="num">${pollNumber(p, c)}%<small>latest poll</small></div>` : `<div class="num" style="color:var(--muted)">—<small>polling unavailable</small></div>`;
     return `<div class="cand" style="--c:${col}">
       <div class="photo ${c.photo ? "" : "none"}" style="${c.photo ? `background-image:url('${esc(c.photo)}')` : ""}"></div>
-      <div class="nm">${esc(c.name)}</div>
-      <div class="lab">${esc(label(c, b))}${c.incumbent ? " · incumbent" : ""}</div>
+      <div class="nm">${esc(c.name)}${incStar(c)}</div>
+      <div class="lab">${esc(label(c, b))}</div>
       <div class="sub">${esc(String(sub).slice(0, 110))}</div>
       ${num}${pill}
     </div>`;
