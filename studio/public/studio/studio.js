@@ -1529,6 +1529,17 @@ for (const id of ["ticker", "screens", "playlists", "detail", "broad", "movement
 
 // ---------- boot ----------
 let timers = [];
+// ---------- Races opens and closes: closed by default, remembered per browser; hidden cards load no previews ----------
+function setRacesOpen(open) {
+  $("broad").classList.toggle("collapsed", !open);
+  $("broadtoggle").textContent = open ? "▾" : "▸";
+  $("broadtoggle").setAttribute("aria-expanded", String(open));
+  try { localStorage.setItem("studio.racesOpen", open ? "1" : "0"); } catch {}
+}
+try { if (localStorage.getItem("studio.racesOpen") === "1") setRacesOpen(true); } catch {}
+for (const id of ["broadtoggle", "broadtitle"]) $(id).addEventListener("click", () => setRacesOpen($("broad").classList.contains("collapsed")));
+document.addEventListener("click", (e) => { if (e.target.closest('a[href="#broad"]')) setRacesOpen(true); });   // going to the section from a link opens it
+
 // ---------- a reload comes back to the same place ----------
 // The page is built after it loads, so the browser's own restore finds a short page and lands at the top. The position is
 // kept per tab and put back once the content is drawn, and again as previews and lists settle, until the person scrolls.

@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-02T19:04:16Z",
+  updated: "2026-11-02T19:05:48Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -281,6 +281,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-02T19:05:48Z", what: "Studio: the Races section is closed by default and opens from a triangle in its head; the choice is remembered per browser, a link to the section opens it, and while closed its cards load no previews. Its future is undecided." },
   { t: "2026-11-02T19:04:16Z", what: "Studio: a reload returns to the same place on the page. The position is kept per tab and restored once the content is drawn, and again as it settles, until the person scrolls." },
   { t: "2026-11-03T12:00:00Z", what: "Incumbents are marked with an asterisk after the name on every chart that lists candidates in rows or cards (incStar in feed.js), and the footer adds \"* Incumbent\" by itself while one is on screen; B5's \"inc.\" and the \"· incumbent\" wording on B14 and setup are gone. Campaign-sponsored polls move from * to † so * has one meaning. Also fixed: too-close, state-overview and the call alert still printed I for Libertarians." },
   { t: "2026-11-02T16:30:00Z", what: "Producer's email: Libertarians read (L) and Greens (G) everywhere a party letter appears (graphics, ticker, Studio lists), so the only (I) in a race is our independent; one rule, partyLetter in control.js. B14 Head-to-head shows a short bio for the six (new bio field in candidates.json) and the first clause of the occupation for opponents, so nothing is cut off." },

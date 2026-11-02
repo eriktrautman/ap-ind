@@ -555,3 +555,10 @@ main > section.card.display { margin: 10px 0 28px; padding: 8px 14px; border-wid
 .display #themestate { white-space: nowrap; }
 .display #themestate.previewing { color: #9a5b00; font-weight: 600; }
 .testbanner.stylepreview { background: #7a4b00; color: #fff; } .testbanner.stylepreview code { font-family: var(--mono); font-weight: 400; background: rgba(255,255,255,.14); padding: 0 5px; border-radius: 3px; }
+/* a section that opens and closes from a triangle in its head (closed by default where the markup says so) */
+.sectoggle { background: none; border: 0; padding: 0 2px; margin-right: -8px; color: var(--gold); font-size: 20px; line-height: 1; cursor: pointer; }
+.sectoggle:hover { color: #fff; }
+#broadtitle { cursor: pointer; }
+main > section.card.collapsed { padding-bottom: 0; }
+.card.collapsed .cardhead { margin-bottom: 0; }
+.card.collapsed > :not(.cardhead), .card.collapsed .cardhead .secdisp { display: none; }
