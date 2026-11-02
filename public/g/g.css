@@ -28,8 +28,8 @@ body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px n
 .yes .tag, .tag.yes { background: var(--yes); color: #06230f; } .no .tag, .tag.no { background: var(--no); color: #1a0d00; }   /* a measure's options */
 .c-dem { color: var(--dem); } .c-gop { color: var(--gop); } .c-ind { color: var(--ind); } .c-gold { color: var(--gold); }
 table { border-collapse: collapse; width: 100%; font-size: 28px; align-self: start; }
-th { text-align: left; color: var(--muted); font-weight: 400; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 2px solid var(--rule); white-space: nowrap; }
+th { text-align: left; color: var(--muted); font-weight: 400; font-size: 24px; letter-spacing: .04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 2px solid var(--rule); white-space: nowrap; }
 td { padding: 9px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 td.r, th.r { text-align: right; } td.b { font-weight: 700; } td.m { color: var(--muted); }
-.ahead { color: var(--ok); } .behind { color: var(--bad); }
+.ahead { color: var(--gold); } .behind { color: #B4BDD3; }   /* gold ahead, slate gray behind: neither reads as Democrat or Republican */
 .note { font-size: 22px; color: var(--muted); }

@@ -139,7 +139,7 @@ async function upstreamLogin() {
 /** GET or PUT the deployment's producer state (or its playlists). PUT logs in with GLOBAL_PASSWORD first (once per process). */
 async function upstreamProducer(method, body, path = "/api/producer") {
   if (method === "PUT") {
-    if (!GLOBAL_PASSWORD) throw Object.assign(new Error("publish not configured: set GLOBAL_PASSWORD in studio/.env to the deployment's studio password"), { status: 403 });
+    if (!GLOBAL_PASSWORD) throw Object.assign(new Error("Can't save to production from this laptop: add GLOBAL_PASSWORD (your own production password) to studio/.env and restart the local server"), { status: 403 });
     if (!upstreamCookie) await upstreamLogin();
   }
   let r = await fetch(`${GLOBAL}${path}`, { method, headers: { "content-type": "application/json", ...(method === "PUT" ? { cookie: upstreamCookie } : {}) }, body, cache: "no-store", signal: AbortSignal.timeout(10_000) });

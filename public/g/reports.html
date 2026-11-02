@@ -10,7 +10,8 @@
      closing (F3 closing times by district) | counts (F4 how this state counts, ?st=) | expect (F5 when to expect results)
      | roster (F6 ballot roster and status, ?st=) | parties (F7 party names from AP codes). */
   .body { min-height: 0; overflow: hidden; }
-  table { font-size: 27px; } th { font-size: 21px; } td { padding: 8px 10px; }
+  table { font-size: 27px; } td { padding: 8px 10px; }
+  .roomy table { font-size: 34px; } .roomy td { padding: 16px 10px; }   /* a short table fills the panel; a long one keeps the shared size */
   td.p { font-weight: 700; }
   .seg { display: flex; height: 70px; border-radius: 8px; overflow: hidden; background: #16244a; margin-bottom: 22px; }
   .seg i { display: block; height: 100%; }
@@ -91,6 +92,7 @@
       },
     };
     $("body").innerHTML = (views[view] ?? views.bop)();
+    $("body").classList.toggle("roomy", ["bop", "house"].includes(view));   // the number tables; the others carry long lines
     $("src").textContent = ["bop", "house"].includes(view) ? "Source: AP via lightship.media · Trend report" : ["counts", "expect"].includes(view) ? "Source: editorial notes (config/state-notes.json) and poll-close times from AP via lightship.media" : view === "parties" ? "Source: AP via lightship.media · candidate lists and config/party-codes.json" : "Source: AP via lightship.media";
     $("updated").textContent = `Updated ${clockS()}`;
   }

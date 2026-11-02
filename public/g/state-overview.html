@@ -8,7 +8,8 @@
 <style>
   /* D9: every federal race in one state. ?st=ID required (?id=<raceID> also works: that race's state). */
   .body { min-height: 0; overflow: hidden; }
-  table { font-size: 30px; } th { font-size: 22px; } td { padding: 11px 10px; }
+  table { font-size: 30px; } td { padding: 11px 10px; }
+  table.roomy { font-size: 40px; } table.roomy td { padding: 20px 10px; } table.roomy .tag { font-size: 28px !important; min-width: 50px !important; } table.roomy .pill { font-size: 26px; }   /* a state with few races fills the panel */
   td.race { font-weight: 700; } td.lane { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px; }
   tr.feat td.race { color: var(--gold); }
   .pill { display: inline-block; font-size: 20px; font-weight: 700; padding: 3px 12px; border-radius: 4px; letter-spacing: .04em; }
@@ -39,6 +40,7 @@
     const name = list[0]?.stateName ?? st;
     $("title").innerHTML = `${esc(name)} <small>${list.length} federal race${list.length === 1 ? "" : "s"}</small>`;
     $("reporting").innerHTML = `<b>${list.filter((r) => r.called).length}</b> called`;
+    $("rows").closest("table").classList.toggle("roomy", list.length <= 6);
     $("rows").innerHTML = list.slice(0, 11).map((r) => {
       const s = raceState(r); const c = [...r.candidates].sort((a, b) => b.votes - a.votes);
       const pill = s.status === "called" ? `<span class="pill call">AP CALL</span>` : s.status === "leading" ? `<span class="pill counting">${Math.round(r.eevp || r.precinctsPct)}% IN</span>` : s.status === "closed" ? `<span class="pill open">CLOSED</span>` : `<span class="pill open">OPEN</span>`;

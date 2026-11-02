@@ -16,6 +16,9 @@
   .pill { display: inline-block; font-size: 22px; padding: 2px 12px; border-radius: 4px; background: #2a3a5c; color: var(--fg); margin-left: 16px; vertical-align: middle; }
   .explain { font-size: 26px; color: var(--muted); line-height: 1.35; }
   .explain b { color: var(--fg); }
+  /* first choices alone are a short list: large enough to fill the panel; a table of rounds is wide and stays at the shared size */
+  #tbl.roomy { font-size: 40px; } #tbl.roomy td { padding: 18px 10px; } #tbl.roomy .tag { font-size: 30px; min-width: 56px; margin-right: 18px; }
+  .explain { font-size: 28px; }
 </style>
 </head>
 <body>
@@ -44,6 +47,7 @@
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     const cands = [...race.candidates].sort((a, b) => b.votes - a.votes);
     const rounds = Array.isArray(race.rounds) && race.rounds.length ? race.rounds : null;
+    $("tbl").classList.toggle("roomy", !rounds);
     if (!rounds) {
       // First-choice totals only
       $("thead").innerHTML = `<tr><th>Candidate</th><th class="r">First choices</th><th class="r">Share</th></tr>`;
