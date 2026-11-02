@@ -149,7 +149,7 @@ const isDeprecated = (id) => !!playlists?.deprecatedCharts?.includes(id);
 const depLabel = (id) => (isDeprecated(id) ? "Restore…" : "Deprecate…");
 /** In place, so no preview reloads: run after the shared playlists change. */
 function syncDeprecated() {
-  for (const el of document.querySelectorAll(".gcard[data-chart]")) { el.classList.toggle("deprecated", isDeprecated(el.dataset.chart)); const b = el.querySelector("[data-dep-item]"); if (b) b.textContent = depLabel(el.dataset.chart); }
+  for (const el of document.querySelectorAll(".gcard[data-chart]")) { if (el.dataset.image) { el.classList.toggle("deprecated", !!library.images.find((x) => x.file === el.dataset.image)?.deprecated); continue; } el.classList.toggle("deprecated", isDeprecated(el.dataset.chart)); const b = el.querySelector("[data-dep-item]"); if (b) b.textContent = depLabel(el.dataset.chart); }
   for (const c of CHARTS) for (const o of document.querySelectorAll(`select[data-f="chart"] option[value="${c.id}"]`)) o.textContent = chartOptionText(c);
 }
 async function toggleDeprecated(chart) {
@@ -224,7 +224,7 @@ $("applyall").addEventListener("click", async () => {
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
-const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getImage: (file) => library.images.find((x) => x.file === file) ?? null, isChartStarred: (id) => chartStars.has(id), isChartDeprecated: (id) => isDeprecated(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getImage: (file) => library.images.find((x) => x.file === file) ?? null, isImageStarred: (file) => imageStars.has(file), isChartStarred: (id) => chartStars.has(id), isChartDeprecated: (id) => isDeprecated(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
@@ -777,7 +777,7 @@ $("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_bl
 // Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
 // chart's own parameters, saved on this page), an arrow with Publish and Pull, and the published page on the right.
 const SCREEN_PARAMS = {
-  I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }],
+  I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }, { k: "caption", label: "Caption", ph: "optional: a line shown over the image" }, { k: "showcredit", label: "Credit on air", options: [["1", "Show the credit"]] }],
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
   B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
@@ -1049,14 +1049,14 @@ $("playlists").addEventListener("drop", async (e) => {
   if (!canDropImage()) return;
   const u = plUser(), p = plList();
   for (const file of [...e.dataTransfer.files]) {
-    const up = await uploadImage(file);
-    if (up) await plPutSpec(specDef({ chart: IMAGE_CHART, race: "", state: "", params: { image: up.image.file, layout: up.layout }, bg: up.bg }), u, p);
+    const up = await uploadImage(file, { forPlaylist: true });
+    if (up) await plPutSpec(imageCardSpec(up), u, p);
   }
 });
 // A file dropped anywhere else must not make the browser leave the Studio to open it. A file input still takes its own drop.
 for (const ev of ["dragover", "drop"]) document.addEventListener(ev, (e) => { if (dragHasFile(e) && !e.target.closest?.('input[type="file"]') && !e.defaultPrevented) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = "none"; } });
 /** What other people changed shows up on its own. Nothing redraws while someone is mid-action; the next tick catches up. */
-const sharedBusy = () => $("dlg").open || !!$("ploptions")?.open || $("pladdcard")?.querySelector(".plchoose")?.hidden === false || !!document.querySelector(".gcard.dragging, #playlists.filedrag") || [...document.querySelectorAll(".gcard .menu")].some((m) => !m.hidden) || /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? "");
+const sharedBusy = () => $("dlg").open || !!$("ploptions")?.open || $("pladdcard")?.querySelector(".plchoose")?.hidden === false || !!document.querySelector(".gcard.dragging, #playlists.filedrag, #images.filedrag") || [...document.querySelectorAll(".gcard .menu")].some((m) => !m.hidden) || /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? "");
 async function refreshShared() {
   if (document.hidden || sharedBusy()) return;
   let doc, lib;
@@ -1272,7 +1272,7 @@ async function specDialog(spec, { title, ok }) {
 // images.json through /api/images. The browser decodes and re-encodes every upload: that proves it is an image, strips its metadata,
 // and brings it to what the frame can use (no more than covers 1920x1080, within the size a function accepts). Files are never overwritten.
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const canvasOf = (bmp, w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(bmp, 0, 0, w, h); return c; };
+const canvasOf = (bmp, w, h, crop = null) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); if (crop) x.drawImage(bmp, crop.x, crop.y, crop.w, crop.h, 0, 0, w, h); else x.drawImage(bmp, 0, 0, w, h); return c; };
 const toBlob = (canvas, type, q) => new Promise((res) => canvas.toBlob(res, type, q));
 function hasAlpha(bmp) {
   const c = canvasOf(bmp, Math.min(bmp.width, 256), Math.min(bmp.height, 256));
@@ -1290,29 +1290,73 @@ async function encode(canvas, alpha, maxBytes) {
   }
   return null;
 }
-async function prepareImage(file) {
+async function decodeImage(file) {
   if (!IMAGE_TYPES.includes(file.type)) throw new Error("Upload a JPEG, PNG or WebP image.");
   if (file.size > 60_000_000) throw new Error("That file is over 60 MB.");
   let bmp;
   try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); } catch { throw new Error("That file could not be read as an image."); }
-  const alpha = hasAlpha(bmp);
-  let scale = Math.min(1, Math.max(1920 / bmp.width, 1080 / bmp.height), 3840 / Math.max(bmp.width, bmp.height));
+  return { bmp, alpha: hasAlpha(bmp), crop: null, shape: "none", fullUrl: URL.createObjectURL(file), url: null };
+}
+/** Encodes the image, or its cropped part, to what the frame can use. */
+async function renderImage(im) {
+  const rw = im.crop?.w ?? im.bmp.width, rh = im.crop?.h ?? im.bmp.height;
+  let scale = Math.min(1, Math.max(1920 / rw, 1080 / rh), 3840 / Math.max(rw, rh));
   let main = null, w, h;
   for (let tries = 0; tries < 5 && !main; tries++, scale *= 0.8) {
-    w = Math.round(bmp.width * scale); h = Math.round(bmp.height * scale);
-    main = await encode(canvasOf(bmp, w, h), alpha, IMAGE_LIMITS.bytes);
+    w = Math.max(1, Math.round(rw * scale)); h = Math.max(1, Math.round(rh * scale));
+    main = await encode(canvasOf(im.bmp, w, h, im.crop), im.alpha, IMAGE_LIMITS.bytes);
   }
   if (!main) throw new Error("That image would not compress small enough to upload.");
   const tw = Math.min(480, w), th = Math.max(1, Math.round(h * tw / w));
-  const thumb = await encode(canvasOf(bmp, tw, th), alpha, IMAGE_LIMITS.thumbBytes);
+  const thumb = await encode(canvasOf(im.bmp, tw, th, im.crop), im.alpha, IMAGE_LIMITS.thumbBytes);
   if (!thumb) throw new Error("That image would not compress small enough to upload.");
-  return { main, thumb, w, h, alpha, srcW: bmp.width, srcH: bmp.height, url: URL.createObjectURL(thumb) };
+  if (im.url) URL.revokeObjectURL(im.url);
+  Object.assign(im, { main, thumb, w, h, srcW: rw, srcH: rh, url: URL.createObjectURL(thumb) });
+  return im;
+}
+function releaseImage(im) { if (im.url) URL.revokeObjectURL(im.url); URL.revokeObjectURL(im.fullUrl); im.bmp.close?.(); }
+/** Drag a box over the image: the box moves, its corners resize it. Only what is inside it is uploaded. */
+async function cropDialog(im) {
+  const W = im.bmp.width, H = im.bmp.height, r = (16 / 9) * (H / W);   // a 16:9 box's width over its height, as fractions of this image
+  const full16 = () => { const w = W / H > 16 / 9 ? r : 1, h = W / H > 16 / 9 ? 1 : 1 / r; return { x: (1 - w) / 2, y: (1 - h) / 2, w, h }; };
+  let shape = im.shape === "none" ? "16:9" : im.shape;
+  let sel = im.crop ? { x: im.crop.x / W, y: im.crop.y / H, w: im.crop.w / W, h: im.crop.h / H } : full16();
+  const pending = ask({ title: "Crop the image", ok: "Use this crop", body: `<div class="psform"><label>Shape${selectHtml('id="cropshape"', [["16:9", "16:9, the shape of the frame"], ["free", "Any shape"], ["none", "The whole image, no crop"]], shape)}</label></div>
+    <div class="cropwrap"><img id="cropimg" src="${im.fullUrl}" alt="" draggable="false"><div class="cropsel" id="cropsel"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div><p class="small muted" id="cropsize"></p>` });
+  const box = $("cropsel"), img = $("cropimg");
+  const draw = () => {
+    box.hidden = shape === "none";
+    Object.assign(box.style, { left: `${sel.x * 100}%`, top: `${sel.y * 100}%`, width: `${sel.w * 100}%`, height: `${sel.h * 100}%` });
+    const pw = Math.round(sel.w * W), ph = Math.round(sel.h * H);
+    $("cropsize").textContent = shape === "none" ? `${W}×${H}, the whole image.` : `${pw}×${ph}${pw < 1920 || ph < 1080 ? ": smaller than the 1920×1080 frame, so it will look soft at full size." : "."}`;
+  };
+  $("cropshape").addEventListener("change", (e) => { shape = e.target.value; if (shape === "16:9") sel = full16(); else if (shape === "none") sel = { x: 0, y: 0, w: 1, h: 1 }; draw(); });
+  let drag = null;
+  box.addEventListener("pointerdown", (e) => { e.preventDefault(); box.setPointerCapture(e.pointerId); drag = { h: e.target.dataset.h ?? "move", px: e.clientX, py: e.clientY, s: { ...sel } }; });
+  box.addEventListener("pointerup", () => { drag = null; });
+  box.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const dx = (e.clientX - drag.px) / img.clientWidth, dy = (e.clientY - drag.py) / img.clientHeight, s = drag.s, MIN = 0.05;
+    if (drag.h === "move") { sel = { ...s, x: Math.min(1 - s.w, Math.max(0, s.x + dx)), y: Math.min(1 - s.h, Math.max(0, s.y + dy)) }; draw(); return; }
+    const west = drag.h.includes("w"), north = drag.h.includes("n");
+    const ax = west ? s.x + s.w : s.x, ay = north ? s.y + s.h : s.y;   // the corner that stays put
+    const room = { w: west ? ax : 1 - ax, h: north ? ay : 1 - ay };
+    let w = Math.min(room.w, Math.max(MIN, s.w + (west ? -dx : dx))), h = Math.min(room.h, Math.max(MIN, s.h + (north ? -dy : dy)));
+    if (shape === "16:9") { h = w / r; if (h > room.h) { h = room.h; w = h * r; } if (h < MIN) { h = MIN; w = h * r; } }
+    sel = { x: west ? ax - w : ax, y: north ? ay - h : ay, w, h }; draw();
+  });
+  draw();
+  if (!(await pending)) return false;
+  im.shape = shape;
+  im.crop = shape === "none" ? null : { x: Math.round(sel.x * W), y: Math.round(sel.y * H), w: Math.max(1, Math.round(sel.w * W)), h: Math.max(1, Math.round(sel.h * H)) };
+  return true;
 }
 const base64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = () => rej(new Error("could not read the image")); r.readAsDataURL(blob); });
 const bgStyle = (bg) => (!bg ? "" : bg === "green" ? "background:#00ff00" : bg === "black" ? "background:#000" : `background:#000 url(/g/bg/${bg}.jpg) center / cover`);
-const layoutWord = (v) => (IMAGE_LAYOUTS.find(([k]) => k === (v || "fill"))?.[1] ?? "").split(" (")[0];
-const imageSpecLine = (s) => [layoutWord(s.params?.layout), s.bg || "transparent"].join(" · ");
+const layoutWord = (v) => (IMAGE_LAYOUTS.find(([k]) => k === (v || "fill"))?.[1] ?? "").split(/ [(,]/)[0];
+const imageSpecLine = (s) => [s.params?.caption ? `"${s.params.caption}"` : "", layoutWord(s.params?.layout), s.bg || "transparent"].filter(Boolean).join(" · ");
 const imageUses = (file) => (playlists?.users ?? []).flatMap((u) => u.playlists.filter((p) => p.items.some((it) => it.chart === IMAGE_CHART && it.params?.image === file)).map((p) => `${u.name || u.id}: ${p.name || p.id}`));
+const imageOnAir = (file) => ["screenA", "screenB"].filter((k) => live?.[k]?.chart === IMAGE_CHART && live[k].params?.image === file).map((k) => `Live Screen ${k === "screenA" ? "One" : "Two"}`);
 function imageWarnings(im) {
   const out = [];
   if (im.srcW < 1920 || im.srcH < 1080) out.push(`It is ${im.srcW}×${im.srcH}, smaller than the 1920×1080 frame, so it will look soft at full size.`);
@@ -1320,91 +1364,154 @@ function imageWarnings(im) {
   if (im.alpha) out.push("It has transparency, which suits a lower third or corner over video.");
   return out;
 }
-/** Chooses a file, prepares it, takes its details, uploads it. Resolves to { image, layout, bg }, or null. */
-async function uploadImage(file = null) {
-  if (!file) {
-    const pending = ask({ title: "Upload an image", body: `<p><input type="file" id="imgfile" accept="${IMAGE_TYPES.join(",")}"></p><p class="small muted">JPEG, PNG or WebP. It is resized to what the 1920×1080 frame can use, and its metadata is removed.</p>`, ok: "Next" });
-    const ok = await pending;
-    file = $("imgfile")?.files?.[0] ?? null;
-    if (!ok || !file) return null;
-  }
+const pickFile = async (title, note = "") => {
+  const ok = await ask({ title, ok: "Next", body: `<p><input type="file" id="imgfile" accept="${IMAGE_TYPES.join(",")}"></p><p class="small muted">JPEG, PNG or WebP. It is resized to what the 1920×1080 frame can use, and its metadata is removed.${note ? " " + note : ""}</p>` });
+  return ok ? $("imgfile")?.files?.[0] ?? null : null;
+};
+/** A file through crop, details and upload. Resolves to { image, params, bg } ready for a playlist card, or null.
+ *  forPlaylist also asks how it should appear there. swapFrom offers to put it in place of an older image in every playlist. */
+async function uploadImage(file = null, { forPlaylist = false, preset = null, swapFrom = null, swapDefault = false, startCrop = false, title = "Image details" } = {}) {
+  if (!file) { file = await pickFile("Upload an image"); if (!file) return null; }
   let im;
-  try { im = await prepareImage(file); } catch (e) { await ask({ title: "That image can't be used", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return null; }
-  let name = file.name.replace(/\.[^.]+$/, "").slice(0, IMAGE_LIMITS.name), credit = "", layout = im.alpha ? "lower" : "fill", bg = im.alpha ? "" : DEFAULT_BG, warn = "";
+  const refuse = (e) => ask({ title: "That image can't be used", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true });
+  try { im = await decodeImage(file); } catch (e) { await refuse(e); return null; }
+  try { if (startCrop) { if (!(await cropDialog(im))) { releaseImage(im); return null; } } await renderImage(im); } catch (e) { releaseImage(im); await refuse(e); return null; }
+  let name = preset?.name ?? file.name.replace(/\.[^.]+$/, "").slice(0, IMAGE_LIMITS.name), credit = preset?.credit ?? "", layout = im.alpha ? "lower" : "fill", bg = im.alpha ? "" : DEFAULT_BG, caption = "", showcredit = false, swap = swapDefault, warn = "";
+  const uses = swapFrom ? imageUses(swapFrom.file) : [], onAir = swapFrom ? imageOnAir(swapFrom.file) : [];
   for (;;) {
+    let wantCrop = false;
     const notes = imageWarnings(im).map((t) => `<div class="warnline">${esc(t)}</div>`).join("");
-    const pending = ask({ title: "Image details", ok: "Upload", body: `${warn}<div class="imgframe ${bg ? "" : "checker"}" id="imgframe" style="${bgStyle(bg)}"><img class="imgl ${layout}" id="imgprev" src="${im.url}" alt=""></div>${notes}
+    const pending = ask({ title, ok: "Upload", body: `${warn}<div class="imgframe ${bg ? "" : "checker"}" id="imgframe" style="${bgStyle(bg)}"><img class="imgl ${layout}" id="imgprev" src="${im.url}" alt=""></div><p><button type="button" id="imgcrop">Crop…</button> <span class="small muted">${im.w}×${im.h}${im.crop ? ", cropped" : ""}</span></p>${notes}
       <div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(name)}"></label>
-      <label>Credit and rights<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(credit)}" placeholder="e.g. Photo: AP, licensed for broadcast"></label>
-      <label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}</label><label>Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label></div>` });
-    $("imglayout").addEventListener("change", (e) => { $("imgprev").className = `imgl ${e.target.value}`; });
-    $("imgbg").addEventListener("change", (e) => { const f = $("imgframe"); f.style.cssText = bgStyle(e.target.value); f.classList.toggle("checker", !e.target.value); });
+      <label>Credit and rights (optional)<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(credit)}" placeholder="e.g. Photo: AP, licensed for broadcast"></label>
+      ${forPlaylist ? `<label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}</label><label>Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label>
+      <label>Caption<input id="imgcaption" maxlength="200" value="${esc(caption)}" placeholder="Optional: a line shown over the image"></label>
+      <label class="imgcheck"><input type="checkbox" id="imgshowcredit" ${showcredit ? "checked" : ""}> Show the credit on air</label>` : ""}
+      ${uses.length ? `<label class="imgcheck"><input type="checkbox" id="imgswap" ${swap ? "checked" : ""}> Put this in place of ${esc(swapFrom.name)} in ${plural(uses.length, "playlist")}</label>` : ""}</div>
+      ${onAir.length ? `<div class="warnline">${esc(onAir.join(" and "))} keeps showing ${esc(swapFrom.name)} until someone publishes there.</div>` : ""}` });
+    $("imgcrop").addEventListener("click", () => { wantCrop = true; $("dlg").close(); });
+    $("imglayout")?.addEventListener("change", (e) => { $("imgprev").className = `imgl ${e.target.value}`; });
+    $("imgbg")?.addEventListener("change", (e) => { const f = $("imgframe"); f.style.cssText = bgStyle(e.target.value); f.classList.toggle("checker", !e.target.value); });
     const ok = await pending;
-    if (!ok) { URL.revokeObjectURL(im.url); return null; }
-    name = $("imgname").value.trim(); credit = $("imgcredit").value.trim(); layout = $("imglayout").value; bg = $("imgbg").value;
-    if (name && credit) break;
-    warn = `<div class="warnline bad">An image needs a name and a credit, so everyone can see where it came from.</div>`;
+    name = $("imgname").value.trim(); credit = $("imgcredit").value.trim(); layout = $("imglayout")?.value ?? layout; bg = $("imgbg")?.value ?? bg; caption = $("imgcaption")?.value.trim() ?? ""; showcredit = !!$("imgshowcredit")?.checked; swap = !!$("imgswap")?.checked;
+    if (wantCrop) { try { if (await cropDialog(im)) await renderImage(im); } catch (e) { await refuse(e); } continue; }
+    if (!ok) { releaseImage(im); return null; }
+    if (name) break;
+    warn = `<div class="warnline bad">An image needs a name.</div>`;
   }
-  URL.revokeObjectURL(im.url);
   try {
     const r = await api("/api/images", { method: "POST", body: JSON.stringify({ name, credit, w: im.w, h: im.h, alpha: im.alpha, file: await base64(im.main), thumb: await base64(im.thumb) }) });
-    library = normalizeLibrary(r.library); renderImages(); renderPlaylists();
-    return { image: r.image, layout, bg };
+    library = normalizeLibrary(r.library);
+    if (swap && uses.length) await swapImage(swapFrom.file, r.image.file);
+    renderImages(); renderPlaylists();
+    return { image: r.image, params: { image: r.image.file, layout, ...(caption ? { caption } : {}), ...(showcredit ? { showcredit: "1" } : {}) }, bg };
   } catch (e) { await ask({ title: "The image was not uploaded", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return null; }
+  finally { releaseImage(im); }
 }
+/** Every playlist card showing one image now shows another. Live screens change only by publishing. */
+const swapImage = (from, to) => savePlaylists((doc) => { for (const u of doc.users) for (const p of u.playlists) for (const it of p.items) if (it.chart === IMAGE_CHART && it.params?.image === from) it.params.image = to; });
+const imageCardSpec = (up) => specDef({ chart: IMAGE_CHART, race: "", state: "", params: up.params, bg: up.bg });
 /** + Add image: pick from the library or upload, then it joins this playlist. */
 async function plAddImage() {
   const u = plUser(), p = plList(); if (!u || !p) return;
   let picked = null;
   const pending = ask({ title: `Add an image to ${p.name || "the playlist"} (${u.name || u.id})`, ok: "Next", body: `<p><input type="file" id="imgfile" accept="${IMAGE_TYPES.join(",")}"> <span class="small muted">Upload a new image</span></p>
-    ${library.images.length ? `<p class="small muted">Or choose one from the library:</p><div class="imgpick" id="imgpick">${library.images.map((x) => `<button type="button" data-file="${esc(x.file)}" title="${esc(x.name)}"><img src="/data/images/${esc(x.thumb)}" alt=""><span>${esc(x.name)}</span></button>`).join("")}</div>` : ""}` });
+    ${library.images.length ? `<p class="small muted">Or choose one from the library:</p><div class="imgpick" id="imgpick">${sortedImages().map((x) => `<button type="button" data-file="${esc(x.file)}" title="${esc(x.name)}"><img src="/data/images/${esc(x.thumb)}" alt=""><span>${imageStars.has(x.file) ? "★ " : ""}${esc(x.name)}${x.deprecated ? " (deprecated)" : ""}</span></button>`).join("")}</div>` : ""}` });
   $("imgpick")?.addEventListener("click", (e) => { const b = e.target.closest("[data-file]"); if (!b) return; picked = b.dataset.file; $("imgfile").value = ""; for (const x of $("imgpick").children) x.classList.toggle("on", x === b); });
   $("imgfile").addEventListener("change", () => { picked = null; for (const x of $("imgpick")?.children ?? []) x.classList.remove("on"); });
   const ok = await pending;
   const file = $("imgfile")?.files?.[0] ?? null;
   if (!ok || (!file && !picked)) return;
   if (picked) return plAdd({ chart: IMAGE_CHART, race: "", state: "", params: { image: picked, layout: "fill" }, bg: DEFAULT_BG });
-  const up = await uploadImage(file);
-  if (up) return plPutSpec(specDef({ chart: IMAGE_CHART, race: "", state: "", params: { image: up.image.file, layout: up.layout }, bg: up.bg }), u, p);
+  const up = await uploadImage(file, { forPlaylist: true });
+  if (up) return plPutSpec(imageCardSpec(up), u, p);
 }
 async function loadLibrary() { try { library = normalizeLibrary(await api("/api/images")); libraryError = null; } catch (e) { libraryError = e.message; } }
+// Starred images, a browser's own marks like starred charts: first in the library and the picker, with the halo. Deprecated is shared.
+const IMAGE_STARS_KEY = "studio.starredImages";
+let imageStars = (() => { try { const v = JSON.parse(localStorage.getItem(IMAGE_STARS_KEY) ?? "null"); return new Set(Array.isArray(v) ? v : []); } catch { return new Set(); } })();
+function toggleImageStar(x) { imageStars.has(x.file) ? imageStars.delete(x.file) : imageStars.add(x.file); try { localStorage.setItem(IMAGE_STARS_KEY, JSON.stringify([...imageStars])); } catch {} renderImages(); renderPlaylists(); }
+const sortedImages = () => [...library.images].sort((a, b) => imageStars.has(b.file) - imageStars.has(a.file));
 function renderImages() {
   $("imgupload").hidden = !mayPublish();
   const q = $("imgq").value.trim().toLowerCase();
-  const rows = library.images.filter((x) => !q || `${x.name} ${x.credit} ${x.uploadedBy ?? ""}`.toLowerCase().includes(q));
+  const whoSel = $("imgwho"), who = whoSel.value, names = [...new Set(library.images.map((x) => x.uploadedBy).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  whoSel.innerHTML = `<option value="">All uploaders</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}`;
+  whoSel.value = names.includes(who) ? who : "";
+  const rows = sortedImages().filter((x) => (!whoSel.value || x.uploadedBy === whoSel.value) && (!q || `${x.name} ${x.credit} ${x.uploadedBy ?? ""}`.toLowerCase().includes(q)));
   $("imgcount").textContent = `${rows.length} of ${library.images.length} image${library.images.length === 1 ? "" : "s"}`;
   const host = $("imggrid"); host.innerHTML = "";
   if (libraryError) { host.innerHTML = `<div class="empty">Cannot read the library: ${esc(libraryError)}</div>`; return; }
-  if (!rows.length) { host.innerHTML = `<div class="empty">${library.images.length ? "No images match." : "No images yet."}</div>`; return; }
   const chart = CHARTS.find((c) => c.id === IMAGE_CHART);
   const grid = document.createElement("div"); grid.className = "cardgrid dense";
   for (const x of rows) {
     const menu = [
-      ...(mayPublish() ? [{ label: "Add to playlist…", onClick: () => addToPlaylistFromCatalog(chart, { label: `Image: ${x.name}`, params: { image: x.file, layout: x.alpha ? "lower" : "fill" }, bg: x.alpha ? "" : DEFAULT_BG }) }, { label: "Edit name and credit…", onClick: () => editImage(x) }] : []),
-      ...(isProducer() ? [{ label: "Delete…", onClick: () => deleteImage(x) }] : []),
+      ...(mayPublish() ? [
+        { label: "Add to playlist…", onClick: () => addToPlaylistFromCatalog(chart, { label: `Image: ${x.name}`, params: { image: x.file, layout: x.alpha ? "lower" : "fill" }, bg: x.alpha ? "" : DEFAULT_BG }) },
+        { label: "Crop…", onClick: () => cropExisting(x) },
+        { label: "Replace…", onClick: () => replaceImage(x) },
+        { label: "Edit name and credit…", onClick: () => editImage(x) },
+      ] : []),
+      { label: imageStars.has(x.file) ? "Remove star" : "Star", onClick: () => toggleImageStar(x) },
+      ...(isProducer() ? [{ label: x.deprecated ? "Restore…" : "Deprecate…", onClick: () => toggleImageDeprecated(x) }, { label: "Delete…", onClick: () => deleteImage(x) }] : []),
     ];
     const el = cards.card({ chart, params: { image: x.file, layout: "fit" }, section: "images", priority: 8, open: "show", showRace: false, menu });
     el.classList.add("minicard");
     const uses = imageUses(x.file).length;
-    el.querySelector(".thumb").insertAdjacentHTML("afterend", `<div class="imgmeta" title="${esc(x.credit)}"><div>${esc(x.credit)}</div><div class="muted">${x.w}×${x.h}${x.uploadedBy ? ` · ${esc(x.uploadedBy)}` : ""}${uses ? ` · in ${plural(uses, "playlist")}` : ""}</div></div>`);
+    el.querySelector(".thumb").insertAdjacentHTML("afterend", `<div class="imgmeta" title="${esc(x.credit)}"><div class="${x.credit ? "" : "muted"}">${esc(x.credit || "No credit")}</div><div class="muted">${x.w}×${x.h}${x.uploadedBy ? ` · ${esc(x.uploadedBy)}` : ""}${uses ? ` · in ${plural(uses, "playlist")}` : ""}</div></div>`);
     grid.appendChild(el);
   }
+  if (mayPublish()) grid.insertAdjacentHTML("beforeend", `<div class="pladdcard" id="imgaddcard" role="button" title="Upload an image, or drag and drop one here"><span class="plplus">+</span><div class="plhint">Upload an image, or drag and drop one here</div></div>`);
+  if (!grid.children.length) { host.innerHTML = `<div class="empty">${library.images.length ? "No images match." : "No images yet."}</div>`; return; }
   host.appendChild(grid);
   cards.prune();
 }
 $("imgq").addEventListener("input", renderImages);
+$("imgwho").addEventListener("change", renderImages);
 $("imgupload").addEventListener("click", () => uploadImage());
+$("imggrid").addEventListener("click", (e) => { if (e.target.closest("#imgaddcard")) uploadImage(); });
+// An image file dropped anywhere on the Image Library joins it.
+const canDropToLibrary = () => mayPublish() && !$("dlg").open;
+$("images").addEventListener("dragover", (e) => { if (!dragHasFile(e) || !canDropToLibrary()) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; $("images").classList.add("filedrag"); });
+$("images").addEventListener("dragleave", (e) => { if (!$("images").contains(e.relatedTarget)) $("images").classList.remove("filedrag"); });
+$("images").addEventListener("drop", async (e) => {
+  if (!dragHasFile(e)) return;
+  e.preventDefault(); $("images").classList.remove("filedrag");
+  if (!canDropToLibrary()) return;
+  for (const file of [...e.dataTransfer.files]) await uploadImage(file);
+});
+/** A crop makes a new image, since files are never changed: the original stays until someone deletes it. */
+async function cropExisting(x) {
+  let file;
+  try { const r = await fetch(`/data/images/${x.file}`, { cache: "no-store" }); if (!r.ok) throw new Error(`${r.status}`); const b = await r.blob(); file = new File([b], x.file, { type: b.type }); }
+  catch (e) { await ask({ title: "The image could not be read", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); return; }
+  await uploadImage(file, { startCrop: true, preset: { name: `${x.name} (cropped)`.slice(0, IMAGE_LIMITS.name), credit: x.credit }, swapFrom: x, swapDefault: false, title: "Save the crop as a new image" });
+}
+async function replaceImage(x) {
+  const file = await pickFile(`Replace ${x.name}`, "The old image stays in the library until a producer deletes it.");
+  if (file) await uploadImage(file, { preset: { name: x.name, credit: x.credit }, swapFrom: x, swapDefault: true, title: `Replace ${x.name}` });
+}
 async function editImage(x) {
   let warn = "";
   for (;;) {
-    const ok = await (() => { const p = ask({ title: "Edit the image's details", ok: "Save", body: `${warn}<div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(x.name)}"></label><label>Credit and rights<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(x.credit)}"></label></div>` }); return p; })();
+    const ok = await ask({ title: "Edit the image's details", ok: "Save", body: `${warn}<div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(x.name)}"></label><label>Credit and rights (optional)<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(x.credit)}"></label></div>` });
     if (!ok) return;
     const name = $("imgname").value.trim(), credit = $("imgcredit").value.trim();
-    if (!name || !credit) { warn = `<div class="warnline bad">An image needs a name and a credit.</div>`; continue; }
+    if (!name) { warn = `<div class="warnline bad">An image needs a name.</div>`; continue; }
     try { library = normalizeLibrary((await api("/api/images", { method: "PATCH", body: JSON.stringify({ file: x.file, name, credit }) })).library); renderImages(); renderPlaylists(); }
     catch (e) { await ask({ title: "The change was not saved", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); }
     return;
   }
+}
+async function toggleImageDeprecated(x) {
+  const uses = imageUses(x.file);
+  const where = uses.length ? `<p>It is in ${plural(uses.length, "playlist")}, and stays there:</p><ul>${uses.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>` : "<p>It is in no playlist right now.</p>";
+  const ok = await ask(x.deprecated
+    ? { title: `Restore ${x.name}?`, body: "<p>It stops being grayed out, for everyone in the Studio.</p>", ok: "Restore image" }
+    : { title: `Deprecate ${x.name}?`, danger: true, ok: "Deprecate image", body: `<div class="warnline bad"><b>This grays the image out for everyone in the Studio</b>, in the library and in every playlist.</div>${where}<p class="small muted">It can still be added to playlists, its address keeps working, and it displays normally on air. A producer can restore it from this menu.</p>` });
+  if (!ok) return;
+  try { library = normalizeLibrary((await api("/api/images", { method: "PATCH", body: JSON.stringify({ file: x.file, deprecated: !x.deprecated }) })).library); renderImages(); renderPlaylists(); }
+  catch (e) { await ask({ title: "The change was not saved", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true }); }
 }
 async function deleteImage(x) {
   const uses = imageUses(x.file);

@@ -219,6 +219,14 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .gcard .thumb .ph.imgph { padding: 0; overflow: hidden; }
 .imgl { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .imgl.fit { object-fit: contain; } .imgl.lower { object-fit: contain; object-position: bottom; }
+.imgl.panel { object-fit: contain; padding: 6%; box-sizing: border-box; }
+.imgcheck { display: flex !important; flex-direction: row; align-items: center; gap: 8px; } .imgcheck input { width: auto; }
+.cropwrap { position: relative; width: fit-content; max-width: 100%; margin: 8px auto; line-height: 0; overflow: hidden; touch-action: none; user-select: none; }
+.cropwrap img { display: block; max-width: 100%; max-height: 52vh; }
+.cropsel { position: absolute; box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .55); cursor: move; } .cropsel[hidden] { display: none; }
+.cropsel i { position: absolute; width: 16px; height: 16px; background: #fff; border: 1px solid #333; box-sizing: border-box; }
+.cropsel i[data-h="nw"] { left: -2px; top: -2px; cursor: nwse-resize; } .cropsel i[data-h="ne"] { right: -2px; top: -2px; cursor: nesw-resize; }
+.cropsel i[data-h="sw"] { left: -2px; bottom: -2px; cursor: nesw-resize; } .cropsel i[data-h="se"] { right: -2px; bottom: -2px; cursor: nwse-resize; }
 .imgl.corner { left: auto; right: 5%; top: 7.4%; width: 29%; height: 39%; object-fit: contain; object-position: top right; }
 .imgframe { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
 .imgmeta { padding: 5px 8px 2px; font-size: 11.5px; line-height: 1.35; } .imgmeta > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -311,22 +319,23 @@ main > section#playlists, main > section#images, main > section#charts { overflo
 #playlists.collapsed > .cardhead, #images.collapsed > .cardhead, #charts.collapsed > .cardhead { border-radius: 7px; }
 /* the + card closing a playlist */
 .pladdcard { position: relative; min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; box-sizing: border-box; text-align: center; border: 2px dashed var(--sand); border-radius: 8px; color: var(--muted); }
-.pladdcard:hover, #playlists.filedrag .pladdcard { border-color: var(--navy); background: var(--cream); }
+.pladdcard:hover, #playlists.filedrag .pladdcard, #images.filedrag .pladdcard { border-color: var(--navy); background: var(--cream); }
 .pladdcard .plplus { position: static; width: 56px; height: 56px; border-radius: 50%; padding: 0; font-size: 34px; line-height: 1; font-weight: 300; color: var(--navy); background: #fff; border: 2px solid var(--sand); }
 .pladdcard:hover .plplus { border-color: var(--navy); }
 .pladdcard .plhint { font-size: 12.5px; line-height: 1.35; max-width: 190px; visibility: hidden; }
-.pladdcard:hover .plhint, #playlists.filedrag .pladdcard .plhint { visibility: visible; }
+.pladdcard:hover .plhint, #playlists.filedrag .pladdcard .plhint, #images.filedrag .pladdcard .plhint { visibility: visible; }
 .pladdcard .plplus[hidden], .pladdcard .plhint[hidden], .pladdcard .plchoose[hidden] { display: none; }
 .pladdcard .plchoose { display: flex; gap: 8px; }
 .pladdcard .plchoose button { padding: 8px 14px; font-weight: 600; }
-#playlists.filedrag { outline: 3px dashed var(--gold); outline-offset: -3px; }
-#charts .gcard.deprecated .ghead, #catalog .gcard.deprecated .ghead, #plbody .gcard.deprecated .ghead { opacity: .6; }
-#charts .gcard.deprecated .gname, #catalog .gcard.deprecated .gname, #plbody .gcard.deprecated .gname { text-decoration: line-through; }
-#charts .gcard.deprecated .thumb, #catalog .gcard.deprecated .thumb, #plbody .gcard.deprecated .thumb { position: relative; }
-#charts .gcard.deprecated .thumb > *, #catalog .gcard.deprecated .thumb > *, #plbody .gcard.deprecated .thumb > * { filter: grayscale(1) opacity(.45); }
-#charts .gcard.deprecated .thumb::after, #catalog .gcard.deprecated .thumb::after, #plbody .gcard.deprecated .thumb::after { content: "Deprecated"; position: absolute; left: 6px; top: 6px; z-index: 3; padding: 1px 7px; border-radius: 4px; background: rgba(40, 40, 40, .8); color: #e5e5e5; font-size: 11px; font-weight: 600; pointer-events: none; }
+#imgaddcard { cursor: pointer; min-height: 0; } #imgaddcard .plplus { display: flex; align-items: center; justify-content: center; }
+#playlists.filedrag, #images.filedrag { outline: 3px dashed var(--gold); outline-offset: -3px; }
+#images .gcard.deprecated .ghead, #charts .gcard.deprecated .ghead, #catalog .gcard.deprecated .ghead, #plbody .gcard.deprecated .ghead { opacity: .6; }
+#images .gcard.deprecated .gname, #charts .gcard.deprecated .gname, #catalog .gcard.deprecated .gname, #plbody .gcard.deprecated .gname { text-decoration: line-through; }
+#images .gcard.deprecated .thumb, #charts .gcard.deprecated .thumb, #catalog .gcard.deprecated .thumb, #plbody .gcard.deprecated .thumb { position: relative; }
+#images .gcard.deprecated .thumb > *, #charts .gcard.deprecated .thumb > *, #catalog .gcard.deprecated .thumb > *, #plbody .gcard.deprecated .thumb > * { filter: grayscale(1) opacity(.45); }
+#images .gcard.deprecated .thumb::after, #charts .gcard.deprecated .thumb::after, #catalog .gcard.deprecated .thumb::after, #plbody .gcard.deprecated .thumb::after { content: "Deprecated"; position: absolute; left: 6px; top: 6px; z-index: 3; padding: 1px 7px; border-radius: 4px; background: rgba(40, 40, 40, .8); color: #e5e5e5; font-size: 11px; font-weight: 600; pointer-events: none; }
 .gcard.chartstar .cid::after { content: " ★"; color: #c9a227; }
-#charts .gcard.chartstar { outline: 2px solid #c9a227; outline-offset: -1px; box-shadow: 0 0 12px 2px rgba(201, 162, 39, .55); }
+#images .gcard.chartstar, #charts .gcard.chartstar { outline: 2px solid #c9a227; outline-offset: -1px; box-shadow: 0 0 12px 2px rgba(201, 162, 39, .55); }
 .gcard.minicard.inuse { outline: 2px solid var(--gold); outline-offset: -1px; }
 .gcard.minicard.inuse .ghead { background: #fbf3d6; }
 .gcard { border: 1px solid var(--sand); border-radius: 8px; overflow: hidden; background: #fff; display: flex; flex-direction: column; }

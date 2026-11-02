@@ -1,6 +1,6 @@
 // The image library: static images that go into playlists and onto live screens like any chart. GET is public and uncached.
 // POST adds one (publisher or producer): the browser has already decoded and re-encoded the file, which caps its size and strips its
-// metadata, and sends it here as base64 with a small thumbnail. PATCH changes the name or credit. DELETE needs a producer, refuses
+// metadata, and sends it here as base64 with a small thumbnail. PATCH changes the name or credit, or (a producer) marks it deprecated. DELETE needs a producer, refuses
 // an image a live screen is showing, and asks first when playlists use it.
 // Files are written once under a random name and never overwritten, so nothing on air can change underneath a playlist.
 import { randomBytes } from "node:crypto";
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
       const who = await requirePublisher(req, res); if (!who) return;
       const b = readBody(req);
       const name = text(b.name, IMAGE_LIMITS.name), credit = text(b.credit, IMAGE_LIMITS.credit);
-      if (!name || !credit) { res.status(400).json({ error: "an image needs a name and a credit" }); return; }
+      if (!name) { res.status(400).json({ error: "an image needs a name" }); return; }
       const main = decode(b.file), thumb = decode(b.thumb), kind = sniff(main), tkind = sniff(thumb);
       if (!kind || !tkind) { res.status(400).json({ error: "only JPEG, PNG and WebP images can be uploaded" }); return; }
       if (main.length > IMAGE_LIMITS.bytes || thumb.length > IMAGE_LIMITS.thumbBytes) { res.status(413).json({ error: "that image is too large to upload" }); return; }
@@ -52,12 +52,13 @@ export default async function handler(req, res) {
       return;
     }
     if (req.method === "PATCH") {
-      const who = await requirePublisher(req, res); if (!who) return;
       const b = readBody(req);
+      const who = await (typeof b.deprecated === "boolean" ? requireProducer : requirePublisher)(req, res); if (!who) return;
       const lib = await currentLibrary(); const im = lib.images.find((x) => x.file === b.file);
       if (!im) { res.status(404).json({ error: "that image is not in the library" }); return; }
+      if (typeof b.deprecated === "boolean") { im.deprecated = b.deprecated; res.status(200).json({ library: await save(lib, who) }); return; }
       const name = text(b.name, IMAGE_LIMITS.name), credit = text(b.credit, IMAGE_LIMITS.credit);
-      if (!name || !credit) { res.status(400).json({ error: "an image needs a name and a credit" }); return; }
+      if (!name) { res.status(400).json({ error: "an image needs a name" }); return; }
       Object.assign(im, { name, credit });
       res.status(200).json({ library: await save(lib, who) });
       return;

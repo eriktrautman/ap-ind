@@ -353,14 +353,14 @@ export function seedPlaylists(doc) {
 
 // The image library (images.json, /api/images). A file's name is random and is written once, so an address never changes what it shows.
 export const IMAGE_CHART = "I1";
-export const IMAGE_LAYOUTS = [["fill", "Fill the frame (crops the edges)"], ["fit", "Fit the whole image (bars)"], ["lower", "Across the bottom (lower third)"], ["corner", "Top right corner"]];
+export const IMAGE_LAYOUTS = [["fill", "Fill the frame (crops the edges)"], ["fit", "Fit the whole image (bars)"], ["lower", "Across the bottom (lower third)"], ["corner", "Top right corner"], ["panel", "In a chart panel, with the caption as its title"]];
 export const IMAGE_LIMITS = { count: 500, name: 80, credit: 160, bytes: 3_000_000, thumbBytes: 150_000 };   // a Vercel function takes 4.5 MB, and base64 adds a third
 export const imageNameOk = (s) => typeof s === "string" && /^[a-zA-Z0-9]{1,24}(-t)?\.(jpg|png|webp)$/.test(s);
 export function normalizeLibrary(raw) {
   const r = raw && typeof raw === "object" ? raw : {};
   const images = (Array.isArray(r.images) ? r.images : []).filter((x) => x && imageNameOk(x.file) && imageNameOk(x.thumb)).slice(0, IMAGE_LIMITS.count).map((x) => ({
     file: x.file, thumb: x.thumb, name: String(x.name ?? "").slice(0, IMAGE_LIMITS.name), credit: String(x.credit ?? "").slice(0, IMAGE_LIMITS.credit),
-    w: Number(x.w) || 0, h: Number(x.h) || 0, bytes: Number(x.bytes) || 0, alpha: x.alpha === true,
+    w: Number(x.w) || 0, h: Number(x.h) || 0, bytes: Number(x.bytes) || 0, alpha: x.alpha === true, deprecated: x.deprecated === true,
     uploadedBy: typeof x.uploadedBy === "string" ? x.uploadedBy.slice(0, 40) : null, uploadedAt: typeof x.uploadedAt === "string" ? x.uploadedAt : null,
   }));
   return { images, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" ? r.updatedBy.slice(0, 40) : null };

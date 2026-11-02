@@ -7,28 +7,50 @@
 <link rel="stylesheet" href="./g.css">
 <style>
   /* I1: one static image from the Studio's image library, 1920x1080. ?image=<file> required. ?layout=fill (default, covers the frame and
-     crops the edges) | fit (the whole image, with bars) | lower (across the bottom, for a transparent lower third) | corner (top right).
-     It appears only once fully decoded; if the file cannot be read the frame stays empty rather than showing a broken image on air. */
+     crops the edges) | fit (the whole image, with bars) | lower (across the bottom, for a transparent lower third) | corner (top right)
+     | panel (inside the standard chart panel). ?caption= a line over the image (in a panel, its title). ?showcredit=1 the library's credit.
+     The image appears only once fully decoded; if the file cannot be read the frame stays empty rather than showing a broken image on air. */
   #img { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; display: block; opacity: 0; }
   #img.fit { object-fit: contain; }
   #img.lower { top: auto; bottom: 0; height: auto; max-height: 1080px; object-fit: contain; object-position: bottom; }
   #img.corner { left: auto; right: 96px; top: 80px; width: auto; height: auto; max-width: 560px; max-height: 420px; object-fit: contain; }
+  #img.panel { position: static; width: 100%; height: 100%; object-fit: contain; }
   #img.on { opacity: 1; }
+  #pan { display: none; grid-template-rows: auto minmax(0, 1fr) auto; } #pan.on { display: grid; }
+  #pan .head { grid-row: 1; } #pan .pbody { grid-row: 2; min-height: 0; } #pan .foot { grid-row: 3; }
+  #pan .head:empty { display: none; }
+  .capt { position: absolute; left: 96px; bottom: 150px; max-width: 1400px; padding: 16px 36px 18px 28px; border-left: 10px solid var(--gold); background: linear-gradient(90deg, var(--panel), var(--panel-edge)); font-size: 52px; font-weight: 700; line-height: 1.1; border-radius: 6px; }
+  .capt:empty { display: none; }
+  .credit { position: absolute; right: 48px; bottom: 36px; padding: 4px 12px; font-size: 22px; color: #fff; background: rgba(0, 0, 0, .55); border-radius: 4px; }
+  .credit:empty { display: none; }
+  html[data-theme="election-night-v1"] .capt { left: 97px; bottom: 82px; padding: 0 24px; line-height: 88px; border: 0; border-radius: 0; background: linear-gradient(180deg, #FFFFFF, #9A9A9A); color: #090E40; font-size: 67px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 8px 24px rgba(9, 14, 64, .45); }
 </style>
 </head>
 <body>
 <img id="img" alt="">
+<div class="panel" id="pan"><div class="head" id="phead"></div><div class="pbody" id="pbody"></div><div class="foot"><span id="pcredit"></span></div></div>
+<div class="capt" id="capt"></div>
+<div class="credit" id="credit"></div>
 <script type="module">
-  import "./control.js";   // ?fit=1, the scaling a Studio preview asks for
+  import "./feed.js";   // the published stylesheet, kept current
   import { imageNameOk, IMAGE_LAYOUTS } from "./control.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
-  const el = document.getElementById("img");
-  const file = q.get("image"), layout = q.get("layout");
+  const $ = (id) => document.getElementById(id);
+  const el = $("img"), file = q.get("image"), layout = q.get("layout"), caption = q.get("caption") ?? "";
+  const inPanel = layout === "panel";
   if (IMAGE_LAYOUTS.some(([v]) => v === layout)) el.classList.add(layout);
+  if (inPanel) {
+    $("pan").classList.add("on"); $("pbody").appendChild(el);
+    if (caption) { const t = document.createElement("div"); t.className = "title"; t.textContent = caption; $("phead").appendChild(t); }
+  } else $("capt").textContent = caption;
   if (imageNameOk(file)) {
     el.src = `/data/images/${file}`;
     el.decode().then(() => el.classList.add("on")).catch(() => {});
+    if (q.get("showcredit") === "1") fetch("/data/images.json").then((r) => (r.ok ? r.json() : null)).then((lib) => {
+      const credit = lib?.images?.find((x) => x.file === file)?.credit ?? "";
+      $(inPanel ? "pcredit" : "credit").textContent = credit;
+    }).catch(() => {});
   }
 </script>
 </body>

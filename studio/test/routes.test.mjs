@@ -158,13 +158,17 @@ test("images: a publisher uploads, the file is served, an SVG is refused, and on
   const publisher = await signIn(S.base, PASSWORDS.publisher), producer = await signIn(S.base, PASSWORDS.producer);
   assert.equal((await send("POST", one)).status, 401, "signed out cannot upload");
   assert.equal((await send("POST", { ...one, file: Buffer.from("<svg onload=alert(1)>").toString("base64") }, publisher)).status, 400, "not an image");
-  assert.equal((await send("POST", { ...one, credit: " " }, publisher)).status, 400, "a credit is required");
+  assert.equal((await send("POST", { ...one, name: " " }, publisher)).status, 400, "a name is required");
+  assert.equal((await send("POST", { ...one, credit: "" }, publisher)).status, 200, "a credit is not");
   const up = await send("POST", one, publisher);
   assert.equal(up.status, 200); const file = up.json.image.file; assert.match(file, /\.png$/);
   const served = await fetch(url(`/data/images/${file}`));
   assert.equal(served.status, 200); assert.equal(served.headers.get("content-type"), "image/png");
   assert.equal((await get(url(`/g/I1?image=${file}`))).status, 200);
   assert.equal((await send("DELETE", { file }, publisher)).status, 403, "a publisher cannot delete");
+  assert.equal((await send("PATCH", { file, deprecated: true }, publisher)).status, 403, "a publisher cannot deprecate");
+  assert.equal((await send("PATCH", { file, deprecated: true }, producer)).json.library.images.find((x) => x.file === file).deprecated, true);
+  assert.equal((await send("PATCH", { file, name: "Renamed", credit: "Photo: test" }, publisher)).json.library.images.find((x) => x.file === file).name, "Renamed");
   const doc = (await get(url("/api/playlists"))).json;
   doc.users[0].playlists[0].items.push({ chart: "I1", params: { image: file, layout: "fit" }, bg: "green" });
   const saved = await put(url("/api/playlists"), { users: doc.users }, { cookie: producer });
