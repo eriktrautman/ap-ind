@@ -136,6 +136,19 @@ const SLATE_IDS = FEATURED_RACES.map((r) => r.id);
 // Catalog and of the race pickers; it is not part of any state, so no output or preview can tell.
 const STARS_KEY = "studio.starredRaces";
 let starred = (() => { try { const v = JSON.parse(localStorage.getItem(STARS_KEY) ?? "null"); return Array.isArray(v) ? new Set(v) : new Set(SLATE_IDS); } catch { return new Set(SLATE_IDS); } })();
+// Starred charts, the same idea: this browser's own marks, none to begin with. A star shows on the chart's cards and in the
+// chart dropdowns, with a halo in the Chart Catalog, and changes nothing else.
+const CHART_STARS_KEY = "studio.starredCharts";
+let chartStars = (() => { try { const v = JSON.parse(localStorage.getItem(CHART_STARS_KEY) ?? "null"); return new Set(Array.isArray(v) ? v : []); } catch { return new Set(); } })();
+function saveChartStars() { try { localStorage.setItem(CHART_STARS_KEY, JSON.stringify([...chartStars])); } catch {} }
+const starLabel = (id) => (chartStars.has(id) ? "Remove star" : "Star");
+const chartOptionText = (c) => `${chartStars.has(c.id) ? "★ " : ""}${c.id} ${c.name}`;
+/** In place, so no preview reloads: every card of this chart, its menu label, and every chart dropdown. */
+function toggleChartStar(chart) {
+  chartStars.has(chart.id) ? chartStars.delete(chart.id) : chartStars.add(chart.id); saveChartStars();
+  for (const el of document.querySelectorAll(`.gcard[data-chart="${chart.id}"]`)) { el.classList.toggle("chartstar", chartStars.has(chart.id)); const b = el.querySelector("[data-star-item]"); if (b) b.textContent = starLabel(chart.id); }
+  for (const o of document.querySelectorAll(`select[data-f="chart"] option[value="${chart.id}"]`)) o.textContent = chartOptionText(chart);
+}
 function saveStars() { try { localStorage.setItem(STARS_KEY, JSON.stringify([...starred])); } catch {} }
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
 const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
@@ -190,7 +203,7 @@ $("applyall").addEventListener("click", async () => {
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
 });
-const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), getDraft: () => draft , getTheme: () => previewThemeParam() });
+const cards = createCardManager({ maxLive: 32, getDisplay: (sec) => secDisplay(sec), getOrigin: () => origin(), isChartStarred: (id) => chartStars.has(id), getDraft: () => draft , getTheme: () => previewThemeParam() });
 cards.onBudget((live, wanting) => { $("thumbbudget").textContent = wanting > live ? `${live} of ${wanting} previews live (at most 32 at once)` : live ? `${live} live previews` : ""; });
 
 /** True between a Test/Live switch and the poll that confirms it (settings say one thing, the last run says another). */
@@ -400,10 +413,11 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races, and every Background and Opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every Background and Opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   starred = new Set(SLATE_IDS); saveStars();
+  chartStars = new Set(); saveChartStars();
   display = { top: { bg: DEFAULT_BG, opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: the default background at 100%
   renderAll(); cards.broadcast(draft);
 }
@@ -772,7 +786,7 @@ function stateOptions(selected) {
 function specFormHtml(s, attr, bgAttr, bg) {
   const chart = CHARTS.find((c) => c.id === s.chart);
   const groups = [["A", "Lower thirds and strips"], ["B", "Per-race charts"], ["C", "Independent movement"], ["D", "Many races at once"], ["F", "AP reports"]];
-  const chartSel = `<label>Chart<select ${attr} data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${c.id} ${esc(c.name)}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
+  const chartSel = `<label>Chart<select ${attr} data-f="chart">${groups.map(([ser, name]) => `<optgroup label="${ser} · ${name}">${CHARTS.filter((c) => c.id[0] === ser && c.built && !c.retired && c.page && c.id !== "A1").map((c) => `<option value="${c.id}" ${s.chart === c.id ? "selected" : ""}>${esc(chartOptionText(c))}</option>`).join("")}</optgroup>`).join("")}</select></label>`;
   const needsRace = chart && (chart.kind === "race" || chart.needsRace);
   // The form keeps the same shape whatever the chart: Chart, Race, Background. A chart that draws no single race shows Race greyed out.
   const raceSel = needsRace || chart?.needsState
@@ -1269,18 +1283,29 @@ document.querySelectorAll("#catalog .filters .chip").forEach((c) => c.addEventLi
 }));
 
 // ---------- Chart Catalog ----------
+/** The menu has closed, so the card's ⋯ says it worked. */
+function copyChartUrl(el) {
+  const k = el.querySelector(".kebab"), was = k.textContent, url = cards.addressOf(el);
+  navigator.clipboard?.writeText(url).then(() => { k.textContent = "Copied"; setTimeout(() => (k.textContent = was), 1500); }).catch(() => ask({ title: "Copy this address", body: `<p><code>${esc(url)}</code></p>`, ok: "OK", info: true }));
+}
 function renderChartCatalog() {
   const sample = SLATE_IDS.map((id) => index?.byId?.get(id)).find(Boolean) ?? index?.races?.find((r) => r.featured) ?? null;
   for (const [gridId, kind, series] of [["chartsA", "other", "A"], ["chartsRace", "race", "B"], ["chartsMove", "movement", "C"], ["chartsBroad", "movement", "D"], ["chartsF", "other", "F"]]) {
     const grid = $(gridId); grid.innerHTML = "";
     for (const chart of CHARTS.filter((c) => c.kind === kind && seriesOf(c.id) === series)) {
-      const el = cards.card({ chart, race: kind === "race" || chart.needsRace || chart.needsState ? sample : null, section: "charts", priority: 6, showRace: false });
+      const race = kind === "race" || chart.needsRace || chart.needsState ? sample : null;
+      const live = chart.built && !chart.retired && chart.page;
+      const menu = [
+        ...(mayAddToPlaylist(chart) ? [{ label: "Add to playlist…", onClick: () => addToPlaylistFromCatalog(chart) }] : []),
+        ...(live ? [{ label: race ? `Copy URL (${race.label})` : "Copy URL", onClick: () => copyChartUrl(el) }] : []),
+        ...(chart.retired ? [] : [{ label: starLabel(chart.id), star: true, onClick: () => toggleChartStar(chart) }]),
+      ];
+      const el = cards.card({ chart, race, section: "charts", priority: 6, showRace: false, menu, copyButton: false });
       el.classList.add("minicard");
       if (chart.retired) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">Retired · id reserved</span>`);
       else if (chart.unavailable) el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<span class="muted small">${esc(chart.unavailable)}</span>`);
       else if (chart.id === "A1") { el.classList.add("inuse"); el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", `<a class="mini on" href="#ticker">★ Managed in Ticker</a>`); }
       else el.querySelector(".gfoot").insertAdjacentHTML("afterbegin", playlistBtn(chart));
-      if ("BCD".includes(series)) el.querySelector(".copybtn")?.remove();   // a catalog chart has no race of its own: its address would be worthless
       grid.appendChild(el);
     }
   }
