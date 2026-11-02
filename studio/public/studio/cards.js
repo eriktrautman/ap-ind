@@ -69,12 +69,20 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
   }
 
   function reconcile() {
-    const wanting = [...cards].filter((c) => c.chart.built && !c.chart.retired && !c.static && c.visible).sort((a, b) => a.priority - b.priority || a.seq - b.seq);
-    const live = new Set(wanting.slice(0, maxLive));
-    for (const c of cards) {
-      if (live.has(c)) mount(c); else unmount(c, wanting.includes(c) ? "paused" : null);
-    }
-    onBudget?.(live.size, wanting.length);
+    // A starred chart's previews come first and stay loaded off screen, so scrolling to one never finds it empty. What is on
+    // screen still outranks a starred preview that is not, and a closed section's cards load nothing.
+    const canRun = (c) => c.chart.built && !c.chart.retired;
+    const starred = (c) => isChartStarred(c.chart.id);
+    const byOrder = (a, b) => a.priority - b.priority || a.seq - b.seq;
+    const all = [...cards].filter(canRun);
+    const starredOn = all.filter((c) => starred(c) && c.visible).sort(byOrder);
+    const othersOn = all.filter((c) => !starred(c) && !c.static && c.visible).sort(byOrder);
+    const starredOff = all.filter((c) => starred(c) && !c.visible && c.el.offsetParent).sort(byOrder);
+    const wanting = [...starredOn, ...othersOn];
+    const live = new Set([...wanting, ...starredOff].slice(0, maxLive));
+    for (const c of live) mount(c);   // in this order, so the starred ones start loading first
+    for (const c of cards) if (!live.has(c)) unmount(c, wanting.includes(c) ? "paused" : null);
+    onBudget?.(Math.min(live.size, wanting.length), wanting.length);
   }
   let onBudget = null;
 
@@ -205,5 +213,5 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
   document.addEventListener("click", (e) => { if (!e.target.closest(".kebab, .menu")) for (const m of document.querySelectorAll(".gcard .menu")) m.hidden = true; });
   window.addEventListener("scroll", schedule, { passive: true });
 
-  return { card, addressOf: (el) => copyUrl(el._card), prune, setData, broadcast, refreshSource, refreshFrames, refreshLinks, onBudget: (fn) => { onBudget = fn; }, get count() { return cards.size; } };
+  return { card, reschedule: schedule, addressOf: (el) => copyUrl(el._card), prune, setData, broadcast, refreshSource, refreshFrames, refreshLinks, onBudget: (fn) => { onBudget = fn; }, get count() { return cards.size; } };
 }

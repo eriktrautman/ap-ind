@@ -168,6 +168,7 @@ function toggleChartStar(chart) {
   chartStars.has(chart.id) ? chartStars.delete(chart.id) : chartStars.add(chart.id); saveChartStars();
   for (const el of document.querySelectorAll(`.gcard[data-chart="${chart.id}"]`)) { el.classList.toggle("chartstar", chartStars.has(chart.id)); const b = el.querySelector("[data-star-item]"); if (b) b.textContent = starLabel(chart.id); }
   for (const o of document.querySelectorAll(`select[data-f="chart"] option[value="${chart.id}"]`)) o.textContent = chartOptionText(chart);
+  cards.reschedule();   // a newly starred chart loads at once and stays loaded
 }
 function saveStars() { try { localStorage.setItem(STARS_KEY, JSON.stringify([...starred])); } catch {} }
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
@@ -1446,6 +1447,7 @@ function setSectionOpen(id, open, remember = true) {
   btn.textContent = open ? "▾" : "▸";
   btn.setAttribute("aria-expanded", String(open));
   if (open) scaleScreens();   // frames measured while hidden have no width
+  cards.reschedule();   // a closed section lets go of its previews at once
   if (remember) { sectionsOpen[id] = open; try { localStorage.setItem(SECTIONS_KEY, JSON.stringify(sectionsOpen)); } catch {} }
 }
 for (const id of SECTIONS) {
