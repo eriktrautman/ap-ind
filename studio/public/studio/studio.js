@@ -36,6 +36,11 @@ function ask({ title, body, ok = "Confirm", danger = false, info = false }) {
   dlg.showModal();
   return new Promise((resolve) => dlg.addEventListener("close", () => resolve(dlg.returnValue === "ok"), { once: true }));
 }
+// Enter in a text field means the dialog's main button. Left alone it submits the form's first button, which is Cancel.
+$("dlg").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.isComposing || e.target.tagName !== "INPUT" || !["text", "search", ""].includes(e.target.getAttribute("type") ?? "")) return;
+  e.preventDefault(); $("dlgok").click();
+});
 // {id} markers from diffState become race labels (NE-SEN) once the index is loaded.
 const withLabels = (text) => text.replace(/\{(\d+)\}/g, (_, id) => index?.byId?.get(id)?.label ?? `race ${id}`);
 const changeList = (changes) => changes.length ? `<ul>${changes.map((c) => `<li>${esc(withLabels(c.text))}</li>`).join("")}</ul>` : `<p class="muted">No differences.</p>`;
