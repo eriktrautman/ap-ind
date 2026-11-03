@@ -24,7 +24,6 @@
   .cand.ind .tag { color: #1a1600; }
   .votes { font-size: 26px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; min-height: 32px; }
   .pill { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 800; padding: 2px 12px; border-radius: 4px; letter-spacing: .06em; background: var(--gold); color: #1a1600; text-shadow: none; margin-right: 12px; vertical-align: 2px; }
-  .cand.lost .pic { filter: brightness(.55) saturate(.6); } .cand.lost .info { opacity: .6; }   /* the art must not show through a face, so the picture darkens rather than fades */
   .body.n3 .pct { font-size: 112px; } .body.n3 .info { margin-top: -96px; }
   .body.n4 .pct { font-size: 92px; } .body.n4 .info { margin-top: -80px; } .body.n4 .who { font-size: 32px; } .body.n4 .tag { min-width: 34px; height: 34px; line-height: 34px; font-size: 22px; margin-right: 8px; vertical-align: 3px; }
   .others { font-size: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
@@ -78,7 +77,7 @@
     for (const c of shown) {
       const el = $("cols").querySelector(`[data-id="${c.id}"]`);
       const won = st.status === "called" && st.cand?.id === c.id;
-      el.className = `cand ${partyKey(c)} ${st.status === "called" && !won ? "lost" : ""}`;
+      el.className = `cand ${partyKey(c)}`;
       el.style.setProperty("--c", PARTY_COLOR[partyKey(c)]);
       el.querySelector(".pct").textContent = counting ? `${Number(c.pct).toFixed(1)}%` : "—";
       el.querySelector(".pct").classList.toggle("wait", !counting);
