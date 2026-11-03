@@ -170,6 +170,9 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .row.manual .nm { font-weight: 600; white-space: normal; }
 .addmanual { display: flex; gap: 6px; margin-bottom: 6px; }
 .addmanual input, #idletext { flex: 1; width: 100%; }
+/* Blue once there is something to add: text typed or a bundle chosen. */
+.addmanual:has(input:not(:placeholder-shown)) button:not(:disabled), .addmanual:has(select option:checked:not([value=""])) button:not(:disabled) { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+.addmanual:has(input:not(:placeholder-shown)) button:not(:disabled):hover, .addmanual:has(select option:checked:not([value=""])) button:not(:disabled):hover { background: #1858c4; border-color: #1858c4; }
 .empty { color: var(--muted); padding: 22px; text-align: center; font-size: 13px; }
 .addfeat { margin-top: 8px; }
 .addfeat input { flex: 1; }
@@ -182,6 +185,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .row.textrow .nm .quote { color: #6b4a12; }
 .row.bundlerow { background: #f6f3ff; }
 .row.bundlerow .nm { white-space: normal; }
+.row.bundlerow .nm b { color: #5b3fb8; }   /* a bundle's name matches its tag, so bundles stand out when scanning the crawl order */
 .bundletag { display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; background: #5b3fb8; color: #fff; padding: 1px 6px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .chip { display: inline-block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; border: 1px solid var(--sand); background: #fff; cursor: help; vertical-align: middle; }
