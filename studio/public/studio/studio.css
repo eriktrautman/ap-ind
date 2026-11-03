@@ -45,6 +45,7 @@ input[type=text]:focus, input:not([type]):focus, input[type=password]:focus, sel
 .howbox code { font-family: var(--mono); font-size: 12px; }
 .howbox a { color: inherit; text-decoration: underline; }
 .testbanner { background: var(--warn); color: #1a1200; font-size: 12px; font-weight: 700; text-align: center; padding: 4px 10px; letter-spacing: .04em; }
+.testbanner.updatebar { background: #1f6feb; color: #fff; } .updatebar button { margin-left: 10px; padding: 1px 10px; font-size: 12px; font-weight: 700; } .updatebar code { background: rgba(255,255,255,.2); padding: 1px 5px; border-radius: 3px; }
 .testbanner.testlogin { background: var(--local); color: #fff; }
 .problem { background: #fdf0f1; border: 1px solid #f0c3c7; border-left: 4px solid var(--bad); border-radius: 8px; padding: 10px 14px; margin: 10px 0; font-size: 14px; color: var(--ink); }
 .problem.warn { background: #fdf6ea; border-color: #f1d9a8; border-left-color: var(--warn); }

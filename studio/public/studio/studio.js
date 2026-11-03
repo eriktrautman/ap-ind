@@ -1993,6 +1993,19 @@ function restoreScroll() {
   put();
 }
 
+// Staying in step: a tab opened before the latest deploy offers a reload, and a laptop running older code than the website says how to catch up.
+// Nothing updates by itself: a reload or a restart in the middle of something is that person's call.
+let loadedSha = null;
+async function checkVersion() {
+  const sha = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((v) => v?.sha ?? null).catch(() => null);
+  if (!loadedSha) loadedSha = sha;
+  const rt = runtime ? await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null) : null;
+  const bar = $("updatebar"), tabOld = !!sha && sha !== loadedSha;
+  bar.hidden = !tabOld && !rt?.codeBehind;
+  bar.innerHTML = rt?.codeBehind ? `This laptop is running different code than the website, so it may not stay in sync. Stop it, run <code>git pull && npm start</code>, then reload this page.`
+    : tabOld ? `The Studio was updated. Reload to stay in sync with everyone.<button type="button" id="updatereload">Reload</button>` : "";
+}
+$("updatebar").addEventListener("click", (e) => { if (e.target.id === "updatereload") location.reload(); });
 async function boot() {
   timers.forEach(clearInterval);
   hadLocalBundles = !!readLocal();
@@ -2006,7 +2019,8 @@ async function boot() {
   await loadBundles();   // after loadLive: a browser's first load copies the published ticker into its builder, and the library replaces those bundles
   renderAll();
   restoreScroll();
-  timers = [setInterval(refreshShared, 5_000), setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
+  checkVersion();
+  timers = [setInterval(checkVersion, 60_000), setInterval(refreshShared, 5_000), setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];
 }
 (async () => {
   const me = await fetch("/api/login", { cache: "no-store" }).then((r) => r.json()).catch(() => ({}));

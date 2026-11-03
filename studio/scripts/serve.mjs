@@ -62,6 +62,16 @@ const mode = {
   mirror: { lastOk: null, lastError: null, lastTry: null, indexGenerated: null, files: 0, runs: 0 },
   poll: { lastRun: null, lastError: null },
 };
+// The code this process is running, from the build npm start made, against what the deployment is running: a laptop says when it is behind.
+const RUNNING_SHA = await readFile(join(DIST, "version.json"), "utf8").then((t) => JSON.parse(t).sha).catch(() => null);
+let deploymentSha = { at: 0, sha: null };
+async function deploymentCode() {
+  if (Date.now() - deploymentSha.at > 60_000) {
+    deploymentSha.at = Date.now();
+    try { const r = await fetch(`${GLOBAL}/version.json?t=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(5000) }); if (r.ok) deploymentSha.sha = (await r.json()).sha ?? null; } catch {}
+  }
+  return deploymentSha.sha;
+}
 const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json", "playlists.json", "images.json", "bundles.json"];
 async function fetchData(p) {
   const r = await fetch(`${GLOBAL}/data/${p}?t=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
@@ -179,8 +189,10 @@ createServer(async (req, res) => {
     if (url.pathname === "/api/runtime") {
       const up = STANDBY ? await reachable() : null;   // the deployment's health matters to a standby in either state
       const l = lan();
+      const code = STANDBY ? await deploymentCode() : null;
       res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
       res.end(JSON.stringify({
+        codeBehind: !!code && !!RUNNING_SHA && code !== RUNNING_SHA,
         local: true, store: isLocalStore() ? "files" : "blob", mode: mode.kind, polling: !!mode.pollTimer, promotedAt: mode.promotedAt,
         standby: STANDBY, canPromote: STANDBY && CONNECTED, canDemote: STANDBY && !CONNECTED,
         mirror: mode.kind === "mirror" ? { ...mode.mirror, ageMs: mode.mirror.lastOk ? Date.now() - mode.mirror.lastOk : null, every: MIRROR_MS / 1000 } : null,
