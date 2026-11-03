@@ -6,11 +6,29 @@
 <title>Head-to-Head</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* B14: the two candidates who matter, face to face. Before results: the featured independent and the
+  /* B14: the candidates who matter, face to face, up to four. A race in LINEUPS below shows exactly those faces, in that order, and everyone
+     else on one "Other" line with no photos. Any other race shows two. Before results: the featured independent and the
      opponent the latest poll puts closest (else the incumbent, else the seat holder's party), with the
      poll, the last result and poll-close time between them. Once votes are counted: the two leaders, with
      live shares, the margin and the AP call. ?id=<raceID>; ?a=<candID>&b=<candID> fixes the pair. */
-  .body { display: grid; grid-template-columns: 1fr 380px 1fr; gap: 40px; min-height: 0; }
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) 380px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 20px 40px; min-height: 0; }
+  .body.many { grid-template-rows: minmax(0, 1fr) auto auto; gap: 16px 24px; }
+  .body.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .body.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .body.hasother .photo { height: 268px; width: 224px; }
+  .body.many .cand { padding: 14px 16px 12px; }
+  .body.many .photo { width: 190px; height: 226px; }
+  .body.many.hasother .photo { width: 150px; height: 180px; }   /* the Other line takes its height from the cards */
+  .body.many .nm { font-size: 32px; margin-top: 8px; }
+  .body.many .num { font-size: 46px; } .body.many .num small { display: block; margin: 4px 0 0; font-size: 20px; }
+  .body.many .pill { top: 10px; right: 10px; font-size: 16px; padding: 3px 8px; }
+  .body.many .mid { grid-column: 1 / -1; display: flex; align-items: stretch; gap: 16px; }
+  .body.many .mid .box { flex: 1 1 0; min-width: 0; padding: 8px 14px; }
+  .body.many .mid .vs { display: none; }
+  .body.many .box .v { font-size: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .body.many .box .v b { font-size: 28px; }
+  .body.many .box .k { font-size: 17px; margin-bottom: 2px; } .body.many .box .m { font-size: 17px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .others { grid-column: 1 / -1; font-size: 28px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .others .k { color: var(--muted); font-size: 22px; letter-spacing: .08em; text-transform: uppercase; margin-right: 16px; }
+  .others .sep { color: var(--muted); margin: 0 10px; } .others b { font-variant-numeric: tabular-nums; margin-left: 8px; }
   .cand { position: relative; display: grid; grid-template-rows: auto auto auto auto 1fr; align-content: start; justify-items: center; text-align: center; background: rgba(0,0,0,.25); border-radius: 10px; padding: 22px 28px 18px; min-width: 0; min-height: 0; overflow: hidden; border-top: 8px solid var(--c, #5c6b85); }
   .cand > * { min-width: 0; max-width: 100%; }
   .photo { width: 260px; height: 312px; border-radius: 8px; background: #1b2a4a center top/cover no-repeat; display: flex; align-items: flex-end; justify-content: center; color: var(--muted); font-size: 22px; }
@@ -34,14 +52,23 @@
 <body>
 <div class="panel">
   <div class="head"><div><div class="kicker" id="kicker">Head-to-head</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
-  <div class="body"><div class="cand" id="a"></div><div class="mid" id="mid"></div><div class="cand" id="b"></div></div>
+  <div class="body" id="body"></div>
   <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP via lightship.media · public polls</span></span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, featArrow, freshness, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clock, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, candTag, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clock, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), forceA = q.get("a"), forceB = q.get("b");
+  // Who gets a face, by AP candidate id, left to right; it does not reorder as votes come in. Everyone else goes on the "Other" line.
+  const LINEUPS = {
+    "SD-SEN": ["580", "70405"],                    // Rounds, Bengs
+    "NE-SEN": ["51566", "168007"],                 // Ricketts, Osborn
+    "MT-SEN": ["171710", "177955", "171696"],      // Alme, Bodnar, Bankhead
+    "ID-SEN": ["15344", "162421"],                 // Risch, Achilles
+    "CA-6": ["69756", "105173"],                   // Kiley, Pan
+    "AK-AL": ["70724", "177719", "167001", "62643"],   // Begich, Hill, Hafner, McDermott
+  };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const timeText = (iso) => clock(iso);
@@ -77,6 +104,14 @@
     return [first, second].filter(Boolean);
   }
 
+  /** The faces and the rest: ?a&b wins, then the race's lineup, else the pair above with no Other line. */
+  function pickLineup() {
+    const cs = race.candidates;
+    const fixed = forceA && forceB ? null : LINEUPS[race.label]?.map((id) => cs.find((c) => c.id === id)).filter(Boolean);
+    if (fixed?.length >= 2) return { shown: fixed.slice(0, 4), others: cs.filter((c) => !fixed.includes(c)).sort((a, b) => b.votes - a.votes) };
+    return { shown: pickPair().filter(Boolean), others: null };
+  }
+  const otherLine = (others) => !others?.length ? "" : `<div class="others"><span class="k">Other</span>${others.map((c) => `${esc(c.last ?? c.name)}${incStar(c)} (${esc(candTag(c).text)})${race.totalVotes ? `<b>${Number(c.pct).toFixed(1)}%</b>` : ""}`).join('<span class="sep">·</span>')}</div>`;
   const firstClause = (s) => { const t = String(s).split(";")[0].trim(); return t.length > 44 ? t.split(",")[0].trim() : t; };
   function card(c, st, p) {
     if (!c) return `<div class="nm" style="color:var(--muted)">—</div>`;
@@ -101,23 +136,24 @@
     if (!race) { $("title").textContent = "Race not found"; return; }
     const st = raceState(race);
     const p = latestPoll();
-    const [a, b] = pickPair();
-    $("kicker").textContent = race.totalVotes > 0 ? "Head-to-head · live" : "Head-to-head";
+    const { shown, others } = pickLineup();
+    const many = shown.length > 2;
+    // Margin is between the two ahead among the faces; before votes they are simply the first two.
+    const [a, b] = [...shown].sort((x, y) => (race.totalVotes > 0 ? y.votes - x.votes : 0));
+    $("kicker").textContent = (many ? "The candidates" : "Head-to-head") + (race.totalVotes > 0 ? " · live" : "");
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
     $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : race.pollClose ? `Polls close ${esc(timeText(race.pollClose))}` : "";
-    $("a").outerHTML = card(a, st, p); $("b").outerHTML = card(b, st, p);
-    document.querySelectorAll(".body .cand").forEach((el, i) => (el.id = i === 0 ? "a" : "b"));
     const boxes = [];
     if (race.totalVotes > 0 && a && b) {
       const lead = a.votes >= b.votes ? a : b, trail = lead === a ? b : a;
       const margin = Math.abs(Number(a.pct) - Number(b.pct));
       boxes.push(`<div class="box"><div class="k">Margin</div><div class="v"><b style="color:${PARTY_COLOR[partyKey(lead)]}">${esc(lead.last)}</b> +${margin.toFixed(1)}</div><div class="m">${fmt(Math.abs(a.votes - b.votes))} votes ahead of ${esc(trail.last)}</div></div>`);
-      const rest = race.candidates.filter((c) => c !== a && c !== b).reduce((s, c) => s + Number(c.pct || 0), 0);
-      if (rest > 0) boxes.push(`<div class="box"><div class="k">Everyone else</div><div class="v">${rest.toFixed(1)}%</div></div>`);
+      const rest = race.candidates.filter((c) => !shown.includes(c)).reduce((s, c) => s + Number(c.pct || 0), 0);
+      if (rest > 0 && !others) boxes.push(`<div class="box"><div class="k">Everyone else</div><div class="v">${rest.toFixed(1)}%</div></div>`);
       if (st.status === "called") boxes.push(`<div class="box"><div class="k">AP call</div><div class="v" style="color:var(--gold)">${esc(st.cand.last)} wins</div></div>`);
     } else {
       boxes.push(`<div class="vs">VS</div>`);
-      if (p) boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v">${[a, b].filter(Boolean).map((c) => `${esc(c.last)} <b>${pollNumber(p, c) ?? "–"}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${esc(p.partisan)})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div></div>`);
+      if (p) boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v">${shown.map((c) => `${esc(c.last)} <b>${pollNumber(p, c) ?? "–"}</b>`).join(" · ")}</div><div class="m">${esc(p.pollster)}${p.sponsored ? " (campaign-sponsored)" : p.partisan ? ` (${esc(p.partisan)})` : ""} · ${esc(p.dates)}${p.sample ? ` · n=${p.sample}` : ""}</div></div>`);
       else boxes.push(`<div class="box"><div class="k">Latest poll</div><div class="v m">Polling unavailable</div><div class="m">No public poll for this race is on file</div></div>`);
       if (prior) boxes.push(`<div class="box"><div class="k">Last time</div><div class="v">${prior.candidates.slice(0, 2).map((c) => `<span style="color:${PARTY_COLOR[partyKey(c)]}">${esc(c.last)}</span> ${c.pct}%`).join(" · ")}</div><div class="m">${esc(String(prior.date).slice(0, 4))}${prior.note ? " · " + esc(prior.note) : ""}</div></div>`);
       if (isMeasure(race)) boxes.push(`<div class="box"><div class="k">Measure</div><div class="v">${esc(race.category || "Ballot measure")}</div>${race.summary ? `<div class="m">${esc(String(race.summary).slice(0, 220))}</div>` : ""}</div>`);
@@ -126,7 +162,10 @@
         boxes.push(`<div class="box"><div class="k">Seat</div><div class="v">${esc(holder)}${race.rankedChoice ? `</div><div class="m">Ranked-choice voting` : ""}</div></div>`);
       }
     }
-    $("mid").innerHTML = boxes.join("");
+    const mid = `<div class="mid">${boxes.join("")}</div>`;
+    const cards = shown.map((c) => card(c, st, p));
+    $("body").className = `body ${many ? `many n${shown.length}` : ""} ${others?.length ? "hasother" : ""}`;
+    $("body").innerHTML = (many ? cards.join("") + mid : cards[0] + mid + (cards[1] ?? "")) + otherLine(others);
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
   }
   connectFeed({

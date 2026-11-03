@@ -780,7 +780,7 @@ const SCREEN_PARAMS = {
   I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }, { k: "caption", label: "Caption", ph: "optional: a line shown over the image" }, { k: "showcredit", label: "Credit on air", options: [["1", "Show the credit"]] }],
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
   B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
-  B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
+  B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the race's lineup, else the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
   B13: [{ k: "who", label: "Who", options: [["ind", "the independent vs the 2024 Democratic vote"], ["main", "the Republican vs the 2024 Trump vote"]] }],
   B11: [{ k: "quote", label: "Quote", ph: "empty = the curated quotes in turn" }, { k: "who", label: "Attribution", ph: "" }],
   A2: [{ k: "name", label: "Name", ph: "" }, { k: "title", label: "Title", ph: "" }, { k: "tab", label: "Live tab", ph: "e.g. Live from Omaha; empty = no tab; geniots stylesheet only" }],
