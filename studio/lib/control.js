@@ -39,9 +39,16 @@ export function applyChartBackground(search = typeof location === "undefined" ? 
   if (typeof document === "undefined") return;
   const id = new URLSearchParams(search).get("chartbg");
   if (!id || !CHART_BACKGROUNDS.some(([v]) => v === id)) return;
+  // The art is drawn at 1920 wide with a red rule 172 px down, starting at the panel's left margin: it fits the panel's width and slides so
+  // that rule lands exactly on the chart's header line, whose own line it replaces. Where that leaves a gap above, the art's navy fades in.
+  const SCALE = 1728 / 1920, RULE = 172 * SCALE, NAVY = "#04204f";
   const style = document.createElement("style");
-  style.textContent = `.panel { background: url(/g/bg/${id}.jpg) center / cover no-repeat !important; }`;
+  const paint = (y) => { style.textContent = `.panel { background: linear-gradient(${NAVY}, ${NAVY} ${Math.max(0, y)}px, transparent ${Math.max(0, y) + 30}px), url(/g/bg/${id}.jpg) 0 ${y}px / 1728px auto no-repeat, ${NAVY} !important; text-shadow: 0 1px 6px rgba(0, 10, 40, .85); } .panel .head { border-bottom-color: transparent !important; }`; };
+  paint(-Math.round((1080 * SCALE - 920) / 2));
   document.head.appendChild(style);
+  const fit = () => { const h = document.querySelector(".panel > .head"); if (h && h.offsetHeight) paint(Math.round(h.offsetTop + h.offsetHeight - RULE)); };
+  const start = () => { fit(); const h = document.querySelector(".panel > .head"); if (h && typeof ResizeObserver !== "undefined") new ResizeObserver(fit).observe(h); };
+  document.body ? start() : document.addEventListener("DOMContentLoaded", start);
 }
 applyChartBackground();
 
