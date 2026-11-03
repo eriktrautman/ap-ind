@@ -635,5 +635,6 @@ main > section.card.collapsed { padding-bottom: 0; }
 .tform .seqwell + .addfeat { margin-top: 28px; }
 .idlebox { margin-top: 14px; } .idlebox summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--navy); }
 .idlebox summary:hover { color: var(--ink); } .idlebox[open] summary { margin-bottom: 6px; }
+.bundlestatus.bad { color: var(--bad); font-weight: 600; }
 .liveonly { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 6px 12px; border-radius: 6px; font-size: 13px; background: #f6f3ff; border-left: 4px solid #5b3fb8; } .liveonly span { flex: 1; } .ro .liveonly button { display: none; }
 .bundlelist { gap: 10px; } .bundlebar { margin: 0; }

@@ -184,20 +184,18 @@ export function canonicalAddress(pathname, search = "") {
  *  from that sequence by normalize() (the races in crawl order, the texts in crawl order) for everything that has always
  *  read them: older addresses, D5's fallback, older clients that publish only those two. */
 /** The shipped bundle: the slate's races, one package. The default crawl is this bundle and nothing else. */
-export const SLATE_BUNDLE = Object.freeze({ id: "slate", name: "Slate", items: [{ t: "text", id: "slatetitle", text: "Independent Slate" }, ...FEATURED_RACES.map((r) => ({ t: "race", id: r.id }))] });
+export const SLATE_BUNDLE = Object.freeze({ id: "slate", name: "Slate", items: [{ t: "text", id: "mw0ymgx495d9", text: "Independent Slate" }, ...FEATURED_RACES.map((r) => ({ t: "race", id: r.id }))] });
 // Every Toss Up and Lean race on Cook's Nov. 2 ratings, plus the races the show already follows, by the time zone their polls close in, earliest
 // close first, each opened by a line naming the zone. They wait in the builder until someone places them in the crawl order. A state split across
-// zones goes with most of its voters. Alaska closes last and has its own bundle; Hawaii has no race in the set. added: races new since the first
-// version of these bundles, merged once into a builder that already holds it (adoptShippedBundles in the Studio).
+// zones goes with most of its voters. Alaska closes last and has its own bundle; Hawaii has no race in the set.
 const ZONE_DEFS = [
-  { id: "easternraces", name: "Eastern Races", races: ["15026", "18015", "10031", "10033", "10396", "11129", "11587", "10019", "10023", "10045", "12029", "12301", "30003", "41922", "41938", "47001", "47003", "47009", "35385", "34977", "35984", "36033", "36043", "36027", "36031", "36005", "84327", "20645", "20643", "23814", "23808", "23811", "24074", "24463", "31218", "39008", "39017", "39014", "39015", "36597", "36601"], added: ["15026", "10031", "11587", "10019", "10023", "41922", "47009", "36033", "36043", "36601"] },   // IN-5 KY-6 FL-13 FL-14 FL-22 FL-25 FL-27 FL-7 FL-9 FL-GOV GA-GOV GA-SEN NH-SEN SC-1 SC-SEN VA-1 VA-2 VA-5 NC-1 NC-11 NC-SEN OH-10 OH-15 OH-7 OH-9 OH-GOV OH-SEN ME-2 ME-SEN MI-10 MI-4 MI-7 MI-GOV MI-SEN NJ-7 PA-1 PA-10 PA-7 PA-8 NY-17 NY-21
-  { id: "centralraces", name: "Central Races", races: ["1374", "17559", "17585", "42003", "45885", "45893", "49478", "49479", "45901", "46643", "17071", "17072", "17073", "17076", "17247", "24007", "24704", "25151", "28385", "28006", "28594", "50040", "50048", "50016"], added: ["45893", "24007", "50040"] },   // AL-2 KS-GOV KS-SEN SD-SEN TX-15 TX-23 TX-34 TX-35 TX-GOV TX-SEN IA-1 IA-2 IA-3 IA-GOV IA-SEN MN-1 MN-GOV MN-SEN NE-2 NE-GOV NE-SEN WI-1 WI-3 WI-GOV
-  { id: "mountainraces", name: "Mountain Races", races: ["3004", "3006", "3544", "3014", "6616", "6617", "7727", "33279", "13253", "13252", "28447", "27607", "45669"], added: ["3006", "6616", "6617", "13253"] },   // AZ-1 AZ-2 AZ-6 AZ-GOV CO-4 CO-5 CO-8 NM-2 ID-1 ID-SEN MT-1 MT-SEN UT-1
-  { id: "pacificraces", name: "Pacific Races", races: ["30989", "29861", "38019", "5712", "5730", "8149", "5696", "6123", "48009"], added: ["30989"] },   // NV-2 NV-GOV OR-GOV CA-22 CA-40 CA-48 CA-6 CA-GOV WA-3
-  { id: "alaskaraces", name: "Alaska Races", races: ["2015", "2010", "3079"], added: ["2015", "2010", "3079"] },   // AK-AL AK-GOV AK-SEN
+  { id: "easternraces", name: "Eastern Races", races: ["15026", "18015", "10031", "10033", "10396", "11129", "11587", "10019", "10023", "10045", "12029", "12301", "30003", "41922", "41938", "47001", "47003", "47009", "35385", "34977", "35984", "36033", "36043", "36027", "36031", "36005", "84327", "20645", "20643", "23814", "23808", "23811", "24074", "24463", "31218", "39008", "39017", "39014", "39015", "36597", "36601"] },   // IN-5 KY-6 FL-13 FL-14 FL-22 FL-25 FL-27 FL-7 FL-9 FL-GOV GA-GOV GA-SEN NH-SEN SC-1 SC-SEN VA-1 VA-2 VA-5 NC-1 NC-11 NC-SEN OH-10 OH-15 OH-7 OH-9 OH-GOV OH-SEN ME-2 ME-SEN MI-10 MI-4 MI-7 MI-GOV MI-SEN NJ-7 PA-1 PA-10 PA-7 PA-8 NY-17 NY-21
+  { id: "centralraces", name: "Central Races", races: ["1374", "17559", "17585", "42003", "45885", "45893", "49478", "49479", "45901", "46643", "17071", "17072", "17073", "17076", "17247", "24007", "24704", "25151", "28385", "28006", "28594", "50040", "50048", "50016"] },   // AL-2 KS-GOV KS-SEN SD-SEN TX-15 TX-23 TX-34 TX-35 TX-GOV TX-SEN IA-1 IA-2 IA-3 IA-GOV IA-SEN MN-1 MN-GOV MN-SEN NE-2 NE-GOV NE-SEN WI-1 WI-3 WI-GOV
+  { id: "mountainraces", name: "Mountain Races", races: ["3004", "3006", "3544", "3014", "6616", "6617", "7727", "33279", "13253", "13252", "28447", "27607", "45669"] },   // AZ-1 AZ-2 AZ-6 AZ-GOV CO-4 CO-5 CO-8 NM-2 ID-1 ID-SEN MT-1 MT-SEN UT-1
+  { id: "pacificraces", name: "Pacific Races", races: ["30989", "29861", "38019", "5712", "5730", "8149", "5696", "6123", "48009"] },   // NV-2 NV-GOV OR-GOV CA-22 CA-40 CA-48 CA-6 CA-GOV WA-3
+  { id: "alaskaraces", name: "Alaska Races", races: ["2015", "2010", "3079"] },   // AK-AL AK-GOV AK-SEN
 ];
 export const ZONE_BUNDLES = Object.freeze(ZONE_DEFS.map(({ id, name, races }) => ({ id, name, items: [{ t: "text", id: `${id}title`, text: name }, ...races.map((r) => ({ t: "race", id: r }))] })));
-export const ZONE_ADDED = Object.freeze(Object.fromEntries(ZONE_DEFS.map(({ id, added }) => [id, added])));
 export const DEFAULTS = Object.freeze({
   tickerItems: [{ t: "bundle", id: SLATE_BUNDLE.id }],   // {t:"race",id} | {t:"text",id,text} | {t:"bundle",id}
   bundles: [SLATE_BUNDLE, ...ZONE_BUNDLES],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
@@ -251,7 +249,7 @@ export function describeScreen(s) {
   return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""} · on ${s.bg || "transparent"}`;
 }
 
-const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, bundles: 24, bundleItems: 50, bundleName: 60 };
+const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, bundles: 60, bundleItems: 50, bundleName: 60 };
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
 
@@ -267,11 +265,20 @@ function seqItem(it, i, allowBundle) {
 }
 const seqItems = (raw, allowBundle, max) => (Array.isArray(raw) ? raw : []).map((it, i) => seqItem(it, i, allowBundle)).filter(Boolean).slice(0, max);
 export const MAX_BUNDLES = LIMITS.bundles;
+/** A list of bundles, validated: ids unique, names and pieces within their limits. */
+function bundleList(raw) {
+  const seen = new Set();
+  return (Array.isArray(raw) ? raw : []).filter((c) => c && typeof c === "object" && bundleIdOk(c.id) && !seen.has(c.id) && seen.add(c.id))
+    .map((c) => ({ id: c.id, name: typeof c.name === "string" ? c.name.trim().slice(0, LIMITS.bundleName) : "", items: seqItems(c.items, false, LIMITS.bundleItems) })).slice(0, LIMITS.bundles);
+}
+/** The shared bundle library (bundles.json): what everyone in the Studio builds crawls from. It starts as the shipped bundles. */
+export const normalizeBundleLibrary = (raw) => ({ bundles: bundleList(raw?.bundles), updatedAt: typeof raw?.updatedAt === "string" ? raw.updatedAt : null, updatedBy: typeof raw?.updatedBy === "string" ? raw.updatedBy : null });
+export const defaultBundleLibrary = () => normalizeBundleLibrary({ bundles: structuredClone(DEFAULTS.bundles) });
 /** The bundles a state's crawl actually uses: what airs, so what Publish sends and what "differs from live" compares. */
 export const airingBundles = (s) => (s.bundles ?? []).filter((b) => (s.tickerItems ?? []).some((it) => it.t === "bundle" && it.id === b.id));
-/** What Pull leaves in a builder: every live bundle, every bundle only this builder has, and, where this builder's copy of a live bundle
- *  was edited, that copy under its own name so the work survives. An unedited shipped copy needs no keeping. over: more than the limit. */
-export function mergePulledBundles(live, mine, newId) {
+/** A browser's bundles from before the library was shared, joining it once: every library bundle, every bundle only this browser has, and, where
+ *  this browser's copy of a library bundle was edited, that copy under its own name so the work survives. An unedited shipped copy needs no keeping. */
+export function mergeIntoLibrary(live, mine, newId) {
   const same = (a, b) => a.name === b.name && JSON.stringify(a.items) === JSON.stringify(b.items);
   const titleless = { ...SLATE_BUNDLE, items: SLATE_BUNDLE.items.filter((i) => i.t === "race") };   // the Slate as it first shipped
   const shipped = (c) => [...DEFAULTS.bundles, titleless].some((d) => d.id === c.id && same(d, c));
@@ -313,8 +320,8 @@ export function normalize(raw) {
   // Bundles first (the sequence may point at them), then the sequence: the stored one, or the one an older state implies.
   const seenBundle = new Set();
   const rawBundles = r.bundles ?? r.chunks;   // chunks: the old name, in states saved before the rename
-  const bundles = (Array.isArray(rawBundles) ? rawBundles : []).filter((c) => c && typeof c === "object" && bundleIdOk(c.id) && !seenBundle.has(c.id) && seenBundle.add(c.id))
-    .map((c) => ({ id: c.id, name: typeof c.name === "string" ? c.name.trim().slice(0, LIMITS.bundleName) : "", items: seqItems(c.items, false, LIMITS.bundleItems) })).slice(0, LIMITS.bundles);
+  const bundles = bundleList(rawBundles);
+  bundles.forEach((b) => seenBundle.add(b.id));
   let tickerItems;
   if (Array.isArray(r.tickerItems)) tickerItems = seqItems(r.tickerItems, true, LIMITS.seq).filter((it) => it.t !== "bundle" || seenBundle.has(it.id));
   else {

@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergePulledBundles, airingBundles, MAX_BUNDLES } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergeIntoLibrary, airingBundles, MAX_BUNDLES } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -105,15 +105,15 @@ test("the shipped zone bundles survive validation whole, and a published crawl c
   assert.equal("chunks" in old, false);
 });
 
-test("Pull keeps every live bundle and all of this builder's work; only bundles in the crawl count as airing", () => {
+test("A browser's old bundles join the library without losing work; only bundles in the crawl count as airing", () => {
   const b = (id, name, n = 1) => ({ id, name, items: Array.from({ length: n }, (_, i) => ({ t: "race", id: String(i) })) });
   const shipped = structuredClone(ZONE_BUNDLES[0]);
-  const { bundles, copies, over } = mergePulledBundles([b("onlylive", "Live"), b("both", "Both"), b("same", "Same"), { ...shipped, name: "Changed live" }], [b("mine", "Mine"), b("both", "Both", 2), b("same", "Same"), shipped], () => "newid");
+  const { bundles, copies, over } = mergeIntoLibrary([b("onlylive", "Live"), b("both", "Both"), b("same", "Same"), { ...shipped, name: "Changed live" }], [b("mine", "Mine"), b("both", "Both", 2), b("same", "Same"), shipped], () => "newid");
   assert.deepEqual(bundles.map((x) => x.id), ["onlylive", "both", "same", shipped.id, "mine", "newid"], "an unedited shipped copy is not kept as a copy");
   assert.equal(bundles.find((x) => x.id === "both").items.length, 1, "the live version wins");
   assert.equal(bundles.find((x) => x.id === "newid").items.length, 2, "the edited one survives");
   assert.deepEqual(copies, ["Both (my copy)"]);
   assert.equal(over, false);
-  assert.equal(mergePulledBundles([], Array.from({ length: MAX_BUNDLES + 1 }, (_, i) => b(`b${i}`, "x")), () => "n").over, true);
+  assert.equal(mergeIntoLibrary([], Array.from({ length: MAX_BUNDLES + 1 }, (_, i) => b(`b${i}`, "x")), () => "n").over, true);
   assert.deepEqual(airingBundles({ tickerItems: [{ t: "bundle", id: "a" }, { t: "race", id: "b" }], bundles: [b("a", "A"), b("b", "B")] }).map((x) => x.id), ["a"]);
 });

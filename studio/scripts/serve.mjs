@@ -62,7 +62,7 @@ const mode = {
   mirror: { lastOk: null, lastError: null, lastTry: null, indexGenerated: null, files: 0, runs: 0 },
   poll: { lastRun: null, lastError: null },
 };
-const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json", "playlists.json", "images.json"];
+const MIRROR_FILES = ["index.json", "history.json", "trend.json", "producer.json", "settings.json", "playlists.json", "images.json", "bundles.json"];
 async function fetchData(p) {
   const r = await fetch(`${GLOBAL}/data/${p}?t=${Date.now()}`, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
   if (r.status === 404) return null;
@@ -128,7 +128,7 @@ const lanOrigin = () => { const l = lan(); return l ? `http://${l.ip}:${PORT}` :
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8" };
 
 const handlers = {};
-for (const name of ["login", "poll", "producer", "settings", "playlists", "images"]) handlers[name] = (await import(`../api/${name}.js`)).default;
+for (const name of ["login", "poll", "producer", "settings", "playlists", "images", "bundles"]) handlers[name] = (await import(`../api/${name}.js`)).default;
 
 async function file(p) { try { const s = await stat(p); return s.isFile() ? p : null; } catch { return null; } }
 async function resolve(pathname) {
@@ -201,7 +201,7 @@ createServer(async (req, res) => {
       res.status(200).json({ ok: true, mode: mode.kind, production: CONNECTED ? "deployment" : "self", lan: lanOrigin() });
       return;
     }
-    if ((url.pathname === "/api/producer" || url.pathname === "/api/playlists" || url.pathname === "/api/images") && CONNECTED) {
+    if ((url.pathname === "/api/producer" || url.pathname === "/api/playlists" || url.pathname === "/api/images" || url.pathname === "/api/bundles") && CONNECTED) {
       // Production lives on the deployment: this machine's outputs and Studio read it from
       // there, and a push goes there (after the local sign-in check, then the deployment's). Playlists likewise.
       if (req.method !== "GET") {

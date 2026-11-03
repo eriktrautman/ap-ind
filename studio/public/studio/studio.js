@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { airingBundles, mergePulledBundles, MAX_BUNDLES, DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_BUNDLES, ZONE_ADDED, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { airingBundles, mergeIntoLibrary, normalizeBundleLibrary, MAX_BUNDLES, DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -343,6 +343,7 @@ function commit() {
   draft = saveLocal(normalize(draft));
   renderAll();
   cards.broadcast(draft);
+  queueBundleSave();
 }
 
 /** The box at the top of the page: two kinds of ticker, graphics as addresses, and what this page does and does not change. */
@@ -427,11 +428,13 @@ async function pull() {
   let latest;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
   catch (e) { liveError = e.message; renderLive(); await ask({ title: "Can't read the live ticker", body: `<div class="warnline bad">${esc(e.message)}</div><p>The builder is unchanged.</p>`, ok: "OK" }); return; }
-  // Pull keeps bundles that exist only on this page and any edited copy of a live one, so the change list is against what the builder will actually become.
-  const merged = mergePulledBundles(latest.bundles, draft.bundles, newId);
-  if (merged.over) { await ask({ title: "Too many bundles to pull", info: true, ok: "Close", body: `<p>The live ticker's bundles and yours come to ${merged.bundles.length}, and a builder holds ${MAX_BUNDLES}. Delete ${merged.bundles.length - MAX_BUNDLES} of yours in the Bundles area, then pull again. Nothing has changed.</p>` }); return; }
-  const changes = tickerDiff(draft, { ...latest, bundles: merged.bundles });
-  const copyNote = merged.copies.length ? `<div class="warnline">Yours differed from the live version, so ${merged.copies.length === 1 ? "it stays" : "they stay"} in your Bundles as: <b>${merged.copies.map(esc).join(", ")}</b>.</div>` : "";
+  // Pull takes the live crawl order. The library is shared, so it stays as it is, except that a bundle the crawl needs and the library has lost comes back.
+  const onAir = airingBundles(latest);
+  const lost = onAir.filter((b) => !draft.bundles.some((x) => x.id === b.id));
+  const after = [...draft.bundles, ...structuredClone(lost)];
+  const changes = tickerDiff(draft, { ...latest, bundles: after });
+  const differs = onAir.filter((b) => { const m = draft.bundles.find((x) => x.id === b.id); return m && !sameJson(m, b); });
+  const copyNote = differs.length ? `<div class="warnline">The shared library's <b>${differs.map((b) => esc(b.name || b.id)).join(", ")}</b> differ${differs.length === 1 ? "s" : ""} from what is live and stay${differs.length === 1 ? "s" : ""} as ${differs.length === 1 ? "it is" : "they are"}. The Bundles area offers the live version.</div>` : "";
   const ok = await ask({
     title: "Pull from the LIVE TICKER?",
     body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing published changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}` + copyNote,
@@ -439,14 +442,17 @@ async function pull() {
   });
   if (!ok) return;
   liveSeenAt = latest.updatedAt;
-  draft = saveLocal({ ...draft, ...tickerPart(latest), bundles: merged.bundles });
-  renderAll(); cards.broadcast(draft);
+  draft = saveLocal({ ...draft, ...tickerPart(latest), bundles: after });
+  renderAll(); cards.broadcast(draft); queueBundleSave();
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every background and opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every background and opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><div class="warnline bad"><b>The shared bundle library changes for everyone:</b> Slate, Eastern, Central, Mountain, Pacific and Alaska Races go back to how they shipped. Bundles people built stay.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
-  draft = saveLocal(normalize(DEFAULTS));
+  // The shipped bundles go back as they shipped, in the shared library too; bundles people built stay.
+  const built = draft.bundles.filter((b) => !DEFAULTS.bundles.some((d) => d.id === b.id));
+  draft = saveLocal({ ...normalize(DEFAULTS), bundles: [...structuredClone(DEFAULTS.bundles), ...built] });
+  queueBundleSave();
   starred = new Set(SLATE_IDS); saveStars();
   chartStars = new Set(); saveChartStars();
   display = { top: { bg: DEFAULT_BG, opacity: "100" }, sections: {}, pages: {} }; saveDisplay(); applyDisplay();   // display settings too: the default background at 100%
@@ -633,15 +639,90 @@ const BUNDLE_ADD = "__add";
 let bundleSel = (() => { try { return localStorage.getItem("studio.bundle") ?? localStorage.getItem("studio.chunk"); } catch { return null; } })();
 const activeBundle = () => bundleById(bundleSel) ?? draft.bundles[0] ?? null;
 function selectBundle(id) { bundleSel = id; try { localStorage.setItem("studio.bundle", id); } catch {} renderBundles(); }
-/** Live bundles this builder lacks, each one button away, without Pull replacing the crawl order. */
+// The bundle library is shared: bundles.json, one document for everyone in the Studio. draft.bundles is this page's working copy, also kept in the
+// browser so a page opens with what it last saw. An edit saves within a moment, one bundle at a time over a fresh read, so two people working on
+// different bundles don't undo each other. If a save fails the edit stays here and is tried again. No output reads the library: a crawl's bundles
+// reach the air only as the copy Publish puts in the published state.
+let bundleBase = null, bundleMeta = null, bundleSaving = false, bundleError = null, bundleTimer = null, hadLocalBundles = false;
+const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const bundlesDirty = () => !!bundleBase && mayPublish() && !sameJson(draft.bundles, bundleBase);
+function queueBundleSave() { clearTimeout(bundleTimer); if (bundlesDirty()) bundleTimer = setTimeout(saveBundles, 300); renderBundleStatus(); }
+function renderBundleStatus() {
+  const el = $("bundlestatus"); if (!el) return;
+  el.className = `small ${bundleError ? "bundlestatus bad" : "muted"}`;
+  el.textContent = bundleError ? `Not saved to the shared library, trying again: ${bundleError}`
+    : bundlesDirty() ? "Saving…"
+    : bundleMeta?.updatedBy ? `· shared · last saved by ${bundleMeta.updatedBy}, ${fmtTime(bundleMeta.updatedAt)}` : "· shared";
+}
+/** Take the library as read or saved, keeping anything typed but not yet added. */
+function applyBundles(doc) {
+  bundleBase = doc.bundles; bundleMeta = doc; bundleError = null;
+  if (sameJson(draft.bundles, doc.bundles)) { renderBundleStatus(); return; }
+  const box = $("bundles"), input = () => box.querySelector("form[data-addtext] input"), pick = () => box.querySelector("[data-pick]");
+  const typed = [input()?.value ?? "", pick()?.value ?? ""];
+  draft = saveLocal({ ...draft, bundles: structuredClone(doc.bundles) });
+  renderAll(); cards.broadcast(draft);
+  if (input()) input().value = typed[0];
+  if (pick()) pick().value = typed[1];
+  renderBundleStatus();
+}
+/** Once per browser: bundles built here before the library was shared join it, so nothing is lost. */
+async function joinLibrary(doc) {
+  const KEY = "studio.bundlesJoined";
+  if (localStorage.getItem(KEY) || !mayPublish()) return doc;
+  let out = doc;
+  if (hadLocalBundles) {
+    const merged = mergeIntoLibrary(doc.bundles, draft.bundles, newId).bundles;
+    if (!sameJson(merged, doc.bundles)) out = normalizeBundleLibrary(await api("/api/bundles", { method: "PUT", body: JSON.stringify({ bundles: merged }) }));
+  }
+  try { localStorage.setItem(KEY, "1"); } catch {}
+  return out;
+}
+async function loadBundles() {
+  if (bundleSaving) return;
+  if (bundlesDirty()) { saveBundles(); return; }
+  try {
+    let doc = normalizeBundleLibrary(await api("/api/bundles"));
+    if (bundleSaving || bundlesDirty()) return;
+    if (!bundleBase) doc = await joinLibrary(doc);
+    applyBundles(doc);
+  } catch (e) { if (!bundleBase) { bundleError = e.message; renderBundleStatus(); } }   // a blip once it has loaded: keep what is on screen
+}
+async function saveBundles() {
+  clearTimeout(bundleTimer);
+  if (bundleSaving || !bundlesDirty()) return;
+  bundleSaving = true; renderBundleStatus();
+  const base = bundleBase, mine = structuredClone(draft.bundles);
+  try {
+    const fresh = normalizeBundleLibrary(await api("/api/bundles"));
+    const out = fresh.bundles.filter((b) => mine.some((m) => m.id === b.id) || !base.some((x) => x.id === b.id));   // what I removed goes; what someone else added stays
+    for (const m of mine) {
+      if (sameJson(m, base.find((x) => x.id === m.id))) continue;   // unchanged here: theirs stands
+      const at = out.findIndex((b) => b.id === m.id);
+      if (at >= 0) out[at] = m; else out.push(m);
+    }
+    const saved = normalizeBundleLibrary(await api("/api/bundles", { method: "PUT", body: JSON.stringify({ bundles: out }) }));
+    if (sameJson(draft.bundles, mine)) { bundleSaving = false; applyBundles(saved); }
+    else { bundleBase = saved.bundles; bundleMeta = saved; bundleError = null; }   // edited again meanwhile: that edit saves next
+  } catch (e) { bundleError = e.message; }
+  bundleSaving = false; renderBundleStatus();
+  if (!bundleError && bundlesDirty()) saveBundles();
+}
+/** Bundles the live crawl uses that the library has lost or holds differently, each one button away, without Pull replacing the crawl order. */
 function renderLiveOnly() {
-  const missing = (live?.bundles ?? []).filter((b) => !draft.bundles.some((x) => x.id === b.id));
-  $("liveonly").innerHTML = missing.map((b) => `<div class="liveonly"><span>The live ticker has <b>${esc(b.name || b.id)}</b>, which this builder doesn't.</span><button type="button" data-bringin="${esc(b.id)}">Bring in</button></div>`).join("");
+  const on = live ? airingBundles(live) : [];
+  const missing = on.filter((b) => !draft.bundles.some((x) => x.id === b.id));
+  const differs = on.filter((b) => { const m = draft.bundles.find((x) => x.id === b.id); return m && !sameJson(m, b); });
+  $("liveonly").innerHTML = missing.map((b) => `<div class="liveonly"><span>The live ticker uses <b>${esc(b.name || b.id)}</b>, which the library no longer has.</span><button type="button" data-fromlive="${esc(b.id)}">Bring in</button></div>`).join("")
+    + differs.map((b) => `<div class="liveonly"><span>The library's <b>${esc(b.name || b.id)}</b> has changed since it was published. Publish to send the change, or go back to what is live.</span><button type="button" data-fromlive="${esc(b.id)}">Use live version</button></div>`).join("");
 }
 $("liveonly").addEventListener("click", async (e) => {
-  const b = live?.bundles.find((x) => x.id === e.target.closest("[data-bringin]")?.dataset.bringin); if (!b) return;
-  if (draft.bundles.length >= MAX_BUNDLES) { await ask({ title: "Too many bundles", info: true, ok: "Close", body: `<p>A builder holds ${MAX_BUNDLES} bundles. Delete one of yours first.</p>` }); return; }
-  draft.bundles.push(structuredClone(b)); bundleSel = b.id; try { localStorage.setItem("studio.bundle", b.id); } catch {} commit();
+  const b = live && airingBundles(live).find((x) => x.id === e.target.closest("[data-fromlive]")?.dataset.fromlive); if (!b) return;
+  const at = draft.bundles.findIndex((x) => x.id === b.id);
+  if (at < 0 && draft.bundles.length >= MAX_BUNDLES) { await ask({ title: "Too many bundles", info: true, ok: "Close", body: `<p>The library holds ${MAX_BUNDLES} bundles. Delete one first.</p>` }); return; }
+  if (at >= 0 && !(await ask({ title: `Use the live version of "${b.name || b.id}"?`, ok: "Use live version", danger: true, body: `<p>The library's version is replaced for everyone in the Studio. The live ticker doesn't change.</p>` }))) return;
+  if (at >= 0) draft.bundles[at] = structuredClone(b); else draft.bundles.push(structuredClone(b));
+  bundleSel = b.id; try { localStorage.setItem("studio.bundle", b.id); } catch {} commit();
 });
 // Another tab's save reaches this one, so a tab left open can't later overwrite that work with its older copy.
 window.addEventListener("storage", (e) => { if (e.key !== "studio.local" || !e.newValue) return; const d = readLocal(); if (d) { draft = d; renderAll(); cards.broadcast(draft); } });
@@ -674,7 +755,7 @@ function renderBundles() {
   if (keep) box.querySelector(keep.pick ? "[data-pick]" : "form[data-addtext] input")?.focus();
 }
 async function addBundle() {
-  const ok = await ask({ title: "New bundle", ok: "Add bundle", body: `<p><label>Name<br><input id="bundlename" maxlength="60" placeholder="e.g. Nebraska package" style="width:100%"></label></p><p class="small muted">A package of races and text you can place in the crawl order. This changes only this page until you publish.</p>` });
+  const ok = await ask({ title: "New bundle", ok: "Add bundle", body: `<p><label>Name<br><input id="bundlename" maxlength="60" placeholder="e.g. Nebraska package" style="width:100%"></label></p><p class="small muted">A package of races and text you can place in the crawl order. Everyone in the Studio sees it right away. The live ticker changes only when someone publishes it.</p>` });
   const name = $("bundlename")?.value.trim(); if (!ok || !name) { renderBundles(); return; }
   const id = newId(); draft.bundles.push({ id, name, items: [] }); bundleSel = id; try { localStorage.setItem("studio.bundle", id); } catch {} commit();
 }
@@ -752,7 +833,7 @@ $("bundles").addEventListener("click", async (e) => {
   if (b.classList.contains("renamebundle")) { renameBundle(c); return; }
   if (b.classList.contains("rmbundle")) {
     const uses = draft.tickerItems.filter((it) => it.t === "bundle" && it.id === c.id).length;
-    const ok = await ask({ title: `Delete bundle "${c.name || c.id}"?`, body: `<p>Its ${c.items.length} piece${c.items.length === 1 ? "" : "s"} go with it${uses ? `, and the crawl order loses it in ${uses} place${uses === 1 ? "" : "s"}` : ""}.</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: "Delete bundle", danger: true });
+    const ok = await ask({ title: `Delete bundle "${c.name || c.id}"?`, body: `<p>Its ${c.items.length} piece${c.items.length === 1 ? "" : "s"} go with it${uses ? `, and the crawl order loses it in ${uses} place${uses === 1 ? "" : "s"}` : ""}.</p><div class="warnline bad">This deletes it for everyone in the Studio, and from their crawl orders.</div><p class="small muted">The LIVE TICKER changes only when someone publishes.</p>`, ok: "Delete bundle", danger: true });
     if (!ok) return;
     draft.bundles = draft.bundles.filter((x) => x.id !== c.id); draft.tickerItems = draft.tickerItems.filter((it) => !(it.t === "bundle" && it.id === c.id)); commit();
   }
@@ -1146,6 +1227,7 @@ for (const ev of ["dragover", "drop"]) document.addEventListener(ev, (e) => { if
 const sharedBusy = () => $("dlg").open || !!$("ploptions")?.open || $("pladdcard")?.querySelector(".plchoose")?.hidden === false || !!document.querySelector(".gcard.dragging, #playlists.filedrag, #images.filedrag") || [...document.querySelectorAll(".gcard .menu")].some((m) => !m.hidden) || /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName ?? "");
 async function refreshShared() {
   if (document.hidden || sharedBusy()) return;
+  loadBundles();
   let doc, lib;
   try { [doc, lib] = await Promise.all([api("/api/playlists"), api("/api/images")]); } catch { return; }   // a blip: keep what is on screen
   if (sharedBusy()) return;
@@ -1911,31 +1993,9 @@ function restoreScroll() {
   put();
 }
 
-/** Shipped bundles join a browser's builder once, outside the crawl order. A newer version of one merges in only the races added since,
- *  each after the shipped race it follows, so a piece someone removed or moved stays that way and a bundle they deleted stays deleted. */
-function adoptShippedBundles() {
-  const KEY = "studio.shippedBundles";
-  let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(KEY) ?? localStorage.getItem("studio.shippedChunks") ?? "null"); } catch {}   // the old name, from before the rename
-  const v1 = Array.isArray(raw) ? raw : (raw?.v1 ?? []), done = raw?.v2 ?? [];
-  const todo = ZONE_BUNDLES.filter((c) => !done.includes(c.id));
-  if (!todo.length) return;
-  let changed = false;
-  for (const c of todo) {
-    const mine = draft.bundles.find((x) => x.id === c.id);
-    if (!mine) { if (!v1.includes(c.id)) { draft.bundles.push(structuredClone(c)); changed = true; } continue; }
-    c.items.forEach((it, k) => {
-      if (it.t !== "race" || !ZONE_ADDED[c.id]?.includes(it.id) || mine.items.some((x) => x.t === "race" && x.id === it.id)) return;
-      let at = mine.items.length;
-      for (let p = k - 1; p >= 0; p--) { const q = mine.items.findIndex((x) => x.id === c.items[p].id); if (q >= 0) { at = q + 1; break; } }
-      mine.items.splice(at, 0, structuredClone(it)); changed = true;
-    });
-  }
-  if (changed) draft = saveLocal(draft);
-  try { localStorage.setItem(KEY, JSON.stringify({ v1, v2: [...done, ...todo.map((c) => c.id)] })); } catch {}
-}
 async function boot() {
   timers.forEach(clearInterval);
+  hadLocalBundles = !!readLocal();
   draft = readLocal() ?? normalize(DEFAULTS);
   draft.featuredRaceIds = [...DEFAULTS.featuredRaceIds];   // the slate is fixed now; a browser that once changed its own copy goes back to it
   renderDisplayControls(); renderTickerFrames();   // the builder frame is fed by postMessage; the live one reads what is published
@@ -1943,7 +2003,7 @@ async function boot() {
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();
   await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists(), loadLibrary()]);
-  adoptShippedBundles();   // after loadLive: a browser's first load copies the published ticker into its builder, bundles included
+  await loadBundles();   // after loadLive: a browser's first load copies the published ticker into its builder, and the library replaces those bundles
   renderAll();
   restoreScroll();
   timers = [setInterval(refreshShared, 5_000), setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];

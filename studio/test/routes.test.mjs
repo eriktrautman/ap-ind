@@ -126,6 +126,20 @@ test("publishing the ticker: the crawl order and its bundles reach the file the 
   assert.deepEqual(live2.pinnedRaceIds, ["90001", "90002"]);
   assert.equal(live2.idleText, text, "the idle text was not in the publish and did not change");
 });
+test("bundles: the shipped library is served, a publisher saves it, nobody signed out can, and editing it leaves the live ticker alone", async (t) => {
+  if (localOnly(t)) return;
+  const publisher = await signIn(S.base, PASSWORDS.publisher);
+  const doc = (await get(url("/api/bundles"))).json;
+  assert.deepEqual(doc.bundles.map((b) => b.id), ["slate", "easternraces", "centralraces", "mountainraces", "pacificraces", "alaskaraces"]);
+  assert.equal((await put(url("/api/bundles"), doc)).status, 401, "signed out cannot write");
+  assert.equal((await put(url("/api/bundles"), { bundles: "no" }, { cookie: publisher })).status, 400, "a bad body cannot wipe the library");
+  const live = (await get(url("/api/producer"))).json;
+  doc.bundles.push({ id: "testbundle", name: "Test", items: [{ t: "race", id: "90001" }] });
+  const saved = await put(url("/api/bundles"), { bundles: doc.bundles }, { cookie: publisher });
+  assert.equal(saved.status, 200); assert.ok(saved.json.updatedBy, "it says who saved");
+  assert.equal((await get(url("/api/bundles"))).json.bundles.at(-1).id, "testbundle", "everyone reads the same document");
+  assert.deepEqual((await get(url("/api/producer"))).json, live, "the published state did not move");
+});
 test("playlists: General and the slate playlist are served, a publisher changes what is in one, and only a producer adds a person", async (t) => {
   if (localOnly(t)) return;
   const doc = (await get(url("/api/playlists"))).json;

@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-03T19:18:37Z",
+  updated: "2026-11-03T19:28:30Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -287,6 +287,7 @@ const QUESTIONS = [
 ];
 const LOG = [
   { t: "2026-11-03T19:29:43Z", what: "B16 Photo live race result (S135): cut-outs in public/g/cutouts/<AP id>.png for the six slate races; any other race shows its two leaders with an oval fade on their ordinary photo. Hafner and McDermott come from 200 px Ballotpedia photos and need better ones before air." },
+  { t: "2026-11-03T19:28:30Z", what: "Bundles are a shared library, like playlists and images: bundles.json, /api/bundles, saved as you edit, seen by everyone in the Studio within seconds, mirrored by a standby laptop. The ticker still reads only what is published. Each browser's own bundles join the library once. Pull leaves the library alone, and Restore Defaults puts the shipped bundles back in it." },
   { t: "2026-11-03T19:18:37Z", what: "Bundles have clear rules between a builder and live. Publish sends only the bundles in the crawl, and only those count as differing from live. Pull keeps an edited copy of a live bundle as \"(my copy)\" and stops rather than dropping anything past 24. A live bundle the builder lacks gets a Bring in button. Studio tabs now share saves, so an old tab can't overwrite newer work. The default Slate opens with the Independent Slate line." },
   { t: "2026-11-03T19:12:35Z", what: "The ticker keeps its place when only a race's numbers change. It used to go back to the first item on every change, so a long crawl would never have reached its end once votes came in. A publish that changes the list still starts from the top." },
   { t: "2026-11-03T18:25:10Z", what: "The Bundles area follows the same rule: Add to crawl is blue while the open bundle has pieces and is not in the crawl, Add text once text is typed, and the New and Rename dialogs' button once there is a name." },
