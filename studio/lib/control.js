@@ -183,7 +183,7 @@ export function canonicalAddress(pathname, search = "") {
  *  from that sequence by normalize() (the races in crawl order, the texts in crawl order) for everything that has always
  *  read them: older addresses, D5's fallback, older clients that publish only those two. */
 /** The shipped bundle: the slate's races, one package. The default crawl is this bundle and nothing else. */
-export const SLATE_BUNDLE = Object.freeze({ id: "slate", name: "Slate", items: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })) });
+export const SLATE_BUNDLE = Object.freeze({ id: "slate", name: "Slate", items: [{ t: "text", id: "slatetitle", text: "Independent Slate" }, ...FEATURED_RACES.map((r) => ({ t: "race", id: r.id }))] });
 // Every Toss Up and Lean race on Cook's Nov. 2 ratings, plus the races the show already follows, by the time zone their polls close in, earliest
 // close first, each opened by a line naming the zone. They wait in the builder until someone places them in the crawl order. A state split across
 // zones goes with most of its voters. Alaska closes last and has its own bundle; Hawaii has no race in the set. added: races new since the first
@@ -265,6 +265,24 @@ function seqItem(it, i, allowBundle) {
   return null;
 }
 const seqItems = (raw, allowBundle, max) => (Array.isArray(raw) ? raw : []).map((it, i) => seqItem(it, i, allowBundle)).filter(Boolean).slice(0, max);
+export const MAX_BUNDLES = LIMITS.bundles;
+/** The bundles a state's crawl actually uses: what airs, so what Publish sends and what "differs from live" compares. */
+export const airingBundles = (s) => (s.bundles ?? []).filter((b) => (s.tickerItems ?? []).some((it) => it.t === "bundle" && it.id === b.id));
+/** What Pull leaves in a builder: every live bundle, every bundle only this builder has, and, where this builder's copy of a live bundle
+ *  was edited, that copy under its own name so the work survives. An unedited shipped copy needs no keeping. over: more than the limit. */
+export function mergePulledBundles(live, mine, newId) {
+  const same = (a, b) => a.name === b.name && JSON.stringify(a.items) === JSON.stringify(b.items);
+  const titleless = { ...SLATE_BUNDLE, items: SLATE_BUNDLE.items.filter((i) => i.t === "race") };   // the Slate as it first shipped
+  const shipped = (c) => [...DEFAULTS.bundles, titleless].some((d) => d.id === c.id && same(d, c));
+  const kept = [], copies = [];
+  for (const c of mine) {
+    const l = live.find((x) => x.id === c.id);
+    if (!l) kept.push(c);
+    else if (!same(l, c) && !shipped(c)) { const name = `${c.name || c.id} (my copy)`.slice(0, LIMITS.bundleName); kept.push({ ...c, id: newId(), name }); copies.push(name); }
+  }
+  const bundles = [...live, ...kept];
+  return { bundles, copies, over: bundles.length > MAX_BUNDLES };
+}
 /** The crawl order as flat race and text entries, bundles expanded (a bundle entry becomes its items, each carrying bundle: id). */
 export function expandTicker(state) {
   const bundles = new Map((state.bundles ?? []).map((c) => [c.id, c]));

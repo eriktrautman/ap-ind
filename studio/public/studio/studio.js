@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_BUNDLES, ZONE_ADDED, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { airingBundles, mergePulledBundles, MAX_BUNDLES, DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_BUNDLES, ZONE_ADDED, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -136,6 +136,7 @@ let lastPublished = null;     // { updatedAt, blocks: ["ticker"] | ["screenA"] |
 let draft = normalize(DEFAULTS);   // everything on this page, saved in this browser. Only the ticker builder's four fields are ever published.
 const tickerPart = (s) => Object.fromEntries(TICKER_FIELDS.map((k) => [k, structuredClone(s[k])]));
 const tickerDiff = (from, to) => diffState(from, to).filter((c) => TICKER_FIELDS.includes(c.field));
+const airing = (s) => ({ ...s, bundles: airingBundles(s) });   // only the bundles in the crawl are published or compared with live; the rest stay on this page
 const SLATE_IDS = FEATURED_RACES.map((r) => r.id);
 // Starred races: a browser's own shortlist, the slate until it changes. A star only moves a race to the top of the Race
 // Catalog and of the race pickers; it is not part of any state, so no output or preview can tell.
@@ -365,19 +366,20 @@ function renderLive() {
   else {
     box.innerHTML = `<table class="params">
       <tr><td class="k" title="crawl: races, text and bundles in crawl order; hover a piece for the full text">crawl</td><td><div class="chips">${live.tickerItems.map((it) => seqChip(it, live)).join("")}</div></td></tr>
-      ${live.bundles.length ? `<tr><td class="k" title="bundles: the packages published with this ticker, used in the crawl or not">bundles</td><td>${live.bundles.map((c) => `<div><span class="bundletag">BUNDLE</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
+      ${airingBundles(live).length ? `<tr><td class="k" title="bundles: the packages in this ticker's crawl">bundles</td><td>${airingBundles(live).map((c) => `<div><span class="bundletag">BUNDLE</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
       <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span></td></tr>
       <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})${byWhom(live)}` : "never: the shipped defaults are live"}</td></tr>
     </table>`;
   }
+  renderLiveOnly();
   renderPublishState();
   renderScreens();
   renderFresh();
 }
 function renderPublishState() {
-  const changes = live ? tickerDiff(live, draft) : [];
+  const changes = live ? tickerDiff(airing(live), airing(draft)) : [];
   const same = live && !changes.length;
   const st = $("pubstate");
   st.className = `pubstate ${same ? "same" : "dirty"}`;
@@ -399,7 +401,7 @@ async function publish() {
   if (!canPublish()) return;
   let latest = live;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; } catch (e) { liveError = e.message; }
-  const changes = tickerDiff(latest ?? DEFAULTS, draft);
+  const changes = tickerDiff(airing(latest ?? DEFAULTS), airing(draft));
   const someoneElse = latest && latest.updatedAt !== liveSeenAt;
   const host = prodHost();
   const ok = await ask({
@@ -413,7 +415,7 @@ async function publish() {
   });
   if (!ok) return;
   try {
-    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(tickerPart(draft)) }));
+    const saved = normalize(await api("/api/producer", { method: "PUT", body: JSON.stringify(tickerPart(airing(draft))) }));
     live = saved; liveSeenAt = saved.updatedAt; liveError = null;
     lastPublished = { updatedAt: saved.updatedAt, blocks: ["ticker"] };
     renderAll(); loadReaders();
@@ -425,18 +427,19 @@ async function pull() {
   let latest;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
   catch (e) { liveError = e.message; renderLive(); await ask({ title: "Can't read the live ticker", body: `<div class="warnline bad">${esc(e.message)}</div><p>The builder is unchanged.</p>`, ok: "OK" }); return; }
-  // Pull keeps bundles that exist only on this page, so the change list is against what the builder will actually become.
-  const mineAfter = draft.bundles.filter((c) => !latest.bundles.some((x) => x.id === c.id));
-  const changes = tickerDiff(draft, { ...latest, bundles: [...latest.bundles, ...mineAfter] });
+  // Pull keeps bundles that exist only on this page and any edited copy of a live one, so the change list is against what the builder will actually become.
+  const merged = mergePulledBundles(latest.bundles, draft.bundles, newId);
+  if (merged.over) { await ask({ title: "Too many bundles to pull", info: true, ok: "Close", body: `<p>The live ticker's bundles and yours come to ${merged.bundles.length}, and a builder holds ${MAX_BUNDLES}. Delete ${merged.bundles.length - MAX_BUNDLES} of yours in the Bundles area, then pull again. Nothing has changed.</p>` }); return; }
+  const changes = tickerDiff(draft, { ...latest, bundles: merged.bundles });
+  const copyNote = merged.copies.length ? `<div class="warnline">Yours differed from the live version, so ${merged.copies.length === 1 ? "it stays" : "they stay"} in your Bundles as: <b>${merged.copies.map(esc).join(", ")}</b>.</div>` : "";
   const ok = await ask({
     title: "Pull from the LIVE TICKER?",
-    body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing published changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
+    body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing published changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}` + copyNote,
     ok: "Pull into the builder", danger: changes.length > 0,
   });
   if (!ok) return;
   liveSeenAt = latest.updatedAt;
-  // The live bundles replace this page's copies of the same bundles; bundles that exist only here stay.
-  draft = saveLocal({ ...draft, ...tickerPart(latest), bundles: [...latest.bundles, ...mineAfter] });
+  draft = saveLocal({ ...draft, ...tickerPart(latest), bundles: merged.bundles });
   renderAll(); cards.broadcast(draft);
 }
 async function restoreDefaults() {
@@ -630,7 +633,20 @@ const BUNDLE_ADD = "__add";
 let bundleSel = (() => { try { return localStorage.getItem("studio.bundle") ?? localStorage.getItem("studio.chunk"); } catch { return null; } })();
 const activeBundle = () => bundleById(bundleSel) ?? draft.bundles[0] ?? null;
 function selectBundle(id) { bundleSel = id; try { localStorage.setItem("studio.bundle", id); } catch {} renderBundles(); }
+/** Live bundles this builder lacks, each one button away, without Pull replacing the crawl order. */
+function renderLiveOnly() {
+  const missing = (live?.bundles ?? []).filter((b) => !draft.bundles.some((x) => x.id === b.id));
+  $("liveonly").innerHTML = missing.map((b) => `<div class="liveonly"><span>The live ticker has <b>${esc(b.name || b.id)}</b>, which this builder doesn't.</span><button type="button" data-bringin="${esc(b.id)}">Bring in</button></div>`).join("");
+}
+$("liveonly").addEventListener("click", async (e) => {
+  const b = live?.bundles.find((x) => x.id === e.target.closest("[data-bringin]")?.dataset.bringin); if (!b) return;
+  if (draft.bundles.length >= MAX_BUNDLES) { await ask({ title: "Too many bundles", info: true, ok: "Close", body: `<p>A builder holds ${MAX_BUNDLES} bundles. Delete one of yours first.</p>` }); return; }
+  draft.bundles.push(structuredClone(b)); bundleSel = b.id; try { localStorage.setItem("studio.bundle", b.id); } catch {} commit();
+});
+// Another tab's save reaches this one, so a tab left open can't later overwrite that work with its older copy.
+window.addEventListener("storage", (e) => { if (e.key !== "studio.local" || !e.newValue) return; const d = readLocal(); if (d) { draft = d; renderAll(); cards.broadcast(draft); } });
 function renderBundles() {
+  renderLiveOnly();
   const box = $("bundles");
   if (box.querySelector(".row.dragging") || box.querySelector("#bundleopts[open]")) return;   // mid-action: the next redraw catches up
   $("bundlecount").textContent = draft.bundles.length ? `${draft.bundles.length}` : "";

@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergePulledBundles, airingBundles, MAX_BUNDLES } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -66,7 +66,7 @@ test("the ticker crawl: idle line before data, the crawl order with bundles expa
   assert.deepEqual(st.manualItems.map((m) => m.text), ["Welcome", "Osborn watch", "Osborn watch"]);
   const fallback = normalize({ tickerItems: [{ t: "bundle", id: "gone" }] });
   assert.deepEqual(fallback.tickerItems, [{ t: "bundle", id: "slate" }], "a crawl with nothing left in it falls back to the Slate bundle");
-  assert.deepEqual(fallback.bundles[0].items.map((it) => it.id), fallback.pinnedRaceIds, "which holds the slate's races");
+  assert.deepEqual(fallback.bundles[0].items.filter((it) => it.t === "race").map((it) => it.id), fallback.pinnedRaceIds, "which holds the slate's races");
 });
 
 test("vercel.json wires the Studio gate, the chart router, the data files and the poll cron, and the build ships what the pages import", () => {
@@ -103,4 +103,17 @@ test("the shipped zone bundles survive validation whole, and a published crawl c
   assert.deepEqual(old.tickerItems, [{ t: "bundle", id: "abc" }], "a state saved under the old name still reads");
   assert.equal(old.bundles.find((b) => b.id === "abc").name, "Old");
   assert.equal("chunks" in old, false);
+});
+
+test("Pull keeps every live bundle and all of this builder's work; only bundles in the crawl count as airing", () => {
+  const b = (id, name, n = 1) => ({ id, name, items: Array.from({ length: n }, (_, i) => ({ t: "race", id: String(i) })) });
+  const shipped = structuredClone(ZONE_BUNDLES[0]);
+  const { bundles, copies, over } = mergePulledBundles([b("onlylive", "Live"), b("both", "Both"), b("same", "Same"), { ...shipped, name: "Changed live" }], [b("mine", "Mine"), b("both", "Both", 2), b("same", "Same"), shipped], () => "newid");
+  assert.deepEqual(bundles.map((x) => x.id), ["onlylive", "both", "same", shipped.id, "mine", "newid"], "an unedited shipped copy is not kept as a copy");
+  assert.equal(bundles.find((x) => x.id === "both").items.length, 1, "the live version wins");
+  assert.equal(bundles.find((x) => x.id === "newid").items.length, 2, "the edited one survives");
+  assert.deepEqual(copies, ["Both (my copy)"]);
+  assert.equal(over, false);
+  assert.equal(mergePulledBundles([], Array.from({ length: MAX_BUNDLES + 1 }, (_, i) => b(`b${i}`, "x")), () => "n").over, true);
+  assert.deepEqual(airingBundles({ tickerItems: [{ t: "bundle", id: "a" }, { t: "race", id: "b" }], bundles: [b("a", "A"), b("b", "B")] }).map((x) => x.id), ["a"]);
 });
