@@ -1371,12 +1371,19 @@ const layoutWord = (v) => (IMAGE_LAYOUTS.find(([k]) => k === (v || "fill"))?.[1]
 const imageSpecLine = (s) => [s.params?.caption ? `"${s.params.caption}"` : "", layoutWord(s.params?.layout), s.bg || "transparent"].filter(Boolean).join(" · ");
 const imageUses = (file) => (playlists?.users ?? []).flatMap((u) => u.playlists.filter((p) => p.items.some((it) => it.chart === IMAGE_CHART && it.params?.image === file)).map((p) => `${u.name || u.id}: ${p.name || p.id}`));
 const imageOnAir = (file) => ["screenA", "screenB"].filter((k) => live?.[k]?.chart === IMAGE_CHART && live[k].params?.image === file).map((k) => `Live Screen ${k === "screenA" ? "One" : "Two"}`);
-function imageWarnings(im) {
-  const out = [];
-  if (im.srcW < 1920 || im.srcH < 1080) out.push(`It is ${im.srcW}×${im.srcH}, smaller than the 1920×1080 frame, so it will look soft at full size.`);
-  if (Math.abs(im.w / im.h - 16 / 9) > 0.04) out.push("It is not 16:9: Fill crops its edges, and Fit leaves bars.");
-  if (im.alpha) out.push("It has transparency, which suits a lower third or corner over video.");
-  return out;
+const isFrameShape = (w, h) => Math.abs(w / h - 16 / 9) <= 0.04;
+/** How an image starts out: Fill, unless it is a transparent band, which is a lower third. Transparency keeps a transparent background. */
+const imageDefaults = (w, h, alpha) => ({ layout: alpha && w / h >= 2.5 ? "lower" : "fill", bg: alpha && (isFrameShape(w, h) || w / h >= 2.5) ? "" : DEFAULT_BG });
+/** The image's actual size, against the frame's. */
+function imageSizeLine(im) {
+  const size = `${im.srcW}×${im.srcH}${im.crop ? ", cropped" : ""}`;
+  if (im.srcW === 1920 && im.srcH === 1080) return `<div class="imgdims ok" id="imgdims">✓ ${size}, the exact size of the frame</div>`;
+  if (imageDefaults(im.srcW, im.srcH, im.alpha).layout === "lower") return `<div class="imgdims bad" id="imgdims">⚠ ${size}, not 1920×1080: a transparent band, so it starts as a lower third${im.srcW < 1920 ? ", and it will look soft across the full width" : ""}.</div>`;
+  const why = [];
+  if (im.srcW < 1920 || im.srcH < 1080) why.push("smaller than the frame, so it will look soft at full size");
+  else if (im.w !== im.srcW || im.h !== im.srcH) why.push(`it will be saved at ${im.w}×${im.h}`);
+  if (!isFrameShape(im.srcW, im.srcH)) why.push("not 16:9, so Fill crops its edges and Fit leaves bars");
+  return `<div class="imgdims bad" id="imgdims">⚠ ${size}, not 1920×1080${why.length ? `: ${why.join("; ")}` : ""}.</div>`;
 }
 const pickFile = async (title, note = "") => {
   const ok = await ask({ title, ok: "Next", body: `<p><input type="file" id="imgfile" accept="${IMAGE_TYPES.join(",")}"></p><p class="small muted">JPEG, PNG or WebP. It is resized to what the 1920×1080 frame can use, and its metadata is removed.${note ? " " + note : ""}</p>` });
@@ -1390,15 +1397,15 @@ async function uploadImage(file = null, { forPlaylist = false, preset = null, sw
   const refuse = (e) => ask({ title: "That image can't be used", body: `<div class="warnline bad">${esc(e.message)}</div>`, ok: "OK", info: true });
   try { im = await decodeImage(file); } catch (e) { await refuse(e); return null; }
   try { if (startCrop) { if (!(await cropDialog(im))) { releaseImage(im); return null; } } await renderImage(im); } catch (e) { releaseImage(im); await refuse(e); return null; }
-  let name = preset?.name ?? file.name.replace(/\.[^.]+$/, "").slice(0, IMAGE_LIMITS.name), credit = preset?.credit ?? "", layout = im.alpha ? "lower" : "fill", bg = im.alpha ? "" : DEFAULT_BG, caption = "", showcredit = false, swap = swapDefault, warn = "";
+  let auto = imageDefaults(im.srcW, im.srcH, im.alpha), name = preset?.name ?? file.name.replace(/\.[^.]+$/, "").slice(0, IMAGE_LIMITS.name), credit = preset?.credit ?? "", { layout, bg } = imageDefaults(im.srcW, im.srcH, im.alpha), caption = "", showcredit = false, swap = swapDefault, warn = "";
   const uses = swapFrom ? imageUses(swapFrom.file) : [], onAir = swapFrom ? imageOnAir(swapFrom.file) : [];
   for (;;) {
     let wantCrop = false;
-    const notes = imageWarnings(im).map((t) => `<div class="warnline">${esc(t)}</div>`).join("");
-    const pending = ask({ title, ok: "Upload", body: `${warn}<div class="imgframe ${bg ? "" : "checker"}" id="imgframe" style="${bgStyle(bg)}"><img class="imgl ${layout}" id="imgprev" src="${im.url}" alt=""></div><p><button type="button" id="imgcrop">Crop…</button> <span class="small muted">${im.w}×${im.h}${im.crop ? ", cropped" : ""}</span></p>${notes}
+    const notes = im.alpha ? `<div class="warnline">It has transparency, so whatever is behind it shows through.</div>` : "";
+    const pending = ask({ title, ok: "Upload", body: `${warn}<div class="imgframe ${bg ? "" : "checker"}" id="imgframe" style="${bgStyle(bg)}"><img class="imgl ${layout}" id="imgprev" src="${im.url}" alt=""></div><p><button type="button" id="imgcrop">Crop…</button></p>${imageSizeLine(im)}${notes}
       <div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(name)}"></label>
       <label>Credit and rights (optional)<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(credit)}" placeholder="e.g. Photo: AP, licensed for broadcast"></label>
-      ${forPlaylist ? `<label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}</label><label>Outer Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label>
+      ${forPlaylist ? `<label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}${isFrameShape(im.w, im.h) ? `<span class="small muted imglayouthint">At this shape Fill, Fit and Across the bottom look the same.</span>` : ""}</label><label>Outer Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label>
       <label>Caption<input id="imgcaption" maxlength="200" value="${esc(caption)}" placeholder="Optional: a line shown over the image"></label>
       <label class="imgcheck"><input type="checkbox" id="imgshowcredit" ${showcredit ? "checked" : ""}> Show the credit on air</label>` : ""}
       ${uses.length ? `<label class="imgcheck"><input type="checkbox" id="imgswap" ${swap ? "checked" : ""}> Put this in place of ${esc(swapFrom.name)} in ${plural(uses.length, "playlist")}</label>` : ""}</div>
@@ -1408,7 +1415,19 @@ async function uploadImage(file = null, { forPlaylist = false, preset = null, sw
     $("imgbg")?.addEventListener("change", (e) => { const f = $("imgframe"); f.style.cssText = bgStyle(e.target.value); f.classList.toggle("checker", !e.target.value); });
     const ok = await pending;
     name = $("imgname").value.trim(); credit = $("imgcredit").value.trim(); layout = $("imglayout")?.value ?? layout; bg = $("imgbg")?.value ?? bg; caption = $("imgcaption")?.value.trim() ?? ""; showcredit = !!$("imgshowcredit")?.checked; swap = !!$("imgswap")?.checked;
-    if (wantCrop) { try { if (await cropDialog(im)) await renderImage(im); } catch (e) { await refuse(e); } continue; }
+    if (wantCrop) {
+      try {
+        if (await cropDialog(im)) {
+          await renderImage(im);
+          // a crop can change the image's shape: its defaults follow, unless they have been changed by hand
+          const next = imageDefaults(im.srcW, im.srcH, im.alpha);
+          if (layout === auto.layout) layout = next.layout;
+          if (bg === auto.bg) bg = next.bg;
+          auto = next;
+        }
+      } catch (e) { await refuse(e); }
+      continue;
+    }
     if (!ok) { releaseImage(im); return null; }
     if (name) break;
     warn = `<div class="warnline bad">An image needs a name.</div>`;
@@ -1436,7 +1455,7 @@ async function plAddImage() {
   const ok = await pending;
   const file = $("imgfile")?.files?.[0] ?? null;
   if (!ok || (!file && !picked)) return;
-  if (picked) return plAdd({ chart: IMAGE_CHART, race: "", state: "", params: { image: picked, layout: "fill" }, bg: DEFAULT_BG });
+  if (picked) { const x = library.images.find((y) => y.file === picked), d = imageDefaults(x?.w ?? 1920, x?.h ?? 1080, !!x?.alpha); return plAdd({ chart: IMAGE_CHART, race: "", state: "", params: { image: picked, layout: d.layout }, bg: d.bg }); }
   const up = await uploadImage(file, { forPlaylist: true });
   if (up) return plPutSpec(imageCardSpec(up), u, p);
 }
@@ -1461,7 +1480,7 @@ function renderImages() {
   for (const x of rows) {
     const menu = [
       ...(mayPublish() ? [
-        { label: "Add to playlist…", onClick: () => addToPlaylistFromCatalog(chart, { label: `Image: ${x.name}`, params: { image: x.file, layout: x.alpha ? "lower" : "fill" }, bg: x.alpha ? "" : DEFAULT_BG }) },
+        { label: "Add to playlist…", onClick: () => { const d = imageDefaults(x.w, x.h, x.alpha); addToPlaylistFromCatalog(chart, { label: `Image: ${x.name}`, params: { image: x.file, layout: d.layout }, bg: d.bg }); } },
         { label: "Crop…", onClick: () => cropExisting(x) },
         { label: "Replace…", onClick: () => replaceImage(x) },
         { label: "Edit name and credit…", onClick: () => editImage(x) },
