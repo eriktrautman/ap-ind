@@ -133,8 +133,8 @@
     requestAnimationFrame(frame);
   }
   function setQueue(items) {
-    const same = queue.length === items.length && queue.every((q, i) => q.key === items[i].key && q.text === items[i].text);
-    if (same) return;
+    // The same list with new numbers keeps its place: results change on every poll, and a restart each time would never reach the end.
+    if (queue.length === items.length && queue.every((q, i) => q.key === items[i].key)) { queue = items; return; }
     // Before any data, or while only the idle line is crawling, there is nothing worth finishing:
     // start the new list at once. Otherwise what is on screen finishes and the new list follows.
     const restart = !queue.length || queue.every((q) => q.kind === "idle");
