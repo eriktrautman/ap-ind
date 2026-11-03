@@ -611,40 +611,65 @@ function seqRow(it, i, n, drag = false) {
   }
   if (it.t === "text") return `<div class="row textrow" data-i="${i}"><div class="nm">${handle}<span class="ord">${i + 1}</span><span class="quote" title="${esc(it.text)}">“${esc(it.text)}”</span></div>${btns}</div>`;
   const c = chunkById(it.id);
-  return `<div class="row chunkrow" data-i="${i}"><div><div class="nm"><span class="ord">${i + 1}</span><span class="chunktag">CHUNK</span>${c ? `<b>${esc(c.name || c.id)}</b> <span class="muted small">${c.items.length} piece${c.items.length === 1 ? "" : "s"}</span>` : `<span class="muted">chunk no longer defined; the ticker skips it</span>`}</div>${c ? `<div class="chips">${c.items.length ? c.items.map((x) => seqChip(x)).join("") : '<span class="muted small">empty: add races and text in the Chunks area below</span>'}</div>` : ""}</div>${btns}</div>`;
+  return `<div class="row chunkrow" data-i="${i}"><div><div class="nm">${handle}<span class="ord">${i + 1}</span><span class="chunktag">CHUNK</span>${c ? `<b>${esc(c.name || c.id)}</b> <span class="muted small">${c.items.length} piece${c.items.length === 1 ? "" : "s"}</span>` : `<span class="muted">chunk no longer defined; the ticker skips it</span>`}</div>${c ? `<div class="chips">${c.items.length ? c.items.map((x) => seqChip(x)).join("") : '<span class="muted small">empty: add races and text in the Chunks area below</span>'}</div>` : ""}</div>${btns}</div>`;
 }
 function renderSeq() {
   const items = draft.tickerItems;
   const flat = expandTicker(draft);
   $("seqcount").textContent = `${items.length} element${items.length === 1 ? "" : "s"} · ${flat.length} piece${flat.length === 1 ? "" : "s"} crawl`;
-  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length)).join("") || `<div class="empty">Nothing in the crawl order: the default races crawl. Add races, text or a chunk below.</div>`;
+  if ($("seq").querySelector(".row.dragging")) return;   // mid-drag: the next redraw catches up
+  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length, true)).join("") || `<div class="empty">Nothing in the crawl order: the default races crawl. Add races, text or a chunk below.</div>`;
   // Like the two boxes above it, the dropdown opens on its helper text; the chunks follow.
-  $("chunkpick").innerHTML = `<option value="" selected>${draft.chunks.length ? "Add a chunk: choose one built below" : "Add a chunk: none built yet, build one below"}</option>` + draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
+  $("chunkpick").innerHTML = `<option value="" selected>${draft.chunks.length ? "Add a chunk: choose one" : "Add a chunk: none built yet, build one below"}</option>` + draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
   $("addchunkref").querySelector("button").disabled = !draft.chunks.length;
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").value = draft.callHighlight ? "1" : "0";
 }
+// One chunk at a time, like a playlist: pick it from the dropdown, add, rename or delete it. The choice is this browser's.
+const CHUNK_ADD = "__add";
+let chunkSel = (() => { try { return localStorage.getItem("studio.chunk"); } catch { return null; } })();
+const activeChunk = () => chunkById(chunkSel) ?? draft.chunks[0] ?? null;
+function selectChunk(id) { chunkSel = id; try { localStorage.setItem("studio.chunk", id); } catch {} renderChunks(); }
 function renderChunks() {
   const box = $("chunks");
+  if (box.querySelector(".row.dragging") || box.querySelector("#chunkopts[open]")) return;   // mid-action: the next redraw catches up
   $("chunkcount").textContent = draft.chunks.length ? `${draft.chunks.length}` : "";
   const active = document.activeElement;
-  if (box.contains(active) && active.matches(".chunkname")) return;   // typing a name: redraw on blur
-  // A picker or text box in a chunk keeps its place through the redraw (a pick or an add redraws the card it sits in).
-  const keep = box.contains(active) && active.matches("[data-pick], form[data-addtext] input") ? { chunk: active.closest(".chunk")?.dataset.chunk, pick: active.matches("[data-pick]") } : null;
-  box.innerHTML = draft.chunks.map((c) => {
-    const uses = draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length;
-    return `<div class="chunk" data-chunk="${esc(c.id)}">
-      <div class="chunktop"><span class="chunktag">CHUNK</span><input class="chunkname" value="${esc(c.name)}" maxlength="60" placeholder="Chunk name" title="The name this chunk shows in the crawl order"><span class="muted small">${uses ? `in the crawl ${uses}×` : "not in the crawl"}</span><span class="spacer"></span><button class="addref" title="Place this chunk at the end of the crawl order">Add to crawl</button><button class="rmchunk" title="Delete this chunk; the crawl order drops it">Delete</button></div>
+  // A picker or text box keeps its place through the redraw (a pick or an add redraws the chunk it sits in).
+  const keep = box.contains(active) && active.matches("[data-pick], form[data-addtext] input") ? { pick: active.matches("[data-pick]") } : null;
+  const c = activeChunk();
+  const uses = c ? draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length : 0;
+  box.innerHTML = `<div class="plbar chunkbar">
+      <label>Chunk <select id="chunksel">${draft.chunks.map((x) => `<option value="${esc(x.id)}" ${x.id === c?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}<option value="${CHUNK_ADD}">+ Add chunk…</option></select></label>
+      ${c ? `<button class="primary addref" type="button" title="Place this chunk at the end of the crawl order">Add to crawl</button>` : ""}
+      <button class="newchunkbtn" type="button" title="A new, empty chunk">+ Add chunk…</button>
+      ${c ? `<details class="ploptions" id="chunkopts"><summary title="Rename or delete this chunk">Additional Options</summary><div class="plmenu">
+        <div class="plmenuhead">Chunk: ${esc(c.name || c.id)}</div>
+        <button class="renamechunk" type="button">Rename chunk…</button><button class="rmchunk dangerous" type="button">Delete chunk…</button>
+      </div></details>` : ""}
+      <span class="spacer"></span>
+      ${c ? `<span class="plmeta">${uses ? `In the crawl ${uses}×` : "Not in the crawl"}</span>` : ""}
+    </div>
+    ${c ? `<div class="chunk" data-chunk="${esc(c.id)}">
       <div class="list pins seq" data-list="chunk:${esc(c.id)}">${c.items.length ? c.items.map((it, i) => seqRow(it, i, c.items.length, true)).join("") : '<div class="empty">Empty. Add races and text below.</div>'}</div>
       <div class="filters addfeat"><input data-pick="chunk:${esc(c.id)}" placeholder="Add a race to this chunk: type a label, state or candidate" autocomplete="off"><div class="suggest" hidden></div></div>
       <form class="addmanual" data-addtext="chunk:${esc(c.id)}"><input placeholder="Add text to this chunk" maxlength="240"><button type="submit">Add text</button></form>
-    </div>`;
-  }).join("") || `<div class="empty">No chunks yet. Name one above to start building it.</div>`;
-  if (keep?.chunk) box.querySelector(`.chunk[data-chunk="${keep.chunk}"] ${keep.pick ? "[data-pick]" : "form[data-addtext] input"}`)?.focus();
+    </div>` : `<div class="empty">No chunks yet. Press + Add chunk… to start one.</div>`}`;
+  if (keep) box.querySelector(keep.pick ? "[data-pick]" : "form[data-addtext] input")?.focus();
 }
-// Dragging a piece by its handle reorders it within its own chunk: the upper half of a row drops above it, the lower half below.
-{
-  const box = $("chunks"); let from = null, fromList = null;
+async function addChunk() {
+  const ok = await ask({ title: "New chunk", ok: "Add chunk", body: `<p><label>Name<br><input id="chunkname" maxlength="60" placeholder="e.g. Nebraska package" style="width:100%"></label></p><p class="small muted">A package of races and text you can place in the crawl order. This changes only this page until you publish.</p>` });
+  const name = $("chunkname")?.value.trim(); if (!ok || !name) { renderChunks(); return; }
+  const id = newId(); draft.chunks.push({ id, name, items: [] }); chunkSel = id; try { localStorage.setItem("studio.chunk", id); } catch {} commit();
+}
+async function renameChunk(c) {
+  const ok = await ask({ title: "Rename the chunk", ok: "Rename", body: `<p><label>Name<br><input id="chunkname" maxlength="60" value="${esc(c.name)}" style="width:100%"></label></p>` });
+  const name = $("chunkname")?.value.trim(); if (!ok || !name) return;
+  c.name = name; commit();
+}
+// Dragging a row by its handle reorders it within its own list, the crawl order or the open chunk: the upper half of a row drops above it, the lower half below.
+for (const box of [$("seq"), $("chunks")]) {
+  let from = null, fromList = null;
   const clear = () => box.querySelectorAll(".dragging, .dropabove, .dropbelow").forEach((r) => r.classList.remove("dragging", "dropabove", "dropbelow"));
   const after = (e, row) => { const r = row.getBoundingClientRect(); return e.clientY > r.top + r.height / 2; };
   const target = (e) => { const row = e.target.closest(".list[data-list] > .row"); return from !== null && row?.closest(".list").dataset.list === fromList ? row : null; };
@@ -664,7 +689,7 @@ function renderChunks() {
   box.addEventListener("drop", (e) => {
     const row = target(e); if (!row) return;
     e.preventDefault();
-    const a = listFor(fromList), i = from; let to = Number(row.dataset.i) + (after(e, row) ? 1 : 0);
+    const a = listFor(fromList), i = from; const to = Number(row.dataset.i) + (after(e, row) ? 1 : 0);
     from = null; fromList = null; clear();
     if (!a || to === i || to === i + 1) return;
     const [it] = a.splice(i, 1); a.splice(to > i ? to - 1 : to, 0, it);
@@ -672,7 +697,6 @@ function renderChunks() {
   });
   box.addEventListener("dragend", (e) => { const r = e.target.closest?.(".row"); if (r) r.draggable = false; from = null; fromList = null; clear(); });
 }
-$("chunks").addEventListener("focusout", (e) => { if (e.target.closest(".chunkname")) setTimeout(renderChunks, 450); });   // after the name's debounced commit
 // Reorder and remove, in the crawl order and inside every chunk.
 document.addEventListener("click", (e) => {
   const list = e.target.closest("[data-list]"); const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!list || !row || !b) return;
@@ -697,22 +721,19 @@ $("addchunkref").addEventListener("submit", (e) => {
   const id = $("chunkpick").value; if (!id || !chunkById(id)) { $("chunkpick").focus(); return; }
   draft.tickerItems.push({ t: "chunk", id }); commit();
 });
-$("newchunk").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const name = $("chunkname").value.trim(); if (!name) { $("chunkname").focus(); return; }
-  draft.chunks.push({ id: newId(), name, items: [] }); $("chunkname").value = ""; commit();
+$("chunks").addEventListener("change", (e) => {
+  if (e.target.id !== "chunksel") return;
+  if (e.target.value === CHUNK_ADD) { addChunk(); return; }
+  selectChunk(e.target.value);
 });
-let chunkNameTimer = null;
-$("chunks").addEventListener("input", (e) => {
-  const inp = e.target.closest(".chunkname"); if (!inp) return;
-  const c = chunkById(inp.closest(".chunk").dataset.chunk); if (!c) return;
-  c.name = inp.value.trim().slice(0, 60);
-  clearTimeout(chunkNameTimer); chunkNameTimer = setTimeout(commit, 400);
-});
+document.addEventListener("click", (e) => { if (!e.target.closest("#chunkopts")) $("chunkopts")?.removeAttribute("open"); });
 $("chunks").addEventListener("click", async (e) => {
-  const box = e.target.closest(".chunk"); const b = e.target.closest("button"); if (!box || !b) return;
-  const c = chunkById(box.dataset.chunk); if (!c) return;
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.classList.contains("newchunkbtn")) { addChunk(); return; }
+  const c = activeChunk(); if (!c) return;
   if (b.classList.contains("addref")) { draft.tickerItems.push({ t: "chunk", id: c.id }); commit(); return; }
+  $("chunkopts")?.removeAttribute("open");
+  if (b.classList.contains("renamechunk")) { renameChunk(c); return; }
   if (b.classList.contains("rmchunk")) {
     const uses = draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length;
     const ok = await ask({ title: `Delete chunk "${c.name || c.id}"?`, body: `<p>Its ${c.items.length} piece${c.items.length === 1 ? "" : "s"} go with it${uses ? `, and the crawl order loses it in ${uses} place${uses === 1 ? "" : "s"}` : ""}.</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: "Delete chunk", danger: true });

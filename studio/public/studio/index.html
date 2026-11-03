@@ -81,15 +81,16 @@
             <label for="tickerbg">Outer Background</label><select id="tickerbg" data-page="ticker"></select>
           </div>
           <h4>Crawl order <span class="muted" id="seqcount"></span></h4>
-          <p class="muted small hint" title="Races, text and chunks crawl in this order, top to bottom, then repeat. A chunk is a package of races and text built in the Chunks area below; in this list it shows what is inside it, and hovering any piece shows the full text.">Races, text and chunks, in crawl order. ▲▼ reorder. A chunk shows its contents; hover a piece for the full text.</p>
+          <p class="muted small hint" title="Races, text and chunks crawl in this order, top to bottom, then repeat. A chunk is a package of races and text built in the Chunks area below; in this list it shows what is inside it, and hovering any piece shows the full text.">Races, text and chunks, in crawl order. Drag ⠿ or use ▲▼ to reorder. A chunk shows its contents; hover a piece for the full text.</p>
           <div class="list pins seq" id="seq" data-list="seq"></div>
           <div class="filters addfeat"><input id="pinq" data-pick="seq" placeholder="Add a race: type a label, state or candidate" size="34" autocomplete="off"><div class="suggest" hidden></div></div>
           <form class="addmanual" id="addmanual" data-addtext="seq"><input id="manualtext" placeholder="Add text to crawl, e.g. Polls close in Georgia at 7pm ET" maxlength="240"><button type="submit">Add text</button></form>
           <form class="addmanual" id="addchunkref"><select id="chunkpick" title="A chunk built in the Chunks area below; it crawls as one element"></select><button type="submit">Add chunk</button></form>
           <p class="muted small">Or add races from the <a href="#catalog">Race Catalog</a> below, and chunks from the <a href="#chunksbox">Chunks</a> area under this ticker. With nothing to crawl, the featured races crawl.</p>
-          <h4>Idle text</h4>
+          <details class="idlebox"><summary>Idle text</summary>
           <input id="idletext" placeholder="Welcome to the Independent Election Night coverage" maxlength="240">
           <p class="muted small hint">Crawls on its own when the ticker has no races and no crawler text to show.</p>
+          </details>
         </div>
       </div>
       <div class="screenmid">
@@ -111,8 +112,7 @@
     </div>
     <div class="chunks" id="chunksbox">
       <h3 class="chunkhead">Chunks <span class="muted small" id="chunkcount"></span></h3>
-      <p class="secsub">A chunk is a package of races and text, built here once and placed in the crawl order above as one element, as many times as you like. Chunks travel with the ticker: Publish sends them with the crawl, Pull brings the live ones back and keeps any you have only here.</p>
-      <form class="addmanual newchunk" id="newchunk"><input id="chunkname" placeholder="New chunk name, e.g. Nebraska package" maxlength="60"><button type="submit">New chunk</button></form>
+      <p class="secsub">A chunk is a package of races and text, built here once and placed in the crawl order above as one element, as many times as you like. Pick one to work on from the dropdown. Chunks travel with the ticker: Publish sends them with the crawl, Pull brings the live ones back and keeps any you have only here.</p>
       <div class="chunklist" id="chunks"></div>
     </div>
 </section>
