@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       const next = normalizePlaylists({ users: body?.users, deprecatedCharts: body?.deprecatedCharts ?? prev.deprecatedCharts });
       if (who.role !== "producer" && shape(prev) !== shape(next)) { res.status(403).json({ error: PRODUCER_SHAPE }); return; }
       if (who.role !== "producer" && JSON.stringify(prev.deprecatedCharts) !== JSON.stringify(next.deprecatedCharts)) { res.status(403).json({ error: PRODUCER_DEPRECATE }); return; }
-      const doc = { ...next, generalSeeded: true, updatedAt: new Date().toISOString(), updatedBy: who.name };
+      const doc = { ...next, generalSeeded: true, ryanB16Seeded: true, updatedAt: new Date().toISOString(), updatedBy: who.name };
       await writeFresh("playlists.json", doc);
       res.status(200).json(doc);
     } catch (e) {

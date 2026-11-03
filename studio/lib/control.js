@@ -386,7 +386,7 @@ export function normalizePlaylists(raw) {
   });
   // Charts a producer has marked as on the way out: grayed in the Studio's catalogs and playlists, and still fully usable.
   const deprecatedCharts = [...new Set((Array.isArray(r.deprecatedCharts) ? r.deprecatedCharts : []).filter((id) => CHARTS.some((c) => c.id === id && !c.retired && id !== "A1")))];
-  return { users, deprecatedCharts, generalSeeded: r.generalSeeded === true, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
+  return { users, deprecatedCharts, generalSeeded: r.generalSeeded === true, ryanB16Seeded: r.ryanB16Seeded === true, updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null, updatedBy: typeof r.updatedBy === "string" && r.updatedBy.trim() ? r.updatedBy.trim().slice(0, 40) : null };
 }
 export const PLAYLIST_RACE_OVERVIEW = ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D10", "D11", "D12", "D13"];
 export const PLAYLIST_MOVEMENT_OVERVIEW = ["C1", "C6", "C7"];
@@ -400,15 +400,18 @@ const generalPerson = () => ({ id: "general", name: "General", playlists: [
   { id: "movementoverview", name: "Movement Overview", items: PLAYLIST_MOVEMENT_OVERVIEW.map((chart) => plSpec(chart)) },
 ] });
 /** The shipped playlists: General, then Ryan with the same slate. */
+const b5ToB16 = (s) => (s.chart === "B5" ? { ...s, chart: "B16" } : s);
 export function defaultPlaylists() {
-  return normalizePlaylists({ generalSeeded: true, users: [generalPerson(), { id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items: slateItems() }] }] });
+  return normalizePlaylists({ generalSeeded: true, ryanB16Seeded: true, users: [generalPerson(), { id: "ryan", name: "Ryan", playlists: [{ id: "slate", name: "Slate", items: slateItems().map(b5ToB16) }] }] });
 }
 /** A stored document from before General existed gains it once, in front. The flag goes back with the next write, so a
  *  producer who later removes General does not see it return. */
 export function seedPlaylists(doc) {
-  if (doc.generalSeeded) return doc;
-  const users = doc.users.some((u) => u.id === "general") ? doc.users : [generalPerson(), ...doc.users];
-  return normalizePlaylists({ ...doc, users, generalSeeded: true });
+  if (doc.generalSeeded && doc.ryanB16Seeded) return doc;
+  let users = doc.generalSeeded || doc.users.some((u) => u.id === "general") ? doc.users : [generalPerson(), ...doc.users];
+  // Ryan's B5s became B16s once, on 2026-11-03; the same flag rule, so a B5 put back in by hand stays.
+  if (!doc.ryanB16Seeded) users = users.map((u) => (u.id !== "ryan" ? u : { ...u, playlists: u.playlists.map((p) => ({ ...p, items: p.items.map(b5ToB16) })) }));
+  return normalizePlaylists({ ...doc, users, generalSeeded: true, ryanB16Seeded: true });
 }
 
 // The image library (images.json, /api/images). A file's name is random and is written once, so an address never changes what it shows.

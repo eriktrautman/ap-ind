@@ -77,7 +77,7 @@ export default async function handler(req, res) {
       if (used.length && b.force !== true) { res.status(409).json({ error: "playlists use this image", usedIn: used }); return; }
       if (used.length) {
         for (const u of plays.users) for (const p of u.playlists) p.items = p.items.filter((it) => !(it.chart === IMAGE_CHART && it.params?.image === b.file));
-        await writeFresh("playlists.json", { ...plays, generalSeeded: true, updatedAt: new Date().toISOString(), updatedBy: who.name });
+        await writeFresh("playlists.json", { ...plays, generalSeeded: true, ryanB16Seeded: true, updatedAt: new Date().toISOString(), updatedBy: who.name });
       }
       const doc = await save({ ...lib, images: lib.images.filter((x) => x.file !== b.file) }, who);
       await deleteFile(`images/${im.file}`); await deleteFile(`images/${im.thumb}`);

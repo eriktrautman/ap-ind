@@ -91,6 +91,10 @@ test("stored playlists from before General gain it once, keep what they had, and
   assert.equal(seeded.users[1].playlists[0].items.length, 1, "what was stored is untouched");
   const removed = normalizePlaylists({ users: seeded.users.slice(1), generalSeeded: true });
   assert.deepEqual(seedPlaylists(removed).users.map((u) => u.name), ["Ryan"], "General does not come back");
+  const ryanDoc = (flag) => normalizePlaylists({ generalSeeded: true, ryanB16Seeded: flag, users: [{ id: "ryan", name: "Ryan", playlists: [{ id: "a", name: "A", items: [{ chart: "B5", race: "NE-SEN" }, { chart: "B8", race: "NE-SEN" }] }] }, { id: "bob", name: "Bob", playlists: [{ id: "a", name: "A", items: [{ chart: "B5", race: "NE-SEN" }] }] }] });
+  const charts = (d) => d.users.map((u) => u.playlists[0].items.map((i) => i.chart));
+  assert.deepEqual(charts(seedPlaylists(ryanDoc(false))), [["B16", "B8"], ["B5"]], "only Ryan's B5s become B16s");
+  assert.deepEqual(charts(seedPlaylists(ryanDoc(true))), [["B5", "B8"], ["B5"]], "and only once");
 });
 
 test("the shipped zone bundles survive validation whole, and a published crawl carries its own copy of each bundle it uses", () => {
