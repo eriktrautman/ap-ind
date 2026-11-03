@@ -1,0 +1,1049 @@
+{
+ "_comment": "Campaign-supplied headshots, preferred over every other source. Keyed by AP candidateID. Applied to config/photos.json by studio/scripts/import-campaign-photos.mjs; run it again after scripts/build-photo-index.py, which rewrites that file.",
+ "folder": "https://drive.google.com/drive/folders/1OldIczuATLSPFxXhz9vwA6LavlvBRqy9",
+ "photos": {
+  "94": {
+   "name": "Xavier Becerra",
+   "race": "CA-GOV",
+   "party": "Dem",
+   "file": "64 - California Governor - Xavier Becerra (D).jpg",
+   "drive": "1eegYRKij_izjOeauTjIJ0gQufpej-I3N"
+  },
+  "132": {
+   "name": "Ken Calvert",
+   "race": "CA-40",
+   "party": "GOP",
+   "file": "63 - California House (CA-40) - Ken Calvert (R).jpg",
+   "drive": "1IUimn8cE23usJfDsLOvFmvGrlpQ7gA8k"
+  },
+  "405": {
+   "name": "Marcy Kaptur",
+   "race": "OH-9",
+   "party": "Dem",
+   "file": "24 - Ohio House (OH-09) - Marcy Kaptur (D).jpg",
+   "drive": "1bTaMfR5lNhObHPPbkH7ZJ3HhzeaKPryy"
+  },
+  "1169": {
+   "name": "Mike Rogers",
+   "race": "MI-SEN",
+   "party": "GOP",
+   "file": "26 - Michigan Senate - Mike Rogers (R).jpg",
+   "drive": "14ZahZiTXm9_iyV_ZgJ790X2DXwhjY2P2"
+  },
+  "1384": {
+   "name": "Sherrod Brown",
+   "race": "OH-SEN",
+   "party": "Dem",
+   "file": "22 - Ohio Senate - Sherrod Brown (D).jpg",
+   "drive": "1K1xdJZf28IDd22g_eb6gZWR9rHYuS_hd"
+  },
+  "1727": {
+   "name": "Susan Collins",
+   "race": "ME-SEN",
+   "party": "GOP",
+   "file": "01 - Maine Senate - Susan Collins (R).jpg",
+   "drive": "1TbmojgHLwQ5u_UNOAiSrKYPI2Po3Rh7I"
+  },
+  "10546": {
+   "name": "Kathy Castor",
+   "race": "FL-14",
+   "party": "Dem",
+   "file": "19 - Florida House (FL-14) - Kathy Castor (D).jpg",
+   "drive": "1ycZoQKyXLn4ADrWEkHqg_--hIC660fin"
+  },
+  "29888": {
+   "name": "Brinker Harding",
+   "race": "NE-2",
+   "party": "GOP",
+   "file": "45 - Nebraska House (NE-02) - Brinker Harding (R).jpg",
+   "drive": "1NGu2KorU-PWjH72kPgrZyHYJp12iKg3q"
+  },
+  "34471": {
+   "name": "Roy Cooper",
+   "race": "NC-SEN",
+   "party": "Dem",
+   "file": "12 - North Carolina Senate - Roy Cooper (D).jpg",
+   "drive": "1flS_NPEdhAgbbR0dF8EsiqrNTo02ju9T"
+  },
+  "41404": {
+   "name": "Greg Abbott",
+   "race": "TX-GOV",
+   "party": "GOP",
+   "file": "47 - Texas Governor - Greg Abbott (R).jpg",
+   "drive": "1EjQsXt-QBpr85PS7BDqKG_MyRtvKHkrM"
+  },
+  "52611": {
+   "name": "Andy Biggs",
+   "race": "AZ-GOV",
+   "party": "GOP",
+   "file": "53 - Arizona Governor - Andy Biggs (R).jpg",
+   "drive": "1ZF0-fZi1k65Dq_13WUJUz-wZhxVUTpYW"
+  },
+  "54967": {
+   "name": "Troy Jackson",
+   "race": "ME-SEN",
+   "party": "Dem",
+   "file": "01 - Maine Senate - Troy Jackson (D).jpg",
+   "drive": "1QIJ2Y4UmOtc6We9wl41dZzLFQ6HzxGhw"
+  },
+  "55092": {
+   "name": "Bill Huizenga",
+   "race": "MI-4",
+   "party": "GOP",
+   "file": "28 - Michigan House (MI-04) - Bill Huizenga (R).jpg",
+   "drive": "1Tb-E8aT7bB6w_6fe2EMIrmtHCkM2Q-cm"
+  },
+  "56360": {
+   "name": "Chris Pappas",
+   "race": "NH-SEN",
+   "party": "Dem",
+   "file": "03 - New Hampshire Senate - Chris Pappas (D).jpg",
+   "drive": "1i-JH85HX1pvVC6pAqu2UkjhHti5d5Pqm"
+  },
+  "56741": {
+   "name": "Thomas Kean Jr.",
+   "race": "NJ-7",
+   "party": "GOP",
+   "file": "05 - New Jersey House (NJ-07) - Thomas Kean Jr. (R).jpg",
+   "drive": "1a2iJCJ2eT6pVURo2PmWM0uUpk0k59eV8"
+  },
+  "57798": {
+   "name": "Robert Wittman",
+   "race": "VA-1",
+   "party": "GOP",
+   "file": "10 - Virginia House (VA-01) - Rob Wittman (R).jpg",
+   "drive": "1FvIIszVgdnCTr1r-_hrPNOhih38q-xMu"
+  },
+  "58352": {
+   "name": "Ken Paxton",
+   "race": "TX-SEN",
+   "party": "GOP",
+   "file": "46 - Texas Senate - Ken Paxton (R).jpg",
+   "drive": "1bPVlCXWEpJwd1iPFQaW_EYjnc7k4xVhe"
+  },
+  "59745": {
+   "name": "Mariannette Miller-Meeks",
+   "race": "IA-1",
+   "party": "GOP",
+   "file": "38 - Iowa House (IA-01) - Mariannette Miller-Meeks (R).jpg",
+   "drive": "1ny6k1MRr7jMlmAJIZodyAkxwzhIIWn-T"
+  },
+  "60414": {
+   "name": "Paul LePage",
+   "race": "ME-2",
+   "party": "GOP",
+   "file": "02 - Maine House (ME-02) - Paul LePage (R).jpg",
+   "drive": "14VDRHI35fIHCDGqiXLJJvxoxcNPXMdoz"
+  },
+  "61618": {
+   "name": "Scott Perry",
+   "race": "PA-10",
+   "party": "GOP",
+   "file": "08 - Pennsylvania House (PA-10) - Scott Perry (R).jpg",
+   "drive": "1KIISaX6cyYgqX7pgO_x2wRLvMCwpwlOU"
+  },
+  "62229": {
+   "name": "David Valadao",
+   "race": "CA-22",
+   "party": "GOP",
+   "file": "60 - California House (CA-22) - David Valadao (R).jpg",
+   "drive": "1YPzwTroNI9p_hXHSvZLJSYbUZ1Pcum_2"
+  },
+  "62408": {
+   "name": "Byron Donalds",
+   "race": "FL-GOV",
+   "party": "GOP",
+   "file": "18 - Florida Governor - Byron Donalds (R).jpg",
+   "drive": "1ggWxQioUBV6K2aTSZsIyRYdPjecOftMw"
+  },
+  "63159": {
+   "name": "David Jolly",
+   "race": "FL-GOV",
+   "party": "Dem",
+   "file": "18 - Florida Governor - David Jolly (D).jpg",
+   "drive": "1y4V9RhQbPQfUCzCPv_Z0Lwr0c9E-6DZ8"
+  },
+  "63367": {
+   "name": "Mike Collins",
+   "race": "GA-SEN",
+   "party": "GOP",
+   "file": "16 - Georgia Senate - Mike Collins (R).jpg",
+   "drive": "1T41p1ZqCBFoN6QXLa6Ry2IkFgxCOsAjd"
+  },
+  "64262": {
+   "name": "Dan Sullivan",
+   "race": "AK-SEN",
+   "party": "GOP",
+   "file": "67 - Alaska Senate - Dan Sullivan (R).jpg",
+   "drive": "1ZAMnY53XNDGrvpph_fA-Vv-CimDbUyLE"
+  },
+  "64608": {
+   "name": "Vicente Gonzalez",
+   "race": "TX-34",
+   "party": "Dem",
+   "file": "50 - Texas House (TX-34) - Vicente Gonzalez (D).jpg",
+   "drive": "1FVgt8VUN4YWbfMpWd_NVG5sa5rhKuQji"
+  },
+  "64827": {
+   "name": "Brian Fitzpatrick",
+   "race": "PA-1",
+   "party": "GOP",
+   "file": "09 - Pennsylvania House (PA-01) - Brian Fitzpatrick (R).jpg",
+   "drive": "1Fs1N4RCby01JuKR5kujcxi0kZLpHaSVV"
+  },
+  "65324": {
+   "name": "Roger Marshall",
+   "race": "KS-SEN",
+   "party": "GOP",
+   "file": "41 - Kansas Senate - Roger Marshall (R).jpg",
+   "drive": "1ylp9TeAlMzkniBEmsvhpAi718rJQ7p61"
+  },
+  "65866": {
+   "name": "Jon Ossoff",
+   "race": "GA-SEN",
+   "party": "Dem",
+   "file": "16 - Georgia Senate - Jon Ossoff (D).jpg",
+   "drive": "1wr_huMEc6h7IOdL9GdYubFsYj9dpSaAj"
+  },
+  "66573": {
+   "name": "Young Kim",
+   "race": "CA-40",
+   "party": "GOP",
+   "file": "63 - California House (CA-40) - Young Kim (R).jpg",
+   "drive": "14uRjA2i0uYRwIoYAlZ0oxsO9n9z-nrUH"
+  },
+  "66930": {
+   "name": "Elaine Luria",
+   "race": "VA-2",
+   "party": "Dem",
+   "file": "11 - Virginia House (VA-02) - Elaine Luria (D).jpg",
+   "drive": "1_UVihhuL5gTiDqINk6fBAzTCb4aHVHqK"
+  },
+  "67074": {
+   "name": "Ben McAdams",
+   "race": "UT-1",
+   "party": "Dem",
+   "file": "58 - Utah House (UT-01) - Ben McAdams (D).jpg",
+   "drive": "1_JlroyR3G7hXw6RgyvnGds9q-YBZ0TrC"
+  },
+  "67151": {
+   "name": "Abdul El-Sayed",
+   "race": "MI-SEN",
+   "party": "Dem",
+   "file": "26 - Michigan Senate - Abdul El-Sayed (D).jpg",
+   "drive": "1bha_vZXjsV9zZ7oFtnVj3cRsIfWRasfn"
+  },
+  "67975": {
+   "name": "Tom Tiffany",
+   "race": "WI-GOV",
+   "party": "GOP",
+   "file": "32 - Wisconsin Governor - Tom Tiffany (R).jpg",
+   "drive": "1wmHBn0eRa1VCngZhAzxHUYRTETaWyzXa"
+  },
+  "68744": {
+   "name": "Ashley Hinson",
+   "race": "IA-SEN",
+   "party": "GOP",
+   "file": "36 - Iowa Senate - Ashley Hinson (R).jpg",
+   "drive": "1HHpKuE8ptR6QIDagyTpGHQPNHZ-ypJiJ"
+  },
+  "69183": {
+   "name": "Derrick Van Orden",
+   "race": "WI-3",
+   "party": "GOP",
+   "file": "33 - Wisconsin House (WI-03) - Derrick Van Orden (R).jpg",
+   "drive": "1FYBe8_SDuAVKnm-VNIIcF6ArnLdvwTpk"
+  },
+  "69371": {
+   "name": "Casey Askar",
+   "race": "FL-22",
+   "party": "GOP",
+   "file": "20 - Florida House (FL-22) - Casey Askar (R).jpg",
+   "drive": "1cdomptXU9R4V-YUG1kFEW_JjvdeYpn5Y"
+  },
+  "69841": {
+   "name": "Monica De La Cruz",
+   "race": "TX-15",
+   "party": "GOP",
+   "file": "48 - Texas House (TX-15) - Monica De La Cruz (R).jpg",
+   "drive": "1SDhy66IL0Mx8hlQXachtpr5rzwewnjo4"
+  },
+  "69957": {
+   "name": "Jim Pillen",
+   "race": "NE-GOV",
+   "party": "GOP",
+   "file": "44 - Nebraska Governor - Jim Pillen (R).jpg",
+   "drive": "12yskzi4KDUXqndg3bQ5_r5BH79JBCJjQ"
+  },
+  "70139": {
+   "name": "Max Miller",
+   "race": "OH-7",
+   "party": "GOP",
+   "file": "25 - Ohio House (OH-07) - Max Miller (R).jpg",
+   "drive": "1bgaQ3dS4qJ62uEG4dEUi9rarHWxoIUZA"
+  },
+  "70156": {
+   "name": "Gabriel Vasquez",
+   "race": "NM-2",
+   "party": "Dem",
+   "file": "57 - New Mexico House (NM-02) - Gabe Vasquez (D).jpg",
+   "drive": "1zJkQ6Pa7g_OzlP2s_8ewpyrI-sVCLziO"
+  },
+  "70205": {
+   "name": "Tina Kotek",
+   "race": "OR-GOV",
+   "party": "Dem",
+   "file": "65 - Oregon Governor - Tina Kotek (D).jpg",
+   "drive": "1VTOxkdkU9pSDbasY9a9iEs3E3N91ub8h"
+  },
+  "70218": {
+   "name": "Christine Drazan",
+   "race": "OR-GOV",
+   "party": "GOP",
+   "file": "65 - Oregon Governor - Christine Drazan (R).jpg",
+   "drive": "1iJbMkSH01jdlhktiv9CM29i3S4y9VePZ"
+  },
+  "70238": {
+   "name": "Don Davis",
+   "race": "NC-1",
+   "party": "Dem",
+   "file": "13 - North Carolina House (NC-01) - Don Davis (D).jpg",
+   "drive": "1IeVvUc2akDT4InsOKnv0JpMvQNbYROnw"
+  },
+  "70409": {
+   "name": "Christina Bohannan",
+   "race": "IA-1",
+   "party": "Dem",
+   "file": "38 - Iowa House (IA-01) - Christina Bohannan (D).jpg",
+   "drive": "1O99JL0E4aKInOxOvvQTsonUOM9Nm0CZ8"
+  },
+  "70417": {
+   "name": "Zach Nunn",
+   "race": "IA-3",
+   "party": "GOP",
+   "file": "40 - Iowa House (IA-03) - Zach Nunn (R).jpg",
+   "drive": "18NaC8lNHZEMWLUsRx_vE4BgfyDHkjJva"
+  },
+  "70718": {
+   "name": "Mary Peltola",
+   "race": "AK-SEN",
+   "party": "Dem",
+   "file": "67 - Alaska Senate - Mary Peltola (D).jpg",
+   "drive": "1JP5N-ejGU_iXhKtGmwoDoN_Ic3ij5LWT"
+  },
+  "70779": {
+   "name": "Joseph Lombardo",
+   "race": "NV-GOV",
+   "party": "GOP",
+   "file": "59 - Nevada Governor - Joe Lombardo (R).jpg",
+   "drive": "1LDDHfOnk_m32YKiWYEKk8VS1KU-y317i"
+  },
+  "70830": {
+   "name": "Tom Barrett",
+   "race": "MI-7",
+   "party": "GOP",
+   "file": "29 - Michigan House (MI-07) - Tom Barrett (R).jpg",
+   "drive": "1AkJvs8otpYHZAO471vx-s9weuEOjiDDN"
+  },
+  "70896": {
+   "name": "Jen Kiggans",
+   "race": "VA-2",
+   "party": "GOP",
+   "file": "11 - Virginia House (VA-02) - Jen Kiggans (R).jpg",
+   "drive": "1PphG-wJ9GSRPNr3NIQY0xVDXbUxb0vVJ"
+  },
+  "70916": {
+   "name": "Annie Andrews",
+   "race": "SC-SEN",
+   "party": "Dem",
+   "file": "15 - South Carolina Senate - Annie Andrews (D).jpg",
+   "drive": "1htPSdkLpUqnS9PcxtUQHlGkYDsa8B2E-"
+  },
+  "70979": {
+   "name": "Juan Ciscomani",
+   "race": "AZ-6",
+   "party": "GOP",
+   "file": "55 - Arizona House (AZ-06) - Juan Ciscomani (R).jpg",
+   "drive": "1Br_S3EP0XQvhRFX9u_DAAoY1IzLWAVBh"
+  },
+  "70987": {
+   "name": "Katie Hobbs",
+   "race": "AZ-GOV",
+   "party": "Dem",
+   "file": "53 - Arizona Governor - Katie Hobbs (D).jpg",
+   "drive": "14cuHMp-DQzaTiQctp2egAFI6wQEO6Jmt"
+  },
+  "71012": {
+   "name": "Marie Gluesenkamp Perez",
+   "race": "WA-3",
+   "party": "Dem",
+   "file": "66 - Washington House (WA-03) - Marie Gluesenkamp Perez (D).jpg",
+   "drive": "1skU73NuCnnuDXcMwn895Dw9uA3hwNR47"
+  },
+  "71449": {
+   "name": "Mike Lawler",
+   "race": "NY-17",
+   "party": "GOP",
+   "file": "04 - New York House (NY-17) - Mike Lawler (R).jpg",
+   "drive": "1FKidc8F_pCBMf-t_DGoHvF23m4SGwOwj"
+  },
+  "71620": {
+   "name": "Jared Moskowitz",
+   "race": "FL-25",
+   "party": "Dem",
+   "file": "21 - Florida House (FL-25) - Jared Moskowitz (D).jpg",
+   "drive": "1TaK451zyLjcMtA3Fout9ur8yzrH0TU2G"
+  },
+  "71843": {
+   "name": "Vivek Ramaswamy",
+   "race": "OH-GOV",
+   "party": "GOP",
+   "file": "23 - Ohio Governor - Vivek Ramaswamy (R).jpg",
+   "drive": "1P1qmLaMUiSbtm5ukfJUikp3B9AR9HQ5l"
+  },
+  "100547": {
+   "name": "Rhett Marques",
+   "race": "AL-2",
+   "party": "GOP",
+   "file": "51 - Alabama House (AL-02) - Rhett Marques (R).jpg",
+   "drive": "1jPnE-cVNdhDmh_9FYd7e27muB5SIUlo4"
+  },
+  "101017": {
+   "name": "Jonathan Kreiss-Tomkins",
+   "race": "AK-GOV",
+   "party": "Dem",
+   "file": "68 - Alaska Governor - Jonathan Kreiss-Tomkins (D).jpg",
+   "drive": "1pYJ4AvPW7OjEqubGNMxhzWu8LYxUNFSP"
+  },
+  "101869": {
+   "name": "Amish Shah",
+   "race": "AZ-1",
+   "party": "Dem",
+   "file": "54 - Arizona House (AZ-01) - Amish Shah (D).jpg",
+   "drive": "1a89aunHaex5AUvHGU9eluofcqXFMPiXq"
+  },
+  "101892": {
+   "name": "JoAnna Mendoza",
+   "race": "AZ-6",
+   "party": "Dem",
+   "file": "55 - Arizona House (AZ-06) - JoAnna Mendoza (D).jpg",
+   "drive": "1EDtnCw6VHNnH3TzW2yt2-Fa4qYxkBsCc"
+  },
+  "104836": {
+   "name": "Gabe Evans",
+   "race": "CO-8",
+   "party": "GOP",
+   "file": "56 - Colorado House (CO-08) - Gabe Evans (R).jpg",
+   "drive": "1SGvc5ogjV5ziykYL-ylY99Ym0jBgDy0k"
+  },
+  "110141": {
+   "name": "Mike Beltran",
+   "race": "FL-14",
+   "party": "GOP",
+   "file": "19 - Florida House (FL-14) - Mike Beltran (R).jpg",
+   "drive": "1cgMRDvXWZ9nJ0hH_OhV6D-E5UbwYBOG5"
+  },
+  "110638": {
+   "name": "Keisha Bottoms",
+   "race": "GA-GOV",
+   "party": "Dem",
+   "file": "17 - Georgia Governor - Keisha Lance Bottoms (D).jpg",
+   "drive": "1dsc34uelbkUhzY4odFWfEzJPtkCtsFRN"
+  },
+  "114528": {
+   "name": "Rob Sand",
+   "race": "IA-GOV",
+   "party": "Dem",
+   "file": "37 - Iowa Governor - Rob Sand (D).jpg",
+   "drive": "11LlYX-fsSzrx68dd4BqMAHqd83KQGwuk"
+  },
+  "114676": {
+   "name": "Joe Mitchell",
+   "race": "IA-2",
+   "party": "GOP",
+   "file": "39 - Iowa House (IA-02) - Joe Mitchell (R).jpg",
+   "drive": "1n7JLP5hxUf1q4ReBacOmz5KUBACP7ksq"
+  },
+  "114681": {
+   "name": "Ty Masterson",
+   "race": "KS-GOV",
+   "party": "GOP",
+   "file": "42 - Kansas Governor - Ty Masterson (R).jpg",
+   "drive": "1GqG8hLJu883FVoiwAwpnlrbtFdra_E1w"
+  },
+  "114693": {
+   "name": "Lindsay James",
+   "race": "IA-2",
+   "party": "Dem",
+   "file": "39 - Iowa House (IA-02) - Lindsay James (D).jpg",
+   "drive": "13UiCpckSp6hY8PwU3bSWT5wERa8egFVN"
+  },
+  "114740": {
+   "name": "Sarah Trone Garriott",
+   "race": "IA-3",
+   "party": "Dem",
+   "file": "40 - Iowa House (IA-03) - Sarah Trone Garriott (D).jpg",
+   "drive": "16Gx2vBKMBK9fzlMBP2YbI3ED9lDbxcTg"
+  },
+  "114917": {
+   "name": "Josh Turek",
+   "race": "IA-SEN",
+   "party": "Dem",
+   "file": "36 - Iowa Senate - Josh Turek (D).jpg",
+   "drive": "1lVHJ1ftEoZYGUlBx_KXVsk2S9leLw9C_"
+  },
+  "115622": {
+   "name": "Ralph Alvarado",
+   "race": "KY-6",
+   "party": "GOP",
+   "file": "31 - Kentucky House (KY-06) - Ralph Alvarado (R).jpg",
+   "drive": "1uzlNc52zfuU9QNcy3k6o9fvxXlpM3Jv_"
+  },
+  "115817": {
+   "name": "Cindy Holscher",
+   "race": "KS-GOV",
+   "party": "Dem",
+   "file": "42 - Kansas Governor - Cindy Holscher (D).jpg",
+   "drive": "1NiqTBme0EJRWFlFkJuth5jejeqIP28B3"
+  },
+  "117036": {
+   "name": "William Lawrence",
+   "race": "MI-7",
+   "party": "Dem",
+   "file": "29 - Michigan House (MI-07) - William Lawrence (D).jpg",
+   "drive": "13t2VqcfXh9mDMc7Htqfi1jrORLWvUuAN"
+  },
+  "124461": {
+   "name": "Sean McCann",
+   "race": "MI-4",
+   "party": "Dem",
+   "file": "28 - Michigan House (MI-04) - Sean McCann (D).jpg",
+   "drive": "1ljc0woMG2TmCimShvUEMHaj8Yu8yTv-R"
+  },
+  "126236": {
+   "name": "Peggy Flanagan",
+   "race": "MN-SEN",
+   "party": "Dem",
+   "file": "34 - Minnesota Senate - Peggy Flanagan (D).jpg",
+   "drive": "1GQbyJMG8-UGUDkdP84bzRWDxEvf6CVV6"
+  },
+  "126628": {
+   "name": "Lisa Demuth",
+   "race": "MN-GOV",
+   "party": "GOP",
+   "file": "35 - Minnesota Governor - Lisa Demuth (R).jpg",
+   "drive": "1dMDgZYjFJLzw-SRu41dSbEUL-IkJjqnE"
+  },
+  "128670": {
+   "name": "Jocelyn Benson",
+   "race": "MI-GOV",
+   "party": "Dem",
+   "file": "27 - Michigan Governor - Jocelyn Benson (D).jpg",
+   "drive": "1gyXe5X8B3uAyboIOkZiyNIG1Pb0U0EB_"
+  },
+  "129088": {
+   "name": "Lynne Walz",
+   "race": "NE-GOV",
+   "party": "Dem",
+   "file": "44 - Nebraska Governor - Lynne Walz (D).jpg",
+   "drive": "1bXS83Gfb5nba0YCNpTCL-LXkC12l6tzM"
+  },
+  "131963": {
+   "name": "Aaron Ford",
+   "race": "NV-GOV",
+   "party": "Dem",
+   "file": "59 - Nevada Governor - Aaron Ford (D).jpg",
+   "drive": "1GRem4jbjvMLkXuVb4tR_t8nvaG81K0uW"
+  },
+  "134067": {
+   "name": "Gregory Cunningham",
+   "race": "NM-2",
+   "party": "GOP",
+   "file": "57 - New Mexico House (NM-02) - Greg Cunningham (R).jpg",
+   "drive": "1uCfCpNpag2bbqKx5UIvdtNjabFYQ17FK"
+  },
+  "136989": {
+   "name": "Jennifer Balkcom",
+   "race": "NC-11",
+   "party": "GOP",
+   "file": "14 - North Carolina House (NC-11) - Jennifer Balkcom (R).jpg",
+   "drive": "1qL83b4GiZTlhTiugYTiFuawYC5PmwH0E"
+  },
+  "139415": {
+   "name": "Jon Husted",
+   "race": "OH-SEN",
+   "party": "GOP",
+   "file": "22 - Ohio Senate - Jon Husted (R).jpg",
+   "drive": "1cu_jsfVqScKOlBC9tPieMt_j9QeY5KRz"
+  },
+  "142329": {
+   "name": "Derek Merrin",
+   "race": "OH-9",
+   "party": "GOP",
+   "file": "24 - Ohio House (OH-09) - Derek Merrin (R).jpg",
+   "drive": "11Ac2dvXRN3oMLcIgDBx_lHzzYZKVqwJi"
+  },
+  "145268": {
+   "name": "Ryan Mackenzie",
+   "race": "PA-7",
+   "party": "GOP",
+   "file": "07 - Pennsylvania House (PA-07) - Ryan Mackenzie (R).jpg",
+   "drive": "1JmOqxerYFCXJsmqNpxSq9a5UXtA67S7G"
+  },
+  "146242": {
+   "name": "Bob Brooks",
+   "race": "PA-7",
+   "party": "Dem",
+   "file": "07 - Pennsylvania House (PA-07) - Bob Brooks (D).jpg",
+   "drive": "1IY2IRbqOf_Otw4D8wqx8OfSyizj31wb4"
+  },
+  "151238": {
+   "name": "John Braun",
+   "race": "WA-3",
+   "party": "GOP",
+   "file": "66 - Washington House (WA-03) - John Braun (R).jpg",
+   "drive": "1BXnWO4dXDxxJ-2JaXaNLa_f0cF57nrAC"
+  },
+  "152027": {
+   "name": "Gina Hinojosa",
+   "race": "TX-GOV",
+   "party": "Dem",
+   "file": "47 - Texas Governor - Gina Hinojosa (D).jpg",
+   "drive": "1XgK7pi8NarKzUIGtBIJacSgrPYiCn7jM"
+  },
+  "153037": {
+   "name": "James Talarico",
+   "race": "TX-SEN",
+   "party": "Dem",
+   "file": "46 - Texas Senate - James Talarico (D).jpg",
+   "drive": "1h7Rn4KwOBj-crpN4NK4WeV70DgvMfOGb"
+  },
+  "156426": {
+   "name": "David Crowley",
+   "race": "WI-GOV",
+   "party": "Dem",
+   "file": "32 - Wisconsin Governor - David Crowley (D).jpg",
+   "drive": "1Q-7rERWzPnYrbzhzCWeaudJT_8lx5I77"
+  },
+  "159027": {
+   "name": "Amy Klobuchar",
+   "race": "MN-GOV",
+   "party": "Dem",
+   "file": "35 - Minnesota Governor - Amy Klobuchar (D).jpg",
+   "drive": "1N88qBdCXfH_s6uuDUSnEYEIj8UQiTabb"
+  },
+  "160568": {
+   "name": "Laurie Buckhout",
+   "race": "NC-1",
+   "party": "GOP",
+   "file": "13 - North Carolina House (NC-01) - Laurie Buckhout (R).jpg",
+   "drive": "1bHIt3-oNUPNr02tBWzqtCiJGQL0uN1Tt"
+  },
+  "160906": {
+   "name": "Shomari Figures",
+   "race": "AL-2",
+   "party": "Dem",
+   "file": "51 - Alabama House (AL-02) - Shomari Figures (D).jpg",
+   "drive": "105rsBavDdsgO9ZpoHNjRTtHZS74LC7DG"
+  },
+  "161765": {
+   "name": "Rob Bresnahan Jr.",
+   "race": "PA-8",
+   "party": "GOP",
+   "file": "06 - Pennsylvania House (PA-08) - Rob Bresnahan (R).jpg",
+   "drive": "193oOBkUjoq1KXz3CjC4riZ-wyoz8r31W"
+  },
+  "161767": {
+   "name": "Janelle Stelson",
+   "race": "PA-10",
+   "party": "Dem",
+   "file": "08 - Pennsylvania House (PA-10) - Janelle Stelson (D).jpg",
+   "drive": "1P8QMdGOK_Z01j-LeVeBjpqUK1LtZVFSP"
+  },
+  "164328": {
+   "name": "Manny Rutinel",
+   "race": "CO-8",
+   "party": "Dem",
+   "file": "56 - Colorado House (CO-08) - Manny Rutinel (D).jpg",
+   "drive": "1glcxKbY1qZcQFoEzSciCqi2sM1ZZKS1l"
+  },
+  "164787": {
+   "name": "Rebecca Cooke",
+   "race": "WI-3",
+   "party": "Dem",
+   "file": "33 - Wisconsin House (WI-03) - Rebecca Cooke (D).jpg",
+   "drive": "1lWAsTJl8EUguvtHznRVdcU5-Ca3WbHey"
+  },
+  "166570": {
+   "name": "John James",
+   "race": "MI-GOV",
+   "party": "GOP",
+   "file": "27 - Michigan Governor - John James (R).jpg",
+   "drive": "1vysMrB7ZCZinLs8Q9xsiq9vRb6Cl8D7q"
+  },
+  "168785": {
+   "name": "Shannon Taylor",
+   "race": "VA-1",
+   "party": "Dem",
+   "file": "10 - Virginia House (VA-01) - Shannon Taylor (D).jpg",
+   "drive": "1bVQ5ujxsaZ4kNqgnOYtH0Hzck4deC9GX"
+  },
+  "169297": {
+   "name": "Michael Whatley",
+   "race": "NC-SEN",
+   "party": "GOP",
+   "file": "12 - North Carolina Senate - Michael Whatley (R).jpg",
+   "drive": "1tiyJexq8NPmiGXP2JeEZf5zYTf5Ev79U"
+  },
+  "169343": {
+   "name": "Jamie Ager",
+   "race": "NC-11",
+   "party": "Dem",
+   "file": "14 - North Carolina House (NC-11) - Jamie Ager (D).jpg",
+   "drive": "1rW2dYPU6wvMMRUbURhpe18fu9vHqhyp4"
+  },
+  "169724": {
+   "name": "Bobby Pulido",
+   "race": "TX-15",
+   "party": "Dem",
+   "file": "48 - Texas House (TX-15) - Bobby Pulido (D).jpg",
+   "drive": "1Jpe6ggaTzwAR2kEHPxwiCqSjrwlNfCfm"
+  },
+  "169753": {
+   "name": "Johnny Garcia",
+   "race": "TX-35",
+   "party": "Dem",
+   "file": "49 - Texas House (TX-35) - Johnny Garcia (D).jpg",
+   "drive": "1m0SnVeJM2U80rSStMe_w6fn_paiwc3DW"
+  },
+  "169796": {
+   "name": "Zach Dembo",
+   "race": "KY-6",
+   "party": "Dem",
+   "file": "31 - Kentucky House (KY-06) - Zach Dembo (D).jpg",
+   "drive": "1UqnCrd08rflgE6gDol455ey49S6Ypdo0"
+  },
+  "170051": {
+   "name": "Eric Flores",
+   "race": "TX-34",
+   "party": "GOP",
+   "file": "50 - Texas House (TX-34) - Eric Flores (R).jpg",
+   "drive": "1TSYqRDrLcgdI6ixj_5y8utqAry4RtoGy"
+  },
+  "170052": {
+   "name": "Carlos De La Cruz",
+   "race": "TX-35",
+   "party": "GOP",
+   "file": "49 - Texas House (TX-35) - Carlos De La Cruz (R).jpg",
+   "drive": "1F_8DFOXOcM-Ki1i661_vUpBBRAOYRA2G"
+  },
+  "170750": {
+   "name": "Amy Acton",
+   "race": "OH-GOV",
+   "party": "Dem",
+   "file": "23 - Ohio Governor - Amy Acton (D).jpg",
+   "drive": "1qSccBB-BOcgxa2HYouDbD1Gzw_KuB9ig"
+  },
+  "170928": {
+   "name": "Brian Poindexter",
+   "race": "OH-7",
+   "party": "Dem",
+   "file": "25 - Ohio House (OH-07) - Brian Poindexter (D).jpg",
+   "drive": "1dv8HVr53wwasKssxBNJvgS71uerKLhRn"
+  },
+  "171159": {
+   "name": "Denise Powell",
+   "race": "NE-2",
+   "party": "Dem",
+   "file": "45 - Nebraska House (NE-02) - Denise Powell (D).jpg",
+   "drive": "14v5LhdeaPZivfBVRaIKiSHoSKiLDdR1_"
+  },
+  "171221": {
+   "name": "Bob Harvie",
+   "race": "PA-1",
+   "party": "Dem",
+   "file": "09 - Pennsylvania House (PA-01) - Bob Harvie (D).jpg",
+   "drive": "1qlRiY5Kje1QQaIkkiALgon8ZsLnqjbUf"
+  },
+  "171223": {
+   "name": "Paige Cognetti",
+   "race": "PA-8",
+   "party": "Dem",
+   "file": "06 - Pennsylvania House (PA-08) - Paige Cognetti (D).jpg",
+   "drive": "1ozs-eGF9X8Sw_0ZiX59i4ua21h_GFxlV"
+  },
+  "171426": {
+   "name": "Rick Jackson",
+   "race": "GA-GOV",
+   "party": "GOP",
+   "file": "17 - Georgia Governor - Rick Jackson (R).jpg",
+   "drive": "1t0COvXtGAwmIliPiEyVvOxpW27qLWeOL"
+  },
+  "171715": {
+   "name": "Sam Forstag",
+   "race": "MT-1",
+   "party": "Dem",
+   "file": "52 - Montana House (MT-01) - Sam Forstag (D).jpg",
+   "drive": "1gtXqCzSP3VfCFU9RLU55CPvKaKzyctPp"
+  },
+  "171717": {
+   "name": "Aaron Flint",
+   "race": "MT-1",
+   "party": "GOP",
+   "file": "52 - Montana House (MT-01) - Aaron Flint (R).jpg",
+   "drive": "1UsULNWS8rpFNwRI_o5cScN-1Zn2Te2io"
+  },
+  "172149": {
+   "name": "Rebecca Bennett",
+   "race": "NJ-7",
+   "party": "Dem",
+   "file": "05 - New Jersey House (NJ-07) - Rebecca Bennett (D).jpg",
+   "drive": "10T3tOmrFAJ8k-LifBe7ljihM8Dv3fgZG"
+  },
+  "172439": {
+   "name": "Steve Hilton",
+   "race": "CA-GOV",
+   "party": "GOP",
+   "file": "64 - California Governor - Steve Hilton (R).jpg",
+   "drive": "1JDruBSLDpkm1lK-tuOT4GADtnLH0P5mI"
+  },
+  "172562": {
+   "name": "Randy Villegas",
+   "race": "CA-22",
+   "party": "Dem",
+   "file": "60 - California House (CA-22) - Randy Villegas (D).jpg",
+   "drive": "14M6iAUCCHOey7hPz_9U4xABtGXqYgaUG"
+  },
+  "172645": {
+   "name": "Jim Desmond",
+   "race": "CA-48",
+   "party": "GOP",
+   "file": "61 - California House (CA-48) - Jim Desmond (R).jpg",
+   "drive": "1nUJ7-p6y0LaYNIoXhyrLQbCSJTaki_dE"
+  },
+  "172653": {
+   "name": "Marni von Wilpert",
+   "race": "CA-48",
+   "party": "Dem",
+   "file": "61 - California House (CA-48) - Marni von Wilpert (D).jpg",
+   "drive": "1AQRNTgxTTRrQpOAt52eUosVc6cQ-ToGA"
+  },
+  "173748": {
+   "name": "Zach Lahn",
+   "race": "IA-GOV",
+   "party": "GOP",
+   "file": "37 - Iowa Governor - Zach Lahn (R).jpg",
+   "drive": "1nuDiSh-2ZtliD2KAXGbZqH7wdimnPAzB"
+  },
+  "174146": {
+   "name": "Matthew Dunlap",
+   "race": "ME-2",
+   "party": "Dem",
+   "file": "02 - Maine House (ME-02) - Matthew Dunlap (D).jpg",
+   "drive": "147JHFbYcErNgmV5Oztb7N03sREH6r16B"
+  },
+  "174325": {
+   "name": "Cait Conley",
+   "race": "NY-17",
+   "party": "Dem",
+   "file": "04 - New York House (NY-17) - Cait Conley (D).jpg",
+   "drive": "1q_jhChAGKTagLz2rhBPG8OaVPiB1j6aO"
+  },
+  "174358": {
+   "name": "Riley Owen",
+   "race": "UT-1",
+   "party": "GOP",
+   "file": "58 - Utah House (UT-01) - Riley Owen (R).jpg",
+   "drive": "1nA2H6gH31NXDUPmnKjzAFede78B6Flgb"
+  },
+  "174913": {
+   "name": "Thomas Feely IV",
+   "race": "AZ-1",
+   "party": "GOP",
+   "file": "54 - Arizona House (AZ-01) - Jay Feely (R).jpg",
+   "drive": "11BePiY-Zr76zqw-1JpP2OsOgQr-zd3QY"
+  },
+  "175051": {
+   "name": "Jay Bowman",
+   "race": "KY-6",
+   "party": "Ind",
+   "file": "31 - Kentucky KY-06 U.S. House - Jay J Bowman (Independent).jpg",
+   "drive": "19-bT16mDpDG4DdSWCWr7lP6FBC6vlSFd"
+  },
+  "175201": {
+   "name": "Christina Hines",
+   "race": "MI-10",
+   "party": "Dem",
+   "file": "30 - Michigan House (MI-10) - Christina Hines (D).jpg",
+   "drive": "10VlWg1aCHL6haWm1QJk89IeUE4N1J-n6"
+  },
+  "175202": {
+   "name": "Michael Bouchard",
+   "race": "MI-10",
+   "party": "GOP",
+   "file": "30 - Michigan House (MI-10) - Michael Bouchard Jr. (R).jpg",
+   "drive": "1jiVvMMjY32E99dHLfJUSu0BxbUGGc6Vj"
+  },
+  "175305": {
+   "name": "Adam Hamilton",
+   "race": "KS-SEN",
+   "party": "Dem",
+   "file": "41 - Kansas Senate - Adam Hamilton (D).jpg",
+   "drive": "1ZE7ow4v6AAPefp6uGMZNAynrhhIgCgXA"
+  },
+  "175847": {
+   "name": "Pia Dandiya",
+   "race": "FL-22",
+   "party": "Dem",
+   "file": "20 - Florida House (FL-22) - Pia Dandiya (D).jpg",
+   "drive": "1uHH0tJ7WYleuP-ygi79MtOBfURqBHR2h"
+  },
+  "175868": {
+   "name": "Scott Singer",
+   "race": "FL-25",
+   "party": "GOP",
+   "file": "21 - Florida House (FL-25) - Scott Singer (R).jpg",
+   "drive": "1o1AkOM71Vi3B98200FLqr9HjeAXOTXqy"
+  },
+  "176348": {
+   "name": "John Sununu",
+   "race": "NH-SEN",
+   "party": "GOP",
+   "file": "03 - New Hampshire Senate - John Sununu (R).jpg",
+   "drive": "1ixeWck3K0uR94PBzguO_NAyHx8acsHGE"
+  },
+  "177166": {
+   "name": "Michele Tafoya",
+   "race": "MN-SEN",
+   "party": "GOP",
+   "file": "34 - Minnesota Senate - Michele Tafoya (R).jpg",
+   "drive": "1Cik5CmNowcJxeETsJBW_UhM8IBbCzgFn"
+  },
+  "177699": {
+   "name": "Dave Bronson",
+   "race": "AK-GOV",
+   "party": "GOP",
+   "file": "68 - Alaska Governor - Dave Bronson (R).jpg",
+   "drive": "1yizjyjtTjQnr5LG88u2tfv6xycnYGvJ5"
+  },
+  "177706": {
+   "name": "Treg Taylor",
+   "race": "AK-GOV",
+   "party": "GOP",
+   "file": "68 - Alaska Governor - Treg Taylor (R).jpg",
+   "drive": "1ZYEDJnpior8fAyT-8mMv7z6a--lybL5C"
+  },
+  "177707": {
+   "name": "Bernadette Wilson",
+   "race": "AK-GOV",
+   "party": "GOP",
+   "file": "68 - Alaska Governor - Bernadette Wilson (R).jpg",
+   "drive": "1gcGJl8Pf85zKj9YiK_MRcoCGpJ0jzwXh"
+  },
+  "177716": {
+   "name": "Daniel Sullivan Jr.",
+   "race": "AK-SEN",
+   "party": "UDC",
+   "file": "67 - Alaska Senate - Daniel J. Sullivan (Independent).jpg",
+   "drive": "147EKWnf0mokzLkCY_maA22xLbg8BY6lA"
+  },
+  "177925": {
+   "name": "Danielle Ford",
+   "race": "NV-GOV",
+   "party": "NPA",
+   "file": "59 - Nevada Governor - Danielle Ford (No Political Party).jpg",
+   "drive": "1-dVi9kg8dcJMaXQw9p2d-MjJhDDEOmWC"
+  },
+  "178208": {
+   "name": "Darline Graham",
+   "race": "SC-SEN",
+   "party": "GOP",
+   "file": "15 - South Carolina Senate - Darline Graham (R).jpg",
+   "drive": "1MXe44fFqNEsKpO-aIo7HzZUMJdTQxHFc"
+  },
+  "178284": {
+   "name": "Michael Bridgford",
+   "race": "IA-1",
+   "party": "NPA",
+   "file": "38 - Iowa House (IA-01) - Michael Bridgford (Independent).jpg",
+   "drive": "1ba2ej1K8NMpt7RTz4dhl0f6NP0fTJ3b2"
+  },
+  "178285": {
+   "name": "Dave Bushaw",
+   "race": "IA-2",
+   "party": "NPA",
+   "file": "39 - IA-02 U.S. House - Dave Bushaw (No Party).jpg",
+   "drive": "1_3yPvapQv8KFVA5btma57XziqgwPv3SF"
+  },
+  "178829": {
+   "name": "Alexander Kent",
+   "race": "WI-3",
+   "party": "Ind",
+   "file": "33 - WI-03 U.S. House - Alexander Valiensi Kent (Independent).jpg",
+   "drive": "18hrPZsVK-IEVXzqhzTRl2TQFVuh1H47t"
+  },
+  "178830": {
+   "name": "Rustin Provance",
+   "race": "WI-3",
+   "party": "Ind",
+   "file": "33 - WI-03 U.S. House - Rustin Provance (Independent).jpg",
+   "drive": "1G8emseSjuxzoNShV60HXXkMj15QEKifT"
+  },
+  "178989": {
+   "name": "Dean Abrams",
+   "race": "FL-GOV",
+   "party": "NPA",
+   "file": "18 - Florida Governor - Dean Ocean Abrams (No Party Affiliation).jpg",
+   "drive": "130jvv9f36V0aguabfCWlg4VdV3MNsJEN"
+  },
+  "178990": {
+   "name": "Charles Burkett",
+   "race": "FL-GOV",
+   "party": "NPA",
+   "file": "18 - Florida Governor - Charles Burkett (No Party Affiliation).jpg",
+   "drive": "1A-fF4nzvem37SqArvPxddLdEw_9-1pZ0"
+  },
+  "178991": {
+   "name": "Jeffrey Datto",
+   "race": "FL-GOV",
+   "party": "NPA",
+   "file": "18 - Florida Governor - Jeffrey Peter Dr. Jeff Datto (No Party Affiliation).jpg",
+   "drive": "1OIpaxLK81RUIeE043sQuHXAZKD2J_0dH"
+  },
+  "178995": {
+   "name": "Frank Russo",
+   "race": "FL-GOV",
+   "party": "NPA",
+   "file": "18 - Florida Governor - Frank J. Russo (No Party Affiliation).jpg",
+   "drive": "1ioCb6Hl9VRSegM2q0fTvQW3QKApzUghO"
+  },
+  "179110": {
+   "name": "Greg Levy",
+   "race": "OH-SEN",
+   "party": "Ind",
+   "file": "22 - Ohio Senate - Greg Levy (Independent).jpg",
+   "drive": "1PMMroa_O8OkrmAlp7BGKIGlc3bJbA3qO"
+  },
+  "179319": {
+   "name": "J. Baker",
+   "race": "VA-2",
+   "party": "Ind",
+   "file": "11 - Virginia VA-02 U.S. House - J. Matt Baker (Independent).jpg",
+   "drive": "1tURnV-YcHrXH9L1x1Lf31kraecJdFITZ"
+  },
+  "179333": {
+   "name": "Geral Staten",
+   "race": "VA-2",
+   "party": "Ind",
+   "file": "11 - Virginia VA-02 U.S. House - Geral D. Bishop Staten (Independent).jpg",
+   "drive": "15MIowfzRcIAD_NJ8CpY6Raa0YXvzmdZU"
+  },
+  "179588": {
+   "name": "Marisa Simonetti",
+   "race": "MN-SEN",
+   "party": "Ind",
+   "file": "34 - Minnesota U.S. Senate - Marisa Simonetti (Independent).jpg",
+   "drive": "1Vb8cqgOyXA1zMPhPKjFkujEuVfKoLTvw"
+  }
+ }
+}
