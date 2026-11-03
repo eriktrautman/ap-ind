@@ -126,6 +126,19 @@ test("publishing the ticker: the crawl order and its bundles reach the file the 
   assert.deepEqual(live2.pinnedRaceIds, ["90001", "90002"]);
   assert.equal(live2.idleText, text, "the idle text was not in the publish and did not change");
 });
+test("each output says who published it: a publish stamps only its own, and nobody can write a stamp", async (t) => {
+  if (localOnly(t)) return;
+  const publisher = await signIn(S.base, PASSWORDS.publisher), producer = await signIn(S.base, PASSWORDS.producer);
+  const before = (await get(url("/api/producer"))).json;
+  const screen = await put(url("/api/producer"), { screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: "green" }, stamps: { screenB: { at: "2000-01-01T00:00:00Z", by: "Forged" } } }, { cookie: publisher });
+  assert.ok(screen.json.stamps.screenA.by, "the screen names its publisher");
+  assert.deepEqual(screen.json.stamps.screenB, before.stamps?.screenB, "a stamp sent in cannot stick");
+  assert.deepEqual(screen.json.stamps.ticker, before.stamps?.ticker, "the ticker's stamp did not move");
+  const ticker = await put(url("/api/producer"), { idleText: "stamp test" }, { cookie: producer });
+  assert.notEqual(ticker.json.stamps.ticker.by, screen.json.stamps.screenA.by, "a different person");
+  assert.deepEqual(ticker.json.stamps.screenA, screen.json.stamps.screenA, "the screen keeps who published it");
+  assert.deepEqual((await get(url("/data/producer.json"))).json.stamps, ticker.json.stamps, "readers get them too");
+});
 test("bundles: the shipped library is served, a publisher saves it, nobody signed out can, and editing it leaves the live ticker alone", async (t) => {
   if (localOnly(t)) return;
   const publisher = await signIn(S.base, PASSWORDS.publisher);

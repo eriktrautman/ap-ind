@@ -119,6 +119,8 @@ $("acctperms").addEventListener("click", () => { acctOpen(false); $("permslink")
 document.addEventListener("click", (e) => { if (!e.target.closest("#account")) acctOpen(false); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") acctOpen(false); });
 const byWhom = (s) => s?.updatedBy ? ` by ${esc(s.updatedBy)}` : "";
+/** Who published one output and when. A publish from before outputs had their own stamps says nothing rather than guess. */
+const publishedLine = (block) => { const s = live?.stamps?.[block]; return s ? `${esc(fmtTime(s.at))} (${esc(ago(s.at))})${s.by ? ` by <b>${esc(s.by)}</b>` : ""}` : `<span class="muted">not recorded: published before this was tracked</span>`; };
 
 // ---------- data ----------
 let status = null, settings = null, index = null;
@@ -371,7 +373,7 @@ function renderLive() {
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
       <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span></td></tr>
-      <tr><td class="k">published</td><td>${live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})${byWhom(live)}` : "never: the shipped defaults are live"}</td></tr>
+      <tr><td class="k">published</td><td>${live.updatedAt ? publishedLine("ticker") : "never: the shipped defaults are live"}</td></tr>
     </table>`;
   }
   renderLiveOnly();
@@ -447,7 +449,7 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every background and opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><div class="warnline bad"><b>The shared bundle library changes for everyone:</b> Slate, Eastern, Central, Mountain, Pacific and Alaska Races go back to how they shipped. Bundles people built stay.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every background and opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div>${canPublish() ? `<div class="warnline bad"><b>The shared bundle library changes for everyone:</b> Slate, Eastern, Central, Mountain, Pacific and Alaska Races go back to how they shipped. Bundles people built stay.</div>` : ""}<p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   // The shipped bundles go back as they shipped, in the shared library too; bundles people built stay.
   const built = draft.bundles.filter((b) => !DEFAULTS.bundles.some((d) => d.id === b.id));
@@ -645,10 +647,16 @@ function selectBundle(id) { bundleSel = id; try { localStorage.setItem("studio.b
 // reach the air only as the copy Publish puts in the published state.
 let bundleBase = null, bundleMeta = null, bundleSaving = false, bundleError = null, bundleTimer = null, hadLocalBundles = false;
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const bundlesDirty = () => !!bundleBase && mayPublish() && !sameJson(draft.bundles, bundleBase);
+const bundlesDirty = () => !!bundleBase && canPublish() && !sameJson(draft.bundles, bundleBase);
 function queueBundleSave() { clearTimeout(bundleTimer); if (bundlesDirty()) bundleTimer = setTimeout(saveBundles, 300); renderBundleStatus(); }
 function renderBundleStatus() {
   const el = $("bundlestatus"); if (!el) return;
+  if (!canPublish()) {   // a laptop that can't push, or a read-only sign-in: this page only reads the library
+    const site = runtime?.production?.origin;
+    el.className = "small muted";
+    el.innerHTML = mayPublish() && site ? `· read only on this laptop. Edit bundles at <a href="${esc(site)}/studio" target="_blank" rel="noopener">${esc(site.replace(/^https?:\/\//, ""))}</a>` : "· read only";
+    return;
+  }
   el.className = `small ${bundleError ? "bundlestatus bad" : "muted"}`;
   el.textContent = bundleError ? `Not saved to the shared library, trying again: ${bundleError}`
     : bundlesDirty() ? "Saving…"
@@ -669,7 +677,11 @@ function applyBundles(doc) {
 /** Once per browser: bundles built here before the library was shared join it, so nothing is lost. */
 async function joinLibrary(doc) {
   const KEY = "studio.bundlesJoined";
-  if (localStorage.getItem(KEY) || !mayPublish()) return doc;
+  if (localStorage.getItem(KEY)) return doc;
+  if (!canPublish()) {   // can't join from here: keep a copy in this browser, since the library is about to replace what this page shows
+    try { if (hadLocalBundles && !localStorage.getItem("studio.bundlesBeforeLibrary")) localStorage.setItem("studio.bundlesBeforeLibrary", JSON.stringify(draft.bundles)); } catch {}
+    return doc;
+  }
   let out = doc;
   if (hadLocalBundles) {
     const merged = mergeIntoLibrary(doc.bundles, draft.bundles, newId).bundles;
@@ -710,6 +722,7 @@ async function saveBundles() {
 }
 /** Bundles the live crawl uses that the library has lost or holds differently, each one button away, without Pull replacing the crawl order. */
 function renderLiveOnly() {
+  if (!canPublish()) { $("liveonly").innerHTML = ""; return; }
   const on = live ? airingBundles(live) : [];
   const missing = on.filter((b) => !draft.bundles.some((x) => x.id === b.id));
   const differs = on.filter((b) => { const m = draft.bundles.find((x) => x.id === b.id); return m && !sameJson(m, b); });
@@ -728,6 +741,7 @@ $("liveonly").addEventListener("click", async (e) => {
 window.addEventListener("storage", (e) => { if (e.key !== "studio.local" || !e.newValue) return; const d = readLocal(); if (d) { draft = d; renderAll(); cards.broadcast(draft); } });
 function renderBundles() {
   renderLiveOnly();
+  $("bundlesbox").classList.toggle("bundlesro", !canPublish());
   const box = $("bundles");
   if (box.querySelector(".row.dragging") || box.querySelector("#bundleopts[open]")) return;   // mid-action: the next redraw catches up
   $("bundlecount").textContent = draft.bundles.length ? `${draft.bundles.length}` : "";
@@ -737,7 +751,7 @@ function renderBundles() {
   const c = activeBundle();
   const uses = c ? draft.tickerItems.filter((it) => it.t === "bundle" && it.id === c.id).length : 0;
   box.innerHTML = `<div class="plbar bundlebar">
-      <label>Bundle <select id="bundlesel">${draft.bundles.map((x) => `<option value="${esc(x.id)}" ${x.id === c?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}<option value="${BUNDLE_ADD}">+ Add bundle…</option></select></label>
+      <label>Bundle <select id="bundlesel">${draft.bundles.map((x) => `<option value="${esc(x.id)}" ${x.id === c?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}${canPublish() ? `<option value="${BUNDLE_ADD}">+ Add bundle…</option>` : ""}</select></label>
       ${c ? `<button class="addref${c.items.length && !uses ? " ready" : ""}" type="button" title="Place this bundle at the end of the crawl order">Add to crawl</button>` : ""}
       <button class="newbundlebtn" type="button" title="A new, empty bundle">+ Add bundle…</button>
       ${c ? `<details class="ploptions" id="bundleopts"><summary title="Rename or delete this bundle">Additional Options</summary><div class="plmenu">
@@ -995,7 +1009,10 @@ function screenLiveTable(key) {
   const s = live?.[key];
   if (!s) return `<div class="warnline bad">${liveError ? `Cannot read the live screen: ${esc(liveError)}` : "Reading the live screen…"}</div>`;
   const chart = CHARTS.find((c) => c.id === s.chart);
-  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span>`], ["published", live.updatedAt ? `${esc(fmtTime(live.updatedAt))} (${esc(ago(live.updatedAt))})` : "never: the shipped default is published"]];
+  const rows = [["chart", `${esc(s.chart)} ${esc(chart?.name ?? "")}`], ...(s.race ? [["race", `<span class="lab">${esc(s.race)}</span>`]] : []), ...(s.state ? [["state", esc(s.state)]] : []), ...Object.entries(s.params).map(([k, v]) => [k, esc(v)]), ["background", `${esc(BG_OPTIONS.find(([v]) => v === s.bg)?.[1] ?? s.bg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span>`]];
+  // An image is named by what people called it and who uploaded it, not its file.
+  if (s.params.image) { const row = rows.find(([k]) => k === "image"), x = library.images.find((i) => i.file === s.params.image); if (row) row[1] = x ? `<b>${esc(x.name || x.file)}</b>${x.uploadedBy ? ` <span class="muted">· uploaded by ${esc(x.uploadedBy)}</span>` : ""}` : `${esc(s.params.image)} <span class="muted">· not in the Image Library</span>`; }
+  rows.push(["published", live.updatedAt ? publishedLine(key) : "never: the shipped default is live"]);
   return `<table class="params">${rows.map(([k, v]) => `<tr><td class="k">${esc(k)}</td><td>${v}</td></tr>`).join("")}</table>`;
 }
 function buildScreen(key) {

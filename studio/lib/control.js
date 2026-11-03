@@ -352,6 +352,7 @@ export function normalize(raw) {
     featuredRaceIds: Array.isArray(r.featuredRaceIds) ? uniqIds(r.featuredRaceIds, LIMITS.featured) : [...DEFAULTS.featuredRaceIds],
     keyRaceIds: uniqIds(r.keyRaceIds, LIMITS.key),
     contextLines: context,
+    stamps: Object.fromEntries(["ticker", ...SCREENS].flatMap((k) => { const s = r.stamps?.[k]; return typeof s?.at === "string" ? [[k, { at: s.at, by: typeof s.by === "string" ? s.by : null }]] : []; })),   // who published each of the three outputs, and when; only the server writes it
     screenA: screenDef(r.screenA, DEFAULTS.screenA),
     screenB: screenDef(r.screenB, DEFAULTS.screenB),
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : null,

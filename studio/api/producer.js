@@ -7,7 +7,7 @@
 // featured races or chart lists. Every field is validated and capped by normalize().
 import { requirePublisher, readBody } from "../lib/auth.js";
 import { readProducer, writeProducer, defaultProducer } from "../lib/store.js";
-import { normalize, DEFAULTS } from "../lib/control.js";
+import { normalize, DEFAULTS, TICKER_FIELDS } from "../lib/control.js";
 
 const FIELDS = Object.keys(DEFAULTS).filter((k) => k !== "updatedAt" && k !== "updatedBy");
 
@@ -34,7 +34,12 @@ export default async function handler(req, res) {
       // An older client publishes only the ticker races and manual items, never the sequence: let normalize() rebuild
       // the sequence from those (merged with what is stored), instead of keeping the stored sequence over them.
       if (!("tickerItems" in body) && ("pinnedRaceIds" in body || "manualItems" in body)) delete merged.tickerItems;
-      const state = normalize({ ...merged, updatedAt: new Date().toISOString(), updatedBy: who.name });
+      // updatedAt and updatedBy say who wrote the file last. Each output keeps its own stamp, since one publish changes only one of them.
+      const now = new Date().toISOString();
+      const stamps = { ...prev.stamps };
+      if (TICKER_FIELDS.some((k) => k in body)) stamps.ticker = { at: now, by: who.name };
+      for (const k of ["screenA", "screenB"]) if (k in body) stamps[k] = { at: now, by: who.name };
+      const state = normalize({ ...merged, stamps, updatedAt: now, updatedBy: who.name });
       await writeProducer(state);
       res.status(200).json(state);
     } catch (e) {
