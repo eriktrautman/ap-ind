@@ -104,6 +104,11 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .liveparams .warnline { background: #fdf0f1; border-left: 4px solid var(--bad); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
 .tickerurl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 6px 0 10px; font-size: 12.5px; }
 .tickerurl .k { color: var(--muted); cursor: help; }
+.tickerurl .urlsize { margin-left: auto; flex: none; padding: 1px 7px; border-radius: 4px; font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; cursor: help; }
+.tickerurl .urlsize.warn { background: #fdf6ea; color: #9a5b00; border: 1px solid #f1d9a8; }
+.tickerurl .urlsize.bad { background: #fdf0f1; color: #8b1a1a; border: 1px solid #f0c3c7; }
+.tickerurl .urlsize[hidden] { display: none; }
+.tickerurl:has(.urlsize:not([hidden])) .url { order: 3; flex-basis: 100%; }   /* a long address takes its own line under the label and the count */
 .tickerurl .url { font-family: var(--mono); font-size: 11.5px; color: var(--navy); word-break: break-all; }
 .pollstrip .pl-k { font-weight: 700; letter-spacing: .08em; color: var(--navy); font-size: 12px; cursor: help; }
 /* laptop only: standby (mirroring production) or production (promoted) */
@@ -171,31 +176,31 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .suggest { position: absolute; top: 100%; left: 0; right: 0; z-index: 8; background: #fff; border: 1px solid var(--sand); border-radius: 8px; box-shadow: 0 6px 20px #0002; max-height: 300px; overflow: auto; }
 .suggest .row { cursor: pointer; } .suggest .row:hover { background: var(--cream); }
 .ro .list button, .ro #callhl, .ro .addmanual, .ro #idletext, .ro .addfeat, .ro .gcard .featbtn { pointer-events: none; opacity: .55; }
-.ro .addmanual, .ro .addfeat { display: none; } .ro .chunkbar button, .ro .chunkbar details { display: none; }
-/* The crawl order and a chunk's contents: one list of race, text and chunk rows */
+.ro .addmanual, .ro .addfeat { display: none; } .ro .bundlebar button, .ro .bundlebar details { display: none; }
+/* The crawl order and a bundle's contents: one list of race, text and bundle rows */
 .row.textrow .nm { font-weight: 600; white-space: normal; }
 .row.textrow .nm .quote { color: #6b4a12; }
-.row.chunkrow { background: #f6f3ff; }
-.row.chunkrow .nm { white-space: normal; }
-.chunktag { display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; background: #5b3fb8; color: #fff; padding: 1px 6px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+.row.bundlerow { background: #f6f3ff; }
+.row.bundlerow .nm { white-space: normal; }
+.bundletag { display: inline-block; font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; background: #5b3fb8; color: #fff; padding: 1px 6px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .chip { display: inline-block; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 600; padding: 1px 7px; border-radius: 4px; border: 1px solid var(--sand); background: #fff; cursor: help; vertical-align: middle; }
 .chip.race { font-family: var(--mono); }
 .chip.text { font-weight: 500; color: #6b4a12; background: #fdf6ea; border-color: #ecd9a8; }
 .chip.missing { color: var(--bad); border-color: var(--bad); }
-.chunks { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--sand); }
-.chunkhead { font-size: 15px; margin: 0 0 4px; }
-.chunklist { display: grid; gap: 12px; }
-.chunk { border: 1px solid #c9bdf0; background: #faf8ff; border-radius: 8px; padding: 10px 12px; }
-.chunk .list { background: #fff; }
+.bundles { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--sand); }
+.bundlehead { font-size: 15px; margin: 0 0 4px; }
+.bundlelist { display: grid; gap: 12px; }
+.bundle { border: 1px solid #c9bdf0; background: #faf8ff; border-radius: 8px; padding: 10px 12px; }
+.bundle .list { background: #fff; }
 .seq .row .handle { cursor: grab; color: var(--muted); font-size: 14px; line-height: 1; padding: 0 6px 0 0; user-select: none; }
 .seq .row .handle:active { cursor: grabbing; }
 .seq .row.dragging { opacity: .4; }
 .seq .row.dropabove { box-shadow: inset 0 3px 0 var(--gold); } .seq .row.dropbelow { box-shadow: inset 0 -3px 0 var(--gold); }
 .ro .seq .row .handle { display: none; }
-.chunk .addfeat { margin-top: 6px; }
-.chunk .addmanual { margin: 6px 0 0; }
-.chunk .empty { padding: 8px 10px; font-size: 12.5px; }
+.bundle .addfeat { margin-top: 6px; }
+.bundle .addmanual { margin: 6px 0 0; }
+.bundle .empty { padding: 8px 10px; font-size: 12.5px; }
 .sform label.na { color: var(--muted); } .sform label.na select { opacity: .6; }
 /* Playlists */
 .plbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 6px; font-size: 13px; }
@@ -281,9 +286,9 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .psform select, .psform input { width: 100%; max-width: 100%; }
 .psdesc { font-family: var(--mono); font-size: 12px; margin: 6px 0 0; }
 .ro .plbar button { display: none; }
-#addchunkref select { flex: 1; width: 100%; }
-#addchunkref select:has(option[value=""]:checked) { color: var(--muted); }   /* the helper text reads like a placeholder */
-#addchunkref select option { color: var(--ink); }
+#addbundleref select { flex: 1; width: 100%; }
+#addbundleref select:has(option[value=""]:checked) { color: var(--muted); }   /* the helper text reads like a placeholder */
+#addbundleref select option { color: var(--ink); }
 
 /* ---- chart pickers ---- */
 
@@ -620,10 +625,10 @@ main > section.card.collapsed { padding-bottom: 0; }
 
 /* The ticker draft: room for a long crawl above its inputs, and the idle text folded away. */
 #seq { min-height: 280px; }
-/* the crawl order sits in the same tinted well as a chunk's pieces: this is where things get dragged */
+/* the crawl order sits in the same tinted well as a bundle's pieces: this is where things get dragged */
 .seqwell { margin-top: 8px; padding: 10px 12px; background: #f3effc; border: 1px solid #c9bdf0; border-radius: 8px; } .seqwell .list { background: #fff; }
-.chunk { background: #f3effc; }
+.bundle { background: #f3effc; }
 .tform .seqwell + .addfeat { margin-top: 28px; }
 .idlebox { margin-top: 14px; } .idlebox summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--navy); }
 .idlebox summary:hover { color: var(--ink); } .idlebox[open] summary { margin-bottom: 6px; }
-.chunklist { gap: 10px; } .chunkbar { margin: 0; }
+.bundlelist { gap: 10px; } .bundlebar { margin: 0; }

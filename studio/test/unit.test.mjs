@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_CHUNKS, DEFAULTS } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -45,7 +45,7 @@ test("a sign-in cookie opens the Studio for its account only, and dies when tamp
   } finally { delete process.env.STUDIO_PASSWORD_PRODUCER_TEST_PERSON; Object.assign(process.env, saved); }
 });
 
-test("the ticker crawl: idle line before data, the crawl order with chunks expanded and calls highlighted, and an older state's races and items", () => {
+test("the ticker crawl: idle line before data, the crawl order with bundles expanded and calls highlighted, and an older state's races and items", () => {
   const races = [
     { id: "1", label: "NE-SEN", featured: true, totalVotes: 10, precinctsPct: 5, eevp: 5, candidates: [{ last: "Osborn", independent: true, pct: 51 }, { last: "Ricketts", party: "GOP", pct: 49 }] },
     { id: "2", label: "MT-SEN", called: true, totalVotes: 10, precinctsPct: 100, candidates: [{ last: "Winner", party: "Dem", pct: 60, winner: true }, { last: "Loser", party: "GOP", pct: 40 }] },
@@ -59,14 +59,14 @@ test("the ticker crawl: idle line before data, the crawl order with chunks expan
   assert.equal(q.items[0].emphasis, true);
   assert.equal(buildQueue(races, { pinnedRaceIds: ["2"], callHighlight: false }).items[0].emphasis, false);
   assert.equal(buildQueue(races, {}).source, "default");
-  // The crawl order: races, text and chunks in the producer's order; a chunk expands in place, each time it is placed.
-  const st = normalize({ tickerItems: [{ t: "text", id: "a", text: "Welcome" }, { t: "chunk", id: "neb" }, { t: "race", id: "2" }, { t: "chunk", id: "neb" }], chunks: [{ id: "neb", name: "Nebraska", items: [{ t: "race", id: "1" }, { t: "text", id: "b", text: "Osborn watch" }] }] });
+  // The crawl order: races, text and bundles in the producer's order; a bundle expands in place, each time it is placed.
+  const st = normalize({ tickerItems: [{ t: "text", id: "a", text: "Welcome" }, { t: "bundle", id: "neb" }, { t: "race", id: "2" }, { t: "bundle", id: "neb" }], bundles: [{ id: "neb", name: "Nebraska", items: [{ t: "race", id: "1" }, { t: "text", id: "b", text: "Osborn watch" }] }] });
   assert.deepEqual(buildQueue(races, st).items.map((i) => i.text.split(" · ")[0]), ["Welcome", "NE-SEN", "Osborn watch", "MT-SEN", "NE-SEN", "Osborn watch"]);
   assert.deepEqual(st.pinnedRaceIds, ["1", "2"], "the races in crawl order, derived for everything that reads the old field");
   assert.deepEqual(st.manualItems.map((m) => m.text), ["Welcome", "Osborn watch", "Osborn watch"]);
-  const fallback = normalize({ tickerItems: [{ t: "chunk", id: "gone" }] });
-  assert.deepEqual(fallback.tickerItems, [{ t: "chunk", id: "slate" }], "a crawl with nothing left in it falls back to the Slate chunk");
-  assert.deepEqual(fallback.chunks[0].items.map((it) => it.id), fallback.pinnedRaceIds, "which holds the slate's races");
+  const fallback = normalize({ tickerItems: [{ t: "bundle", id: "gone" }] });
+  assert.deepEqual(fallback.tickerItems, [{ t: "bundle", id: "slate" }], "a crawl with nothing left in it falls back to the Slate bundle");
+  assert.deepEqual(fallback.bundles[0].items.map((it) => it.id), fallback.pinnedRaceIds, "which holds the slate's races");
 });
 
 test("vercel.json wires the Studio gate, the chart router, the data files and the poll cron, and the build ships what the pages import", () => {
@@ -93,10 +93,14 @@ test("stored playlists from before General gain it once, keep what they had, and
   assert.deepEqual(seedPlaylists(removed).users.map((u) => u.name), ["Ryan"], "General does not come back");
 });
 
-test("the shipped zone chunks survive validation whole, and a published crawl carries its own copy of each chunk it uses", () => {
-  const races = ZONE_CHUNKS.flatMap((c) => c.items.filter((i) => i.t === "race").map((i) => i.id));
+test("the shipped zone bundles survive validation whole, and a published crawl carries its own copy of each bundle it uses", () => {
+  const races = ZONE_BUNDLES.flatMap((c) => c.items.filter((i) => i.t === "race").map((i) => i.id));
   assert.equal(new Set(races).size, races.length, "no race is in two zones");
-  const st = normalize({ ...DEFAULTS, tickerItems: ZONE_CHUNKS.map((c) => ({ t: "chunk", id: c.id })) });
-  assert.deepEqual(st.chunks.filter((c) => c.id !== "slate"), [...ZONE_CHUNKS], "nothing is trimmed");
-  assert.equal(st.tickerItems.length, ZONE_CHUNKS.length, "every chunk stays in the crawl");
+  const st = normalize({ ...DEFAULTS, tickerItems: ZONE_BUNDLES.map((c) => ({ t: "bundle", id: c.id })) });
+  assert.deepEqual(st.bundles.filter((c) => c.id !== "slate"), [...ZONE_BUNDLES], "nothing is trimmed");
+  assert.equal(st.tickerItems.length, ZONE_BUNDLES.length, "every bundle stays in the crawl");
+  const old = normalize({ chunks: [{ id: "abc", name: "Old", items: [{ t: "race", id: "1" }] }], tickerItems: [{ t: "chunk", id: "abc" }] });
+  assert.deepEqual(old.tickerItems, [{ t: "bundle", id: "abc" }], "a state saved under the old name still reads");
+  assert.equal(old.bundles.find((b) => b.id === "abc").name, "Old");
+  assert.equal("chunks" in old, false);
 });

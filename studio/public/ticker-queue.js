@@ -36,15 +36,15 @@ export function defaultPins(races) {
     .map((r) => r.id);
 }
 
-/** The crawl order as flat race and text entries: tickerItems with its chunks expanded when the state has a sequence,
+/** The crawl order as flat race and text entries: tickerItems with its bundles expanded when the state has a sequence,
  *  else the older fields (races in order, a manual item after every two). */
 export function crawlSequence(p) {
   if (Array.isArray(p.tickerItems)) {
-    const chunks = new Map((Array.isArray(p.chunks) ? p.chunks : []).map((c) => [c.id, c]));
+    const bundles = new Map((Array.isArray(p.bundles) ? p.bundles : []).map((c) => [c.id, c]));
     const out = [];
     for (const it of p.tickerItems) {
       if (!it) continue;
-      if (it.t === "chunk") { const c = chunks.get(it.id); if (c) for (const x of c.items ?? []) out.push({ ...x, chunk: c.id }); }
+      if (it.t === "bundle") { const c = bundles.get(it.id); if (c) for (const x of c.items ?? []) out.push({ ...x, bundle: c.id }); }
       else out.push(it);
     }
     return out;
@@ -59,7 +59,7 @@ export function crawlSequence(p) {
 
 /**
  * @param {Array} races   from index.json
- * @param {Object} producer {tickerItems, chunks, idleText, callHighlight} (or the older {pinnedRaceIds, manualItems})
+ * @param {Object} producer {tickerItems, bundles, idleText, callHighlight} (or the older {pinnedRaceIds, manualItems})
  * @returns {{items: Array<{key,kind,text,emphasis}>, source: "pins"|"default"|"idle", missing: string[]}}
  */
 export function buildQueue(races, producer) {

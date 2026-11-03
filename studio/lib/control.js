@@ -178,16 +178,16 @@ export function canonicalAddress(pathname, search = "") {
   return `/g/${c.id}${s ? "?" + s : ""}`;
 }
 
-/** The shipped state. The ticker crawls tickerItems, a sequence of races, text and chunks (named packages of races and
+/** The shipped state. The ticker crawls tickerItems, a sequence of races, text and bundles (named packages of races and
  *  text, defined once and placed anywhere in the sequence, any number of times). pinnedRaceIds and manualItems are derived
  *  from that sequence by normalize() (the races in crawl order, the texts in crawl order) for everything that has always
  *  read them: older addresses, D5's fallback, older clients that publish only those two. */
-/** The shipped chunk: the slate's races, one package. The default crawl is this chunk and nothing else. */
-export const SLATE_CHUNK = Object.freeze({ id: "slate", name: "Slate", items: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })) });
+/** The shipped bundle: the slate's races, one package. The default crawl is this bundle and nothing else. */
+export const SLATE_BUNDLE = Object.freeze({ id: "slate", name: "Slate", items: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })) });
 // Every Toss Up and Lean race on Cook's Nov. 2 ratings, plus the races the show already follows, by the time zone their polls close in, earliest
 // close first, each opened by a line naming the zone. They wait in the builder until someone places them in the crawl order. A state split across
-// zones goes with most of its voters. Alaska closes last and has its own chunk; Hawaii has no race in the set. added: races new since the first
-// version of these chunks, merged once into a builder that already holds it (adoptShippedChunks in the Studio).
+// zones goes with most of its voters. Alaska closes last and has its own bundle; Hawaii has no race in the set. added: races new since the first
+// version of these bundles, merged once into a builder that already holds it (adoptShippedBundles in the Studio).
 const ZONE_DEFS = [
   { id: "easternraces", name: "Eastern Races", races: ["15026", "18015", "10031", "10033", "10396", "11129", "11587", "10019", "10023", "10045", "12029", "12301", "30003", "41922", "41938", "47001", "47003", "47009", "35385", "34977", "35984", "36033", "36043", "36027", "36031", "36005", "84327", "20645", "20643", "23814", "23808", "23811", "24074", "24463", "31218", "39008", "39017", "39014", "39015", "36597", "36601"], added: ["15026", "10031", "11587", "10019", "10023", "41922", "47009", "36033", "36043", "36601"] },   // IN-5 KY-6 FL-13 FL-14 FL-22 FL-25 FL-27 FL-7 FL-9 FL-GOV GA-GOV GA-SEN NH-SEN SC-1 SC-SEN VA-1 VA-2 VA-5 NC-1 NC-11 NC-SEN OH-10 OH-15 OH-7 OH-9 OH-GOV OH-SEN ME-2 ME-SEN MI-10 MI-4 MI-7 MI-GOV MI-SEN NJ-7 PA-1 PA-10 PA-7 PA-8 NY-17 NY-21
   { id: "centralraces", name: "Central Races", races: ["1374", "17559", "17585", "42003", "45885", "45893", "49478", "49479", "45901", "46643", "17071", "17072", "17073", "17076", "17247", "24007", "24704", "25151", "28385", "28006", "28594", "50040", "50048", "50016"], added: ["45893", "24007", "50040"] },   // AL-2 KS-GOV KS-SEN SD-SEN TX-15 TX-23 TX-34 TX-35 TX-GOV TX-SEN IA-1 IA-2 IA-3 IA-GOV IA-SEN MN-1 MN-GOV MN-SEN NE-2 NE-GOV NE-SEN WI-1 WI-3 WI-GOV
@@ -195,11 +195,11 @@ const ZONE_DEFS = [
   { id: "pacificraces", name: "Pacific Races", races: ["30989", "29861", "38019", "5712", "5730", "8149", "5696", "6123", "48009"], added: ["30989"] },   // NV-2 NV-GOV OR-GOV CA-22 CA-40 CA-48 CA-6 CA-GOV WA-3
   { id: "alaskaraces", name: "Alaska Races", races: ["2015", "2010", "3079"], added: ["2015", "2010", "3079"] },   // AK-AL AK-GOV AK-SEN
 ];
-export const ZONE_CHUNKS = Object.freeze(ZONE_DEFS.map(({ id, name, races }) => ({ id, name, items: [{ t: "text", id: `${id}title`, text: name }, ...races.map((r) => ({ t: "race", id: r }))] })));
+export const ZONE_BUNDLES = Object.freeze(ZONE_DEFS.map(({ id, name, races }) => ({ id, name, items: [{ t: "text", id: `${id}title`, text: name }, ...races.map((r) => ({ t: "race", id: r }))] })));
 export const ZONE_ADDED = Object.freeze(Object.fromEntries(ZONE_DEFS.map(({ id, added }) => [id, added])));
 export const DEFAULTS = Object.freeze({
-  tickerItems: [{ t: "chunk", id: SLATE_CHUNK.id }],   // {t:"race",id} | {t:"text",id,text} | {t:"chunk",id}
-  chunks: [SLATE_CHUNK, ...ZONE_CHUNKS],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
+  tickerItems: [{ t: "bundle", id: SLATE_BUNDLE.id }],   // {t:"race",id} | {t:"text",id,text} | {t:"bundle",id}
+  bundles: [SLATE_BUNDLE, ...ZONE_BUNDLES],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
   manualItems: [],
@@ -250,27 +250,27 @@ export function describeScreen(s) {
   return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""} · on ${s.bg || "transparent"}`;
 }
 
-const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, chunks: 24, chunkItems: 50, chunkName: 60 };
+const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, bundles: 24, bundleItems: 50, bundleName: 60 };
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
 
 // ---------- the ticker sequence ----------
-const chunkIdOk = (id) => typeof id === "string" && /^[a-zA-Z0-9]{1,24}$/.test(id);
-/** One race, text or chunk entry, validated; null if it is none of those. Text ids are kept (or made from the position). */
-function seqItem(it, i, allowChunk) {
+const bundleIdOk = (id) => typeof id === "string" && /^[a-zA-Z0-9]{1,24}$/.test(id);
+/** One race, text or bundle entry, validated; null if it is none of those. Text ids are kept (or made from the position). */
+function seqItem(it, i, allowBundle) {
   if (!it || typeof it !== "object") return null;
   if (it.t === "race" && idOk(it.id)) return { t: "race", id: it.id };
   if (it.t === "text" && typeof it.text === "string" && it.text.trim()) return { t: "text", id: String(it.id ?? "").slice(0, 40) || `t${i}`, text: it.text.trim().slice(0, LIMITS.text) };
-  if (allowChunk && it.t === "chunk" && chunkIdOk(it.id)) return { t: "chunk", id: it.id };
+  if (allowBundle && (it.t === "bundle" || it.t === "chunk") && bundleIdOk(it.id)) return { t: "bundle", id: it.id };   // "chunk": the old name, in states saved before the rename
   return null;
 }
-const seqItems = (raw, allowChunk, max) => (Array.isArray(raw) ? raw : []).map((it, i) => seqItem(it, i, allowChunk)).filter(Boolean).slice(0, max);
-/** The crawl order as flat race and text entries, chunks expanded (a chunk entry becomes its items, each carrying chunk: id). */
+const seqItems = (raw, allowBundle, max) => (Array.isArray(raw) ? raw : []).map((it, i) => seqItem(it, i, allowBundle)).filter(Boolean).slice(0, max);
+/** The crawl order as flat race and text entries, bundles expanded (a bundle entry becomes its items, each carrying bundle: id). */
 export function expandTicker(state) {
-  const chunks = new Map((state.chunks ?? []).map((c) => [c.id, c]));
+  const bundles = new Map((state.bundles ?? []).map((c) => [c.id, c]));
   const out = [];
   for (const it of state.tickerItems ?? []) {
-    if (it.t === "chunk") { const c = chunks.get(it.id); if (c) for (const x of c.items) out.push({ ...x, chunk: c.id }); }
+    if (it.t === "bundle") { const c = bundles.get(it.id); if (c) for (const x of c.items) out.push({ ...x, bundle: c.id }); }
     else out.push(it);
   }
   return out;
@@ -291,22 +291,23 @@ function legacySequence(pins, manual) {
  */
 export function normalize(raw) {
   const r = raw && typeof raw === "object" ? raw : {};
-  // Chunks first (the sequence may point at them), then the sequence: the stored one, or the one an older state implies.
-  const seenChunk = new Set();
-  const chunks = (Array.isArray(r.chunks) ? r.chunks : []).filter((c) => c && typeof c === "object" && chunkIdOk(c.id) && !seenChunk.has(c.id) && seenChunk.add(c.id))
-    .map((c) => ({ id: c.id, name: typeof c.name === "string" ? c.name.trim().slice(0, LIMITS.chunkName) : "", items: seqItems(c.items, false, LIMITS.chunkItems) })).slice(0, LIMITS.chunks);
+  // Bundles first (the sequence may point at them), then the sequence: the stored one, or the one an older state implies.
+  const seenBundle = new Set();
+  const rawBundles = r.bundles ?? r.chunks;   // chunks: the old name, in states saved before the rename
+  const bundles = (Array.isArray(rawBundles) ? rawBundles : []).filter((c) => c && typeof c === "object" && bundleIdOk(c.id) && !seenBundle.has(c.id) && seenBundle.add(c.id))
+    .map((c) => ({ id: c.id, name: typeof c.name === "string" ? c.name.trim().slice(0, LIMITS.bundleName) : "", items: seqItems(c.items, false, LIMITS.bundleItems) })).slice(0, LIMITS.bundles);
   let tickerItems;
-  if (Array.isArray(r.tickerItems)) tickerItems = seqItems(r.tickerItems, true, LIMITS.seq).filter((it) => it.t !== "chunk" || seenChunk.has(it.id));
+  if (Array.isArray(r.tickerItems)) tickerItems = seqItems(r.tickerItems, true, LIMITS.seq).filter((it) => it.t !== "bundle" || seenBundle.has(it.id));
   else {
     const oldPins = uniqIds(r.pinnedRaceIds, LIMITS.pins);
     const oldManual = (Array.isArray(r.manualItems) ? r.manualItems : []).filter((m) => m && typeof m.text === "string" && m.text.trim()).map((m, i) => ({ id: String(m.id ?? `m${i}`).slice(0, 40), text: m.text.trim().slice(0, LIMITS.text) })).slice(0, LIMITS.manual);
     tickerItems = legacySequence(oldPins, oldManual);
   }
-  if (!tickerItems.length) {   // the ticker always has something to crawl: the Slate chunk, defined here if the state lacks it
-    if (!seenChunk.has(SLATE_CHUNK.id)) chunks.unshift(structuredClone(SLATE_CHUNK));
+  if (!tickerItems.length) {   // the ticker always has something to crawl: the Slate bundle, defined here if the state lacks it
+    if (!seenBundle.has(SLATE_BUNDLE.id)) bundles.unshift(structuredClone(SLATE_BUNDLE));
     tickerItems = DEFAULTS.tickerItems.map((it) => ({ ...it }));
   }
-  const flat = expandTicker({ tickerItems, chunks });
+  const flat = expandTicker({ tickerItems, bundles });
   const pins = uniqIds(flat.filter((it) => it.t === "race").map((it) => it.id), LIMITS.pins);
   const manual = flat.filter((it) => it.t === "text").map((it) => ({ id: it.id, text: it.text })).slice(0, LIMITS.manual);
   const context = {};
@@ -315,7 +316,7 @@ export function normalize(raw) {
   }
   return {
     tickerItems,
-    chunks,
+    bundles,
     pinnedRaceIds: pins.length ? pins : [...DEFAULTS.pinnedRaceIds],   // derived: the races in crawl order (the default list when the crawl has none)
     callHighlight: typeof r.callHighlight === "boolean" ? r.callHighlight : DEFAULTS.callHighlight,
     manualItems: manual,                                                 // derived: the texts in crawl order
@@ -433,15 +434,15 @@ export function diffState(from, to) {
     if (reordered) out.push({ field, text: `${label}: order changes to ${b.map(wrap).join(", ")} (was ${a.map(wrap).join(", ")})` });
     else if ((added.length || removed.length) && a.join() !== b.join()) out.push({ field, text: `${label}: order is now ${b.map(wrap).join(", ")}` });
   };
-  // The crawl: one line naming the new order when anything in it changes; chunks by name.
-  const seqText = (st) => st.tickerItems.map((it) => it.t === "race" ? `{${it.id}}` : it.t === "text" ? `"${it.text}"` : `[${st.chunks.find((c) => c.id === it.id)?.name || "chunk"}]`).join(", ");
+  // The crawl: one line naming the new order when anything in it changes; bundles by name.
+  const seqText = (st) => st.tickerItems.map((it) => it.t === "race" ? `{${it.id}}` : it.t === "text" ? `"${it.text}"` : `[${st.bundles.find((c) => c.id === it.id)?.name || "bundle"}]`).join(", ");
   if (JSON.stringify(A.tickerItems) !== JSON.stringify(B.tickerItems)) out.push({ field: "tickerItems", text: `Crawl order: ${seqText(B)} (was ${seqText(A)})` });
   const itemsText = (c) => c.items.map((it) => it.t === "race" ? `{${it.id}}` : `"${it.text}"`).join(", ") || "(empty)";
-  for (const id of new Set([...A.chunks.map((c) => c.id), ...B.chunks.map((c) => c.id)])) {
-    const a = A.chunks.find((c) => c.id === id), b = B.chunks.find((c) => c.id === id);
-    if (a && !b) out.push({ field: "chunks", text: `Chunk "${a.name || id}" removed` });
-    else if (!a && b) out.push({ field: "chunks", text: `Chunk "${b.name || id}" added: ${itemsText(b)}` });
-    else if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ field: "chunks", text: `Chunk "${b.name || id}"${a.name !== b.name ? ` (was "${a.name || id}")` : ""}: ${itemsText(b)}` });
+  for (const id of new Set([...A.bundles.map((c) => c.id), ...B.bundles.map((c) => c.id)])) {
+    const a = A.bundles.find((c) => c.id === id), b = B.bundles.find((c) => c.id === id);
+    if (a && !b) out.push({ field: "bundles", text: `Bundle "${a.name || id}" removed` });
+    else if (!a && b) out.push({ field: "bundles", text: `Bundle "${b.name || id}" added: ${itemsText(b)}` });
+    else if (JSON.stringify(a) !== JSON.stringify(b)) out.push({ field: "bundles", text: `Bundle "${b.name || id}"${a.name !== b.name ? ` (was "${a.name || id}")` : ""}: ${itemsText(b)}` });
   }
   list("featuredRaceIds", "Featured races", true);
   list("keyRaceIds", "Key races", true);
@@ -485,7 +486,7 @@ export async function loadGlobal() {
 
 /** The fields the Live Global Ticker is made of: the only ones that are ever published. Everything else a page needs comes
  *  from its address or the shipped defaults. */
-export const TICKER_FIELDS = ["tickerItems", "chunks", "pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
+export const TICKER_FIELDS = ["tickerItems", "bundles", "pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
 /** Everything that is ever published: the ticker fields and the two Live Screens. */
 export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB", "theme"];
 

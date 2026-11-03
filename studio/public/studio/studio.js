@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_CHUNKS, ZONE_ADDED, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_BUNDLES, ZONE_ADDED, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -335,7 +335,7 @@ const canPull = () => runtime ? !!runtime.production?.canPull : !liveError;
 const prodHost = () => runtime ? (runtime.production?.where === "self" ? `${location.host} (this laptop)` : runtime.production?.origin?.replace(/^https?:\/\//, "") ?? "the website") : location.host;
 const onSite = () => !runtime;
 const origin = () => (onSite() ? location.origin : runtime?.production?.origin ?? location.origin);
-const BUILDER = "the builder's crawl order (races, text and chunks), its chunks, AP Call highlight and idle text";
+const BUILDER = "the builder's crawl order (races, text and bundles), its bundles, AP Call highlight and idle text";
 
 /** Every edit comes through here: the page saves to this browser at once. Nothing is published by an edit. */
 function commit() {
@@ -349,7 +349,7 @@ function renderHow() {
   const host = prodHost();
   $("howtext").innerHTML = [
     `<b>Every chart is a link.</b> Show or Copy URL on any card gives an address carrying the chart, the race and the display settings. It always shows the same thing and can be shared with other authorized people.`,
-    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a crawl order of races, text and chunks (packages of races and text, built once under the ticker and placed anywhere), use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
+    `<b>Live Ticker.</b> One permanent address, <code>${esc(host)}/ticker</code>. Build a crawl order of races, text and bundles (packages of races and text, built once under the ticker and placed anywhere), use it by its own link, or publish it to become the live ticker; it updates published within seconds.`,
     `<b>Live Screens.</b> Two permanent addresses for full-screen charts. Build the draft on the left and publish it to the published screen on the right.`,
     `<b>Playlists.</b> Runs of charts for a segment, by person, shared with everyone here. Add any chart to one from the catalogs. They are never published to an output.`,
     `<b>Producer actions</b> (poll, Test/Live, pause) need a producer password. A publisher password publishes the ticker and the live screens but cannot use them; a read-only password (and the rehearsal one) can look but not change anything published.`,
@@ -364,8 +364,8 @@ function renderLive() {
   if (!live) box.innerHTML = `<div class="warnline bad">${liveError ? `Cannot read the live ticker: ${esc(liveError)}` : "Reading the live ticker…"}</div>`;
   else {
     box.innerHTML = `<table class="params">
-      <tr><td class="k" title="crawl: races, text and chunks in crawl order; hover a piece for the full text">crawl</td><td><div class="chips">${live.tickerItems.map((it) => seqChip(it, live)).join("")}</div></td></tr>
-      ${live.chunks.length ? `<tr><td class="k" title="chunks: the packages published with this ticker, used in the crawl or not">chunks</td><td>${live.chunks.map((c) => `<div><span class="chunktag">CHUNK</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
+      <tr><td class="k" title="crawl: races, text and bundles in crawl order; hover a piece for the full text">crawl</td><td><div class="chips">${live.tickerItems.map((it) => seqChip(it, live)).join("")}</div></td></tr>
+      ${live.bundles.length ? `<tr><td class="k" title="bundles: the packages published with this ticker, used in the crawl or not">bundles</td><td>${live.bundles.map((c) => `<div><span class="bundletag">BUNDLE</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
       <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span></td></tr>
@@ -425,9 +425,9 @@ async function pull() {
   let latest;
   try { latest = normalize(await api("/api/producer")); live = latest; liveError = null; }
   catch (e) { liveError = e.message; renderLive(); await ask({ title: "Can't read the live ticker", body: `<div class="warnline bad">${esc(e.message)}</div><p>The builder is unchanged.</p>`, ok: "OK" }); return; }
-  // Pull keeps chunks that exist only on this page, so the change list is against what the builder will actually become.
-  const mineAfter = draft.chunks.filter((c) => !latest.chunks.some((x) => x.id === c.id));
-  const changes = tickerDiff(draft, { ...latest, chunks: [...latest.chunks, ...mineAfter] });
+  // Pull keeps bundles that exist only on this page, so the change list is against what the builder will actually become.
+  const mineAfter = draft.bundles.filter((c) => !latest.bundles.some((x) => x.id === c.id));
+  const changes = tickerDiff(draft, { ...latest, bundles: [...latest.bundles, ...mineAfter] });
   const ok = await ask({
     title: "Pull from the LIVE TICKER?",
     body: `<p>${BUILDER[0].toUpperCase() + BUILDER.slice(1)} are replaced by the live ticker's (published ${latest.updatedAt ? esc(ago(latest.updatedAt)) : "never, so they are the defaults"}). Nothing published changes.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">The builder already matches the live ticker.</div>` : ""}`,
@@ -435,8 +435,8 @@ async function pull() {
   });
   if (!ok) return;
   liveSeenAt = latest.updatedAt;
-  // The live chunks replace this page's copies of the same chunks; chunks that exist only here stay.
-  draft = saveLocal({ ...draft, ...tickerPart(latest), chunks: [...latest.chunks, ...mineAfter] });
+  // The live bundles replace this page's copies of the same bundles; bundles that exist only here stay.
+  draft = saveLocal({ ...draft, ...tickerPart(latest), bundles: [...latest.bundles, ...mineAfter] });
   renderAll(); cards.broadcast(draft);
 }
 async function restoreDefaults() {
@@ -575,32 +575,32 @@ async function confirmThen(title, body, fn) {
   if (ok) { fn(); commit(); }
 }
 /** The catalogs' Add to / Remove from ticker: a race joins the end of the crawl order, or every top-level entry of it goes.
- *  A race that crawls only inside a chunk is removed by editing the chunk. */
+ *  A race that crawls only inside a bundle is removed by editing the bundle. */
 function toggleTicker(id) {
   const on = draft.pinnedRaceIds.includes(id);
   const top = draft.tickerItems.some((it) => it.t === "race" && it.id === id);
   if (on && !top) {
-    const names = draft.chunks.filter((c) => c.items.some((it) => it.t === "race" && it.id === id)).map((c) => c.name || c.id);
-    ask({ title: "This race crawls inside a chunk", body: `<p>${esc(raceName(id))} is in ${names.map((n) => `<b>${esc(n)}</b>`).join(", ")}. Edit the chunk in the Chunks area under the ticker to take it out.</p>`, ok: "OK", info: true }); return;
+    const names = draft.bundles.filter((c) => c.items.some((it) => it.t === "race" && it.id === id)).map((c) => c.name || c.id);
+    ask({ title: "This race crawls inside a bundle", body: `<p>${esc(raceName(id))} is in ${names.map((n) => `<b>${esc(n)}</b>`).join(", ")}. Edit the bundle in the Bundles area under the ticker to take it out.</p>`, ok: "OK", info: true }); return;
   }
   confirmThen(on ? "Remove from the ticker?" : "Add to the ticker?", `${esc(raceName(id))} ${on ? "leaves the crawl order." : "joins the end of the crawl order."}`,
     () => { draft.tickerItems = on ? draft.tickerItems.filter((it) => !(it.t === "race" && it.id === id)) : [...draft.tickerItems, { t: "race", id }]; });
 }
 
-// ---------- Ticker section: the crawl order and the chunks ----------
-// One list type for both: rows of races, text and (in the crawl order only) chunks, reordered with ▲▼, removed with ✕.
-// data-list="seq" is draft.tickerItems; data-list="chunk:<id>" is that chunk's items.
+// ---------- Ticker section: the crawl order and the bundles ----------
+// One list type for both: rows of races, text and (in the crawl order only) bundles, reordered with ▲▼, removed with ✕.
+// data-list="seq" is draft.tickerItems; data-list="bundle:<id>" is that bundle's items.
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-const chunkById = (id) => draft.chunks.find((c) => c.id === id);
-const listFor = (key) => (key === "seq" ? draft.tickerItems : chunkById(key.slice(6))?.items);
+const bundleById = (id) => draft.bundles.find((c) => c.id === id);
+const listFor = (key) => (key === "seq" ? draft.tickerItems : bundleById(key.slice("bundle:".length))?.items);
 const raceTip = (id) => { const r = index?.byId?.get(id); return r ? `${[r.label, r.stateName, r.title].filter(Boolean).join(" · ")}\n${cands(r).replace(/<[^>]+>/g, "")}${r.called ? "\nAP CALL" : ""}` : `race ${id}: not in the current AP feed; the ticker skips it`; };
 const short = (t, n = 32) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
-/** A condensed piece of a sequence: a race label, a text snippet or a chunk name, each with the full version on hover. */
+/** A condensed piece of a sequence: a race label, a text snippet or a bundle name, each with the full version on hover. */
 function seqChip(it, st = draft) {
   if (it.t === "race") { const r = index?.byId?.get(it.id); return `<span class="chip race ${r ? "" : "missing"}" title="${esc(raceTip(it.id))}">${esc(r?.label ?? it.id)}</span>`; }
   if (it.t === "text") return `<span class="chip text" title="${esc(it.text)}">“${esc(short(it.text))}”</span>`;
-  const c = st.chunks.find((x) => x.id === it.id);
-  return `<span class="chip chunk ${c ? "" : "missing"}" title="${esc(c ? `Chunk ${c.name || c.id}: ${c.items.map((x) => x.t === "race" ? (index?.byId?.get(x.id)?.label ?? x.id) : `“${x.text}”`).join(" · ") || "(empty)"}` : "chunk no longer defined; the ticker skips it")}"><span class="chunktag">CHUNK</span>${esc(c?.name || it.id)}</span>`;
+  const c = st.bundles.find((x) => x.id === it.id);
+  return `<span class="chip bundle ${c ? "" : "missing"}" title="${esc(c ? `Bundle ${c.name || c.id}: ${c.items.map((x) => x.t === "race" ? (index?.byId?.get(x.id)?.label ?? x.id) : `“${x.text}”`).join(" · ") || "(empty)"}` : "bundle no longer defined; the ticker skips it")}"><span class="bundletag">BUNDLE</span>${esc(c?.name || it.id)}</span>`;
 }
 function seqRow(it, i, n, drag = false) {
   const handle = drag ? `<span class="handle" title="Drag to reorder">⠿</span>` : "";
@@ -610,65 +610,65 @@ function seqRow(it, i, n, drag = false) {
     return `<div class="row" data-i="${i}"><div><div class="nm">${handle}<span class="ord">${i + 1}</span>${r ? raceLine(r) : `<span class="lab">${esc(it.id)}</span><span class="muted">not in the current AP feed; the ticker skips it</span>`}</div>${r ? `<div class="sub">${cands(r)}</div>` : ""}</div>${btns}</div>`;
   }
   if (it.t === "text") return `<div class="row textrow" data-i="${i}"><div class="nm">${handle}<span class="ord">${i + 1}</span><span class="quote" title="${esc(it.text)}">“${esc(it.text)}”</span></div>${btns}</div>`;
-  const c = chunkById(it.id);
-  return `<div class="row chunkrow" data-i="${i}"><div><div class="nm">${handle}<span class="ord">${i + 1}</span><span class="chunktag">CHUNK</span>${c ? `<b>${esc(c.name || c.id)}</b> <span class="muted small">${c.items.length} piece${c.items.length === 1 ? "" : "s"}</span>` : `<span class="muted">chunk no longer defined; the ticker skips it</span>`}</div>${c ? `<div class="chips">${c.items.length ? c.items.map((x) => seqChip(x)).join("") : '<span class="muted small">empty: add races and text in the Chunks area below</span>'}</div>` : ""}</div>${btns}</div>`;
+  const c = bundleById(it.id);
+  return `<div class="row bundlerow" data-i="${i}"><div><div class="nm">${handle}<span class="ord">${i + 1}</span><span class="bundletag">BUNDLE</span>${c ? `<b>${esc(c.name || c.id)}</b> <span class="muted small">${c.items.length} piece${c.items.length === 1 ? "" : "s"}</span>` : `<span class="muted">bundle no longer defined; the ticker skips it</span>`}</div>${c ? `<div class="chips">${c.items.length ? c.items.map((x) => seqChip(x)).join("") : '<span class="muted small">empty: add races and text in the Bundles area below</span>'}</div>` : ""}</div>${btns}</div>`;
 }
 function renderSeq() {
   const items = draft.tickerItems;
   const flat = expandTicker(draft);
   $("seqcount").textContent = `${items.length} element${items.length === 1 ? "" : "s"} · ${flat.length} piece${flat.length === 1 ? "" : "s"} crawl`;
   if ($("seq").querySelector(".row.dragging")) return;   // mid-drag: the next redraw catches up
-  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length, true)).join("") || `<div class="empty">Nothing in the crawl order: the default races crawl. Add races, text or a chunk below.</div>`;
-  // Like the two boxes above it, the dropdown opens on its helper text; the chunks follow.
-  $("chunkpick").innerHTML = `<option value="" selected>${draft.chunks.length ? "Add a chunk: choose one" : "Add a chunk: none built yet, build one below"}</option>` + draft.chunks.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
-  $("addchunkref").querySelector("button").disabled = !draft.chunks.length;
+  $("seq").innerHTML = items.map((it, i) => seqRow(it, i, items.length, true)).join("") || `<div class="empty">Nothing in the crawl order: the default races crawl. Add races, text or a bundle below.</div>`;
+  // Like the two boxes above it, the dropdown opens on its helper text; the bundles follow.
+  $("bundlepick").innerHTML = `<option value="" selected>${draft.bundles.length ? "Add a bundle: choose one" : "Add a bundle: none built yet, build one below"}</option>` + draft.bundles.map((c) => `<option value="${esc(c.id)}">${esc(c.name || c.id)} (${c.items.length} piece${c.items.length === 1 ? "" : "s"})</option>`).join("");
+  $("addbundleref").querySelector("button").disabled = !draft.bundles.length;
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").value = draft.callHighlight ? "1" : "0";
 }
-// One chunk at a time, like a playlist: pick it from the dropdown, add, rename or delete it. The choice is this browser's.
-const CHUNK_ADD = "__add";
-let chunkSel = (() => { try { return localStorage.getItem("studio.chunk"); } catch { return null; } })();
-const activeChunk = () => chunkById(chunkSel) ?? draft.chunks[0] ?? null;
-function selectChunk(id) { chunkSel = id; try { localStorage.setItem("studio.chunk", id); } catch {} renderChunks(); }
-function renderChunks() {
-  const box = $("chunks");
-  if (box.querySelector(".row.dragging") || box.querySelector("#chunkopts[open]")) return;   // mid-action: the next redraw catches up
-  $("chunkcount").textContent = draft.chunks.length ? `${draft.chunks.length}` : "";
+// One bundle at a time, like a playlist: pick it from the dropdown, add, rename or delete it. The choice is this browser's.
+const BUNDLE_ADD = "__add";
+let bundleSel = (() => { try { return localStorage.getItem("studio.bundle") ?? localStorage.getItem("studio.chunk"); } catch { return null; } })();
+const activeBundle = () => bundleById(bundleSel) ?? draft.bundles[0] ?? null;
+function selectBundle(id) { bundleSel = id; try { localStorage.setItem("studio.bundle", id); } catch {} renderBundles(); }
+function renderBundles() {
+  const box = $("bundles");
+  if (box.querySelector(".row.dragging") || box.querySelector("#bundleopts[open]")) return;   // mid-action: the next redraw catches up
+  $("bundlecount").textContent = draft.bundles.length ? `${draft.bundles.length}` : "";
   const active = document.activeElement;
-  // A picker or text box keeps its place through the redraw (a pick or an add redraws the chunk it sits in).
+  // A picker or text box keeps its place through the redraw (a pick or an add redraws the bundle it sits in).
   const keep = box.contains(active) && active.matches("[data-pick], form[data-addtext] input") ? { pick: active.matches("[data-pick]") } : null;
-  const c = activeChunk();
-  const uses = c ? draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length : 0;
-  box.innerHTML = `<div class="plbar chunkbar">
-      <label>Chunk <select id="chunksel">${draft.chunks.map((x) => `<option value="${esc(x.id)}" ${x.id === c?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}<option value="${CHUNK_ADD}">+ Add chunk…</option></select></label>
-      ${c ? `<button class="primary addref" type="button" title="Place this chunk at the end of the crawl order">Add to crawl</button>` : ""}
-      <button class="newchunkbtn" type="button" title="A new, empty chunk">+ Add chunk…</button>
-      ${c ? `<details class="ploptions" id="chunkopts"><summary title="Rename or delete this chunk">Additional Options</summary><div class="plmenu">
-        <div class="plmenuhead">Chunk: ${esc(c.name || c.id)}</div>
-        <button class="renamechunk" type="button">Rename chunk…</button><button class="rmchunk dangerous" type="button">Delete chunk…</button>
+  const c = activeBundle();
+  const uses = c ? draft.tickerItems.filter((it) => it.t === "bundle" && it.id === c.id).length : 0;
+  box.innerHTML = `<div class="plbar bundlebar">
+      <label>Bundle <select id="bundlesel">${draft.bundles.map((x) => `<option value="${esc(x.id)}" ${x.id === c?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}<option value="${BUNDLE_ADD}">+ Add bundle…</option></select></label>
+      ${c ? `<button class="primary addref" type="button" title="Place this bundle at the end of the crawl order">Add to crawl</button>` : ""}
+      <button class="newbundlebtn" type="button" title="A new, empty bundle">+ Add bundle…</button>
+      ${c ? `<details class="ploptions" id="bundleopts"><summary title="Rename or delete this bundle">Additional Options</summary><div class="plmenu">
+        <div class="plmenuhead">Bundle: ${esc(c.name || c.id)}</div>
+        <button class="renamebundle" type="button">Rename bundle…</button><button class="rmbundle dangerous" type="button">Delete bundle…</button>
       </div></details>` : ""}
       <span class="spacer"></span>
       ${c ? `<span class="plmeta">${uses ? `In the crawl ${uses}×` : "Not in the crawl"}</span>` : ""}
     </div>
-    ${c ? `<div class="chunk" data-chunk="${esc(c.id)}">
-      <div class="list pins seq" data-list="chunk:${esc(c.id)}">${c.items.length ? c.items.map((it, i) => seqRow(it, i, c.items.length, true)).join("") : '<div class="empty">Empty. Add races and text below.</div>'}</div>
-      <div class="filters addfeat"><input data-pick="chunk:${esc(c.id)}" placeholder="Add a race to this chunk: type a label, state or candidate" autocomplete="off"><div class="suggest" hidden></div></div>
-      <form class="addmanual" data-addtext="chunk:${esc(c.id)}"><input placeholder="Add text to this chunk" maxlength="240"><button type="submit">Add text</button></form>
-    </div>` : `<div class="empty">No chunks yet. Press + Add chunk… to start one.</div>`}`;
+    ${c ? `<div class="bundle" data-bundle="${esc(c.id)}">
+      <div class="list pins seq" data-list="bundle:${esc(c.id)}">${c.items.length ? c.items.map((it, i) => seqRow(it, i, c.items.length, true)).join("") : '<div class="empty">Empty. Add races and text below.</div>'}</div>
+      <div class="filters addfeat"><input data-pick="bundle:${esc(c.id)}" placeholder="Add a race to this bundle: type a label, state or candidate" autocomplete="off"><div class="suggest" hidden></div></div>
+      <form class="addmanual" data-addtext="bundle:${esc(c.id)}"><input placeholder="Add text to this bundle" maxlength="240"><button type="submit">Add text</button></form>
+    </div>` : `<div class="empty">No bundles yet. Press + Add bundle… to start one.</div>`}`;
   if (keep) box.querySelector(keep.pick ? "[data-pick]" : "form[data-addtext] input")?.focus();
 }
-async function addChunk() {
-  const ok = await ask({ title: "New chunk", ok: "Add chunk", body: `<p><label>Name<br><input id="chunkname" maxlength="60" placeholder="e.g. Nebraska package" style="width:100%"></label></p><p class="small muted">A package of races and text you can place in the crawl order. This changes only this page until you publish.</p>` });
-  const name = $("chunkname")?.value.trim(); if (!ok || !name) { renderChunks(); return; }
-  const id = newId(); draft.chunks.push({ id, name, items: [] }); chunkSel = id; try { localStorage.setItem("studio.chunk", id); } catch {} commit();
+async function addBundle() {
+  const ok = await ask({ title: "New bundle", ok: "Add bundle", body: `<p><label>Name<br><input id="bundlename" maxlength="60" placeholder="e.g. Nebraska package" style="width:100%"></label></p><p class="small muted">A package of races and text you can place in the crawl order. This changes only this page until you publish.</p>` });
+  const name = $("bundlename")?.value.trim(); if (!ok || !name) { renderBundles(); return; }
+  const id = newId(); draft.bundles.push({ id, name, items: [] }); bundleSel = id; try { localStorage.setItem("studio.bundle", id); } catch {} commit();
 }
-async function renameChunk(c) {
-  const ok = await ask({ title: "Rename the chunk", ok: "Rename", body: `<p><label>Name<br><input id="chunkname" maxlength="60" value="${esc(c.name)}" style="width:100%"></label></p>` });
-  const name = $("chunkname")?.value.trim(); if (!ok || !name) return;
+async function renameBundle(c) {
+  const ok = await ask({ title: "Rename the bundle", ok: "Rename", body: `<p><label>Name<br><input id="bundlename" maxlength="60" value="${esc(c.name)}" style="width:100%"></label></p>` });
+  const name = $("bundlename")?.value.trim(); if (!ok || !name) return;
   c.name = name; commit();
 }
-// Dragging a row by its handle reorders it within its own list, the crawl order or the open chunk: the upper half of a row drops above it, the lower half below.
-for (const box of [$("seq"), $("chunks")]) {
+// Dragging a row by its handle reorders it within its own list, the crawl order or the open bundle: the upper half of a row drops above it, the lower half below.
+for (const box of [$("seq"), $("bundles")]) {
   let from = null, fromList = null;
   const clear = () => box.querySelectorAll(".dragging, .dropabove, .dropbelow").forEach((r) => r.classList.remove("dragging", "dropabove", "dropbelow"));
   const after = (e, row) => { const r = row.getBoundingClientRect(); return e.clientY > r.top + r.height / 2; };
@@ -697,7 +697,7 @@ for (const box of [$("seq"), $("chunks")]) {
   });
   box.addEventListener("dragend", (e) => { const r = e.target.closest?.(".row"); if (r) r.draggable = false; from = null; fromList = null; clear(); });
 }
-// Reorder and remove, in the crawl order and inside every chunk.
+// Reorder and remove, in the crawl order and inside every bundle.
 document.addEventListener("click", (e) => {
   const list = e.target.closest("[data-list]"); const row = e.target.closest(".row"); const b = e.target.closest("button"); if (!list || !row || !b) return;
   const a = listFor(list.dataset.list); if (!a) return;
@@ -708,7 +708,7 @@ document.addEventListener("click", (e) => {
   else return;
   commit();
 });
-// Text into the crawl order or a chunk.
+// Text into the crawl order or a bundle.
 document.addEventListener("submit", (e) => {
   const form = e.target.closest("form[data-addtext]"); if (!form) return;
   e.preventDefault();
@@ -716,29 +716,29 @@ document.addEventListener("submit", (e) => {
   const a = listFor(form.dataset.addtext); if (!a) return;
   a.push({ t: "text", id: newId(), text }); input.value = ""; commit();
 });
-$("addchunkref").addEventListener("submit", (e) => {
+$("addbundleref").addEventListener("submit", (e) => {
   e.preventDefault();
-  const id = $("chunkpick").value; if (!id || !chunkById(id)) { $("chunkpick").focus(); return; }
-  draft.tickerItems.push({ t: "chunk", id }); commit();
+  const id = $("bundlepick").value; if (!id || !bundleById(id)) { $("bundlepick").focus(); return; }
+  draft.tickerItems.push({ t: "bundle", id }); commit();
 });
-$("chunks").addEventListener("change", (e) => {
-  if (e.target.id !== "chunksel") return;
-  if (e.target.value === CHUNK_ADD) { addChunk(); return; }
-  selectChunk(e.target.value);
+$("bundles").addEventListener("change", (e) => {
+  if (e.target.id !== "bundlesel") return;
+  if (e.target.value === BUNDLE_ADD) { addBundle(); return; }
+  selectBundle(e.target.value);
 });
-document.addEventListener("click", (e) => { if (!e.target.closest("#chunkopts")) $("chunkopts")?.removeAttribute("open"); });
-$("chunks").addEventListener("click", async (e) => {
+document.addEventListener("click", (e) => { if (!e.target.closest("#bundleopts")) $("bundleopts")?.removeAttribute("open"); });
+$("bundles").addEventListener("click", async (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.classList.contains("newchunkbtn")) { addChunk(); return; }
-  const c = activeChunk(); if (!c) return;
-  if (b.classList.contains("addref")) { draft.tickerItems.push({ t: "chunk", id: c.id }); commit(); return; }
-  $("chunkopts")?.removeAttribute("open");
-  if (b.classList.contains("renamechunk")) { renameChunk(c); return; }
-  if (b.classList.contains("rmchunk")) {
-    const uses = draft.tickerItems.filter((it) => it.t === "chunk" && it.id === c.id).length;
-    const ok = await ask({ title: `Delete chunk "${c.name || c.id}"?`, body: `<p>Its ${c.items.length} piece${c.items.length === 1 ? "" : "s"} go with it${uses ? `, and the crawl order loses it in ${uses} place${uses === 1 ? "" : "s"}` : ""}.</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: "Delete chunk", danger: true });
+  if (b.classList.contains("newbundlebtn")) { addBundle(); return; }
+  const c = activeBundle(); if (!c) return;
+  if (b.classList.contains("addref")) { draft.tickerItems.push({ t: "bundle", id: c.id }); commit(); return; }
+  $("bundleopts")?.removeAttribute("open");
+  if (b.classList.contains("renamebundle")) { renameBundle(c); return; }
+  if (b.classList.contains("rmbundle")) {
+    const uses = draft.tickerItems.filter((it) => it.t === "bundle" && it.id === c.id).length;
+    const ok = await ask({ title: `Delete bundle "${c.name || c.id}"?`, body: `<p>Its ${c.items.length} piece${c.items.length === 1 ? "" : "s"} go with it${uses ? `, and the crawl order loses it in ${uses} place${uses === 1 ? "" : "s"}` : ""}.</p><p class="small muted">This changes only this page. The LIVE TICKER changes only when you publish the builder.</p>`, ok: "Delete bundle", danger: true });
     if (!ok) return;
-    draft.chunks = draft.chunks.filter((x) => x.id !== c.id); draft.tickerItems = draft.tickerItems.filter((it) => !(it.t === "chunk" && it.id === c.id)); commit();
+    draft.bundles = draft.bundles.filter((x) => x.id !== c.id); draft.tickerItems = draft.tickerItems.filter((it) => !(it.t === "bundle" && it.id === c.id)); commit();
   }
 });
 let idleTimer = null;
@@ -818,14 +818,25 @@ function liveTickerUrl() { const s = displayParams({ bg: "", opacity: secDisplay
 /** The builder's address: reproduces the ticker on this page with no publish: display parameters, then races by id, calls, items, idle. */
 function tickerUrl() {
   const p = displayParams({ bg: pageBg("ticker"), opacity: secDisplay("ticker").opacity });
-  // The crawl order with its chunks expanded: a race by its label, text after ~, entries separated by |.
+  // The crawl order with its bundles expanded: a race by its label, text after ~, entries separated by |.
   p.set("seq", expandTicker(draft).map((it) => it.t === "race" ? (index?.byId?.get(it.id)?.label ?? it.id) : `~${it.text.replace(/\|/g, "/")}`).join("|"));
   p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
   p.set("idle", draft.idleText || DEFAULTS.idleText);   // always spelled out, like calls
   return `${origin()}/ticker?${p.toString()}`;
 }
+// An address is plain ASCII once encoded, so characters and bytes are the same count. Short ones show nothing. Yellow: long enough that
+// a tool in the path may cut it. Red: past what proxies and switchers commonly accept. This site itself refuses addresses over about 32,700.
+const URL_WARN = 2000, URL_LIMIT = 8000, URL_SITE_MAX = 32700;
+function renderUrlSize(n) {
+  const el = $("urlsize"); el.hidden = n <= URL_WARN; if (el.hidden) return;
+  el.textContent = `${n.toLocaleString()} / ${URL_LIMIT.toLocaleString()} chars`;
+  el.className = `urlsize ${n > URL_LIMIT ? "bad" : "warn"}`;
+  el.title = n > URL_SITE_MAX ? "Too long: this site refuses an address this long, so the ticker will not load. Shorten the text or take races out of the crawl."
+    : n > URL_LIMIT ? `Over ${URL_LIMIT.toLocaleString()} characters, past what many proxies and switchers accept. This site takes up to about ${URL_SITE_MAX.toLocaleString()}. Test it in your switcher, or publish instead: the Permanent Address never grows.`
+    : `Over ${URL_WARN.toLocaleString()} characters, long enough that some tools may cut it off. Check that a pasted address still loads the whole crawl.`;
+}
 function renderTickerUrl() {
-  const u = tickerUrl(); $("tickerurl").textContent = u; $("tickerurl").href = u; $("tickeropen").href = u;
+  const u = tickerUrl(); $("tickerurl").textContent = u; $("tickerurl").href = u; $("tickeropen").href = u; renderUrlSize(u.length);
   const l = liveTickerUrl(); $("liveurl").textContent = l; $("liveurl").href = l; $("liveopen").href = l;
 }
 for (const [btn, fn, label] of [["tickercopy", tickerUrl, "Copy Draft URL"], ["livecopy", liveTickerUrl, "Copy Live URL"]]) $(btn).addEventListener("click", async () => { try { await navigator.clipboard.writeText(fn()); $(btn).textContent = "Copied"; setTimeout(() => ($(btn).textContent = label), 1500); } catch {} });
@@ -1610,8 +1621,8 @@ async function deleteImage(x) {
 }
 
 // ---------- race pickers ----------
-/** The same picker for the crawl order and every chunk (data-pick="seq" | "chunk:<id>"): one listener for all of them, since
- *  the chunk editors are redrawn on every change. A pick goes straight into that list, no confirmation: the list is right there. */
+/** The same picker for the crawl order and every bundle (data-pick="seq" | "bundle:<id>"): one listener for all of them, since
+ *  the bundle editors are redrawn on every change. A pick goes straight into that list, no confirmation: the list is right there. */
 (() => {
   const boxOf = (input) => input.parentElement.querySelector(".suggest");
   const render = (input) => {
@@ -1823,7 +1834,7 @@ function renderAll() {
   renderStatus();
   renderTheme();
   renderLive();
-  renderSeq(); renderChunks(); sendPreview(); renderScreens(); renderPlaylists(); renderImages();
+  renderSeq(); renderBundles(); sendPreview(); renderScreens(); renderPlaylists(); renderImages();
   renderCatalog(); renderChartCatalog();
   cards.prune();
 }
@@ -1884,19 +1895,19 @@ function restoreScroll() {
   put();
 }
 
-/** Shipped chunks join a browser's builder once, outside the crawl order. A newer version of one merges in only the races added since,
- *  each after the shipped race it follows, so a piece someone removed or moved stays that way and a chunk they deleted stays deleted. */
-function adoptShippedChunks() {
-  const KEY = "studio.shippedChunks";
+/** Shipped bundles join a browser's builder once, outside the crawl order. A newer version of one merges in only the races added since,
+ *  each after the shipped race it follows, so a piece someone removed or moved stays that way and a bundle they deleted stays deleted. */
+function adoptShippedBundles() {
+  const KEY = "studio.shippedBundles";
   let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+  try { raw = JSON.parse(localStorage.getItem(KEY) ?? localStorage.getItem("studio.shippedChunks") ?? "null"); } catch {}   // the old name, from before the rename
   const v1 = Array.isArray(raw) ? raw : (raw?.v1 ?? []), done = raw?.v2 ?? [];
-  const todo = ZONE_CHUNKS.filter((c) => !done.includes(c.id));
+  const todo = ZONE_BUNDLES.filter((c) => !done.includes(c.id));
   if (!todo.length) return;
   let changed = false;
   for (const c of todo) {
-    const mine = draft.chunks.find((x) => x.id === c.id);
-    if (!mine) { if (!v1.includes(c.id)) { draft.chunks.push(structuredClone(c)); changed = true; } continue; }
+    const mine = draft.bundles.find((x) => x.id === c.id);
+    if (!mine) { if (!v1.includes(c.id)) { draft.bundles.push(structuredClone(c)); changed = true; } continue; }
     c.items.forEach((it, k) => {
       if (it.t !== "race" || !ZONE_ADDED[c.id]?.includes(it.id) || mine.items.some((x) => x.t === "race" && x.id === it.id)) return;
       let at = mine.items.length;
@@ -1916,7 +1927,7 @@ async function boot() {
   const loadRuntime = async () => { runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null); };
   await loadRuntime();
   await Promise.all([loadStatus(), loadIndex(), loadLive(), loadReaders(), loadPlaylists(), loadLibrary()]);
-  adoptShippedChunks();   // after loadLive: a browser's first load copies the published ticker into its builder, chunks included
+  adoptShippedBundles();   // after loadLive: a browser's first load copies the published ticker into its builder, bundles included
   renderAll();
   restoreScroll();
   timers = [setInterval(refreshShared, 5_000), setInterval(() => fetch("/api/login", { cache: "no-store" }).catch(() => {}), 60 * 60 * 1000), setInterval(loadStatus, 15_000), setInterval(loadIndex, 60_000), setInterval(loadLive, 20_000), setInterval(loadReaders, 5_000), setInterval(renderFresh, 1_000), setInterval(loadPlaylists, 30_000), setInterval(loadRuntime, 30_000), setInterval(() => { renderStatus(); renderLive(); }, 10_000)];

@@ -71,7 +71,7 @@
   const preview = params.get("preview") === "1";   // studio preview: producer state arrives by postMessage
   // A ticker built entirely from its address, no pushed state involved:
   //   /ticker?bg=black&opacity=60&seq=NE-SEN|~Polls close at 7|MT-SEN|ID-SEN&calls=1&idle=Welcome
-  // seq: the crawl order, entries separated by |: a race (its label NE-SEN, CA-6, or AP id) or ~text. Chunks are already
+  // seq: the crawl order, entries separated by |: a race (its label NE-SEN, CA-6, or AP id) or ~text. Bundles are already
   // expanded into it. Older addresses carry races=NE-SEN,MT-SEN (in order) and item=... (one after every two races).
   // calls=0 turns the yellow AP Call highlight off. Any of the five present switches this mode on.
   const URL_MODE = ["seq", "races", "item", "idle", "calls"].some((k) => params.has(k));
@@ -155,7 +155,7 @@
       const byLabel = new Map(races.map((r) => [r.label, r.id])), byId = new Set(races.map((r) => r.id));
       const resolve = (k) => (byId.has(k) ? k : byLabel.get(k.toUpperCase()));
       producer = urlState.seq
-        ? { ...urlState, tickerItems: urlState.seq.map((it) => it.t === "race" ? { t: "race", id: resolve(it.key) ?? it.key } : it), chunks: [] }
+        ? { ...urlState, tickerItems: urlState.seq.map((it) => it.t === "race" ? { t: "race", id: resolve(it.key) ?? it.key } : it), bundles: [] }
         : { ...urlState, pinnedRaceIds: urlState.pinnedKeys.map(resolve).filter(Boolean) };
     }
     const q = buildQueue(races, producer);
