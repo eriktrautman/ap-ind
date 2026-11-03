@@ -69,7 +69,6 @@ export function applyFit(search = typeof location === "undefined" ? "" : locatio
 }
 applyFit();
 const LS_LOCAL = "studio.local";
-const LS_SOURCE = "studio.source";
 
 /** The slate: the six independents the broadcast follows (cand = the independent's AP id). Order is the default ticker order. */
 export const FEATURED_RACES = [
@@ -185,14 +184,19 @@ export function canonicalAddress(pathname, search = "") {
  *  read them: older addresses, D5's fallback, older clients that publish only those two. */
 /** The shipped chunk: the slate's races, one package. The default crawl is this chunk and nothing else. */
 export const SLATE_CHUNK = Object.freeze({ id: "slate", name: "Slate", items: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })) });
-// The key races by the time zone their polls close in, earliest close first, each opened by a line naming the zone. They wait in the builder
-// until someone places them in the crawl order. A state split across zones goes with most of its voters. Alaska and Hawaii are in none of the four.
-export const ZONE_CHUNKS = Object.freeze([
-  { id: "easternraces", name: "Eastern Races", races: ["18015", "10033", "10396", "11129", "10045", "12029", "12301", "30003", "41938", "47001", "47003", "35385", "34977", "35984", "36027", "36031", "36005", "84327", "20645", "20643", "23814", "23808", "23811", "24074", "24463", "31218", "39008", "39017", "39014", "39015", "36597"] },   // KY-6 FL-14 FL-22 FL-25 FL-GOV GA-GOV GA-SEN NH-SEN SC-SEN VA-1 VA-2 NC-1 NC-11 NC-SEN OH-7 OH-9 OH-GOV OH-SEN ME-2 ME-SEN MI-10 MI-4 MI-7 MI-GOV MI-SEN NJ-7 PA-1 PA-10 PA-7 PA-8 NY-17
-  { id: "centralraces", name: "Central Races", races: ["1374", "17559", "17585", "42003", "45885", "49478", "49479", "45901", "46643", "17071", "17072", "17073", "17076", "17247", "24704", "25151", "28385", "28006", "28594", "50048", "50016"] },   // AL-2 KS-GOV KS-SEN SD-SEN TX-15 TX-34 TX-35 TX-GOV TX-SEN IA-1 IA-2 IA-3 IA-GOV IA-SEN MN-GOV MN-SEN NE-2 NE-GOV NE-SEN WI-3 WI-GOV
-  { id: "mountainraces", name: "Mountain Races", races: ["3004", "3544", "3014", "7727", "33279", "13252", "28447", "27607", "45669"] },   // AZ-1 AZ-6 AZ-GOV CO-8 NM-2 ID-SEN MT-1 MT-SEN UT-1
-  { id: "pacificraces", name: "Pacific Races", races: ["29861", "38019", "5712", "5730", "8149", "5696", "6123", "48009"] },   // NV-GOV OR-GOV CA-22 CA-40 CA-48 CA-6 CA-GOV WA-3
-].map(({ id, name, races }) => ({ id, name, items: [{ t: "text", id: `${id}title`, text: name }, ...races.map((r) => ({ t: "race", id: r }))] })));
+// Every Toss Up and Lean race on Cook's Nov. 2 ratings, plus the races the show already follows, by the time zone their polls close in, earliest
+// close first, each opened by a line naming the zone. They wait in the builder until someone places them in the crawl order. A state split across
+// zones goes with most of its voters. Alaska closes last and has its own chunk; Hawaii has no race in the set. added: races new since the first
+// version of these chunks, merged once into a builder that already holds it (adoptShippedChunks in the Studio).
+const ZONE_DEFS = [
+  { id: "easternraces", name: "Eastern Races", races: ["15026", "18015", "10031", "10033", "10396", "11129", "11587", "10019", "10023", "10045", "12029", "12301", "30003", "41922", "41938", "47001", "47003", "47009", "35385", "34977", "35984", "36033", "36043", "36027", "36031", "36005", "84327", "20645", "20643", "23814", "23808", "23811", "24074", "24463", "31218", "39008", "39017", "39014", "39015", "36597", "36601"], added: ["15026", "10031", "11587", "10019", "10023", "41922", "47009", "36033", "36043", "36601"] },   // IN-5 KY-6 FL-13 FL-14 FL-22 FL-25 FL-27 FL-7 FL-9 FL-GOV GA-GOV GA-SEN NH-SEN SC-1 SC-SEN VA-1 VA-2 VA-5 NC-1 NC-11 NC-SEN OH-10 OH-15 OH-7 OH-9 OH-GOV OH-SEN ME-2 ME-SEN MI-10 MI-4 MI-7 MI-GOV MI-SEN NJ-7 PA-1 PA-10 PA-7 PA-8 NY-17 NY-21
+  { id: "centralraces", name: "Central Races", races: ["1374", "17559", "17585", "42003", "45885", "45893", "49478", "49479", "45901", "46643", "17071", "17072", "17073", "17076", "17247", "24007", "24704", "25151", "28385", "28006", "28594", "50040", "50048", "50016"], added: ["45893", "24007", "50040"] },   // AL-2 KS-GOV KS-SEN SD-SEN TX-15 TX-23 TX-34 TX-35 TX-GOV TX-SEN IA-1 IA-2 IA-3 IA-GOV IA-SEN MN-1 MN-GOV MN-SEN NE-2 NE-GOV NE-SEN WI-1 WI-3 WI-GOV
+  { id: "mountainraces", name: "Mountain Races", races: ["3004", "3006", "3544", "3014", "6616", "6617", "7727", "33279", "13253", "13252", "28447", "27607", "45669"], added: ["3006", "6616", "6617", "13253"] },   // AZ-1 AZ-2 AZ-6 AZ-GOV CO-4 CO-5 CO-8 NM-2 ID-1 ID-SEN MT-1 MT-SEN UT-1
+  { id: "pacificraces", name: "Pacific Races", races: ["30989", "29861", "38019", "5712", "5730", "8149", "5696", "6123", "48009"], added: ["30989"] },   // NV-2 NV-GOV OR-GOV CA-22 CA-40 CA-48 CA-6 CA-GOV WA-3
+  { id: "alaskaraces", name: "Alaska Races", races: ["2015", "2010", "3079"], added: ["2015", "2010", "3079"] },   // AK-AL AK-GOV AK-SEN
+];
+export const ZONE_CHUNKS = Object.freeze(ZONE_DEFS.map(({ id, name, races }) => ({ id, name, items: [{ t: "text", id: `${id}title`, text: name }, ...races.map((r) => ({ t: "race", id: r }))] })));
+export const ZONE_ADDED = Object.freeze(Object.fromEntries(ZONE_DEFS.map(({ id, added }) => [id, added])));
 export const DEFAULTS = Object.freeze({
   tickerItems: [{ t: "chunk", id: SLATE_CHUNK.id }],   // {t:"race",id} | {t:"text",id,text} | {t:"chunk",id}
   chunks: [SLATE_CHUNK, ...ZONE_CHUNKS],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
@@ -246,7 +250,7 @@ export function describeScreen(s) {
   return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""} · on ${s.bg || "transparent"}`;
 }
 
-const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, chunks: 24, chunkItems: 40, chunkName: 60 };
+const LIMITS = { pins: 60, featured: 40, manual: 60, text: 240, key: 8, context: 120, seq: 120, chunks: 24, chunkItems: 50, chunkName: 60 };
 const idOk = (s) => typeof s === "string" && /^[0-9]{1,12}$/.test(s);
 const uniqIds = (arr, max) => [...new Set((Array.isArray(arr) ? arr : []).filter(idOk))].slice(0, max);
 
@@ -460,13 +464,11 @@ const ls = {
 };
 export function readLocal() { try { const raw = ls.get(LS_LOCAL); return raw ? normalize(JSON.parse(raw)) : null; } catch { return null; } }
 export function saveLocal(state) { const s = normalize({ ...state, updatedAt: new Date().toISOString() }); ls.set(LS_LOCAL, JSON.stringify(s)); return s; }
-export function getSavedSource() { const s = ls.get(LS_SOURCE); return SOURCES.includes(s) ? s : "global"; }
-export function setSavedSource(src) { if (SOURCES.includes(src)) ls.set(LS_SOURCE, src); }
 
-/** Which source this page should use: the URL wins, then the saved selector, then global. */
+/** Which source this page should use: the URL wins, else global. An old saved choice must never turn a live ticker into this browser's draft. */
 function requestedSource(search = location.search) {
   const q = new URLSearchParams(search).get("src");
-  return SOURCES.includes(q) ? q : getSavedSource();
+  return SOURCES.includes(q) ? q : "global";
 }
 
 // Production is read as a static file through the CDN, never through a function: every open ticker and graphic
@@ -553,7 +555,7 @@ export function watchState({ source = requestedSource(), intervalMs = 0, onState
     if (r.source === "global" && !r.error) lastGlobal = r.state;
     emit(r.state, { source: r.source, requested, error: r.error, preview: false });
   }
-  const onStorage = (e) => { if (e.key === LS_LOCAL || e.key === LS_SOURCE) tick(); };
+  const onStorage = (e) => { if (e.key === LS_LOCAL) tick(); };
   const onMessage = (e) => {
     if (e.data?.type === "producer" && e.data.state) { pushed = normalize(e.data.state); emit(pushed, { source: "preview", requested, error: null, preview: true }); }
     if (e.data?.type === "producer-source" && SOURCES.includes(e.data.source)) { pushed = null; requested = e.data.source; tick(); }

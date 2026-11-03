@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_CHUNKS, DEFAULTS } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -91,4 +91,12 @@ test("stored playlists from before General gain it once, keep what they had, and
   assert.equal(seeded.users[1].playlists[0].items.length, 1, "what was stored is untouched");
   const removed = normalizePlaylists({ users: seeded.users.slice(1), generalSeeded: true });
   assert.deepEqual(seedPlaylists(removed).users.map((u) => u.name), ["Ryan"], "General does not come back");
+});
+
+test("the shipped zone chunks survive validation whole, and a published crawl carries its own copy of each chunk it uses", () => {
+  const races = ZONE_CHUNKS.flatMap((c) => c.items.filter((i) => i.t === "race").map((i) => i.id));
+  assert.equal(new Set(races).size, races.length, "no race is in two zones");
+  const st = normalize({ ...DEFAULTS, tickerItems: ZONE_CHUNKS.map((c) => ({ t: "chunk", id: c.id })) });
+  assert.deepEqual(st.chunks.filter((c) => c.id !== "slate"), [...ZONE_CHUNKS], "nothing is trimmed");
+  assert.equal(st.tickerItems.length, ZONE_CHUNKS.length, "every chunk stays in the crawl");
 });

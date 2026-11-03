@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_CHUNKS, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, ZONE_CHUNKS, ZONE_ADDED, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -1884,16 +1884,28 @@ function restoreScroll() {
   put();
 }
 
-/** A chunk shipped after this browser saved its builder joins it once, outside the crawl order. Delete it and it stays deleted. */
+/** Shipped chunks join a browser's builder once, outside the crawl order. A newer version of one merges in only the races added since,
+ *  each after the shipped race it follows, so a piece someone removed or moved stays that way and a chunk they deleted stays deleted. */
 function adoptShippedChunks() {
   const KEY = "studio.shippedChunks";
-  let known = [];
-  try { known = JSON.parse(localStorage.getItem(KEY) ?? "[]"); } catch {}
-  const fresh = ZONE_CHUNKS.filter((c) => !known.includes(c.id));
-  if (!fresh.length) return;
-  const add = fresh.filter((c) => !draft.chunks.some((x) => x.id === c.id));
-  if (add.length) draft = saveLocal({ ...draft, chunks: [...draft.chunks, ...structuredClone(add)] });
-  try { localStorage.setItem(KEY, JSON.stringify([...known, ...fresh.map((c) => c.id)])); } catch {}
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(KEY) ?? "null"); } catch {}
+  const v1 = Array.isArray(raw) ? raw : (raw?.v1 ?? []), done = raw?.v2 ?? [];
+  const todo = ZONE_CHUNKS.filter((c) => !done.includes(c.id));
+  if (!todo.length) return;
+  let changed = false;
+  for (const c of todo) {
+    const mine = draft.chunks.find((x) => x.id === c.id);
+    if (!mine) { if (!v1.includes(c.id)) { draft.chunks.push(structuredClone(c)); changed = true; } continue; }
+    c.items.forEach((it, k) => {
+      if (it.t !== "race" || !ZONE_ADDED[c.id]?.includes(it.id) || mine.items.some((x) => x.t === "race" && x.id === it.id)) return;
+      let at = mine.items.length;
+      for (let p = k - 1; p >= 0; p--) { const q = mine.items.findIndex((x) => x.id === c.items[p].id); if (q >= 0) { at = q + 1; break; } }
+      mine.items.splice(at, 0, structuredClone(it)); changed = true;
+    });
+  }
+  if (changed) draft = saveLocal(draft);
+  try { localStorage.setItem(KEY, JSON.stringify({ v1, v2: [...done, ...todo.map((c) => c.id)] })); } catch {}
 }
 async function boot() {
   timers.forEach(clearInterval);
