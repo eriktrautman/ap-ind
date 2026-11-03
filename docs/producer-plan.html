@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-03T01:16:37Z",
+  updated: "2026-11-03T01:19:52Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -285,6 +285,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-03T01:19:52Z", what: "D13: an uncalled race above the record says Record pace, never Trailing." },
   { t: "2026-11-03T01:16:37Z", what: "B10: Osborn is running behind his own 2024 pace, not Osborn's own." },
   { t: "2026-11-03T01:08:38Z", what: "B14 shows up to four faces. The six slate races have a fixed lineup and order, from the producer's list; everyone else in those races is on one Other line with no photos. Any other race still shows two." },
   { t: "2026-11-02T22:53:31Z", what: "Images, phase 2 (S133): crop an upload or a library image, replace an image in every playlist, a caption and the credit on air, a chart-panel layout, star and deprecate. The Image Library takes dropped files, has its own + card and filters by uploader; a credit is optional. Live screens change only by publishing." },

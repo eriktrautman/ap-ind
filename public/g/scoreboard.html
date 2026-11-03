@@ -85,7 +85,7 @@
       else if (!have) pill = { cls: "open", text: st.status === "closed" ? "Polls closed" : "Polls open" };
       else if (b?.countNote) pill = { cls: "counting", text: b.countNote };
       else if (leading) pill = { cls: record ? "record" : "lead", text: `Leading${record ? mark : ""}` };
-      else pill = { cls: record ? "record" : "behind", text: record ? `Trailing${mark}` : "Counting" };
+      else pill = { cls: record ? "record" : "behind", text: record ? (b?.first ? "First" : "Record pace") : "Counting" };
       const winner = lost ? sorted.find((c) => c.winner) : null;
       const pl = partyLetter;
       return { r, ind, b, share, inPct, won, lost, leading, record, pill, have, winner: winner ? `${esc(winner.last ?? winner.name)}${incStar(winner)} (${pl(winner)})` : null };
