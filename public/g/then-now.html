@@ -44,6 +44,7 @@
   const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
     const colorFor = (c) => c.featured ? COLOR.ind : COLOR[partyClass(c.party)];
   const MIN_IN = 10;
+  const PRONOUN = { "168007": "his" };   // Osborn, the one slate candidate compared with his own last run; anyone else reads "their own"
   let race = null, counties = null, prior = null;
 
   async function loadPrior() {
@@ -101,7 +102,7 @@
     const n = rows.filter((r) => r.ok).length;
     const same = lane.id === cand.id;
     $("headline").innerHTML = agg === null ? `<small>No counties with enough of the vote in yet.</small>`
-      : `${esc(cand.last)} running <b class="${agg >= 0 ? "ahead" : "behind"}">${agg >= 0 ? "+" : ""}${agg.toFixed(1)}</b> ${agg >= 0 ? "ahead of" : "behind"} ${same ? `${esc(cand.last)}'s own ${year} pace` : `${esc(lane.last)}'s ${year} pace`} in the ${n} counted ${n === 1 ? "county" : "counties"}<small>${same ? "Same candidate, same counties, " : `Compared with ${esc(lane.name)} (${esc(lane.party)}), the ${year} ${lane.winner ? "winner" : "runner-up"} for this seat; `}counties with under ${MIN_IN}% in are left out.</small>`;
+      : `${esc(cand.last)} running <b class="${agg >= 0 ? "ahead" : "behind"}">${agg >= 0 ? "+" : ""}${agg.toFixed(1)}</b> ${agg >= 0 ? "ahead of" : "behind"} ${same ? `${PRONOUN[cand.id] ?? "their"} own ${year} pace` : `${esc(lane.last)}'s ${year} pace`} in the ${n} counted ${n === 1 ? "county" : "counties"}<small>${same ? "Same candidate, same counties, " : `Compared with ${esc(lane.name)} (${esc(lane.party)}), the ${year} ${lane.winner ? "winner" : "runner-up"} for this seat; `}counties with under ${MIN_IN}% in are left out.</small>`;
     rows.sort((a, b) => b.b.total - a.b.total);
     $("rows").innerHTML = rows.slice(0, 5).map((r) => `<tr><td class="b">${esc(r.u.name)}</td><td class="r m">${Math.round(r.inPct)}%</td><td class="r">${r.base.toFixed(1)}%</td><td class="r b">${r.share === null ? "—" : r.share.toFixed(1) + "%"}</td><td class="r b ${r.diff === null ? "" : r.diff >= 0 ? "ahead" : "behind"}">${r.diff === null ? "—" : (r.diff >= 0 ? "+" : "") + r.diff.toFixed(1)}</td></tr>`).join("");
   }
