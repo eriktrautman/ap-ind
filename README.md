@@ -107,7 +107,7 @@ The broadcast pages live in `studio/` (Studio, ticker, poller functions) and `pu
 
 Poller controls (AP poller card): **Poll now**, **Poll now + reset caches**, **Pause/Resume polling**, **Test/Live**. These write `settings.json`, read at the start of every run, so none need a redeploy. `status.json` is written on every run, including failures, with a plain-English diagnosis shown in the status bar.
 
-The Watch Party project (`watch-party/`, ind-watch-party.vercel.app) is a pure reader of the same Blob files.
+The Watch Party project (`watch-party/`, electionwatchparty.com) is a pure reader of the same Blob files.
 
 Functions: `GET/POST/DELETE /api/login`, `GET/PUT /api/producer` (partial bodies merge over the stored state; every field validated), `GET/PUT /api/settings`, `GET/PUT /api/playlists` (the whole playlists document; adding, renaming or removing people or playlists needs a producer), `GET|POST /api/poll`. Env vars on the Vercel project: `AP_API_KEY`, `AP_RESULTS_TYPE`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, one `STUDIO_PASSWORD_<PRODUCER|PUBLISHER|READONLY>_<FIRST>_<LAST>` per person, optionally `STUDIO_TEST_PASSWORD`.
 
@@ -224,7 +224,7 @@ The pages read the CDN URLs from the manifest (`config/photos.json`); `public/ph
 
 ## Watch Party
 
-`watch-party/` is a separate Vercel project (https://ind-watch-party.vercel.app): static pages that read the same Blob files the ap-ind poller writes. It covers every race the AP key returns (Senate, House, governor, other statewide offices, ballot measures, big-city mayors; not state legislatures). It has no poller or secrets of its own.
+`watch-party/` is a separate Vercel project, `ind-watch-party` (https://electionwatchparty.com; ind-watch-party.vercel.app serves the same deployment, so old links work): static pages that read the same Blob files the ap-ind poller writes. It covers every race the AP key returns (Senate, House, governor, other statewide offices, ballot measures, big-city mayors; not state legislatures). It has no poller or secrets of its own.
 
 ## Who can change what
 

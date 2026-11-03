@@ -220,7 +220,7 @@
     <p>Serverless was also rejected. The team's usual host is Vercel, whose serverless model does not run long-lived processes, and the middleware core (a poller on a 20 s cadence, a WebSocket server, a growing SQLite file) is one. Vercel hosts what fits: the Watch Party (public, read-only) and these docs. A Vercel-native variant of the middleware is possible (Vercel Cron triggers each poll at a 1-minute minimum, state in a hosted DB such as Neon or Turso, graphics poll REST every 10–15 s instead of a socket). It is slower, adds two vendors to the critical path and is a second architecture to maintain. It is held in reserve as the cloud fallback if rehearsal shows the studio machine cannot be trusted.</p>
 
     <h3 id="watch-party">The Watch Party: live updates without a server</h3>
-    <p>The Watch Party (<a href="https://ind-watch-party.vercel.app">ind-watch-party.vercel.app</a>, design in <a href="watch-party.html">its own document</a>) shows the same AP data to the public and updates every minute, and it does run on Vercel. There is no contradiction with the paragraph above: it is live in a different way. The broadcast middleware <em>pushes</em>; the Watch Party is <em>polled</em>, and the two halves of the word "live" are split between a tiny writer and many readers that never meet.</p>
+    <p>The Watch Party (<a href="https://electionwatchparty.com">electionwatchparty.com</a>, design in <a href="watch-party.html">its own document</a>) shows the same AP data to the public and updates every minute, and it does run on Vercel. There is no contradiction with the paragraph above: it is live in a different way. The broadcast middleware <em>pushes</em>; the Watch Party is <em>polled</em>, and the two halves of the word "live" are split between a tiny writer and many readers that never meet.</p>
     <figure>
       <div class="diagram">
       <svg viewBox="0 0 960 300" width="960" height="300" role="img" aria-label="Watch Party architecture: a poller process fetches AP once a minute and writes JSON files to Vercel Blob; Vercel's CDN serves those files and the static pages; each browser re-fetches the files every minute.">
@@ -444,7 +444,7 @@ Event     { id, ts, type (CALL | LEAD_CHANGE | FIRST_RESULTS | THRESHOLD | FEATU
         <tr><td>Oct 22–29</td><td>Build</td><td>Periodic full refresh in the poller; per-state county polling for the featured states; control panel with login; the chosen graphics from the data-options page (national status maps, featured-races board, balance of power, county maps, votes-still-out); wall page; replay mode; pm2 deployment to the studio machine and a mirror host. Carbonite path (option A or B) proven in the studio with real hardware.</td></tr>
         <tr><td>Oct 30–Nov 2</td><td>Rehearse</td><td>Full dress rehearsal on replayed data at 4× speed with the production team; run against AP's scheduled test (dates to confirm); runbook and failure drills (kill AP, kill studio server, kill internet).</td></tr>
         <tr><td>Nov 3</td><td>Air</td><td>Engineer on site; cloud mirror warm; watchdog on.</td></tr>
-        <tr><td>Done</td><td>Tier 2</td><td>Watch Party with county maps, live at ind-watch-party.vercel.app.</td></tr>
+        <tr><td>Done</td><td>Tier 2</td><td>Watch Party with county maps, live at electionwatchparty.com.</td></tr>
       </tbody>
     </table>
     </div>

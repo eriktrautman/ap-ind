@@ -533,7 +533,7 @@ $("pollnow").addEventListener("click", () => runPoll(false));
 $("pollfresh").addEventListener("click", () => runPoll(true));
 $("pause").addEventListener("click", async () => {
   const paused = settings?.pollEnabled === false;
-  if (!paused && !(await ask({ title: "Pause polling?", body: `<p>The ticker, every graphic and the watch party at ${esc(location.host)} stop getting new AP results until you resume.</p>`, ok: "Pause", danger: true }))) return;
+  if (!paused && !(await ask({ title: "Pause polling?", body: `<p>The ticker and every graphic at ${esc(location.host)}, and the watch party at electionwatchparty.com, stop getting new AP results until you resume.</p>`, ok: "Pause", danger: true }))) return;
   settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, pollEnabled: paused }) });
   renderStatus();
   if (!paused) $("pollmsg").textContent = "Paused. Resume polling when ready.";
@@ -543,7 +543,7 @@ $("rtype").querySelectorAll("button").forEach((b) => b.addEventListener("click",
   const rt = b.dataset.rt;
   const cur = settings?.resultsType ?? settings?.envResultsType ?? "t";
   if (rt === cur) return;
-  const body = rt === "l" ? `<p>The ticker, every graphic and the public watch party at ${esc(location.host)} show real AP results from the next poll.</p>` : "<p>Real results are replaced by AP's practice simulation on the next poll.</p>";
+  const body = rt === "l" ? `<p>The ticker and every graphic at ${esc(location.host)}, and the public watch party at electionwatchparty.com, show real AP results from the next poll.</p>` : "<p>Real results are replaced by AP's practice simulation on the next poll.</p>";
   if (!(await ask({ title: rt === "l" ? "Switch to LIVE results?" : "Switch to AP TEST data?", body, ok: rt === "l" ? "Go live" : "Use test data", danger: rt === "l" }))) return;
   settings = await api("/api/settings", { method: "PUT", body: JSON.stringify({ ...settings, resultsType: rt }) });
   renderStatus(); $("pollmsg").textContent = `Switching to ${rt === "l" ? "LIVE" : "TEST"}: polling now; the bar confirms when the poller has run on the new stream.`;
