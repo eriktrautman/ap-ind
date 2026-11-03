@@ -641,7 +641,7 @@ function renderBundles() {
   const uses = c ? draft.tickerItems.filter((it) => it.t === "bundle" && it.id === c.id).length : 0;
   box.innerHTML = `<div class="plbar bundlebar">
       <label>Bundle <select id="bundlesel">${draft.bundles.map((x) => `<option value="${esc(x.id)}" ${x.id === c?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}<option value="${BUNDLE_ADD}">+ Add bundle…</option></select></label>
-      ${c ? `<button class="primary addref" type="button" title="Place this bundle at the end of the crawl order">Add to crawl</button>` : ""}
+      ${c ? `<button class="addref${c.items.length && !uses ? " ready" : ""}" type="button" title="Place this bundle at the end of the crawl order">Add to crawl</button>` : ""}
       <button class="newbundlebtn" type="button" title="A new, empty bundle">+ Add bundle…</button>
       ${c ? `<details class="ploptions" id="bundleopts"><summary title="Rename or delete this bundle">Additional Options</summary><div class="plmenu">
         <div class="plmenuhead">Bundle: ${esc(c.name || c.id)}</div>
@@ -663,7 +663,7 @@ async function addBundle() {
   const id = newId(); draft.bundles.push({ id, name, items: [] }); bundleSel = id; try { localStorage.setItem("studio.bundle", id); } catch {} commit();
 }
 async function renameBundle(c) {
-  const ok = await ask({ title: "Rename the bundle", ok: "Rename", body: `<p><label>Name<br><input id="bundlename" maxlength="60" value="${esc(c.name)}" style="width:100%"></label></p>` });
+  const ok = await ask({ title: "Rename the bundle", ok: "Rename", body: `<p><label>Name<br><input id="bundlename" maxlength="60" value="${esc(c.name)}" placeholder="Bundle name" style="width:100%"></label></p>` });
   const name = $("bundlename")?.value.trim(); if (!ok || !name) return;
   c.name = name; commit();
 }

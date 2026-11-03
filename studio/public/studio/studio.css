@@ -170,9 +170,9 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .row.manual .nm { font-weight: 600; white-space: normal; }
 .addmanual { display: flex; gap: 6px; margin-bottom: 6px; }
 .addmanual input, #idletext { flex: 1; width: 100%; }
-/* Blue once there is something to add: text typed or a bundle chosen. */
-.addmanual:has(input:not(:placeholder-shown)) button:not(:disabled), .addmanual:has(select option:checked:not([value=""])) button:not(:disabled) { background: #1f6feb; border-color: #1f6feb; color: #fff; }
-.addmanual:has(input:not(:placeholder-shown)) button:not(:disabled):hover, .addmanual:has(select option:checked:not([value=""])) button:not(:disabled):hover { background: #1858c4; border-color: #1858c4; }
+/* Blue once there is something to add: text typed, a bundle chosen, a bundle with pieces not yet in the crawl, a bundle name in its dialog. */
+.addmanual:has(input:not(:placeholder-shown)) button:not(:disabled), .addmanual:has(select option:checked:not([value=""])) button:not(:disabled), .bundlebar button.addref.ready, #dlg:has(#bundlename:not(:placeholder-shown)) #dlgok { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+.addmanual:has(input:not(:placeholder-shown)) button:not(:disabled):hover, .addmanual:has(select option:checked:not([value=""])) button:not(:disabled):hover, .bundlebar button.addref.ready:hover, #dlg:has(#bundlename:not(:placeholder-shown)) #dlgok:hover { background: #1858c4; border-color: #1858c4; }
 .empty { color: var(--muted); padding: 22px; text-align: center; font-size: 13px; }
 .addfeat { margin-top: 8px; }
 .addfeat input { flex: 1; }
