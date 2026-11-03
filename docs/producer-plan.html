@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-03T17:39:56Z",
+  updated: "2026-11-03T17:44:26Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -285,6 +285,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-03T17:44:26Z", what: "The crawl order sits in a tinted well matching the chunk area, so it reads as the place to drag things." },
   { t: "2026-11-03T17:39:56Z", what: "Chunks work like playlists: one open at a time, picked from a dropdown, with add, rename and delete. The crawl order reorders by dragging and has more room; Idle text folds away." },
   { t: "2026-11-03T17:29:45Z", what: "Four ticker chunks ship in every builder: Eastern, Central, Mountain and Pacific Races, the key races by the zone their polls close in, earliest close first, each opened by a line naming the zone. They are not in the crawl order until someone places them. A chunk's pieces reorder by dragging a handle." },
   { t: "2026-11-03T16:53:06Z", what: "The upload dialog's preview, crop box and library picker are square-edged, and the preview and crop box carry a thin line at their exact edge." },

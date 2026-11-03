@@ -620,7 +620,10 @@ main > section.card.collapsed { padding-bottom: 0; }
 
 /* The ticker draft: room for a long crawl above its inputs, and the idle text folded away. */
 #seq { min-height: 280px; }
-.tform #seq + .addfeat { margin-top: 28px; }
+/* the crawl order sits in the same tinted well as a chunk's pieces: this is where things get dragged */
+.seqwell { margin-top: 8px; padding: 10px 12px; background: #f3effc; border: 1px solid #c9bdf0; border-radius: 8px; } .seqwell .list { background: #fff; }
+.chunk { background: #f3effc; }
+.tform .seqwell + .addfeat { margin-top: 28px; }
 .idlebox { margin-top: 14px; } .idlebox summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--navy); }
 .idlebox summary:hover { color: var(--ink); } .idlebox[open] summary { margin-bottom: 6px; }
 .chunklist { gap: 10px; } .chunkbar { margin: 0; }
