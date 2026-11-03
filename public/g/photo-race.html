@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="/g/theme-boot.js"></script>
+<meta charset="utf-8">
+<title>Photo Live Race Result</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* B16: the live result with the candidates' faces, cut out and fading into the panel, over their share in big numbers. A race in
+     RACE_LINEUPS shows exactly those faces in that order (the incumbent on the left, as on the race cards) and everyone else on one
+     "Other" line with no photo. Any other race shows the two leaders, incumbent on the left. public/g/cutouts/<AP id>.png holds the
+     cut-outs; a candidate without one gets their ordinary photo with a soft oval fade. ?id=<raceID>. Ali's race card art by default. */
+  .body { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 12px; min-height: 0; }
+  .cols { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 16px; min-height: 0; }
+  .cand { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; min-width: 0; min-height: 0; }
+  .frame { display: flex; justify-content: center; align-items: flex-end; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+  .pic { height: 100%; width: auto; max-width: 100%; min-height: 0; object-fit: contain; object-position: center bottom; -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(#000 64%, transparent 98%); mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(#000 64%, transparent 98%); -webkit-mask-composite: source-in; mask-composite: intersect; }   /* a square-cropped shoulder softens at the sides too */
+  .pic.soft { -webkit-mask-composite: source-over; mask-composite: add; -webkit-mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 64%, transparent 100%); mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 64%, transparent 100%); }
+  .info { position: relative; margin-top: -116px; text-align: center; width: 100%; min-width: 0; }
+  .pct { font-size: 136px; font-weight: 800; line-height: 1; letter-spacing: -.02em; color: var(--c, var(--fg)); font-variant-numeric: tabular-nums; text-shadow: 0 2px 18px rgba(0, 10, 40, .95), 0 0 4px rgba(0, 10, 40, .8); }
+  .pct.wait { color: var(--muted); }
+  .who { font-size: 40px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tag { display: inline-block; min-width: 42px; height: 42px; line-height: 42px; border-radius: 21px; margin-right: 12px; font-size: 26px; font-weight: 800; background: var(--c, #5c6b85); color: #fff; vertical-align: 5px; }
+  .cand.ind .tag { color: #1a1600; }
+  .votes { font-size: 26px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; min-height: 32px; }
+  .pill { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 800; padding: 2px 12px; border-radius: 4px; letter-spacing: .06em; background: var(--gold); color: #1a1600; text-shadow: none; margin-right: 12px; vertical-align: 2px; }
+  .cand.lost .pic { filter: brightness(.55) saturate(.6); } .cand.lost .info { opacity: .6; }   /* the art must not show through a face, so the picture darkens rather than fades */
+  .body.n3 .pct { font-size: 112px; } .body.n3 .info { margin-top: -96px; }
+  .body.n4 .pct { font-size: 92px; } .body.n4 .info { margin-top: -80px; } .body.n4 .who { font-size: 32px; } .body.n4 .tag { min-width: 34px; height: 34px; line-height: 34px; font-size: 22px; margin-right: 8px; vertical-align: 3px; }
+  .others { font-size: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  .others .k { color: var(--muted); font-size: 22px; letter-spacing: .08em; text-transform: uppercase; margin-right: 16px; }
+  .others .sep { color: var(--muted); margin: 0 10px; } .others b { font-variant-numeric: tabular-nums; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Live results</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body" id="body"><div class="cols" id="cols"></div><div class="others" id="others"></div></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, featArrow, freshness, candTag, partyKey, PARTY_COLOR, officeText, raceState, RACE_LINEUPS, fmt, clock, clockS, incStar } from "./feed.js";
+  import { applyChartBackground } from "./control.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  if (!q.get("chartbg")) applyChartBackground("?chartbg=ali-race-card");
+  const raceId = q.get("id");
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const CUTOUTS = new Set(Object.values(RACE_LINEUPS).flat());
+  let race = null, drawn = "";
+
+  /** The faces and the rest: the race's lineup, else the two leaders (the featured candidate and the first other before votes), incumbent on the left. */
+  function pickLineup() {
+    const cs = race.candidates;
+    const fixed = RACE_LINEUPS[race.label]?.map((id) => cs.find((c) => c.id === id)).filter(Boolean);
+    const shown = fixed?.length >= 2 ? fixed.slice(0, 4) : (race.totalVotes > 0 ? [...cs].sort((a, b) => b.votes - a.votes) : [...cs].sort((a, b) => !!b.featured - !!a.featured)).slice(0, 2).sort((a, b) => !!b.incumbent - !!a.incumbent);
+    return { shown, others: cs.filter((c) => !shown.includes(c)).sort((a, b) => b.votes - a.votes) };
+  }
+  function pic(c) {
+    if (CUTOUTS.has(c.id)) return `<img class="pic" alt="" src="./cutouts/${esc(c.id)}.png">`;
+    return c.photo ? `<img class="pic soft" alt="" src="${esc(c.photo)}">` : `<div></div>`;
+  }
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const st = raceState(race), counting = race.totalVotes > 0;
+    const { shown, others } = pickLineup();
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
+    $("reporting").innerHTML = counting ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : race.pollClose ? `Polls close ${esc(clock(race.pollClose))}` : "No results yet";
+    // The faces are drawn once for a lineup and only their numbers change after that, so a photo never flickers on an update.
+    const key = shown.map((c) => c.id).join();
+    if (key !== drawn) {
+      drawn = key;
+      $("body").className = `body n${shown.length}`;
+      $("cols").style.setProperty("--n", shown.length);
+      $("cols").innerHTML = shown.map((c) => `<div class="cand" data-id="${esc(c.id)}"><div class="frame">${pic(c)}</div><div class="info"><div class="pct"></div><div class="who"></div><div class="votes"></div></div></div>`).join("");
+    }
+    for (const c of shown) {
+      const el = $("cols").querySelector(`[data-id="${c.id}"]`);
+      const won = st.status === "called" && st.cand?.id === c.id;
+      el.className = `cand ${partyKey(c)} ${st.status === "called" && !won ? "lost" : ""}`;
+      el.style.setProperty("--c", PARTY_COLOR[partyKey(c)]);
+      el.querySelector(".pct").textContent = counting ? `${Number(c.pct).toFixed(1)}%` : "—";
+      el.querySelector(".pct").classList.toggle("wait", !counting);
+      el.querySelector(".who").innerHTML = `<span class="tag">${esc(candTag(c).text)}</span>${featArrow(c, false, true)}${esc(c.name)}${incStar(c)}`;
+      el.querySelector(".votes").innerHTML = (won ? `<span class="pill">AP CALL · WINS</span>` : "") + (counting ? `${fmt(c.votes)} votes` : "");
+    }
+    $("others").innerHTML = others.length ? `<span class="k">Other</span>${others.map((c) => `${esc(c.last ?? c.name)}${incStar(c)} (${esc(candTag(c).text)})${counting ? `<b>${Number(c.pct).toFixed(1)}%</b>` : ""}`).join('<span class="sep">·</span>')}` : "";
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
+  }
+  connectFeed({
+    onSnapshot: (s) => { race = s.races.get(raceId); render(); },
+    onUpdate: (s, msg) => { if (msg.changed.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); } },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

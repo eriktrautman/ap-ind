@@ -236,6 +236,15 @@ export async function loadGeo(st, [w, h] = [900, 560]) {
 
 /** dem | gop | ind | oth for a candidate; curated independents are always ind. */
 /** A ballot measure (a proposition, amendment, question): its "candidates" are the Yes and No options. */
+// Who gets a face (B14, B16), by AP candidate id, left to right; it does not reorder as votes come in. Everyone else goes on the "Other" line.
+export const RACE_LINEUPS = {
+  "SD-SEN": ["580", "70405"],                    // Rounds, Bengs
+  "NE-SEN": ["51566", "168007"],                 // Ricketts, Osborn
+  "MT-SEN": ["171710", "177955", "171696"],      // Alme, Bodnar, Bankhead
+  "ID-SEN": ["15344", "162421"],                 // Risch, Achilles
+  "CA-6": ["69756", "105173"],                   // Kiley, Pan
+  "AK-AL": ["70724", "177719", "167001", "62643"],   // Begich, Hill, Hafner, McDermott
+};
 export const isMeasure = (r) => !!r && (r.kind === "measure" || r.office === "I");
 export const isOption = (c) => !!c && (c.party === "Yes" || c.party === "No");
 /** The small box before a name: YES / NO for a measure's options, else the party letter. */

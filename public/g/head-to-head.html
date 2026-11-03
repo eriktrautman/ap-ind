@@ -6,7 +6,7 @@
 <title>Head-to-Head</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* B14: the candidates who matter, face to face, up to four. A race in LINEUPS below shows exactly those faces, in that order, and everyone
+  /* B14: the candidates who matter, face to face, up to four. A race in RACE_LINEUPS (feed.js) shows exactly those faces, in that order, and everyone
      else on one "Other" line with no photos. Any other race shows two. Before results: the featured independent and the
      opponent the latest poll puts closest (else the incumbent, else the seat holder's party), with the
      poll, the last result and poll-close time between them. Once votes are counted: the two leaders, with
@@ -56,19 +56,10 @@
   <div class="foot"><span><span class="dot" id="dot"></span><span id="src">Source: AP via lightship.media · public polls</span></span><span id="updated"></span></div>
 </div>
 <script type="module">
-  import { connectFeed, featArrow, freshness, candTag, partyKey, PARTY_COLOR, officeText, raceState, isFeaturedCand, isMeasure, fmt, clock, clockS, incStar } from "./feed.js";
+  import { connectFeed, featArrow, freshness, candTag, partyKey, PARTY_COLOR, officeText, raceState, RACE_LINEUPS, isFeaturedCand, isMeasure, fmt, clock, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const raceId = q.get("id"), forceA = q.get("a"), forceB = q.get("b");
-  // Who gets a face, by AP candidate id, left to right; it does not reorder as votes come in. Everyone else goes on the "Other" line.
-  const LINEUPS = {
-    "SD-SEN": ["580", "70405"],                    // Rounds, Bengs
-    "NE-SEN": ["51566", "168007"],                 // Ricketts, Osborn
-    "MT-SEN": ["171710", "177955", "171696"],      // Alme, Bodnar, Bankhead
-    "ID-SEN": ["15344", "162421"],                 // Risch, Achilles
-    "CA-6": ["69756", "105173"],                   // Kiley, Pan
-    "AK-AL": ["70724", "177719", "167001", "62643"],   // Begich, Hill, Hafner, McDermott
-  };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const timeText = (iso) => clock(iso);
@@ -107,7 +98,7 @@
   /** The faces and the rest: ?a&b wins, then the race's lineup, else the pair above with no Other line. */
   function pickLineup() {
     const cs = race.candidates;
-    const fixed = forceA && forceB ? null : LINEUPS[race.label]?.map((id) => cs.find((c) => c.id === id)).filter(Boolean);
+    const fixed = forceA && forceB ? null : RACE_LINEUPS[race.label]?.map((id) => cs.find((c) => c.id === id)).filter(Boolean);
     if (fixed?.length >= 2) return { shown: fixed.slice(0, 4), others: cs.filter((c) => !fixed.includes(c)).sort((a, b) => b.votes - a.votes) };
     return { shown: pickPair().filter(Boolean), others: null };
   }
