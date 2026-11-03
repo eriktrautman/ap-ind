@@ -193,6 +193,11 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .chunk .chunktop .spacer { flex: 1; }
 .chunk .chunktop button { padding: 3px 9px; font-size: 12px; }
 .chunk .list { background: #fff; }
+.chunk .row .handle { cursor: grab; color: var(--muted); font-size: 14px; line-height: 1; padding: 0 6px 0 0; user-select: none; }
+.chunk .row .handle:active { cursor: grabbing; }
+.chunk .row.dragging { opacity: .4; }
+.chunk .row.dropabove { box-shadow: inset 0 3px 0 var(--gold); } .chunk .row.dropbelow { box-shadow: inset 0 -3px 0 var(--gold); }
+.ro .chunk .row .handle { display: none; }
 .chunk .addfeat { margin-top: 6px; }
 .chunk .addmanual { margin: 6px 0 0; }
 .chunk .empty { padding: 8px 10px; font-size: 12.5px; }

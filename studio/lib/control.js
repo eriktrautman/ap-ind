@@ -185,9 +185,17 @@ export function canonicalAddress(pathname, search = "") {
  *  read them: older addresses, D5's fallback, older clients that publish only those two. */
 /** The shipped chunk: the slate's races, one package. The default crawl is this chunk and nothing else. */
 export const SLATE_CHUNK = Object.freeze({ id: "slate", name: "Slate", items: FEATURED_RACES.map((r) => ({ t: "race", id: r.id })) });
+// The key races by the time zone their polls close in, earliest close first, each opened by a line naming the zone. They wait in the builder
+// until someone places them in the crawl order. A state split across zones goes with most of its voters. Alaska and Hawaii are in none of the four.
+export const ZONE_CHUNKS = Object.freeze([
+  { id: "easternraces", name: "Eastern Races", races: ["18015", "10033", "10396", "11129", "10045", "12029", "12301", "30003", "41938", "47001", "47003", "35385", "34977", "35984", "36027", "36031", "36005", "84327", "20645", "20643", "23814", "23808", "23811", "24074", "24463", "31218", "39008", "39017", "39014", "39015", "36597"] },   // KY-6 FL-14 FL-22 FL-25 FL-GOV GA-GOV GA-SEN NH-SEN SC-SEN VA-1 VA-2 NC-1 NC-11 NC-SEN OH-7 OH-9 OH-GOV OH-SEN ME-2 ME-SEN MI-10 MI-4 MI-7 MI-GOV MI-SEN NJ-7 PA-1 PA-10 PA-7 PA-8 NY-17
+  { id: "centralraces", name: "Central Races", races: ["1374", "17559", "17585", "42003", "45885", "49478", "49479", "45901", "46643", "17071", "17072", "17073", "17076", "17247", "24704", "25151", "28385", "28006", "28594", "50048", "50016"] },   // AL-2 KS-GOV KS-SEN SD-SEN TX-15 TX-34 TX-35 TX-GOV TX-SEN IA-1 IA-2 IA-3 IA-GOV IA-SEN MN-GOV MN-SEN NE-2 NE-GOV NE-SEN WI-3 WI-GOV
+  { id: "mountainraces", name: "Mountain Races", races: ["3004", "3544", "3014", "7727", "33279", "13252", "28447", "27607", "45669"] },   // AZ-1 AZ-6 AZ-GOV CO-8 NM-2 ID-SEN MT-1 MT-SEN UT-1
+  { id: "pacificraces", name: "Pacific Races", races: ["29861", "38019", "5712", "5730", "8149", "5696", "6123", "48009"] },   // NV-GOV OR-GOV CA-22 CA-40 CA-48 CA-6 CA-GOV WA-3
+].map(({ id, name, races }) => ({ id, name, items: [{ t: "text", id: `${id}title`, text: name }, ...races.map((r) => ({ t: "race", id: r }))] })));
 export const DEFAULTS = Object.freeze({
   tickerItems: [{ t: "chunk", id: SLATE_CHUNK.id }],   // {t:"race",id} | {t:"text",id,text} | {t:"chunk",id}
-  chunks: [SLATE_CHUNK],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
+  chunks: [SLATE_CHUNK, ...ZONE_CHUNKS],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
   manualItems: [],
