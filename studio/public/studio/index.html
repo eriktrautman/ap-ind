@@ -49,11 +49,12 @@
   <details class="howbox" id="howbox"><summary><b>How to Use This Site</b></summary><ul id="howtext"></ul></details>
 
   <section class="card display" id="displayset">
-    <span class="dtitle" title="Each section has its own Background and Opacity on its title line, and each live draft its own Background. These two set the pair that Apply to All Charts copies to every section.">Chart Display Settings</span>
+    <span class="dtitle" title="Each section has its own settings on its title line, and each live draft its own. These set what Apply to All Charts copies to every section.">Chart Display Settings</span>
     <div class="disprow">
-      <label>Background <select id="topbg"></select></label>
+      <label title="Behind the chart's panel, filling the frame">Outer Background <select id="topbg"></select></label>
+      <label title="Inside the chart's panel, behind its contents">Chart Background <select id="topchartbg"></select></label>
       <label>Opacity <select id="topopacity"><option value="100" selected>100% (default)</option><option value="90">90%</option><option value="80">80%</option><option value="70">70%</option><option value="60">60%</option><option value="50">50%</option><option value="40">40%</option><option value="30">30%</option><option value="20">20%</option><option value="10">10%</option></select></label>
-      <button id="applyall" class="defaultsbtn" title="Sets every section's Background and Opacity to the pair chosen here. Nothing published changes.">Apply to All Charts</button>
+      <button id="applyall" class="defaultsbtn" title="Sets every section's backgrounds and opacity to what is chosen here. Nothing published changes.">Apply to All Charts</button>
       <span class="vsep"></span>
       <label title="The stylesheet the previews on this page paint with. Pick one other than the live one to try it here only; Push stylesheet makes it live for every output.">Stylesheet <select id="themesel"></select></label>
       <span class="muted small" id="themestate"></span>
@@ -77,7 +78,7 @@
         <div class="sform tform">
           <div class="tgrid">
             <label for="callhl">Highlight AP Calls?</label><select id="callhl"><option value="1">Yes</option><option value="0">No</option></select>
-            <label for="tickerbg">Background</label><select id="tickerbg" data-page="ticker"></select>
+            <label for="tickerbg">Outer Background</label><select id="tickerbg" data-page="ticker"></select>
           </div>
           <h4>Crawl order <span class="muted" id="seqcount"></span></h4>
           <p class="muted small hint" title="Races, text and chunks crawl in this order, top to bottom, then repeat. A chunk is a package of races and text built in the Chunks area below; in this list it shows what is inside it, and hovering any piece shows the full text.">Races, text and chunks, in crawl order. ▲▼ reorder. A chunk shows its contents; hover a piece for the full text.</p>

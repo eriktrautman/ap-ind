@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -178,6 +178,7 @@ function toggleChartStar(chart) {
 function saveStars() { try { localStorage.setItem(STARS_KEY, JSON.stringify([...starred])); } catch {} }
 // ---------- display settings: a top template, one pair per section, one BG per live draft; this browser only ----------
 const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
+const CHART_BG_OPTIONS = CHART_BACKGROUNDS.map(([v, l]) => [v, v ? l : `${l} (default)`]);
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
 const SECTIONS = ["ticker", "screens", "playlists", "images", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
@@ -200,14 +201,15 @@ function renderDisplayControls() {
     const d = secDisplay(sec);
     const box = document.querySelector(`.cardhead[data-sec="${sec}"] .secdisp`); if (!box) continue;
     // The Live Ticker and Live Screens sections have no Background of their own: each draft's Background covers both its addresses.
-    box.innerHTML = `${sec === "ticker" || sec === "screens" ? "" : `<label>Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%" + (o === "100" ? " (default)" : "")]), d.opacity)}</label>`;
+    box.innerHTML = `${sec === "ticker" || sec === "screens" ? "" : `<label>Outer Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>${sec === "images" ? "" : `<label>Chart Background ${selectHtml(`data-sec="${sec}" data-f="chartbg"`, CHART_BG_OPTIONS, d.chartbg ?? "")}</label>`}`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%" + (o === "100" ? " (default)" : "")]), d.opacity)}</label>`;
   }
   for (const page of PAGES) {
     const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
     sel.innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}" ${v === pageBg(page) ? "selected" : ""}>${l}</option>`).join("");
   }
   $("topbg").innerHTML = BG_OPTIONS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");   // the same list as every other Background dropdown
-  $("topbg").value = display.top.bg; $("topopacity").value = display.top.opacity;
+  $("topchartbg").innerHTML = CHART_BG_OPTIONS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+  $("topbg").value = display.top.bg; $("topchartbg").value = display.top.chartbg ?? ""; $("topopacity").value = display.top.opacity;
 }
 /** Anything that shows a background or opacity follows the saved values. */
 function applyDisplay() {
@@ -220,11 +222,11 @@ document.addEventListener("change", (e) => {
   if (sec) { display.sections[sec.dataset.sec] = { ...secDisplay(sec.dataset.sec), [sec.dataset.f]: sec.value }; saveDisplay(); applyDisplay(); return; }
   const pg = e.target.closest("select[data-page]");
   if (pg) { if (pg.dataset.page === "ticker") draft.tickerBg = pg.value; else draft[pg.dataset.page].bg = pg.value; commit(); applyDisplay(); return; }
-  if (e.target.id === "topbg" || e.target.id === "topopacity") { display.top = { bg: $("topbg").value, opacity: $("topopacity").value }; saveDisplay(); }
+  if (e.target.id === "topbg" || e.target.id === "topchartbg" || e.target.id === "topopacity") { display.top = { bg: $("topbg").value, chartbg: $("topchartbg").value, opacity: $("topopacity").value }; saveDisplay(); }
 });
 $("applyall").addEventListener("click", async () => {
-  const top = { bg: $("topbg").value, opacity: $("topopacity").value };
-  const ok = await ask({ title: "Apply to every section?", body: `<p>Every section's Background and Opacity become <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> at <b>${esc(top.opacity)}%</b>. Previews and links on this page change to match. Nothing published changes.</p>`, ok: "Apply to All Charts" });
+  const top = { bg: $("topbg").value, chartbg: $("topchartbg").value, opacity: $("topopacity").value };
+  const ok = await ask({ title: "Apply to every section?", body: `<p>Every section becomes <b>${esc(BG_OPTIONS.find(([v]) => v === top.bg)?.[1] ?? top.bg)}</b> as its Outer Background, <b>${esc(CHART_BG_OPTIONS.find(([v]) => v === top.chartbg)?.[1] ?? top.chartbg)}</b> as its Chart Background, at <b>${esc(top.opacity)}%</b> opacity. Previews and links on this page change to match. Nothing published changes.</p>`, ok: "Apply to All Charts" });
   if (!ok) return;
   display.top = top; display.sections = {};
   saveDisplay(); applyDisplay();
@@ -439,7 +441,7 @@ async function pull() {
 }
 async function restoreDefaults() {
   const changes = diffState(draft, DEFAULTS);
-  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every Background and Opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
+  const ok = await ask({ title: "Restore the defaults on this page?", body: `<div class="warnline bad"><b>Everything on this page</b> goes back to the shipped defaults: the ticker builder, both live screen drafts, the starred races and charts, and every background and opacity dropdown (the default background at 100%). This browser's saved settings are replaced.</div><p><b>The LIVE TICKER and the Playlists are not touched.</b> The ticker keeps crawling what was last published until someone publishes again.</p>${changeList(changes)}${!changes.length ? `<div class="warnline">This page is already on the defaults.</div>` : ""}`, ok: "Restore defaults", danger: true });
   if (!ok) return;
   draft = saveLocal(normalize(DEFAULTS));
   starred = new Set(SLATE_IDS); saveStars();
@@ -824,8 +826,9 @@ function specFormHtml(s, attr, bgAttr, bg) {
   const extra = (SCREEN_PARAMS[s.chart] ?? []).map((p) => p.options
     ? `<label>${esc(p.label)}<select ${attr} data-p="${p.k}"><option value="">default</option>${p.options.map(([v, t]) => `<option value="${v}" ${s.params[p.k] === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`
     : `<label>${esc(p.label)}<input ${attr} data-p="${p.k}" value="${esc(s.params[p.k] ?? "")}" placeholder="${esc(p.ph ?? "")}" maxlength="200"></label>`).join("");
-  const bgSel = `<label>Background${selectHtml(bgAttr, BG_OPTIONS, bg)}</label>`;
-  return chartSel + raceSel + stateSel + extra + bgSel;
+  const bgSel = `<label>Outer Background${selectHtml(bgAttr, BG_OPTIONS, bg)}</label>`;
+  const chartBgSel = chartTakesBackground(s.chart) ? `<label>Chart Background${selectHtml(`${attr} data-p="chartbg"`, CHART_BG_OPTIONS, s.params?.chartbg ?? "")}</label>` : "";
+  return chartSel + raceSel + stateSel + extra + bgSel + chartBgSel;
 }
 function screenForm(key) { return specFormHtml(draft[key], `data-sk="${key}"`, `data-page="${key}"`, pageBg(key)); }
 function screenLiveTable(key) {
@@ -1077,7 +1080,7 @@ async function refreshShared() {
   if (docNew && Object.values(screenMode).includes("playlist")) renderScreens();
 }
 addEventListener("focus", refreshShared);
-const specLine = (s) => [s.race || s.state, ...Object.entries(s.params ?? {}).map(([k, v]) => `${k}=${v}`), s.bg || "transparent"].filter(Boolean).join(" · ");
+const specLine = (s) => [s.race || s.state, ...Object.entries(s.params ?? {}).map(([k, v]) => (k === "chartbg" ? CHART_BACKGROUNDS.find(([id]) => id === v)?.[1] ?? v : `${k}=${v}`)), s.bg || "transparent"].filter(Boolean).join(" · ");
 /** The race object a spec names, for the card's tag and address; a state chart with only a state gets a stand-in. */
 function specRace(s) {
   const chart = CHARTS.find((c) => c.id === s.chart);
@@ -1395,7 +1398,7 @@ async function uploadImage(file = null, { forPlaylist = false, preset = null, sw
     const pending = ask({ title, ok: "Upload", body: `${warn}<div class="imgframe ${bg ? "" : "checker"}" id="imgframe" style="${bgStyle(bg)}"><img class="imgl ${layout}" id="imgprev" src="${im.url}" alt=""></div><p><button type="button" id="imgcrop">Crop…</button> <span class="small muted">${im.w}×${im.h}${im.crop ? ", cropped" : ""}</span></p>${notes}
       <div class="psform"><label>Name<input id="imgname" maxlength="${IMAGE_LIMITS.name}" value="${esc(name)}"></label>
       <label>Credit and rights (optional)<input id="imgcredit" maxlength="${IMAGE_LIMITS.credit}" value="${esc(credit)}" placeholder="e.g. Photo: AP, licensed for broadcast"></label>
-      ${forPlaylist ? `<label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}</label><label>Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label>
+      ${forPlaylist ? `<label>Layout${selectHtml('id="imglayout"', IMAGE_LAYOUTS, layout)}</label><label>Outer Background${selectHtml('id="imgbg"', BG_OPTIONS, bg)}</label>
       <label>Caption<input id="imgcaption" maxlength="200" value="${esc(caption)}" placeholder="Optional: a line shown over the image"></label>
       <label class="imgcheck"><input type="checkbox" id="imgshowcredit" ${showcredit ? "checked" : ""}> Show the credit on air</label>` : ""}
       ${uses.length ? `<label class="imgcheck"><input type="checkbox" id="imgswap" ${swap ? "checked" : ""}> Put this in place of ${esc(swapFrom.name)} in ${plural(uses.length, "playlist")}</label>` : ""}</div>

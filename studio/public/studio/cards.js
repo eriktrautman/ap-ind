@@ -44,6 +44,7 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
     const d = getDisplay(c.section);
     if (d.bg) p.set("bg", d.bg);
     if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
+    if (d.chartbg && !/^[AI]/.test(c.chart.id)) p.set("chartbg", d.chartbg);
     if (c.race && c.chart.needsState) p.set("state", c.race.state);
     else if (c.race) p.set("race", c.race.label);
     for (const [k, v] of Object.entries(c.params ?? {})) if (v) p.set(k, v);
@@ -54,9 +55,10 @@ export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "gre
     const semantic = forOpen && (c.chart.page ?? "").startsWith("/g/");
     const u = new URL(semantic ? `/g/${c.chart.id}` : c.chart.page, location.origin);
     const p = new URLSearchParams();
-    const d = getDisplay(c.section);   // the section's Background and Opacity: previews and links alike
+    const d = getDisplay(c.section);   // the section's backgrounds and opacity: previews and links alike
     if (d.bg) p.set("bg", d.bg);
     if (d.opacity && d.opacity !== "100") p.set("opacity", d.opacity);
+    if (d.chartbg && !/^[AI]/.test(c.chart.id)) p.set("chartbg", d.chartbg);
     if (!forOpen || c.open === "preview") p.set("fit", "1");   // thumbnails and Preview scale the page; "show" is the real page at full size
     { const th = getTheme(); if (th && (!forOpen || c.open === "preview")) p.set("theme", th); }   // a previewed stylesheet: previews only, never the address people copy
     for (const [k, v] of u.searchParams) p.set(k, v);          // e.g. reports.html?view=counts

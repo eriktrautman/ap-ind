@@ -31,6 +31,20 @@ export function applyPanelOpacity(search = typeof location === "undefined" ? "" 
 }
 applyPanelOpacity();
 
+// ?chartbg=<id>: a designated image inside the chart's panel, behind its contents. The page behind the panel is ?bg= (Outer Background).
+// A new choice is an entry here plus its file in public/g/bg/. Lower thirds, strips and static images have no chart panel to fill.
+export const CHART_BACKGROUNDS = [["", "None"], ["ali-race-card", "Ali Race Card BG"]];
+export const chartTakesBackground = (id) => !/^[AI]/.test(String(id));
+export function applyChartBackground(search = typeof location === "undefined" ? "" : location.search) {
+  if (typeof document === "undefined") return;
+  const id = new URLSearchParams(search).get("chartbg");
+  if (!id || !CHART_BACKGROUNDS.some(([v]) => v === id)) return;
+  const style = document.createElement("style");
+  style.textContent = `.panel { background: url(/g/bg/${id}.jpg) center / cover no-repeat !important; }`;
+  document.head.appendChild(style);
+}
+applyChartBackground();
+
 // ?fit=1 (the Studio's Preview links and its thumbnails): keep the 1920x1080 layout but scale it to the
 // window, so a producer on a laptop sees the whole graphic, and a thumbnail frame half the size paints a
 // quarter of the pixels. Broadcast outputs never pass it. Node imports this module too, hence the guard.
@@ -213,7 +227,7 @@ export function screenAddress(s, display = {}) {
 /** "B5 Live race result · NE-SEN · cand=Ricketts" for dialogs and the live parameters table. */
 export function describeScreen(s) {
   const c = CHARTS.find((x) => x.id === s.chart);
-  const extra = Object.entries(s.params ?? {}).map(([k, v]) => `${k}=${v}`).join(" ");
+  const extra = Object.entries(s.params ?? {}).map(([k, v]) => (k === "chartbg" ? `chart background ${CHART_BACKGROUNDS.find(([id]) => id === v)?.[1] ?? v}` : `${k}=${v}`)).join(" ");
   return `${s.chart} ${c?.name ?? ""}${s.race ? " · " + s.race : s.state ? " · " + s.state : ""}${extra ? " · " + extra : ""} · on ${s.bg || "transparent"}`;
 }
 
