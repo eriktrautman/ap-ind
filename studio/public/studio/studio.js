@@ -1082,6 +1082,7 @@ function specRace(s) {
   if (s.race) return { id: "", label: s.race, state: "", stateName: "", title: "not in the current AP feed" };
   return null;
 }
+const PL_ADD = "__add";   // ids are letters and digits only, so this can never be a real person or playlist
 function renderPlaylists() {
   syncDeprecated();
   const bar = $("plbar"), body = $("plbody");
@@ -1089,8 +1090,8 @@ function renderPlaylists() {
   const u = plUser(), p = plList();
   const can = mayPublish(), prod = isProducer();
   bar.innerHTML = `
-    <label>Person <select id="pluser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("") || `<option value="">nobody yet</option>`}</select></label>
-    <label>Playlist <select id="pllist" ${u ? "" : "disabled"}>${(u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === p?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}</select></label>
+    <label>Person <select id="pluser">${playlists.users.map((x) => `<option value="${esc(x.id)}" ${x.id === u?.id ? "selected" : ""}>${esc(x.name || x.id)}</option>`).join("") || `<option value="">nobody yet</option>`}${prod ? `<option value="${PL_ADD}">+ Add person…</option>` : ""}</select></label>
+    <label>Playlist <select id="pllist" ${u ? "" : "disabled"}>${(u?.playlists ?? []).map((x) => `<option value="${esc(x.id)}" ${x.id === p?.id ? "selected" : ""}>${esc(x.name || x.id)} (${x.items.length})</option>`).join("") || `<option value="">none yet</option>`}${prod && u ? `<option value="${PL_ADD}">+ Add playlist…</option>` : ""}</select></label>
     ${can && p ? `<button class="primary" id="pladd" title="Add a chart to this playlist: pick the chart, then its race and settings">+ Add chart…</button><button class="primary" id="pladdimg" title="Add an image to this playlist: from the library, or upload a new one">+ Add image…</button>` : ""}
     ${prod ? `<button id="plnewlist" ${u ? "" : "disabled"} title="A new playlist for ${esc(u?.name ?? "this person")}">+ Add playlist…</button><button id="plnewuser" title="A new person with their own playlists">+ Add person…</button>
     <details class="ploptions" id="ploptions"><summary title="Rename or delete this person or playlist">Additional Options</summary><div class="plmenu">
@@ -1206,8 +1207,13 @@ async function plDelete() {
   if (await savePlaylists((doc) => { const user = doc.users.find((x) => x.id === u.id); if (!user) return false; user.playlists = user.playlists.filter((x) => x.id !== p.id); }, { producerOnly: true })) plSelect(u.id, null);
 }
 $("plbar").addEventListener("change", (e) => {
-  if (e.target.id === "pluser") plSelect(e.target.value, null);
-  else if (e.target.id === "pllist") plSelect(plUser()?.id, e.target.value);
+  if (e.target.id === "pluser") {
+    if (e.target.value === PL_ADD) { e.target.value = plUser()?.id ?? ""; plNewUser(); return; }   // back on the current one, in case the dialog is cancelled
+    plSelect(e.target.value, null);
+  } else if (e.target.id === "pllist") {
+    if (e.target.value === PL_ADD) { e.target.value = plList()?.id ?? ""; plNewList(); return; }
+    plSelect(plUser()?.id, e.target.value);
+  }
 });
 $("plbar").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
