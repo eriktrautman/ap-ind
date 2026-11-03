@@ -222,7 +222,7 @@ button .lock, .readonly .lock { margin-right: 5px; vertical-align: -1px; }
 .imgl.panel { object-fit: contain; padding: 6%; box-sizing: border-box; }
 .imgdims { margin: 6px 0; font-size: 13px; font-weight: 600; } .imgdims.ok { color: #15803d; } .imgdims.bad { color: var(--bad); }
 .imglayouthint { display: block; margin-top: 3px; font-weight: 400; }
-.imgcheck { display: flex !important; flex-direction: row; align-items: center; gap: 8px; } .imgcheck input { width: auto; }
+.psform .imgcheck { display: flex !important; flex-direction: row; justify-content: flex-start; align-items: center; gap: 8px; } .psform .imgcheck input { flex: none; width: auto; margin: 0; }
 .cropwrap { position: relative; width: fit-content; max-width: 100%; margin: 8px auto; line-height: 0; overflow: hidden; touch-action: none; user-select: none; }
 .cropwrap img { display: block; max-width: 100%; max-height: 52vh; }
 .cropsel { position: absolute; box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .55); cursor: move; } .cropsel[hidden] { display: none; }
