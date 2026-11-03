@@ -614,3 +614,6 @@ main > section.card.collapsed { padding-bottom: 0; }
 
 /* Previews are square-edged: rounded corners could hide a background problem at the edge of a chart or image. */
 .gcard, .gcard .thumb, #plbody .gcard .thumb, .splist .gcard .thumb, .preview, .preview .frame, .screen, .screen .frame, .imgframe, .imgpick img { border-radius: 0; }
+/* In the upload dialog the frame shows its exact edge: a thin square line around a square preview, wherever the image stops short of it. */
+.imgframe, .cropwrap { border: 1px solid #1f2937; border-radius: 0; box-sizing: border-box; }
+.imgpick button { border-radius: 0; }
