@@ -1379,6 +1379,8 @@ function imageSizeLine(im) {
   const size = `${im.srcW}×${im.srcH}${im.crop ? ", cropped" : ""}`;
   if (im.srcW === 1920 && im.srcH === 1080) return `<div class="imgdims ok" id="imgdims">✓ ${size}, the exact size of the frame</div>`;
   if (imageDefaults(im.srcW, im.srcH, im.alpha).layout === "lower") return `<div class="imgdims bad" id="imgdims">⚠ ${size}, not 1920×1080: a transparent band, so it starts as a lower third${im.srcW < 1920 ? ", and it will look soft across the full width" : ""}.</div>`;
+  // bigger at the frame's shape only scales down, so nothing is lost: a caution, not a warning
+  if (isFrameShape(im.srcW, im.srcH) && im.srcW >= 1920 && im.srcH >= 1080) return `<div class="imgdims warn" id="imgdims">⚠ ${size}, not 1920×1080: it will be scaled down to ${im.w}×${im.h}.</div>`;
   const why = [];
   if (im.srcW < 1920 || im.srcH < 1080) why.push("smaller than the frame, so it will look soft at full size");
   else if (im.w !== im.srcW || im.h !== im.srcH) why.push(`it will be saved at ${im.w}×${im.h}`);
