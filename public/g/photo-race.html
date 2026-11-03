@@ -23,11 +23,12 @@
   .tag { display: inline-block; min-width: 42px; height: 42px; line-height: 42px; border-radius: 21px; margin-right: 12px; font-size: 26px; font-weight: 800; background: var(--c, #5c6b85); color: #fff; vertical-align: 5px; }
   .cand.ind .tag { color: #1a1600; }
   .votes { font-size: 26px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; min-height: 40px; }
-  .check { color: #2ecc71; margin-left: 12px; font-weight: 800; }
+  .check { position: absolute; transform: translateX(-108%); color: #2ecc71; font-size: .8em; line-height: 1.25; font-weight: 800; }   /* hangs left of the number, which stays centred under the face */
   .pill { display: inline-block; white-space: nowrap; font-size: 22px; font-weight: 800; padding: 5px 14px; border-radius: 4px; letter-spacing: .06em; background: var(--gold); color: #1a1600; text-shadow: none; margin-right: 18px; vertical-align: 2px; }
   .body.n3 .pct { font-size: 112px; } .body.n3 .info { margin-top: -96px; }
   .body.n4 .pct { font-size: 92px; } .body.n4 .info { margin-top: -80px; } .body.n4 .who { font-size: 32px; } .body.n4 .tag { min-width: 34px; height: 34px; line-height: 34px; font-size: 22px; margin-right: 8px; vertical-align: 3px; }
-  .others { font-size: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+  .others:empty { display: none; }
+  .others { margin-bottom: -16px; font-size: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
   .others .k { color: var(--muted); font-size: 22px; letter-spacing: .08em; text-transform: uppercase; margin-right: 16px; }
   .others .sep { color: var(--muted); margin: 0 10px; } .others b { font-variant-numeric: tabular-nums; margin-left: 8px; }
 </style>
@@ -80,9 +81,9 @@
       const won = st.status === "called" && st.cand?.id === c.id;
       el.className = `cand ${partyKey(c)}`;
       el.style.setProperty("--c", PARTY_COLOR[partyKey(c)]);
-      el.querySelector(".pct").textContent = counting ? `${Number(c.pct).toFixed(1)}%` : "—";
+      el.querySelector(".pct").innerHTML = (won ? `<span class="check">✓</span>` : "") + (counting ? `${Number(c.pct).toFixed(1)}%` : "—");
       el.querySelector(".pct").classList.toggle("wait", !counting);
-      el.querySelector(".who").innerHTML = `<span class="tag">${esc(candTag(c).text)}</span>${featArrow(c, false, true)}${esc(c.name)}${incStar(c)}${won ? `<span class="check">✓</span>` : ""}`;
+      el.querySelector(".who").innerHTML = `<span class="tag">${esc(candTag(c).text)}</span>${featArrow(c, false, true)}${esc(c.name)}${incStar(c)}`;
       el.querySelector(".votes").innerHTML = (won ? `<span class="pill">AP CALL · WINS</span>` : "") + (counting ? `${fmt(c.votes)} votes` : "");
     }
     $("others").innerHTML = others.length ? `<span class="k">Other</span>${others.map((c) => `${esc(c.last ?? c.name)}${incStar(c)} (${esc(candTag(c).text)})${counting ? `<b>${Number(c.pct).toFixed(1)}%</b>` : ""}`).join('<span class="sep">·</span>')}` : "";
