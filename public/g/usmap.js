@@ -47,13 +47,13 @@ export async function drawStateMap(svg, { width = 975, height = 610, fill, strok
   svg.selectAll("g.states").remove();
   const g = svg.append("g").attr("class", "states");
   g.selectAll("path.st").data(feats, (d) => d.id).enter().append("path").attr("class", "st").attr("d", path)
-    .attr("fill", (d) => fill?.(d.postal) ?? "#1b2a4a").attr("stroke", "#071222").attr("stroke-width", 0.8);
-  g.append("path").datum(mesh).attr("fill", "none").attr("stroke", "#071222").attr("stroke-width", 1).attr("d", path);
+    .attr("fill", (d) => fill?.(d.postal) ?? "var(--none, #1b2a4a)").attr("stroke", "var(--map-line, #071222)").attr("stroke-width", 0.8);
+  g.append("path").datum(mesh).attr("fill", "none").attr("stroke", "var(--map-line, #071222)").attr("stroke-width", 1).attr("d", path);
   if (stroke) g.selectAll("path.hl").data(feats.filter((d) => stroke(d.postal))).enter().append("path").attr("class", "hl").attr("d", path)
     .attr("fill", "none").attr("stroke", (d) => stroke(d.postal).color).attr("stroke-width", (d) => stroke(d.postal).width ?? 3);
   if (labels) g.selectAll("text").data(feats.filter((d) => labels(d.postal))).enter().append("text")
     .attr("x", (d) => path.centroid(d)[0]).attr("y", (d) => path.centroid(d)[1]).attr("text-anchor", "middle").attr("dominant-baseline", "middle")
-    .attr("fill", "#fff").attr("font-size", 18).attr("font-weight", 700).attr("font-family", "Helvetica Neue, Helvetica, Arial, sans-serif").attr("paint-order", "stroke").attr("stroke", "#071222").attr("stroke-width", 3)
+    .attr("fill", "#fff").attr("font-size", 18).attr("font-weight", 700).attr("font-family", "Helvetica Neue, Helvetica, Arial, sans-serif").attr("paint-order", "stroke").attr("stroke", "var(--map-line, #071222)").attr("stroke-width", 3)
     .text((d) => labels(d.postal));
   return { path };
 }
@@ -64,7 +64,7 @@ export function drawTileMap(svg, { size = 68, gap = 6, x0 = 0, y0 = 0, fill, str
   const g = svg.append("g").attr("class", "tiles");
   const states = Object.entries(TILES);
   const t = g.selectAll("g.tile").data(states).enter().append("g").attr("class", "tile").attr("transform", ([, [c, r]]) => `translate(${x0 + c * (size + gap)},${y0 + r * (size + gap)})`);
-  t.append("rect").attr("width", size).attr("height", size).attr("rx", 6).attr("fill", ([st]) => fill?.(st) ?? "#1b2a4a").attr("stroke", ([st]) => stroke?.(st)?.color ?? "none").attr("stroke-width", ([st]) => stroke?.(st)?.width ?? 0);
+  t.append("rect").attr("width", size).attr("height", size).attr("rx", 6).attr("fill", ([st]) => fill?.(st) ?? "var(--tile-none, var(--none, #1b2a4a))").attr("stroke", ([st]) => stroke?.(st)?.color ?? "none").attr("stroke-width", ([st]) => stroke?.(st)?.width ?? 0);
   t.append("text").attr("x", size / 2).attr("y", sub ? size / 2 - 6 : size / 2).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("fill", "#fff").attr("font-size", size * 0.34).attr("font-weight", 700).attr("font-family", "Helvetica Neue, Helvetica, Arial, sans-serif").text(([st]) => st);
   if (sub) t.append("text").attr("x", size / 2).attr("y", size / 2 + 16).attr("text-anchor", "middle").attr("dominant-baseline", "middle").attr("fill", "#fff").attr("fill-opacity", 0.85).attr("font-size", size * 0.2).attr("font-family", "Helvetica Neue, Helvetica, Arial, sans-serif").text(([st]) => sub(st) ?? "");
   return { cols: 12, rows: 8, width: 12 * (size + gap), height: 8 * (size + gap) };

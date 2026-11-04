@@ -6,7 +6,8 @@
 //   - /styleguide draws every component from these tokens and lets you switch between them.
 // Token names are the style guide's. AIR_VARS maps them onto the variables the graphics (public/g/g.css) and the ticker
 // (studio/public/ticker.html) are actually written against, so a theme never has to know those names.
-// Adding a stylesheet is adding an entry here: the same keys, new values; a key left out keeps the shipped default.
+// Adding a stylesheet is adding an entry here: the same keys, new values; a key left out keeps the shipped default. `font` is
+// the address of a web font's stylesheet, for a theme whose face isn't on every machine.
 // Every output page loads /g/theme-boot.js first thing in <head>: a classic script the build generates from this file
 // (studio/scripts/theme-boot.mjs) that applies ?theme=, else the last published stylesheet this browser saw, else the
 // default, before the first paint, so a page never flashes from its written-in colours to the live ones.
@@ -29,6 +30,21 @@ export const THEMES = {
       "--serif": "'Helvetica Neue', Helvetica, Arial, sans-serif",
     },
   },
+  "democracy-dashboard": {
+    name: "Democracy Dashboard",
+    // From democracy-dashboard's lib/design/tokens.ts: light stone surfaces (nothing pure black or grey), its party series, and violet independents.
+    // Geist is its face. Amber, its one warning family, stands in for the gold accent, since yellow can't be read on white.
+    font: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;700&display=swap",
+    tokens: {
+      "--panel": "#ffffff", "--panel-edge": "#fafaf9", "--band-edge": "#f5f5f4", "--fg": "#1c1917", "--fg-muted": "#78716c", "--rule": "#e7e5e4",
+      "--dem": "#2A56BF", "--gop": "#C4442E", "--ind": "#8A78EE", "--ind-fg": "#ffffff", "--call": "#D97706", "--air-font": "Geist, ui-sans-serif, system-ui, sans-serif",
+      "--none": "#f5f5f4", "--behind": "#a8a29e", "--well": "#f5f5f4", "--who-ind": "#6D5BD0", "--behind-text": "#78716c", "--soft": "#44403c", "--hatch": "#d6d3d1", "--map-line": "#a8a29e", "--tile-none": "#a8a29e",
+      "--navy": "#292524", "--navy-deep": "#1c1917", "--gold": "#D97706", "--cream": "#fafaf9", "--sand": "#e7e5e4", "--ink": "#1c1917", "--muted": "#78716c",
+      "--local": "#2F7BB0", "--ok": "#52A86B", "--warn": "#D97706", "--bad": "#C4442E",
+      "--serif": "Geist, ui-sans-serif, system-ui, sans-serif", "--mono": "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+      "--r-chip": "4px", "--r-field": "6px", "--r-panel": "8px", "--r-card": "8px",
+    },
+  },
   "slate-demo": {
     name: "Slate",
     tokens: {
@@ -47,7 +63,9 @@ export const AIR_VARS = {
   "--panel": ["--panel", "--band"], "--panel-edge": ["--panel-edge"], "--band-edge": ["--band-edge"],
   "--fg": ["--fg"], "--fg-muted": ["--muted"], "--rule": ["--rule"],
   "--dem": ["--dem"], "--gop": ["--gop"], "--ind": ["--ind"], "--ind-fg": ["--ind-fg"], "--call": ["--gold", "--call"],
-  "--air-font": ["--font"],
+  "--air-font": ["--font"], "--none": ["--none"], "--behind": ["--behind"],
+  // Colours the graphics wrote in for a dark panel, for a theme that isn't one. A theme without them keeps what's written.
+  "--well": ["--well"], "--who-ind": ["--who-ind"], "--behind-text": ["--behind-text"], "--soft": ["--soft"], "--hatch": ["--hatch"], "--map-line": ["--map-line"], "--tile-none": ["--tile-none"],
 };
 
 export const themeIds = () => Object.keys(THEMES);
@@ -57,6 +75,13 @@ export const themeLabel = (id) => `${themeName(id)}${id === DEFAULT_THEME ? " (d
 /** A known id, else the default. */
 export const themeId = (id) => (id && THEMES[id] ? id : DEFAULT_THEME);
 
+/** A stylesheet's own typeface, when it names one. The page's font stack carries on with its fallback until this loads, and if it never does. */
+function loadThemeFont(href, doc) {
+  doc?.getElementById("ep-theme-font")?.remove();
+  if (!href || !doc?.head) return;
+  const l = doc.createElement("link"); l.id = "ep-theme-font"; l.rel = "stylesheet"; l.href = href; doc.head.append(l);
+}
+
 /** Paint an output with a stylesheet: set its variables on the root (the default stylesheet is the absence of overrides). */
 export function applyAirTheme(id, root = typeof document === "undefined" ? null : document.documentElement) {
   if (!root) return;
@@ -65,6 +90,7 @@ export function applyAirTheme(id, root = typeof document === "undefined" ? null 
   for (const outs of Object.values(AIR_VARS)) for (const v of outs) root.style.removeProperty(v);
   for (const [k, outs] of Object.entries(AIR_VARS)) { const val = t.tokens[k]; if (val) for (const v of outs) root.style.setProperty(v, val); }
   root.dataset.theme = themeId(id);
+  loadThemeFont(t.font, root.ownerDocument);
   root.ownerDocument?.dispatchEvent(new Event("ep-theme"));   // this just rewrote the panel colours; control.js puts ?opacity= back before the next paint
 }
 

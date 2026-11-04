@@ -10,11 +10,11 @@
      ?id=<raceID>; ?who=ind (default) | main. Before anything is counted the map shows the lane's prior share (deeper = stronger).
      Once a county is counted it reads as B13 does: gold ahead of the prior share, slate gray behind, deeper with the gap, hatched
      until 10% is in. The six must-win counties are outlined in white throughout. */
-  .ahead { color: var(--gold); } .behind { color: #B4BDD3; }
-  .legend i.none { background: repeating-linear-gradient(45deg, #3a4c74 0 2px, #1b2a4a 2px 7px); }
+  .ahead { color: var(--gold); } .behind { color: var(--behind-text, #B4BDD3); }
+  .legend i.none { background: repeating-linear-gradient(45deg, var(--hatch, #3a4c74) 0 2px, var(--none, #1b2a4a) 2px 7px); }
   .legend i.must { box-sizing: border-box; border: 3px solid #fff; }
   .body { display: grid; grid-template-columns: 1fr 600px; gap: 56px; min-height: 0; }
-  .map { background: rgba(0,0,0,.25); border-radius: 8px; padding: 16px; position: relative; min-height: 0; }
+  .map { background: var(--well, rgba(0,0,0,.25)); border-radius: 8px; padding: 16px; position: relative; min-height: 0; }
   .map svg { width: 100%; height: 100%; display: block; }
   .legend { position: absolute; left: 24px; bottom: 18px; display: flex; gap: 22px; font-size: 22px; color: var(--muted); }
   .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; vertical-align: -3px; margin-right: 8px; }
@@ -49,8 +49,8 @@
   function ensureHatch(svg) {
     if (!svg.select("#notcounted").empty()) return;
     const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
-    pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a");
-    pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
+    pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "var(--none, #1b2a4a)");
+    pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "var(--hatch, #3a4c74)");
   }
   let race = null, counties = null, prior = null, geo = null;
   const unitKey = (u) => geo.kind === "county" ? String(u.fips) : normName(u.name);
@@ -74,7 +74,7 @@
       const svg = d3.select("#map");
       ensureHatch(svg);
       const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
-      sel.enter().append("path").attr("d", geo.path).attr("stroke", "#071222").attr("stroke-width", 0.8).merge(sel)
+      sel.enter().append("path").attr("d", geo.path).attr("stroke", "var(--map-line, #071222)").attr("stroke-width", 0.8).merge(sel)
         .style("fill", (d) => { const r = byKey.get(featKey(d)); return r?.tot && r.inPct >= MIN_IN ? (r.yes >= 50 ? PARTY_COLOR.yes : PARTY_COLOR.no) : "url(#notcounted)"; });
     }
     const reporting = rows.filter((r) => r.tot > 0);
@@ -115,9 +115,9 @@
     ensureHatch(svg);
     const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
     sel.enter().append("path").attr("d", geo.path).merge(sel)
-      .style("fill", (d) => { const r = rowOf(d); if (!r) return "#1b2a4a"; if (!counting) return color; return r.counted ? (r.ahead ? "var(--gold)" : "#6B7694") : "url(#notcounted)"; })
+      .style("fill", (d) => { const r = rowOf(d); if (!r) return "var(--none, #1b2a4a)"; if (!counting) return color; return r.counted ? (r.ahead ? "var(--gold)" : "#6B7694") : "url(#notcounted)"; })
       .attr("fill-opacity", (d) => { const r = rowOf(d); if (!r) return 1; if (!counting) return scale(r.then); return r.counted ? 0.45 + Math.min(1, Math.abs(r.now - r.then) / 15) * 0.55 : 1; })
-      .attr("stroke", (d) => (mustKeys.has(featKey(d)) ? "#fff" : "#071222"))
+      .attr("stroke", (d) => (mustKeys.has(featKey(d)) ? "#fff" : "var(--map-line, #071222)"))
       .attr("stroke-width", (d) => (mustKeys.has(featKey(d)) ? 3 : 0.8))
       .filter((d) => mustKeys.has(featKey(d))).raise();   // on top, so a neighbour's border cannot cut the outline
     const mustKey = `<span><i class="must"></i>must-win</span>`;

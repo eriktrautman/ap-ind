@@ -31,5 +31,14 @@ table { border-collapse: collapse; width: 100%; font-size: 28px; align-self: sta
 th { text-align: left; color: var(--muted); font-weight: 400; font-size: 24px; letter-spacing: .04em; text-transform: uppercase; padding: 0 8px 10px; border-bottom: 2px solid var(--rule); white-space: nowrap; }
 td { padding: 9px 8px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
 td.r, th.r { text-align: right; } td.b { font-weight: 700; } td.m { color: var(--muted); }
-.ahead { color: var(--gold); } .behind { color: #B4BDD3; }   /* gold ahead, slate gray behind: neither reads as Democrat or Republican */
+.ahead { color: var(--gold); } .behind { color: var(--behind-text, #B4BDD3); }   /* gold ahead, slate gray behind: neither reads as Democrat or Republican */
 .note { font-size: 22px; color: var(--muted); }
+
+/* Democracy Dashboard is the one light stylesheet. What the graphics wrote in as white-on-dark reads as ink here; cards with a dark photo or fill of their own stay light on dark. */
+html[data-theme="democracy-dashboard"] .ctl b, html[data-theme="democracy-dashboard"] .cmp b, html[data-theme="democracy-dashboard"] .row.called .num .pc, html[data-theme="democracy-dashboard"] .row .bar .tick b { color: var(--fg); }
+html[data-theme="democracy-dashboard"] .pill { --fg: #fff; }
+html[data-theme="democracy-dashboard"] .pill.call { color: #fff; }
+html[data-theme="democracy-dashboard"] .call { color: #fff; }
+html[data-theme="democracy-dashboard"] .check { color: #15803d; }
+html[data-theme="democracy-dashboard"] svg text.lbl { fill: var(--fg); } html[data-theme="democracy-dashboard"] svg text.lbl.dim { fill: var(--muted); } html[data-theme="democracy-dashboard"] svg text.lbl.gold { fill: var(--gold); }
+

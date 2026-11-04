@@ -45,13 +45,13 @@
       s.n += n; if (n) s.races++; if (featured.has(r.id)) s.featured = true;
       byState.set(r.state, s); total += n; if (n) racesWith++;
     }
-    const fill = (st) => { const s = byState.get(st); if (!s || !s.n) return "#1b2a4a"; return s.featured ? "#facc15" : s.n >= 4 ? "#7c3aed" : "#a855f7"; };
+    const fill = (st) => { const s = byState.get(st); if (!s || !s.n) return "var(--tile-none, var(--none, #1b2a4a))"; return s.featured ? "#facc15" : s.n >= 4 ? "#7c3aed" : "#a855f7"; };
     const stroke = (st) => (byState.get(st)?.featured ? { color: "#fff", width: 2 } : null);
     const sub = (st) => { const s = byState.get(st); return s?.n ? String(s.n) : null; };
     const dims = drawTileMap(svg, { size: 68, gap: 6, x0: 6, y0: 6, fill, stroke, sub });
     svg.attr("viewBox", `0 0 ${dims.width + 12} ${dims.height + 12}`);
     $("reporting").innerHTML = `<b>${[...byState.values()].filter((s) => s.n).length}</b> states`;
-    $("legend").innerHTML = `<span><i style="background:#facc15"></i>Featured race (${[...byState.values()].filter((s) => s.featured).length} states)</span><span><i style="background:#a855f7"></i>Independents on the federal ballot</span><span><i style="background:#7c3aed"></i>Four or more</span><span><i style="background:#1b2a4a"></i>None</span>`;
+    $("legend").innerHTML = `<span><i style="background:#facc15"></i>Featured race (${[...byState.values()].filter((s) => s.featured).length} states)</span><span><i style="background:#a855f7"></i>Independents on the federal ballot</span><span><i style="background:#7c3aed"></i>Four or more</span><span><i style="background:var(--none, #1b2a4a)"></i>None</span>`;
     $("big").innerHTML = `<b>${total}</b>independent and third-party candidates for Congress in ${racesWith} races`;
     $("updated").textContent = `Updated ${clockS()}`;
   }

@@ -29,9 +29,9 @@
   .others { grid-column: 1 / -1; font-size: 28px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .others .k { color: var(--muted); font-size: 22px; letter-spacing: .08em; text-transform: uppercase; margin-right: 16px; }
   .others .sep { color: var(--muted); margin: 0 10px; } .others b { font-variant-numeric: tabular-nums; margin-left: 8px; }
-  .cand { position: relative; display: grid; grid-template-rows: auto auto auto auto 1fr; align-content: start; justify-items: center; text-align: center; background: rgba(0,0,0,.25); border-radius: 10px; padding: 22px 28px 18px; min-width: 0; min-height: 0; overflow: hidden; border-top: 8px solid var(--c, #5c6b85); }
+  .cand { position: relative; display: grid; grid-template-rows: auto auto auto auto 1fr; align-content: start; justify-items: center; text-align: center; background: var(--well, rgba(0,0,0,.25)); border-radius: 10px; padding: 22px 28px 18px; min-width: 0; min-height: 0; overflow: hidden; border-top: 8px solid var(--c, #5c6b85); }
   .cand > * { min-width: 0; max-width: 100%; }
-  .photo { width: 260px; height: 312px; border-radius: 8px; background: #1b2a4a center top/cover no-repeat; display: flex; align-items: flex-end; justify-content: center; color: var(--muted); font-size: 22px; }
+  .photo { width: 260px; height: 312px; border-radius: 8px; background: var(--none, #1b2a4a) center top/cover no-repeat; display: flex; align-items: flex-end; justify-content: center; color: var(--muted); font-size: 22px; }
   .photo.none::after { content: "no verified photo"; padding-bottom: 16px; }
   .nm { font-size: 40px; font-weight: 700; margin-top: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--c, var(--fg)); }
   .lab { font-size: 22px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -42,7 +42,7 @@
   .pill.call { background: var(--gold); color: #1a1600; } .pill.lead { background: #2a3a5c; color: #fff; }
   .mid { display: grid; align-content: center; gap: 18px; text-align: center; min-width: 0; }
   .vs { font-size: 54px; font-weight: 700; color: var(--muted); letter-spacing: .1em; }
-  .box { background: rgba(0,0,0,.25); border-radius: 8px; padding: 14px 18px; }
+  .box { background: var(--well, rgba(0,0,0,.25)); border-radius: 8px; padding: 14px 18px; }
   .box .k { font-size: 19px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
   .box .v { font-size: 30px; line-height: 1.25; font-variant-numeric: tabular-nums; } .box .v b { font-size: 40px; }
   .box .m { font-size: 19px; color: var(--muted); margin-top: 4px; line-height: 1.3; }

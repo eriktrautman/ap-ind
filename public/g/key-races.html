@@ -8,7 +8,7 @@
 <style>
   /* D5: eight race cards. The producer's key races list (keyRaceIds) or, when empty, the ticker races. */
   .body { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 20px; min-height: 0; }
-  .kc { background: rgba(0,0,0,.25); border-radius: 8px; padding: 18px 22px; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; border-left: 6px solid #2a3a5c; }
+  .kc { background: var(--well, rgba(0,0,0,.25)); border-radius: 8px; padding: 18px 22px; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; border-left: 6px solid #2a3a5c; }
   .kc.featured { border-left-color: var(--gold); }
   .kc .lab { font-family: ui-monospace, Menlo, monospace; font-size: 30px; font-weight: 700; }
   .kc .lab small { font-family: var(--font); font-size: 20px; color: var(--muted); font-weight: 400; margin-left: 10px; }

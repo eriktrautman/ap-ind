@@ -17,6 +17,7 @@
   .pic { height: 100%; width: auto; max-width: 100%; min-height: 0; object-fit: contain; object-position: center bottom; -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(#000 64%, transparent 98%); mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(#000 64%, transparent 98%); -webkit-mask-composite: source-in; mask-composite: intersect; }   /* a square-cropped shoulder softens at the sides too */
   .pic.soft { -webkit-mask-composite: source-over; mask-composite: add; -webkit-mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 64%, transparent 100%); mask-image: radial-gradient(ellipse 46% 50% at 50% 50%, #000 64%, transparent 100%); }
   .info { position: relative; margin-top: -116px; text-align: center; width: 100%; min-width: 0; }
+  html[data-theme="democracy-dashboard"] .panel { --fg: #fff; --muted: #d6d3d1; --rule: #ffffff40; color: #fff; }   /* its own dark photo background */
   .pct { font-size: 136px; font-weight: 800; line-height: 1; letter-spacing: -.02em; color: var(--c, var(--fg)); font-variant-numeric: tabular-nums; text-shadow: 0 2px 18px rgba(0, 10, 40, .95), 0 0 4px rgba(0, 10, 40, .8); }
   .pct.wait { color: var(--muted); }
   .who { font-size: 40px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

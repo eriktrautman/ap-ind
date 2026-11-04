@@ -12,11 +12,11 @@
   .tile.called { border-top-color: var(--gold); }
   .lab { font-family: ui-monospace, Menlo, monospace; font-size: 22px; color: var(--gold); font-weight: 700; display: flex; justify-content: space-between; }
   .lab .st { color: var(--muted); font-family: var(--font); font-weight: 400; font-size: 18px; }
-  .who { font-size: 28px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fde68a; }
+  .who { font-size: 28px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--who-ind, #fde68a); }
   .who b { float: right; color: var(--fg); }
   .vs { font-size: 22px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .vs b { float: right; color: var(--muted); }
-  .pos { color: var(--gold); } .neg { color: #B4BDD3; }
+  .pos { color: var(--gold); } .neg { color: var(--behind-text, #B4BDD3); }
   /* The geniots stylesheet: each tile is a small lower third: the race and status on the red tab (gold once called), the
      independent on the white-to-grey band in navy, the opponent and margin on the navy line. */
   html[data-theme="election-night-v1"] .strip { height: auto; bottom: 82px; gap: 10px; align-items: flex-start; }
