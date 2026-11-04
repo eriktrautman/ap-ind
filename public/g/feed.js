@@ -210,6 +210,12 @@ export function clock(when = Date.now(), { seconds = false } = {}) {
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", ...(seconds ? { second: "2-digit" } : {}), timeZone: ZONES[TZ] }) + " " + TZ;
 }
 export const clockS = (when) => clock(when, { seconds: true });
+/** "Nov 4, 2026, 9:41:05 PM ET": an Updated stamp on a chart that may be shown long after the night. */
+export function dateClock(when = Date.now()) {
+  const d = when instanceof Date ? when : new Date(when);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: ZONES[TZ] })}, ${clockS(d)}`;
+}
 
 /** "U.S. Senate" / "U.S. House, District 6" / "Governor" for a race record. */
 export function officeText(race) {

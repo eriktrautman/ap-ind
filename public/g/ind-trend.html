@@ -38,7 +38,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP, FEC<span id="updated"></span></span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness } from "./feed.js";
+  import { connectFeed, dateClock, freshness } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -47,7 +47,6 @@
   const YEARS = ["2010", "2012", "2014", "2016", "2018", "2020", "2022", "2024"];
   // Sanders and King run as independents and caucus with Democrats, so they aren't counted here. Their votes stay in the total.
   const countedOther = (o) => o.other - Object.values(o.caucusDem ?? {}).reduce((a, b) => a + b, 0);
-  const dateOf = (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
   let races = null, base = null;
 
   /** Tonight's totals, the same way the past years were added up: every vote in a House or Senate race not cast for a Democrat or Republican. */
@@ -84,7 +83,7 @@
     $("caucus").textContent = caucus.length ? ` (${caucus.map(([y, v], i) => `${compact(v)}${i ? "" : " votes"} in ${y}`).join(", ")})` : "";
     $("reporting").innerHTML = stillCounting ? `*2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
     const latest = [...races.values()].reduce((m, r) => (r.lastUpdated > m ? r.lastUpdated : m), "");
-    $("updated").textContent = latest ? ` · Updated ${dateOf(latest)}` : "";
+    $("updated").textContent = latest ? ` · Updated ${dateClock(latest)}` : "";
   }
   const feed = connectFeed({
     onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },

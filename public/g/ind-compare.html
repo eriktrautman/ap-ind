@@ -32,8 +32,11 @@
   .tot .dash { color: var(--muted); font-size: 38px; }
   /* As C10's current year: 2026 boxed, here only its percentages. The box sits over the column the numbers share, clear of the vote counts beside them. */
   .rows { position: relative; }
-  .now .rows::after { content: ""; position: absolute; top: -8px; bottom: -6px; right: 144px; width: 156px; border: 4px solid var(--gold); border-radius: 8px; box-sizing: border-box; pointer-events: none; }
-  .tight .now .rows::after { top: -6px; bottom: -6px; right: 146px; width: 136px; }
+  .rows > :last-child { margin-bottom: 0; }
+  .now .rows::after { content: ""; position: absolute; top: var(--box-top, -9px); bottom: var(--box-bottom, -10px); right: 138px; width: 172px; border: 4px solid var(--gold); border-radius: 8px; box-sizing: border-box; pointer-events: none; }
+  .tight .now .rows::after { right: 140px; width: 150px; }
+  .tight { gap: 8px; padding-bottom: 12px; } .tight .track { height: 40px; } .tight .names { margin-bottom: 4px; }
+  .now h3 { margin-bottom: 18px; } .tight .now h3 { margin-bottom: 16px; }
   .empty { color: var(--muted); font-size: 34px; text-align: center; margin: auto; }
   .foot { align-items: center; }
   .note { color: var(--muted); font-style: italic; }
@@ -46,7 +49,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · <span class="note">Ind = not Dem or Rep</span> · <span id="updated"></span></span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, isMeasure, isFeaturedCand, officeText, fmt, clockS, incStar } from "./feed.js";
+  import { connectFeed, freshness, isMeasure, isFeaturedCand, officeText, fmt, dateClock, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -80,7 +83,7 @@
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
     const inPct = Math.round(race.eevp || race.precinctsPct || 0), counting = !race.totalVotes || inPct < 100;
     $("reporting").innerHTML = race.totalVotes ? (counting ? `*2026: <b>${inPct}%</b> of expected vote in` : "") : "No results yet";
-    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
+    $("updated").textContent = `Updated ${dateClock(race.lastUpdated)}`;
     if (isMeasure(race)) { $("body").innerHTML = `<div class="empty">A ballot measure has no candidates to compare.</div>`; return; }
     if (!priorLoaded) return;
     if (!prior) { $("body").innerHTML = `<div class="empty">No last-cycle result on file for this race.</div>`; return; }
@@ -90,11 +93,20 @@
     const diff = Number(now.ind.pct.toFixed(1)) - Number(then.ind.pct.toFixed(1));   // from the figures on screen, so the subtraction checks out on air
     const was = then.ind.cands.length ? `${then.ind.pct.toFixed(1)}% in ${year}` : "";
     const headline = race.totalVotes
-      ? `Independents <b>${now.ind.pct.toFixed(1)}%</b><small>${!was ? `none on the ballot in ${year}` : `${Math.abs(diff) < .05 ? "level with" : `${diff > 0 ? "up" : "down"} ${Math.abs(diff).toFixed(1)} points from`} ${was}`}</small>`
-      : (was ? `Independents had <b>${then.ind.pct.toFixed(1)}%</b> here in ${year}<small>no votes counted yet in 2026</small>` : `No independent on the ballot here in ${year}<small>no votes counted yet in 2026</small>`);
+      ? `Independent vote share is <b>${now.ind.pct.toFixed(1)}%</b><small>${!was ? `none on the ballot in ${year}` : `${Math.abs(diff) < .05 ? "level with" : `${diff > 0 ? "up" : "down"} ${Math.abs(diff).toFixed(1)} points from`} ${was}`}</small>`
+      : (was ? `Independent vote share was <b>${then.ind.pct.toFixed(1)}%</b> in ${year}<small>no votes counted yet in 2026</small>` : `No independent on the ballot here in ${year}<small>no votes counted yet in 2026</small>`);
     const cycle = (label, sub, l, cls = "") => `<div class="cycle ${cls}"><h3>${label}${sub ? `<small>${esc(sub)}</small>` : ""}</h3><div class="rows">${shown.map(([k, name]) => rowHtml(k, name, l[k], top)).join("")}</div></div>`;
     $("body").classList.toggle("tight", shown.length > 2);
     $("body").innerHTML = `<div class="headline">${headline}</div>${cycle(year, prior.note ? capital(prior.note) : "", then)}${cycle(`2026${counting ? "*" : ""}`, "", now, "now")}`;
+    boxPercentages();
+  }
+  /** The 2026 box runs from the first percentage to the last, the same distance past each; a lane with no candidate this cycle (a dash) stays outside it. */
+  function boxPercentages() {
+    const rows = document.querySelector(".now .rows"), hits = [...rows.querySelectorAll(".row")].filter((r) => r.querySelector(".tot b:not(.dash)"));
+    if (!hits.length) return;
+    const last = hits.at(-1);
+    rows.style.setProperty("--box-top", `${hits[0].offsetTop - 9}px`);
+    rows.style.setProperty("--box-bottom", `${rows.offsetHeight - last.offsetTop - last.offsetHeight - 10}px`);
   }
   async function loadPrior() {
     try { prior = (await (await fetch("./baseline-federal.json")).json()).races?.[raceId] ?? null; } catch { prior = null; }
