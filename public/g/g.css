@@ -20,6 +20,7 @@ body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px n
 .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 22px; border-top: 2px solid var(--rule); padding-top: 18px; gap: 24px; }
 .credit { display: flex; align-items: center; gap: 12px; font-size: 27px; font-weight: 700; color: var(--muted); white-space: nowrap; }   /* the byline, in the footnotes' gray */
 .credit svg { width: 34px; height: 34px; }
+.foot:has(.credit) .dot:not(.stale, .dead) { background: var(--muted); }   /* with the byline the live dot is gray too; stale and dead keep their warning colours */
 .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; margin-right: 10px; vertical-align: middle; }
 .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
 .empty { font-size: 36px; color: var(--muted); align-self: center; text-align: center; }
