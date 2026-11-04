@@ -24,7 +24,7 @@
 <div class="panel">
   <div class="head"><div><div class="kicker">Gallup poll</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body"><div class="headline" id="headline"></div><svg id="chart" viewBox="0 0 1584 570" role="img"></svg></div>
-  <div class="foot"><span>Source: Gallup · <span class="note" id="note"></span></span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: Gallup · <span class="note" id="note"></span></span></div>
 </div>
 <script type="module">
   import "./feed.js";   // the stylesheet and the footer, as on every chart
@@ -66,7 +66,6 @@
       $("headline").innerHTML = `${latest.ind === top ? "A record " : ""}<b>${latest.ind}%</b> identified as independent in ${latest.when}<small>${last.ind}% in ${quarter}</small>`;
     }
     $("note").textContent = `Annual averages; dashed to the latest quarter, ${quarter}`;
-    $("updated").textContent = `Through ${quarter}`;
   }
   try { render(await (await fetch("./gallup-party-id.json")).json()); }
   catch { $("title").textContent = "Gallup data did not load"; }
