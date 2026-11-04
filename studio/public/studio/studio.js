@@ -981,6 +981,7 @@ $("liveframe").addEventListener("click", () => window.open(withTheme(liveTickerU
 const SCREEN_PARAMS = {
   I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }, { k: "caption", label: "Caption", ph: "optional: a line shown over the image" }, { k: "showcredit", label: "Credit on air", options: [["1", "Show the credit"]] }],
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
+  C11: [{ k: "view", label: "View", options: [["lean", "with independents who lean to a party"]] }],
   B17: [{ k: "year", label: "Comparison year", options: [2024, 2022, 2020, 2018, 2016, 2014, 2012].map((y) => [String(y), String(y)]) }],   // default: the prior midterm with this race on file
   B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the race's lineup, else the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],

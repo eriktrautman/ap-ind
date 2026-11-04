@@ -150,6 +150,7 @@ export const CHARTS = [
   { id: "C8",  kind: "movement", name: "What if the featured candidates win", page: "/g/scenario.html",      built: true },
   { id: "C9",  kind: "movement", name: "Explainer cards",           page: "/g/explainer.html",                built: true },
   { id: "C10", kind: "movement", name: "Independent vote by year",  page: "/g/ind-trend.html", built: true, added: "2026-11-04" },
+  { id: "C11", kind: "movement", name: "Party identification (Gallup)", page: "/g/party-id.html", built: true, added: "2026-11-04" },
   // D: election updates
   { id: "D1",  kind: "movement", name: "State of the Senate races, map", page: "/g/senate-map.html", built: true },
   { id: "D2",  kind: "movement", name: "State of the House races, map",  page: "/g/house-map.html",  built: true },

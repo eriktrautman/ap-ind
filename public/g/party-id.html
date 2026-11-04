@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="/g/theme-boot.js"></script>
+<meta charset="utf-8">
+<title>Party Identification</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C11: Gallup's party identification, annual averages since 1988 with the latest quarter dashed on the end. ?view=lean adds the independents who lean to a party (Gallup asks from 1991). */
+  .panel { grid-template-rows: auto 1fr auto; }
+  .body { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; min-height: 0; }
+  .headline { font-size: 46px; font-weight: 700; line-height: 1.15; }
+  .headline b { color: var(--ind); } .headline b.dem { color: var(--dem); } .headline b.gop { color: var(--gop); }
+  .headline small { font-size: 30px; font-weight: 400; color: var(--muted); margin-left: 14px; }
+  svg { width: 100%; height: 100%; min-height: 0; display: block; overflow: visible; }
+  .grid { stroke: var(--rule); stroke-width: 2; } .axis { fill: var(--muted); font-size: 26px; }
+  .line { fill: none; stroke-width: 7; stroke-linejoin: round; stroke-linecap: round; } .line.ind { stroke-width: 10; }
+  .latest { fill: none; stroke-width: 6; stroke-dasharray: 3 12; stroke-linecap: round; }
+  .end { font-size: 38px; font-weight: 700; } .end tspan { font-size: 26px; font-weight: 400; }
+  .note { font-style: italic; }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Gallup poll</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body"><div class="headline" id="headline"></div><svg id="chart" viewBox="0 0 1584 570" role="img"></svg></div>
+  <div class="foot"><span>Source: Gallup · <span class="note" id="note"></span></span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import "./feed.js";   // the stylesheet and the footer, as on every chart
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const lean = q.get("view") === "lean";
+  const LINES = lean ? [["dem", "Dem + leaners", "--dem"], ["gop", "Rep + leaners", "--gop"]] : [["ind", "Independent", "--ind"], ["dem", "Democrat", "--dem"], ["gop", "Republican", "--gop"]];
+  const W = 1584, H = 570, L = 70, R = 300, T = 16, B = 46;
+
+  function render(d) {
+    const annual = lean ? d.annualLean : d.annual, last = (lean ? d.quarterlyLean : d.quarterly).at(-1);
+    const first = Number(annual[0].when), end = Number(last.when.slice(0, 4)) + (Number(last.when.slice(-1)) - 1) / 4;
+    const all = [...annual, last].flatMap((r) => LINES.map(([k]) => r[k]));
+    const lo = Math.floor(Math.min(...all) / 5) * 5, hi = Math.ceil(Math.max(...all) / 5) * 5;
+    const x = (y) => L + (y - first) / (end - first) * (W - L - R), y = (v) => T + (hi - v) / (hi - lo) * (H - T - B);
+    let svg = "";
+    for (let v = lo; v <= hi; v += 5) svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L - 14}" y="${y(v) + 9}" text-anchor="end">${v}%</text>`;
+    for (let yr = Math.ceil(first / 4) * 4; yr <= end; yr += 4) svg += `<text class="axis" x="${x(yr)}" y="${H - 6}" text-anchor="middle">${yr}</text>`;
+    const year = Number(annual.at(-1).when);
+    for (const [k, , color] of LINES) {
+      svg += `<polyline class="line ${k}" style="stroke:var(${color})" points="${annual.map((r) => `${x(Number(r.when))},${y(r[k])}`).join(" ")}"/>`;
+      svg += `<line class="latest" style="stroke:var(${color})" x1="${x(year)}" y1="${y(annual.at(-1)[k])}" x2="${x(end)}" y2="${y(last[k])}"/>`;
+      svg += `<circle cx="${x(end)}" cy="${y(last[k])}" r="9" style="fill:var(${color})"/>`;
+    }
+    // Labels on the line's end, pushed apart when two lines finish close together.
+    const ends = LINES.map(([k, name, color]) => ({ name, color, v: last[k], at: y(last[k]) })).sort((a, b) => a.at - b.at);
+    ends.forEach((e, i) => { if (i && e.at - ends[i - 1].at < 76) e.at = ends[i - 1].at + 76; });
+    for (const e of ends) svg += `<text class="end" x="${x(end) + 22}" y="${e.at + 2}" style="fill:var(${e.color})">${e.v}%<tspan x="${x(end) + 22}" dy="30">${e.name}</tspan></text>`;
+    $("chart").innerHTML = svg;
+
+    const quarter = last.when.replace(/(\d+) (Q\d)/, "$2 $1");
+    $("title").innerHTML = `Party identification <small>${lean ? "Independents counted with the party they lean to" : "Share of U.S. adults"}, ${first} to ${quarter}</small>`;
+    if (lean) {
+      const leader = last.dem >= last.gop ? ["dem", "Democrats", last.dem] : ["gop", "Republicans", last.gop], other = last.dem >= last.gop ? last.gop : last.dem;
+      $("headline").innerHTML = `${leader[1]} and their leaners <b class="${leader[0]}">${leader[2]}%</b><small>to ${other}% for ${leader[0] === "dem" ? "Republicans" : "Democrats"}, ${quarter}</small>`;
+    } else {
+      const top = Math.max(...d.annual.map((r) => r.ind)), latest = d.annual.at(-1);
+      $("headline").innerHTML = `${latest.ind === top ? "A record " : ""}<b>${latest.ind}%</b> identified as independent in ${latest.when}<small>${last.ind}% in ${quarter}</small>`;
+    }
+    $("note").textContent = `Annual averages; dashed to the latest quarter, ${quarter}`;
+    $("updated").textContent = `Through ${quarter}`;
+  }
+  try { render(await (await fetch("./gallup-party-id.json")).json()); }
+  catch { $("title").textContent = "Gallup data did not load"; }
+</script>
+</body>
+</html>
