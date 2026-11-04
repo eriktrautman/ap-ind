@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-04T18:23:55Z",
+  updated: "2026-11-04T18:26:38Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -291,6 +291,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-04T18:26:38Z", what: "C10: vote totals are no longer bold, an asterisk on 2026 points to the share of vote in at the top right in place of \"so far\", and the footer's live dot is grey unless the feed is stale." },
   { t: "2026-11-04T18:23:55Z", what: "C10's not-counted note says how many votes Sanders and King drew together in each year they ran." },
   { t: "2026-11-04T18:23:34Z", what: "C10 drops the separate House and Senate vote counts under each year, keeping each year's total." },
   { t: "2026-11-04T18:23:17Z", what: "C10's explainer notes (what Ind means, and that Sanders and King aren't counted) move above the footer rule, leaving the source, credit and date below it." },

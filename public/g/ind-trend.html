@@ -19,14 +19,15 @@
   .stack { width: 82%; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; }
   .seg { display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: var(--ind-fg, #fff); min-height: 0; overflow: hidden; }
   .seg.senate { color: #1a1600; }
-  .year { font-size: 34px; font-weight: 700; margin-top: 12px; } .year small { display: block; font-size: 20px; line-height: 1; font-weight: 400; color: var(--muted); height: 20px; } .yr:not(.now) .year::after { content: ""; display: block; height: 20px; }
-  .abs { font-size: 26px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .year { font-size: 34px; font-weight: 700; margin-top: 12px; }
+  .abs { font-size: 26px; font-weight: 400; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .now { outline: 4px solid var(--gold); outline-offset: 5px; border-radius: 8px; }
   .now .year { color: var(--gold); }
   .foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; }
   .note { color: var(--muted); font-size: 22px; }
   .credit { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--fg); white-space: nowrap; }
   .credit svg { width: 28px; height: 28px; }
+  .foot .dot:not(.stale, .dead) { background: var(--muted); }
   #updated { white-space: nowrap; text-align: right; }
 </style>
 </head>
@@ -80,12 +81,12 @@
       return `<div class="yr ${r.live ? "now" : ""}"><div class="col" style="--h:${sum / top}">
           <div class="total">${empty ? "—" : `${sum.toFixed(1)}%`}</div>
           <div class="stack" style="height:calc((100% - 96px) * ${sum / top})">${empty ? "" : seg("senate", r.sPct) + seg("house", r.hPct)}</div></div>
-        <div><div class="year">${r.y}${r.live && stillCounting ? "<small>so far</small>" : ""}</div>
+        <div><div class="year">${r.y}${r.live && stillCounting ? "*" : ""}</div>
           <div class="abs">${empty ? "—" : `${compact(r.other)}`}</div></div></div>`;
     }).join("");
     const caucus = years.map((x) => [x.y, Object.values(x.S.caucusDem ?? {}).reduce((a, b) => a + b, 0)]).filter(([, v]) => v);
     $("caucus").textContent = caucus.length ? ` (${caucus.map(([y, v], i) => `${compact(v)}${i ? "" : " votes"} in ${y}`).join(", ")})` : "";
-    $("reporting").innerHTML = stillCounting ? `2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
+    $("reporting").innerHTML = stillCounting ? `*2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
     const latest = [...races.values()].reduce((m, r) => (r.lastUpdated > m ? r.lastUpdated : m), "");
     $("updated").textContent = latest ? `Updated ${dateOf(latest)}` : "";
   }
