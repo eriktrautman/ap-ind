@@ -28,6 +28,27 @@ export function statusPill(r) {
   return `<span class="pill open">${r.pollClose && Date.parse(r.pollClose) > Date.now() ? "POLLS OPEN" : "NO RESULTS YET"}</span>`;
 }
 
+/** The candidate ahead on votes and by how many points, or null before results. tied: the top two have the same votes. */
+export function raceLeader(r) {
+  if (!r.totalVotes) return null;
+  const [top, next] = [...r.candidates].sort((a, b) => b.votes - a.votes);
+  if (!top) return null;
+  return { cand: top, margin: Math.round((top.pct - (next?.pct ?? 0)) * 10) / 10, tied: !!next && top.votes === next.votes };
+}
+
+const PARTY_NAMES = { Dem: "Democrat", GOP: "Republican", Lib: "Libertarian", Grn: "Green", NP: "Nonpartisan", NPA: "No party", Una: "Unaffiliated", CST: "Constitution", UST: "Constitution", Oth: "Other party" };
+export const partyName = (c) => (c.independent ? "Independent" : c.partyLabel || PARTY_NAMES[c.party] || c.party);
+
+/** A list row's right-hand column: the leader's lead, in the party's colour, and the party by name. A measure's leader is its leading side. */
+export function leaderCell(r) {
+  const l = raceLeader(r);
+  if (!l) return `<div class="num"><b>—</b><span>No votes yet</span></div>`;
+  const c = l.cand, cls = candClass(c);
+  if (l.tied) return `<div class="num"><b>Tied</b><span>${esc(c.last)}</span></div>`;
+  const label = isSide(c) ? `<span class="p" style="background:${candColor(c)}">${esc(c.party)} leads</span>` : `${esc(c.last)} <span class="p ${cls}">${esc(partyName(c))}</span>`;
+  return `<div class="num lead"><b class="${isSide(c) ? "" : cls}">+${l.margin.toFixed(1)}</b><span>${label}</span></div>`;
+}
+
 /** Independent's margin vs the best-placed other candidate, in points. null before results. */
 export function indMargin(r) {
   if (!r.totalVotes) return null;

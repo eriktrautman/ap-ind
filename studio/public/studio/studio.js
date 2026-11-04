@@ -1,7 +1,7 @@
 // Studio (/studio): status bar and poller controls, the LIVE TICKER and the Ticker Builder (the one thing that is
 // published), the Live Screens, the shared Playlists, and the two catalogs every chart is reached from.
 import { buildQueue } from "/ticker-queue.js";
-import { airingBundles, mergeIntoLibrary, normalizeBundleLibrary, MAX_BUNDLES, DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
+import { tickerMinInOf, airingBundles, mergeIntoLibrary, normalizeBundleLibrary, MAX_BUNDLES, DEFAULTS, CHARTS, FEATURED_RACES, TICKER_FIELDS, BACKGROUNDS, DEFAULT_BG, partyLetter, specDef, normalizePlaylists, normalizeLibrary, CHART_BACKGROUNDS, chartTakesBackground, IMAGE_CHART, IMAGE_LAYOUTS, IMAGE_LIMITS, normalize, diffState, expandTicker, readLocal, saveLocal, screenAddress, describeScreen } from "/g/control.js";
 import { THEMES, DEFAULT_THEME, themeName, themeLabel } from "/g/themes.js";
 import { createCardManager } from "/studio/cards.js";
 
@@ -371,6 +371,7 @@ function renderLive() {
       <tr><td class="k" title="crawl: races, text and bundles in crawl order; hover a piece for the full text">crawl</td><td><div class="chips">${live.tickerItems.map((it) => seqChip(it, live)).join("")}</div></td></tr>
       ${airingBundles(live).length ? `<tr><td class="k" title="bundles: the packages in this ticker's crawl">bundles</td><td>${airingBundles(live).map((c) => `<div><span class="bundletag">BUNDLE</span><b>${esc(c.name || c.id)}</b> <span class="chips" style="display:inline-flex">${c.items.map((it) => seqChip(it, live)).join("")}</span></div>`).join("")}</td></tr>` : ""}
       <tr><td class="k" title="calls: 1 highlights AP Calls yellow, 0 does not">calls</td><td>${live.callHighlight ? "1 · AP Calls highlighted yellow" : "0 · no highlight"}</td></tr>
+      <tr><td class="k" title="minin: only races with votes and at least this percent in">minin</td><td>${live.tickerMinIn === null ? "off · every race" : `${live.tickerMinIn} · races with votes and at least ${live.tickerMinIn}% in`}</td></tr>
       <tr><td class="k" title="idle: the line that crawls when there is nothing else">idle</td><td>${esc(live.idleText || DEFAULTS.idleText)}</td></tr>
       <tr><td class="k" title="background: what the permanent address shows when it names none">background</td><td>${esc(BG_OPTIONS.find(([v]) => v === live.tickerBg)?.[1] ?? live.tickerBg)} <span class="muted">· override on any address with <code>?bg=</code> black, green, capitol, flag, panels or transparent, and <code>&amp;opacity=10..100</code></span></td></tr>
       <tr><td class="k">published</td><td>${live.updatedAt ? publishedLine("ticker") : "never: the shipped defaults are live"}</td></tr>
@@ -635,6 +636,9 @@ function renderSeq() {
   $("addbundleref").querySelector("button").disabled = !draft.bundles.length;
   if (document.activeElement !== $("idletext")) $("idletext").value = draft.idleText;
   $("callhl").value = draft.callHighlight ? "1" : "0";
+  $("minin").value = draft.tickerMinIn === null ? "" : "on";
+  $("minwrap").hidden = draft.tickerMinIn === null;
+  if (document.activeElement !== $("minpct")) $("minpct").value = draft.tickerMinIn ?? 0;
 }
 // One bundle at a time, like a playlist: pick it from the dropdown, add, rename or delete it. The choice is this browser's.
 const BUNDLE_ADD = "__add";
@@ -855,6 +859,9 @@ $("bundles").addEventListener("click", async (e) => {
 let idleTimer = null;
 $("idletext").addEventListener("input", () => { draft.idleText = $("idletext").value; clearTimeout(idleTimer); idleTimer = setTimeout(commit, 400); });
 $("callhl").addEventListener("change", () => { draft.callHighlight = $("callhl").value === "1"; commit(); });
+const setMinIn = () => { draft.tickerMinIn = $("minin").value ? tickerMinInOf($("minpct").value || 0) : null; commit(); };
+$("minin").addEventListener("change", setMinIn);
+$("minpct").addEventListener("change", setMinIn);
 const frame = $("preview"), liveFrame = $("livepreview");
 function scalePreviews() { scaleScreens(); }   // the two ticker frames use the Live Screens layout
 /** The builder's preview frame gets the builder's four fields by postMessage, so it shows the page, not what is published. */
@@ -932,6 +939,7 @@ function tickerUrl() {
   // The crawl order with its bundles expanded: a race by its label, text after ~, entries separated by |.
   p.set("seq", expandTicker(draft).map((it) => it.t === "race" ? (index?.byId?.get(it.id)?.label ?? it.id) : `~${it.text.replace(/\|/g, "/")}`).join("|"));
   p.set("calls", draft.callHighlight === false ? "0" : "1");   // the AP Call highlight, always spelled out
+  if (draft.tickerMinIn !== null) p.set("minin", draft.tickerMinIn);
   p.set("idle", draft.idleText || DEFAULTS.idleText);   // always spelled out, like calls
   return `${origin()}/ticker?${p.toString()}`;
 }

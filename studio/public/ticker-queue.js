@@ -26,6 +26,12 @@ export function raceText(r) {
   return `${r.label} · ${cands} · ${status}`;
 }
 
+/** tickerMinIn null: every race crawls. A number: a race waits until it has votes and that much in, read from the same number the crawl prints as "% in". A race AP has called stays once it has votes: the call is the news. */
+export function clearsMinIn(r, minIn) {
+  if (minIn === null || minIn === undefined) return true;
+  return r.totalVotes > 0 && (r.called || (r.eevp || r.precinctsPct || 0) >= minIn);
+}
+
 /** Races to show when the producer has pinned nothing: featured races, then any with an independent and votes. */
 export function defaultPins(races) {
   const featured = races.filter((r) => r.featured).map((r) => r.id);
@@ -59,7 +65,7 @@ export function crawlSequence(p) {
 
 /**
  * @param {Array} races   from index.json
- * @param {Object} producer {tickerItems, bundles, idleText, callHighlight} (or the older {pinnedRaceIds, manualItems})
+ * @param {Object} producer {tickerItems, bundles, idleText, callHighlight, tickerMinIn} (or the older {pinnedRaceIds, manualItems})
  * @returns {{items: Array<{key,kind,text,emphasis}>, source: "pins"|"default"|"idle", missing: string[]}}
  */
 export function buildQueue(races, producer) {
@@ -72,7 +78,7 @@ export function buildQueue(races, producer) {
 
   const out = [];
   seq.forEach((it, i) => {
-    if (it.t === "race") { const r = byId.get(it.id); if (r) out.push({ key: `race:${r.id}:${i}`, kind: "race", text: raceText(r), emphasis: !!r.called && p.callHighlight !== false }); }
+    if (it.t === "race") { const r = byId.get(it.id); if (r && clearsMinIn(r, p.tickerMinIn)) out.push({ key: `race:${r.id}:${i}`, kind: "race", text: raceText(r), emphasis: !!r.called && p.callHighlight !== false }); }
     else if (it.t === "text" && it.text) out.push({ key: `manual:${it.id ?? i}:${i}`, kind: "manual", text: it.text, emphasis: true });
   });
 

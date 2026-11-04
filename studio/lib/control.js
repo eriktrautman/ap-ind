@@ -28,6 +28,7 @@ export function applyPanelOpacity(search = typeof location === "undefined" ? "" 
     }
   };
   document.body ? apply() : document.addEventListener("DOMContentLoaded", apply);
+  document.addEventListener("ep-theme", apply);   // a stylesheet repaints these variables every 10 s (themes.js watchTheme): the opacity goes back on each time
 }
 applyPanelOpacity();
 
@@ -80,6 +81,13 @@ export const FEATURED_RACES = [
   { id: "2015",  label: "AK-AL",  state: "AK", title: "U.S. House, at large", who: "Bill Hill", cand: "177719" },
   // ID-1 (Sarah Zabel) left the slate on 2026-10-29; the candidate stays curated in config/candidates.json.
 ];
+
+/** The ticker's results threshold: null (off), or a whole percent from 0 to 100. */
+export const tickerMinInOf = (v) => { if (v === null || v === undefined || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null; };
+
+// A write-in reaches a graphic only once it is over 1% of the vote, or has won. AP's names carry "(write-in)". A race is never left with nobody.
+const isWriteIn = (c) => /\bwrite-?\s?in\b/i.test(c.name ?? "");
+export function hideSmallWriteIns(cands) { const kept = cands.filter((c) => !isWriteIn(c) || c.winner || c.pct > 1); return kept.length ? kept : cands; }
 
 /**
  * Every graphic in the lookbook. kind: race (needs ?id=), movement (C and D series), or other (A and
@@ -201,6 +209,7 @@ export const DEFAULTS = Object.freeze({
   bundles: [SLATE_BUNDLE, ...ZONE_BUNDLES],                               // {id, name, items: [{t:"race",id} | {t:"text",id,text}]}
   pinnedRaceIds: FEATURED_RACES.map((r) => r.id),
   callHighlight: true,
+  tickerMinIn: null,          // null: every race crawls. A number: only races with votes and at least that percent in (ticker-queue.js)
   manualItems: [],
   idleText: "Welcome to the Independent Election Night coverage",
   tickerBg: "green",          // the live ticker's background when its address names none ("" transparent, black, green)
@@ -345,6 +354,7 @@ export function normalize(raw) {
     bundles,
     pinnedRaceIds: pins.length ? pins : [...DEFAULTS.pinnedRaceIds],   // derived: the races in crawl order (the default list when the crawl has none)
     callHighlight: typeof r.callHighlight === "boolean" ? r.callHighlight : DEFAULTS.callHighlight,
+    tickerMinIn: tickerMinInOf(r.tickerMinIn),
     manualItems: manual,                                                 // derived: the texts in crawl order
     idleText: typeof r.idleText === "string" ? r.idleText.trim().slice(0, LIMITS.text) : "",
     tickerBg: BG_IDS.includes(r.tickerBg) ? r.tickerBg : DEFAULTS.tickerBg,
@@ -478,6 +488,7 @@ export function diffState(from, to) {
   list("keyRaceIds", "Key races", true);
   for (const k of SCREENS) if (JSON.stringify(A[k]) !== JSON.stringify(B[k])) out.push({ field: k, text: `Live Screen ${k === "screenA" ? "One" : "Two"}: ${describeScreen(B[k])} (was ${describeScreen(A[k])})` });
   if (A.callHighlight !== B.callHighlight) out.push({ field: "callHighlight", text: `AP Call highlight: ${B.callHighlight ? "on" : "off"}` });
+  if (A.tickerMinIn !== B.tickerMinIn) out.push({ field: "tickerMinIn", text: `Ticker races: ${B.tickerMinIn === null ? "every race" : `only with results, at least ${B.tickerMinIn}% in`}` });
   if (A.idleText !== B.idleText) out.push({ field: "idleText", text: `Idle text: "${B.idleText || "(none)"}"` });
   if (A.tickerBg !== B.tickerBg) out.push({ field: "tickerBg", text: `Ticker background: ${B.tickerBg || "transparent"}` });
   if (A.theme !== B.theme) out.push({ field: "theme", text: `Stylesheet: ${B.theme}` });
@@ -516,7 +527,7 @@ export async function loadGlobal() {
 
 /** The fields the Live Global Ticker is made of: the only ones that are ever published. Everything else a page needs comes
  *  from its address or the shipped defaults. */
-export const TICKER_FIELDS = ["tickerItems", "bundles", "pinnedRaceIds", "callHighlight", "manualItems", "idleText", "tickerBg"];
+export const TICKER_FIELDS = ["tickerItems", "bundles", "pinnedRaceIds", "callHighlight", "tickerMinIn", "manualItems", "idleText", "tickerBg"];
 /** Everything that is ever published: the ticker fields and the two Live Screens. */
 export const PUBLISHED_FIELDS = [...TICKER_FIELDS, "screenA", "screenB", "theme"];
 

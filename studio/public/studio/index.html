@@ -79,6 +79,7 @@
         <div class="sform tform">
           <div class="tgrid">
             <label for="callhl">Highlight AP Calls?</label><select id="callhl"><option value="1">Yes</option><option value="0">No</option></select>
+            <label for="minin" title="Leaves a race out of the crawl until it has votes and this much of the expected vote in. A race AP has called stays once it has votes. Text items always crawl. 0% means any votes.">Only races with results?</label><span class="mininrow"><select id="minin"><option value="">No, every race</option><option value="on">Yes, at least</option></select> <span id="minwrap" hidden><input id="minpct" type="number" min="0" max="100" step="1" size="4"> % in</span></span>
             <label for="tickerbg">Outer Background</label><select id="tickerbg" data-page="ticker"></select>
           </div>
           <h4>Crawl order <span class="muted" id="seqcount"></span></h4>

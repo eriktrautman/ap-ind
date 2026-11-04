@@ -26,6 +26,7 @@
     <span class="chip" data-f="counting">Counting</span>
     <span class="chip" data-f="called">Called</span>
     <select id="state"><option value="">All states</option></select>
+    <select id="closes"><option value="">Any poll closing</option></select>
     <select id="sort"><option value="closest">Closest first</option><option value="margin">Independent leading first</option><option value="in">Most counted first</option><option value="label">By state</option></select>
     <input id="q" placeholder="Search name" size="14">
   </div>
@@ -35,7 +36,7 @@
 </main>
 <footer>Results are unofficial and come from the Associated Press. "% in" is AP's estimate of the expected vote counted, not precincts. "AP CALL" is AP's projection. Stars are saved on this device. State legislatures and other local offices are not in our AP feed.</footer>
 <script type="module">
-  import { esc, fmt, pct, face, statusPill, indMargin, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass, winMark, kindBadge, isSide } from "/app.js";
+  import { esc, fmt, pct, face, statusPill, indMargin, raceLeader, leaderCell, getJSON, renderStatus, stars, testBanner, REFRESH_MS, tag, candClass, winMark, kindBadge, isSide } from "/app.js";
   const $ = (id) => document.getElementById(id);
   let index = null, status = null, filter = "all", nextAt = Date.now() + REFRESH_MS;
   let starred = stars.get();
@@ -53,24 +54,22 @@
       const ind = r.candidates.find((c) => c.independent) ?? r.candidates[0];
       if (!ind) return "";
       const others = r.candidates.filter((c) => c.id !== ind.id).slice(0, 2);
-      const mg = indMargin(r);
       const line = r.totalVotes ? r.candidates.slice(0, 3).map((c) => `${esc(c.last)} (${esc(tag(c))}) ${pct(c.pct)}${winMark(c)}`).join(" · ") + ` · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
       return `<div class="race">
         <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
         <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(ind)}${others.map((c) => face(c)).join("")}</span><span class="txt"><span class="nm">${kindBadge(r)}${esc(r.label)} · ${esc(ind.last)} (${esc(tag(ind))})${winMark(ind)}${others.length ? " vs " + others.map((c) => `${esc(c.last)} (${esc(tag(c))})${winMark(c)}`).join(", ") : ""}${r.featured ? ' <span class="pill call" style="background:#fff3bf">FEATURED</span>' : ""}</span><span class="sub">${statusPill(r)} ${line}</span></span></a>
-        <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>${esc(ind.last)} ${r.hasIndependent ? "margin" : "lead"}</span></div>
+        ${leaderCell(r)}
       </div>`;
   }
 
   function measureRow(r) {
       const yes = r.candidates.find((c) => c.party === "Yes") ?? r.candidates[0], no = r.candidates.find((c) => c.party === "No");
       if (!yes) return "";
-      const mg = r.totalVotes ? Math.round((yes.pct - (no?.pct ?? 0)) * 10) / 10 : null;
       const line = r.totalVotes ? `Yes ${pct(yes.pct)}${winMark(yes)} · No ${pct(no?.pct)}${no ? winMark(no) : ""} · ${fmt(r.totalVotes)} votes` : (r.pollClose ? `polls close ${new Date(r.pollClose).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}` : "no results yet");
       return `<div class="race">
         <div class="star ${starred.has(r.label) ? "on" : ""}" data-id="${esc(r.label)}">${starred.has(r.label) ? "★" : "☆"}</div>
         <a class="who" href="/race/${esc(r.label)}"><span class="faces">${face(yes)}${no ? face(no) : ""}</span><span class="txt"><span class="nm">${kindBadge(r)}${esc(r.state)} · ${esc(r.title)}</span><span class="sub">${statusPill(r)} ${line}${r.category ? ` · ${esc(r.category)}` : ""}</span></span></a>
-        <div class="num"><b>${mg === null ? "—" : (mg > 0 ? "+" : "") + mg.toFixed(1)}</b><span>Yes margin</span></div>
+        ${leaderCell(r)}
       </div>`;
   }
 
@@ -79,14 +78,17 @@
     if (!index) { $("list").innerHTML = `<div class="empty">No data yet. The poller has not written its first snapshot.</div>`; return; }
     const sel = $("state");
     if (sel.options.length === 1) for (const st of [...new Set(index.races.map((r) => r.state))].sort()) sel.insertAdjacentHTML("beforeend", `<option>${st}</option>`);
+    const closes = $("closes");
+    if (closes.options.length === 1) for (const t of [...new Set(index.races.map((r) => r.pollClose).filter(Boolean))].sort((a, b) => Date.parse(a) - Date.parse(b))) closes.insertAdjacentHTML("beforeend", `<option value="${esc(t)}">Polls close ${new Date(t).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })}</option>`);
     const q = $("q").value.trim().toLowerCase(), st = sel.value, sort = $("sort").value;
     let rows = index.races.filter((r) =>
       (filter === "all") || (filter === "ind" && r.hasIndependent) || (filter === "starred") || (filter === "S" && r.office === "S") || (filter === "H" && r.office === "H") ||
       (filter === "governor" && r.kind === "governor") || (filter === "statewide" && r.kind === "statewide") || (filter === "measure" && r.kind === "measure") || (filter === "local" && r.kind === "local") ||
       (filter === "counting" && !r.called && r.totalVotes > 0) || (filter === "called" && r.called) || (filter === "featured" && r.featured));
     if (st) rows = rows.filter((r) => r.state === st);
+    if (closes.value) rows = rows.filter((r) => r.pollClose === closes.value);
     if (q) rows = rows.filter((r) => r.candidates.some((c) => c.name.toLowerCase().includes(q)) || r.label.toLowerCase().includes(q) || (r.title ?? "").toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q));
-    const m = (r) => indMargin(r);
+    const m = (r) => (sort === "closest" ? (raceLeader(r)?.margin ?? null) : indMargin(r));   // closest: the lead the list shows; independent leading first: the independent's own margin
     rows.sort((a, b) => {
       if (sort === "label") return a.label.localeCompare(b.label, undefined, { numeric: true });
       if (sort === "in") return (b.eevp || b.precinctsPct) - (a.eevp || a.precinctsPct);
@@ -117,7 +119,7 @@
     filter = chip.dataset.f; render();
   });
   for (const id of ["pinned", "list"]) $(id).addEventListener("click", (e) => { const s = e.target.closest(".star"); if (!s) return; starred = stars.toggle(s.dataset.id); render(); });
-  for (const id of ["state", "sort", "q"]) $(id).addEventListener("input", render);
+  for (const id of ["state", "closes", "sort", "q"]) $(id).addEventListener("input", render);
   setInterval(() => renderStatus($("status"), status, nextAt), 1000);
   setInterval(load, REFRESH_MS);
   load();

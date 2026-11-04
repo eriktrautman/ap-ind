@@ -58,7 +58,7 @@
 </div>
 <script type="module">
   import { buildQueue } from "/ticker-queue.js";
-  import { watchState, DEFAULTS, BG_IDS } from "/g/control.js";
+  import { watchState, DEFAULTS, BG_IDS, tickerMinInOf } from "/g/control.js";
   import { watchTheme } from "/g/themes.js";
   watchTheme();   // the published stylesheet, or ?theme= on this address
 
@@ -73,12 +73,13 @@
   //   /ticker?bg=black&opacity=60&seq=NE-SEN|~Polls close at 7|MT-SEN|ID-SEN&calls=1&idle=Welcome
   // seq: the crawl order, entries separated by |: a race (its label NE-SEN, CA-6, or AP id) or ~text. Bundles are already
   // expanded into it. Older addresses carry races=NE-SEN,MT-SEN (in order) and item=... (one after every two races).
-  // calls=0 turns the yellow AP Call highlight off. Any of the five present switches this mode on.
+  // minin=20 crawls only races with votes and at least 20% in (0: any votes). calls=0 turns the yellow AP Call highlight off. Any of the five present switches this mode on.
   const URL_MODE = ["seq", "races", "item", "idle", "calls"].some((k) => params.has(k));
   const urlState = URL_MODE ? {
     seq: params.has("seq") ? params.get("seq").split("|").map((s) => s.trim()).filter(Boolean).map((s, i) => s.startsWith("~") ? { t: "text", id: `url${i}`, text: s.slice(1).trim() } : { t: "race", key: s }) : null,
     pinnedKeys: (params.get("races") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     callHighlight: params.get("calls") !== "0",
+    tickerMinIn: tickerMinInOf(params.get("minin")),
     manualItems: params.getAll("item").map((text, i) => ({ id: `url${i}`, text: text.trim() })).filter((m) => m.text),
     idleText: params.get("idle") || DEFAULTS.idleText,
   } : null;

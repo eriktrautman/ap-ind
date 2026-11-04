@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergeIntoLibrary, airingBundles, MAX_BUNDLES } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, hideSmallWriteIns, tickerMinInOf, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergeIntoLibrary, airingBundles, MAX_BUNDLES } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -59,6 +59,19 @@ test("the ticker crawl: idle line before data, the crawl order with bundles expa
   assert.equal(q.items[0].emphasis, true);
   assert.equal(buildQueue(races, { pinnedRaceIds: ["2"], callHighlight: false }).items[0].emphasis, false);
   assert.equal(buildQueue(races, {}).source, "default");
+  // Only races with results: a race waits for votes and the threshold, a called race stays once it has votes, text always crawls.
+  const counting = [{ id: "a", label: "A", totalVotes: 0, eevp: 0, candidates: [] }, { id: "b", label: "B", totalVotes: 9, eevp: 10, candidates: [] }, { id: "c", label: "C", totalVotes: 9, eevp: 30, candidates: [] }, { id: "d", label: "D", totalVotes: 9, eevp: 2, called: true, candidates: [{ last: "W", winner: true }] }];
+  const crawl = (tickerMinIn) => buildQueue(counting, { tickerMinIn, tickerItems: [...counting.map((r) => ({ t: "race", id: r.id })), { t: "text", id: "t", text: "Note" }] }).items.map((i) => i.text.split(" · ")[0]);
+  assert.deepEqual(crawl(null), ["A", "B", "C", "D", "Note"]);
+  assert.deepEqual(crawl(0), ["B", "C", "D", "Note"]);
+  assert.deepEqual(crawl(20), ["C", "D", "Note"]);
+  assert.deepEqual([undefined, "", "x", "20", 150, -3].map(tickerMinInOf), [null, null, null, 20, 100, 0]);
+  assert.equal(normalize({}).tickerMinIn, null);
+  assert.equal(normalize({ tickerMinIn: 25 }).tickerMinIn, 25);
+  // A write-in reaches a graphic only over 1%, or as the winner; a race is never left with nobody.
+  const wi = (name, pct, winner = false) => ({ name, pct, winner });
+  assert.deepEqual(hideSmallWriteIns([wi("A", 50), wi("B (write-in)", 1), wi("C (write-in)", 1.1), wi("D Write-in", 0, true), wi("E", 0)]).map((c) => c.name), ["A", "C (write-in)", "D Write-in", "E"]);
+  assert.deepEqual(hideSmallWriteIns([wi("F (write-in)", 0)]).map((c) => c.name), ["F (write-in)"]);
   // The crawl order: races, text and bundles in the producer's order; a bundle expands in place, each time it is placed.
   const st = normalize({ tickerItems: [{ t: "text", id: "a", text: "Welcome" }, { t: "bundle", id: "neb" }, { t: "race", id: "2" }, { t: "bundle", id: "neb" }], bundles: [{ id: "neb", name: "Nebraska", items: [{ t: "race", id: "1" }, { t: "text", id: "b", text: "Osborn watch" }] }] });
   assert.deepEqual(buildQueue(races, st).items.map((i) => i.text.split(" · ")[0]), ["Welcome", "NE-SEN", "Osborn watch", "MT-SEN", "NE-SEN", "Osborn watch"]);

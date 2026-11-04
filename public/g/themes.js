@@ -65,6 +65,7 @@ export function applyAirTheme(id, root = typeof document === "undefined" ? null 
   for (const outs of Object.values(AIR_VARS)) for (const v of outs) root.style.removeProperty(v);
   for (const [k, outs] of Object.entries(AIR_VARS)) { const val = t.tokens[k]; if (val) for (const v of outs) root.style.setProperty(v, val); }
   root.dataset.theme = themeId(id);
+  root.ownerDocument?.dispatchEvent(new Event("ep-theme"));   // this just rewrote the panel colours; control.js puts ?opacity= back before the next paint
 }
 
 /** The stylesheet an address asks for (?theme=<id>), or null. */
