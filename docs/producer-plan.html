@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-04T18:03:04Z",
+  updated: "2026-11-04T18:18:18Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -291,6 +291,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-04T18:18:18Z", what: "C10 draws a yellow outline around the 2026 column, to pull the eye to tonight." },
   { t: "2026-11-04T18:03:04Z", what: "C10 reaches back to 2010, using FEC results for 2010 and 2014 because AP's list starts in 2012 and its 2014 totals are wrong for Maine. It no longer counts Bernie Sanders or Angus King, with a note saying so, and its footer shows a date instead of a time." },
   { t: "2026-11-04T17:54:58Z", what: "C10 now reaches back to 2016 and 2018: six bars, from AP history with no new AP calls." },
   { t: "2026-11-04T17:51:05Z", what: "C10, Independent vote by year: the share of all House and Senate votes going to candidates who aren't Democrats or Republicans in 2020, 2022, 2024 and 2026, stacked by House and Senate, with the vote counts below." },
