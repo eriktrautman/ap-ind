@@ -23,12 +23,11 @@
   .abs { font-size: 26px; font-weight: 400; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .now { outline: 4px solid var(--gold); outline-offset: 5px; border-radius: 8px; }
   .now .year { color: var(--gold); }
-  .foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; }
+  .foot { align-items: center; }
   .note { color: var(--muted); font-size: 22px; font-style: italic; }
-  .credit { position: relative; top: 18px; display: flex; align-items: center; gap: 12px; font-size: 27px; font-weight: 700; color: var(--fg); white-space: nowrap; }
+  .credit { display: flex; align-items: center; gap: 12px; font-size: 27px; font-weight: 700; color: var(--fg); white-space: nowrap; }
   .credit svg { width: 34px; height: 34px; }
   .foot .dot:not(.stale, .dead) { background: var(--muted); }
-  #updated { white-space: nowrap; text-align: right; }
 </style>
 </head>
 <body>
@@ -39,7 +38,7 @@
     <div class="bars" id="bars"></div>
     <div class="note">Ind = not Dem or Rep · Not counted: Sanders and King, who caucus with Democrats<span id="caucus"></span></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC</span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="#E8892B" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC<span id="updated"></span></span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="#E8892B" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span></div>
 </div>
 <script type="module">
   import { connectFeed, freshness } from "./feed.js";
@@ -88,7 +87,7 @@
     $("caucus").textContent = caucus.length ? ` (${caucus.map(([y, v], i) => `${compact(v)}${i ? "" : " votes"} in ${y}`).join(", ")})` : "";
     $("reporting").innerHTML = stillCounting ? `*2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
     const latest = [...races.values()].reduce((m, r) => (r.lastUpdated > m ? r.lastUpdated : m), "");
-    $("updated").textContent = latest ? `Updated ${dateOf(latest)}` : "";
+    $("updated").textContent = latest ? ` · Updated ${dateOf(latest)}` : "";
   }
   const feed = connectFeed({
     onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },
