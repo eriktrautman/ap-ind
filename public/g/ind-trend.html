@@ -12,16 +12,16 @@
   .legend { display: flex; justify-content: flex-end; gap: 30px; font-size: 26px; color: var(--muted); }
   .legend i { display: inline-block; width: 24px; height: 24px; border-radius: 4px; vertical-align: -4px; margin-right: 10px; }
   .house { background: var(--ind); } .senate { background: color-mix(in srgb, var(--ind) 45%, #fff); }
-  .bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; min-height: 0; }
+  .bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 26px; min-height: 0; }
   .yr { display: grid; grid-template-rows: 1fr auto; min-height: 0; text-align: center; }
   .col { position: relative; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 3px solid var(--rule); }
-  .total { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 14px; }
-  .stack { width: 62%; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; }
+  .total { font-size: 56px; font-weight: 700; line-height: 1; margin-bottom: 14px; }
+  .stack { width: 72%; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; }
   .seg { display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: var(--ind-fg, #fff); min-height: 0; overflow: hidden; }
   .seg.senate { color: #1a1600; }
-  .year { font-size: 44px; font-weight: 700; margin-top: 14px; } .year small { font-size: 24px; font-weight: 400; color: var(--muted); margin-left: 10px; }
-  .abs { font-size: 34px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .parts { font-size: 24px; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+  .year { font-size: 40px; font-weight: 700; margin-top: 12px; } .year small { font-size: 22px; font-weight: 400; color: var(--muted); margin-left: 8px; }
+  .abs { font-size: 30px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .parts { font-size: 23px; line-height: 1.25; color: var(--muted); margin-top: 2px; white-space: nowrap; }
   .now .year { color: var(--gold); }
 </style>
 </head>
@@ -59,7 +59,7 @@
   function render() {
     if (!races || !base) return;
     const now = current(), nat = base.national ?? {};
-    const years = ["2020", "2022", "2024"].map((y) => ({ y, S: nat[y]?.S, H: nat[y]?.H })).filter((x) => x.S && x.H);
+    const years = ["2016", "2018", "2020", "2022", "2024"].map((y) => ({ y, S: nat[y]?.S, H: nat[y]?.H })).filter((x) => x.S && x.H);
     const stillCounting = now.share < 98;
     years.push({ y: "2026", S: now.S, H: now.H, live: true });
     const rows = years.map((x) => { const all = x.S.total + x.H.total; return { ...x, all, sPct: all ? x.S.other / all * 100 : 0, hPct: all ? x.H.other / all * 100 : 0, other: x.S.other + x.H.other }; });
@@ -72,7 +72,7 @@
           <div class="stack" style="height:calc((100% - 96px) * ${sum / top})">${empty ? "" : seg("senate", r.sPct) + seg("house", r.hPct)}</div></div>
         <div><div class="year">${r.y}${r.live && stillCounting ? "<small>so far</small>" : ""}</div>
           <div class="abs">${empty ? "—" : `${compact(r.other)} votes`}</div>
-          <div class="parts">${empty ? "&nbsp;" : `House ${compact(r.H.other)} · Senate ${compact(r.S.other)}`}</div></div></div>`;
+          <div class="parts">${empty ? "&nbsp;<br>&nbsp;" : `House ${compact(r.H.other)}<br>Senate ${compact(r.S.other)}`}</div></div></div>`;
     }).join("");
     $("reporting").innerHTML = stillCounting ? `2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
     $("updated").textContent = `Updated ${clockS()}`;
