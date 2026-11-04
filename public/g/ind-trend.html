@@ -24,7 +24,11 @@
   .parts { font-size: 20px; line-height: 1.25; color: var(--muted); margin-top: 2px; white-space: nowrap; }
   .now { outline: 4px solid var(--gold); outline-offset: 5px; border-radius: 8px; }
   .now .year { color: var(--gold); }
-  #updated { white-space: nowrap; }
+  .foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px 24px; }
+  .note { grid-column: 1 / -1; }
+  .credit { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--fg); white-space: nowrap; }
+  .credit svg { width: 28px; height: 28px; }
+  #updated { white-space: nowrap; text-align: right; }
 </style>
 </head>
 <body>
@@ -34,7 +38,7 @@
     <div class="legend"><span><i class="house"></i>House</span><span><i class="senate"></i>Senate</span></div>
     <div class="bars" id="bars"></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC · Ind = not Dem or Rep · Not counted: Sanders and King, who caucus with Democrats</span><span id="updated"></span></div>
+  <div class="foot"><span class="note">Not counted: Sanders and King, who caucus with Democrats</span><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC · Ind = not Dem or Rep</span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="#E8892B" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span><span id="updated"></span></div>
 </div>
 <script type="module">
   import { connectFeed, freshness } from "./feed.js";
