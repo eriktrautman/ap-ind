@@ -183,7 +183,7 @@ function saveStars() { try { localStorage.setItem(STARS_KEY, JSON.stringify([...
 const BG_OPTIONS = BACKGROUNDS.map(([v, l]) => [v, v === DEFAULT_BG ? `${l} (default)` : l]);   // a keying colour or one of the backplates, the same list on every dropdown
 const CHART_BG_OPTIONS = CHART_BACKGROUNDS.map(([v, l]) => [v, v ? l : `${l} (default)`]);
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
-const SECTIONS = ["ticker", "screens", "playlists", "images", "catalog", "charts"];
+const SECTIONS = ["ticker", "screens", "sharing", "playlists", "images", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
 // Green Key was the default until 2026-11-04, and a browser saved it whether or not anyone chose it. Once per browser, its display settings and
 // Live Screen drafts move to the new default. A ticker draft stays as it is, since publishing it would change the live ticker's background.
@@ -217,7 +217,7 @@ function renderDisplayControls() {
     const d = secDisplay(sec);
     const box = document.querySelector(`.cardhead[data-sec="${sec}"] .secdisp`); if (!box) continue;
     // The Live Ticker and Live Screens sections have no Background of their own: each draft's Background covers both its addresses.
-    box.innerHTML = `${sec === "ticker" || sec === "screens" ? "" : `<label>Outer Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>${sec === "images" ? "" : `<label>Chart Background ${selectHtml(`data-sec="${sec}" data-f="chartbg"`, CHART_BG_OPTIONS, d.chartbg ?? "")}</label>`}`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%" + (o === "100" ? " (default)" : "")]), d.opacity)}</label>`;
+    box.innerHTML = `${sec === "ticker" || sec === "screens" || sec === "sharing" ? "" : `<label>Outer Background ${selectHtml(`data-sec="${sec}" data-f="bg"`, BG_OPTIONS, d.bg)}</label>${sec === "images" ? "" : `<label>Chart Background ${selectHtml(`data-sec="${sec}" data-f="chartbg"`, CHART_BG_OPTIONS, d.chartbg ?? "")}</label>`}`}<label>Opacity ${selectHtml(`data-sec="${sec}" data-f="opacity"`, OPACITY_OPTIONS.map((o) => [o, o + "%" + (o === "100" ? " (default)" : "")]), d.opacity)}</label>`;
   }
   for (const page of PAGES) {
     const sel = document.querySelector(`select[data-page="${page}"]`); if (!sel) continue;
@@ -231,7 +231,7 @@ function renderDisplayControls() {
 function applyDisplay() {
   renderDisplayControls();
   cards.refreshLinks(); cards.refreshFrames();
-  renderTickerUrl(); renderTickerFrames(); renderScreens();
+  renderTickerUrl(); renderTickerFrames(); renderScreens(); renderSharing();
 }
 document.addEventListener("change", (e) => {
   const sec = e.target.closest("select[data-sec]");
@@ -1153,6 +1153,73 @@ document.addEventListener("change", (e) => {
   if (su) { screenPl[su.dataset.spu] = { user: su.value, playlist: null }; saveScreenPrefs(); renderScreens(); }
   else if (sl) { const key = sl.dataset.spl; screenPl[key] = { ...(screenPl[key] ?? {}), playlist: sl.value }; saveScreenPrefs(); renderScreens(); }
 });
+// ---------- Sharing: one chart to post, this browser's alone, never published ----------
+const SHARE_LS = "studio.share";
+const SHARE_SIZES = [
+  { w: 1920, h: 1080, name: "1080p", note: "1920×1080 · video and most posts" },
+  { w: 1200, h: 675, name: "1200×675", note: "Link previews and posts on X, LinkedIn and Facebook" },
+  { w: 3840, h: 2160, name: "4K", note: "3840×2160 · the sharpest, for print or big screens" },
+];
+const SHARE_SHOT_LIB = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
+let share = (() => {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(SHARE_LS) ?? "null"); } catch {}
+  const spec = specDef(raw ?? { chart: "B17", race: "NE-SEN", state: "", params: {}, bg: DEFAULT_BG }) ?? specDef({ chart: "B17", race: "NE-SEN", bg: DEFAULT_BG });
+  return { ...spec, theme: THEMES[raw?.theme] ? raw.theme : "shareable" };
+})();
+const saveShare = () => { try { localStorage.setItem(SHARE_LS, JSON.stringify(share)); } catch {} };
+const shareAddress = () => screenAddress(share, { bg: share.bg, opacity: secDisplay("sharing").opacity, theme: share.theme });
+const shareSizeUrl = ({ w, h }) => (w === 1920 ? origin() + shareAddress() : `${origin()}/share?w=${w}&h=${h}&src=${encodeURIComponent(shareAddress())}`);
+function renderSharing() {
+  const form = $("shareform");
+  if (!form.contains(document.activeElement)) {
+    const themeSel = `<label>Stylesheet${selectHtml('id="sharetheme"', Object.keys(THEMES).map((id) => [id, themeLabel(id)]), share.theme)}</label>`;
+    form.innerHTML = specFormHtml(share, 'data-sh="1"', 'data-sh="1" data-f="bg"', share.bg) + themeSel;
+  }
+  const f = $("shareframe"), addr = shareAddress();
+  if (f.dataset.addr !== addr) { f.dataset.addr = addr; f.src = addr; }
+  if (!$("shareacts").children.length) $("shareacts").innerHTML = SHARE_SIZES.map((s, i) => `<div class="sharesize"><span><b>${esc(s.name)}</b> <span class="muted">${esc(s.note)}</span></span><button class="primary" type="button" data-sharecopy="${i}">Copy at ${esc(s.name)}</button><button type="button" data-shareopen="${i}" title="Open the live chart at ${s.w}×${s.h} in a new tab">Open ↗</button></div>`).join("");
+  scaleScreens();
+}
+/** The chart's own window: past the chart-id router's frame, where the page itself is drawn. */
+function shareChartWindow() {
+  let win = $("shareframe").contentWindow;
+  for (let i = 0; i < 3 && win.document.querySelector("iframe"); i++) win = win.document.querySelector("iframe").contentWindow;
+  return win;
+}
+/** A PNG of the preview's chart at this width. The library runs inside the chart's own window, so it reads that page's styles and images. */
+async function shareShot(w) {
+  const win = shareChartWindow();
+  if (!win.htmlToImage) await new Promise((ok, no) => { const s = win.document.createElement("script"); s.src = SHARE_SHOT_LIB; s.onload = ok; s.onerror = () => no(new Error("the image library did not load")); win.document.head.append(s); });
+  await win.document.fonts?.ready;
+  const blob = await win.htmlToImage.toBlob(win.document.documentElement, { width: 1920, height: 1080, pixelRatio: w / 1920, cacheBust: false });
+  if (!blob) throw new Error("the chart could not be drawn");
+  return blob;
+}
+document.addEventListener("input", (e) => {
+  if (e.target.id === "sharetheme") { share.theme = e.target.value; saveShare(); renderSharing(); return; }
+  const el = e.target.closest("[data-sh]"); if (!el) return;
+  if (el.dataset.f === "chart") { share.chart = el.value; share.params = {}; el.blur(); }
+  else if (el.dataset.f === "race") share.race = el.value;
+  else if (el.dataset.f === "state") share.state = el.value;
+  else if (el.dataset.f === "bg") share.bg = el.value;
+  else if (el.dataset.p) { if (el.value.trim()) share.params[el.dataset.p] = el.value; else delete share.params[el.dataset.p]; }
+  saveShare(); renderSharing();
+});
+document.addEventListener("click", async (e) => {
+  const open = e.target.closest("[data-shareopen]");
+  if (open) { window.open(shareSizeUrl(SHARE_SIZES[open.dataset.shareopen]), "_blank", "noopener"); return; }
+  const btn = e.target.closest("[data-sharecopy]"); if (!btn) return;
+  const size = SHARE_SIZES[btn.dataset.sharecopy], label = btn.textContent;
+  btn.textContent = "Copying…"; btn.disabled = true; $("sharemsg").textContent = "";
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": shareShot(size.w) })]);   // the promise goes in now, while this click still counts
+    btn.textContent = "Copied"; $("sharemsg").textContent = `Copied at ${size.w}×${size.h}. Paste it into your post.`;
+  } catch (err) {
+    btn.textContent = label; $("sharemsg").textContent = `Could not copy: ${String(err.message).replace(/\.+$/, "")}. Click the page and try again, or use Open ↗ and take a screenshot. Copying needs the https site, not a laptop's network address.`;
+  }
+  btn.disabled = false; setTimeout(() => { if (btn.textContent === "Copied") btn.textContent = label; }, 1500);
+});
 function scaleScreens() { document.querySelectorAll(".screen .frame").forEach((fr) => { const f = fr.querySelector("iframe"); if (f) f.style.transform = `scale(${fr.clientWidth / 1920})`; }); }
 window.addEventListener("resize", scaleScreens);
 let screenTimer = null;
@@ -1971,7 +2038,7 @@ function renderAll() {
   renderStatus();
   renderTheme();
   renderLive();
-  renderSeq(); renderBundles(); sendPreview(); renderScreens(); renderPlaylists(); renderImages();
+  renderSeq(); renderBundles(); sendPreview(); renderScreens(); renderSharing(); renderPlaylists(); renderImages();
   renderCatalog(); renderChartCatalog();
   cards.prune();
 }

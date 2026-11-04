@@ -467,14 +467,23 @@ dialog::backdrop { background: #071222aa; }
 .screen.draft .frame::before { content: "DRAFT · NOT PUBLISHED"; background: #d98a2b; color: #1a1200; }
 .screen.onair .frame::before { content: "PUBLISHED"; background: #1f9d55 radial-gradient(circle at 10px 50%, #d9ffe6 3.5px, transparent 4.2px) no-repeat; padding-left: 20px; }
 .screen iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.sharerow { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 20px; align-items: start; margin-top: 10px; }
+.shareform.sform { padding: 0; }
+.shareacts { display: grid; gap: 6px; margin-top: 10px; }
+.sharesize { display: grid; grid-template-columns: minmax(0, 1fr) 170px 96px; gap: 8px; align-items: center; padding: 6px 10px; background: var(--cream); border: 1px solid var(--sand); border-radius: 6px; font-size: 12.5px; }
+.sharesize button { font: inherit; font-weight: 600; padding: 5px 10px; border-radius: 6px; cursor: pointer; border: 1px solid var(--sand); background: #fff; color: var(--navy); }
+.sharesize button:hover { border-color: var(--navy); }
+.sharesize button.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+.sharemsg { min-height: 1.4em; margin: 8px 0 0; }
+@media (max-width: 1000px) { .sharerow { grid-template-columns: 1fr; } }
 .screen .gfoot { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px; }
 .screen.draft .gfoot { background: #fdf6ea; } .screen.onair .gfoot { background: #ecf7f0; }
 .screen .gfoot .spacer { flex: 1; }
 .screen .gfoot a.openbtn { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; text-decoration: none; background: #fff; color: var(--navy); border: 1px solid var(--sand); padding: 3px 10px; border-radius: 6px; }
 .screen .gfoot a.openbtn:hover { border-color: var(--navy); background: var(--cream); }
-.screen .sform { display: grid; gap: 10px; padding: 12px 12px 14px; background: #fff; font-size: 12.5px; }
-.screen .sform label { display: grid; gap: 4px; color: var(--muted); }
-.screen .sform select, .screen .sform input { width: 100%; max-width: 100%; }
+.screen .sform, .shareform { display: grid; gap: 10px; padding: 12px 12px 14px; background: #fff; font-size: 12.5px; }
+.screen .sform label, .shareform label { display: grid; gap: 4px; color: var(--muted); }
+.screen .sform select, .screen .sform input, .shareform select, .shareform input { width: 100%; max-width: 100%; }
 .screen.onair .tickerurl { margin: 8px 12px 4px; } .screen.onair .liveparams { margin: 4px 12px 6px; } .screen.onair p.muted { margin: 4px 12px 12px; color: var(--muted); }
 .screen.onair { background: #fff; }
 .screenmid { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 18%; color: var(--navy); }

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Chart at size</title>
+<style>
+  /* One chart at an exact size, from the Studio's Sharing panel: /share?w=1200&h=675&src=/g/B17?race=NE-SEN. Charts are drawn at 1920x1080 and scaled to fit. */
+  html, body { margin: 0; background: #000; }
+  #size { position: relative; overflow: hidden; }
+  iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; }
+</style>
+</head>
+<body>
+<div id="size"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const w = Math.min(7680, Math.max(100, Number(q.get("w")) || 1920)), h = Math.min(4320, Math.max(100, Number(q.get("h")) || 1080));
+  const src = q.get("src") ?? "";
+  const box = document.getElementById("size");
+  box.style.width = `${w}px`; box.style.height = `${h}px`;
+  if (/^\/g\/[^/]/.test(src)) {   // only a chart on this site
+    const f = document.createElement("iframe");
+    f.title = "Chart"; f.src = src; f.style.transform = `scale(${Math.min(w / 1920, h / 1080)})`;
+    box.append(f);
+    document.title = `${src.replace(/^\/g\//, "").split("?")[0]} at ${w}×${h}`;
+  } else box.textContent = "No chart in this address.";
+</script>
+</body>
+</html>
