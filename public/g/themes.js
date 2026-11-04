@@ -58,6 +58,10 @@ export const THEMES = {
   },
 };
 
+// Shareable: charts meant to be posted, on Democracy Dashboard's light colours and face. What sets it apart is in g.css: the byline shows, the
+// source dot is gray, the source is AP alone, the Updated stamp carries date and time, and a page that names no background is black.
+THEMES.shareable = { ...THEMES["democracy-dashboard"], name: "Shareable" };
+
 /** Style-guide token → the variables the outputs are written against (graphics first, then the ticker's names). */
 export const AIR_VARS = {
   "--panel": ["--panel", "--band"], "--panel-edge": ["--panel-edge"], "--band-edge": ["--band-edge"],

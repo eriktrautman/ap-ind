@@ -8,8 +8,8 @@
 <style>
   /* D6: one race, a house status headline, and the producer's context line (contextLines[raceId] in the state). ?id=<raceID> */
   .body { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; min-height: 0; }
-  html[data-theme="democracy-dashboard"] .card { background: var(--well); color: var(--fg); }
-  html[data-theme="democracy-dashboard"] .row .bar { background: #e7e5e4; }
+  html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .card { background: var(--well); color: var(--fg); }
+  html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .row .bar { background: #e7e5e4; }
   .card { background: #0f1d3d; border-radius: 10px; padding: 36px 40px; border-left: 10px solid var(--gold); }
   .card .k { font-size: 24px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
   .rows { display: grid; gap: 16px; margin-top: 20px; }

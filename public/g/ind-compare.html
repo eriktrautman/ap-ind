@@ -17,7 +17,7 @@
   .row { display: grid; grid-template-columns: 250px 1fr 300px; align-items: center; gap: 18px; margin-bottom: 10px; }
   .who { font-size: 30px; font-weight: 700; }
   .track { display: flex; gap: 3px; height: 52px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
-  html[data-theme="democracy-dashboard"] .track { background: rgba(0,0,0,.06); }
+  html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .track { background: rgba(0,0,0,.06); }
   .seg { display: flex; align-items: center; padding: 0 12px; box-sizing: border-box; min-width: 0; overflow: hidden; white-space: nowrap; font-size: 28px; font-weight: 700; color: #fff; }
   .seg.ind { color: var(--ind-fg, #fff); } .seg.ind.minor { color: #1a1600; }
   .seg.dem { background: var(--dem); } .seg.gop { background: var(--gop); }
@@ -46,10 +46,10 @@
 <div class="panel">
   <div class="head"><div><div class="kicker">Independent comparison</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
   <div class="body" id="body"></div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP · <span class="note">Ind = not Dem or Rep</span> · <span id="updated"></span></span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP<span class="not-share"> via lightship.media</span> · <span class="note">Ind = not Dem or Rep</span> · <span id="updated"></span></span><span class="credit share-only"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span></div>
 </div>
 <script type="module">
-  import { connectFeed, freshness, isMeasure, isFeaturedCand, officeText, fmt, dateClock, incStar } from "./feed.js";
+  import { connectFeed, freshness, isMeasure, isFeaturedCand, officeText, fmt, dateS, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -83,7 +83,7 @@
     $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>`;
     const inPct = Math.round(race.eevp || race.precinctsPct || 0), counting = !race.totalVotes || inPct < 100;
     $("reporting").innerHTML = race.totalVotes ? (counting ? `*2026: <b>${inPct}%</b> of expected vote in` : "") : "No results yet";
-    $("updated").textContent = `Updated ${dateClock(race.lastUpdated)}`;
+    $("updated").innerHTML = `Updated <span class="share-only">${dateS(race.lastUpdated)}, </span>${clockS(race.lastUpdated)}`;
     if (isMeasure(race)) { $("body").innerHTML = `<div class="empty">A ballot measure has no candidates to compare.</div>`; return; }
     if (!priorLoaded) return;
     if (!prior) { $("body").innerHTML = `<div class="empty">No last-cycle result on file for this race.</div>`; return; }

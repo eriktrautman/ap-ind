@@ -20,7 +20,11 @@ body.bg-panels { background: #000 url(/g/bg/panels.jpg) center / 1920px 1080px n
 .foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 22px; border-top: 2px solid var(--rule); padding-top: 18px; gap: 24px; }
 .credit { display: flex; align-items: center; gap: 12px; font-size: 27px; font-weight: 700; color: var(--muted); white-space: nowrap; }   /* the byline, in the footnotes' gray */
 .credit svg { width: 34px; height: 34px; }
-.foot:has(.credit) .dot:not(.stale, .dead) { background: var(--muted); }   /* with the byline the live dot is gray too; stale and dead keep their warning colours */
+/* The Shareable stylesheet: .share-only shows only under it, .not-share only under the others. */
+html:not([data-theme="shareable"]) .share-only { display: none; }
+html[data-theme="shareable"] .not-share { display: none; }
+html[data-theme="shareable"] .foot .dot:not(.stale, .dead) { background: var(--muted); }   /* stale and dead keep their warning colours */
+html[data-theme="shareable"] body:not([class*="bg-"]) { background: #000; }   /* ?bg= still wins, ?bg=transparent included */
 .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #22c55e; margin-right: 10px; vertical-align: middle; }
 .dot.stale { background: #f59e0b; } .dot.dead { background: #ef4444; }
 .empty { font-size: 36px; color: var(--muted); align-self: center; text-align: center; }
@@ -38,10 +42,10 @@ td.r, th.r { text-align: right; } td.b { font-weight: 700; } td.m { color: var(-
 .note { font-size: 22px; color: var(--muted); }
 
 /* Democracy Dashboard is the one light stylesheet. What the graphics wrote in as white-on-dark reads as ink here; cards with a dark photo or fill of their own stay light on dark. */
-html[data-theme="democracy-dashboard"] .ctl b, html[data-theme="democracy-dashboard"] .cmp b, html[data-theme="democracy-dashboard"] .row.called .num .pc, html[data-theme="democracy-dashboard"] .row .bar .tick b { color: var(--fg); }
-html[data-theme="democracy-dashboard"] .pill { --fg: #fff; }
-html[data-theme="democracy-dashboard"] .pill.call { color: #fff; }
-html[data-theme="democracy-dashboard"] .call { color: #fff; }
-html[data-theme="democracy-dashboard"] .check { color: #15803d; }
-html[data-theme="democracy-dashboard"] svg text.lbl { fill: var(--fg); } html[data-theme="democracy-dashboard"] svg text.lbl.dim { fill: var(--muted); } html[data-theme="democracy-dashboard"] svg text.lbl.gold { fill: var(--gold); }
+html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .ctl b, html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .cmp b, html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .row.called .num .pc, html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .row .bar .tick b { color: var(--fg); }
+html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .pill { --fg: #fff; }
+html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .pill.call { color: #fff; }
+html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .call { color: #fff; }
+html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .check { color: #15803d; }
+html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) svg text.lbl { fill: var(--fg); } html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) svg text.lbl.dim { fill: var(--muted); } html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) svg text.lbl.gold { fill: var(--gold); }
 

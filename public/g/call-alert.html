@@ -10,7 +10,7 @@
      call among the featured races (and nothing until there is one). Slides in when the call lands. */
   .band { position: absolute; left: 0; right: 0; bottom: 150px; height: 150px; display: flex; align-items: stretch; background: linear-gradient(90deg, #1a1600, #2a2200 40%, var(--panel)); box-shadow: 0 10px 40px #000a; transform: translateY(320px); transition: transform 600ms cubic-bezier(.2,.8,.2,1); }
   .band.on { transform: none; }
-  html[data-theme="democracy-dashboard"] .band { background: linear-gradient(90deg, #fef3c7, #fffbeb 40%, var(--panel)); box-shadow: 0 10px 40px #0003; }
+  html:is([data-theme="democracy-dashboard"], [data-theme="shareable"]) .band { background: linear-gradient(90deg, #fef3c7, #fffbeb 40%, var(--panel)); box-shadow: 0 10px 40px #0003; }
   .tag { background: var(--gold); color: #1a1600; font-weight: 800; font-size: 44px; letter-spacing: .08em; padding: 0 48px 0 96px; display: flex; align-items: center; clip-path: polygon(0 0, 100% 0, calc(100% - 36px) 100%, 0 100%); }
   .text { padding: 0 48px; display: grid; align-content: center; gap: 4px; flex: 1; min-width: 0; }
   .line1 { font-size: 46px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
