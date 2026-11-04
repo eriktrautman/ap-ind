@@ -82,6 +82,12 @@ export const FEATURED_RACES = [
   // ID-1 (Sarah Zabel) left the slate on 2026-10-29; the candidate stays curated in config/candidates.json.
 ];
 
+/** B17's comparison year when the address names none: the latest midterm with this race on file, else the latest year on file. */
+export function defaultCompareYear(years) {
+  const ys = [...years].map(Number).filter((y) => y < 2026).sort((a, b) => b - a);
+  return String(ys.find((y) => y % 4 === 2) ?? ys[0] ?? "");
+}
+
 /** The ticker's results threshold: null (off), or a whole percent from 0 to 100. */
 export const tickerMinInOf = (v) => { if (v === null || v === undefined || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null; };
 
@@ -104,7 +110,7 @@ export function hideSmallWriteIns(cands) { const kept = cands.filter((c) => !isW
  *  The id is the ?bg= value and the body class (bg-capitol); the label is what the Studio's dropdowns say. */
 export const BACKGROUNDS = [["", "Transparent"], ["black", "Black"], ["green", "Green Key"], ["capitol", "Capitol & flag"], ["flag", "Flag glass"], ["panels", "Red, white & blue"]];
 export const BG_IDS = BACKGROUNDS.map(([id]) => id);
-export const DEFAULT_BG = "green";   // the background a fresh state, a new draft and the Studio's display settings start on
+export const DEFAULT_BG = "black";   // the background a fresh state, a new draft and the Studio's display settings start on
 export const CHARTS = [
   // A: lower thirds and strips (the ticker is the one managed in its own section)
   { id: "A1",  kind: "other", name: "Live ticker",                  page: "/ticker",           built: true },
@@ -214,15 +220,15 @@ export const DEFAULTS = Object.freeze({
   tickerMinIn: null,          // null: every race crawls. A number: only races with votes and at least that percent in (ticker-queue.js)
   manualItems: [],
   idleText: "Welcome to the Independent Election Night coverage",
-  tickerBg: "green",          // the live ticker's background when its address names none ("" transparent, black, green)
+  tickerBg: DEFAULT_BG,       // the live ticker's background when its address names none ("" transparent, black, green)
   theme: "election-night-v1", // the stylesheet every output paints with (an id in /g/themes.js); pushed by a producer
   featuredRaceIds: FEATURED_RACES.map((r) => r.id),
   keyRaceIds: [],            // D5; empty means "the ticker races"
   contextLines: {},          // D6: raceId -> one line the producer typed
   // Live Screens: two fixed pages (/live-screen-one, /live-screen-two), each showing one published chart. chart is a
   // chart id, race a race id (NE-SEN), state two letters for state charts, params the chart's extra address parameters.
-  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: "green" },
-  screenB: { chart: "C1", race: "", state: "", params: {}, bg: "green" },
+  screenA: { chart: "B5", race: "NE-SEN", state: "", params: {}, bg: DEFAULT_BG },
+  screenB: { chart: "C1", race: "", state: "", params: {}, bg: DEFAULT_BG },
   updatedAt: null,
   updatedBy: null,   // who published (the signer's name); set by the server on every publish
 });

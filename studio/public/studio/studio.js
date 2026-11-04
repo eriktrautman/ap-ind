@@ -185,6 +185,19 @@ const CHART_BG_OPTIONS = CHART_BACKGROUNDS.map(([v, l]) => [v, v ? l : `${l} (de
 const OPACITY_OPTIONS = ["100", "90", "80", "70", "60", "50", "40", "30", "20", "10"];
 const SECTIONS = ["ticker", "screens", "playlists", "images", "catalog", "charts"];
 const PAGES = ["ticker", "screenA", "screenB"];
+// Green Key was the default until 2026-11-04, and a browser saved it whether or not anyone chose it. Once per browser, its display settings and
+// Live Screen drafts move to the new default. A ticker draft stays as it is, since publishing it would change the live ticker's background.
+function greenDefaultOnce() {
+  try {
+    if (localStorage.getItem("studio.greenDefaultGone")) return;
+    const d = JSON.parse(localStorage.getItem("studio.display") ?? "null");
+    if (d) localStorage.setItem("studio.display", JSON.stringify(d, (k, v) => (k === "bg" && v === "green" ? DEFAULT_BG : v)));
+    const l = readLocal();
+    if (l) { for (const k of ["screenA", "screenB"]) if (l[k]?.bg === "green") l[k].bg = DEFAULT_BG; saveLocal(l); }
+    localStorage.setItem("studio.greenDefaultGone", "1");
+  } catch {}
+}
+greenDefaultOnce();
 function loadDisplay() {
   let d = null;
   try { d = JSON.parse(localStorage.getItem("studio.display") ?? "null"); } catch {}
@@ -968,6 +981,7 @@ $("liveframe").addEventListener("click", () => window.open(withTheme(liveTickerU
 const SCREEN_PARAMS = {
   I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }, { k: "caption", label: "Caption", ph: "optional: a line shown over the image" }, { k: "showcredit", label: "Credit on air", options: [["1", "Show the credit"]] }],
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
+  B17: [{ k: "year", label: "Comparison year", options: [2024, 2022, 2020, 2018, 2016, 2014, 2012].map((y) => [String(y), String(y)]) }],   // default: the prior midterm with this race on file
   B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the race's lineup, else the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],
   B13: [{ k: "who", label: "Who", options: [["ind", "the independent vs the 2024 Democratic vote"], ["main", "the Republican vs the 2024 Trump vote"]] }],

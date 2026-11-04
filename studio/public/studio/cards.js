@@ -19,7 +19,7 @@ const ago = (iso) => {
   return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m ago`;
 };
 
-export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "green", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, getImage = () => null, isImageStarred = () => false, isChartStarred = () => false, isChartDeprecated = () => false, getTheme = () => "" } = {}) {
+export function createCardManager({ maxLive = 32, getDisplay = () => ({ bg: "black", opacity: "100" }), getOrigin = () => location.origin, getDraft = () => null, getImage = () => null, isImageStarred = () => false, isChartStarred = () => false, isChartDeprecated = () => false, getTheme = () => "" } = {}) {
   const cards = new Set();
   let status = null, index = null;
   let scheduled = false;

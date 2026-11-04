@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { CHARTS, chartForPage, canonicalAddress, screenAddress, hideSmallWriteIns, tickerMinInOf, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergeIntoLibrary, airingBundles, MAX_BUNDLES } from "../lib/control.js";
+import { CHARTS, chartForPage, canonicalAddress, screenAddress, hideSmallWriteIns, tickerMinInOf, defaultCompareYear, normalize, normalizePlaylists, seedPlaylists, ZONE_BUNDLES, DEFAULTS, mergeIntoLibrary, airingBundles, MAX_BUNDLES } from "../lib/control.js";
 import { matchPassword, issueCookie, cookieAccount } from "../lib/auth.js";
 import { studioGate } from "../proxy.js";
 import { buildQueue } from "../public/ticker-queue.js";
@@ -69,6 +69,7 @@ test("the ticker crawl: idle line before data, the crawl order with bundles expa
   assert.deepEqual([undefined, "", "x", "20", 150, -3].map(tickerMinInOf), [null, null, null, 20, 100, 0]);
   assert.equal(normalize({}).tickerMinIn, null);
   assert.equal(normalize({ tickerMinIn: 25 }).tickerMinIn, 25);
+  assert.deepEqual([["2024", "2020", "2018", "2014"], ["2024", "2022", "2020"], ["2024", "2020"], []].map(defaultCompareYear), ["2018", "2022", "2024", ""], "B17: the latest midterm on file, else the latest year");
   // A write-in appears only over 1%, or as the winner; a race is never left with nobody.
   const wi = (name, pct, winner = false) => ({ name, pct, winner });
   assert.deepEqual(hideSmallWriteIns([wi("A", 50), wi("B (write-in)", 1), wi("C (write-in)", 1.1), wi("D Write-in", 0, true), wi("E", 0)]).map((c) => c.name), ["A", "C (write-in)", "D Write-in", "E"]);

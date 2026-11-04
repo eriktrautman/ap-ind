@@ -6,8 +6,8 @@
 <title>Independent Comparison</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* B17: one race's independent vote this cycle against its last result on file (config/baseline-federal.json). Independent is anyone
-     who isn't a Democrat or Republican, as in C10; their bar stacks candidate by candidate, so its total reads against each party's bar. */
+  /* B17: one race's independent vote this cycle against another year on file (config/race-history.json): ?year=, else the prior midterm.
+     Independent is anyone who isn't a Democrat or Republican, as in C10; their bar stacks candidate by candidate, so its total reads against each party's bar. */
   .panel { grid-template-rows: auto 1fr auto; }
   .body { display: flex; flex-direction: column; justify-content: space-evenly; gap: 14px; min-height: 0; overflow: hidden; }
   .headline { font-size: 46px; font-weight: 700; line-height: 1.15; }
@@ -49,6 +49,7 @@
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · <span class="note">Ind = not Dem or Rep</span> · <span id="updated"></span></span></div>
 </div>
 <script type="module">
+  import { defaultCompareYear } from "./control.js";
   import { connectFeed, freshness, isMeasure, isFeaturedCand, officeText, fmt, clockS, incStar } from "./feed.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
@@ -59,7 +60,7 @@
   const laneOf = (c) => (c.party === "GOP" && !isFeaturedCand(c.id) ? "gop" : c.party === "Dem" && !isFeaturedCand(c.id) ? "dem" : "ind");
   // The biggest independent in the full colour, each one after it paler, so the stack reads as one bar made of people.
   const indColor = (i) => (i === 0 ? "var(--ind)" : `color-mix(in srgb, var(--ind) ${Math.max(25, 62 - (i - 1) * 16)}%, #fff)`);
-  let race = null, prior = null, priorLoaded = false;
+  let race = null, history = null, priorLoaded = false;
 
   /** One cycle as lanes: {ind: {votes, pct, cands: [{...c, share}]}, ...}, shares of every vote in the race. */
   function lanes(cands, total) {
@@ -76,7 +77,6 @@
     const names = key === "ind" && multi ? `<div class="names">${lane.cands.map((c, i) => `<span><i style="background:${indColor(i)}"></i>${esc(c.last)}${incStar(c)} ${c.share.toFixed(1)}%</span>`).join("")}</div>` : "";
     return `<div class="row"><div class="who">${label}</div><div class="track">${segs || `<div class="none">No ${key === "ind" ? "independent" : label} on the ballot</div>`}</div><div class="tot">${lane.cands.length ? `<b>${lane.pct.toFixed(1)}%</b>` : `<b class="dash">—</b>`}<span>${lane.votes ? fmt(lane.votes) : ""}</span></div></div>${names}`;
   }
-  const capital = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   function render() {
     if (!race) { $("title").textContent = "Race not found"; return; }
@@ -86,9 +86,10 @@
     $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
     if (isMeasure(race)) { $("body").innerHTML = `<div class="empty">A ballot measure has no candidates to compare.</div>`; return; }
     if (!priorLoaded) return;
-    if (!prior) { $("body").innerHTML = `<div class="empty">No last-cycle result on file for this race.</div>`; return; }
+    const onFile = Object.keys(history?.years ?? {}), year = q.get("year") || defaultCompareYear(onFile), prior = history?.years[year];
+    if (!prior) { $("body").innerHTML = `<div class="empty">${onFile.length ? `No ${esc(year)} result on file for this race. On file: ${onFile.join(", ")}.` : "No past results on file for this race."}</div>`; return; }
     const now = lanes(race.candidates, race.totalVotes), then = lanes(prior.candidates, prior.total);
-    const year = prior.date.slice(0, 4), shown = LANES.filter(([k]) => now[k].cands.length || then[k].cands.length);
+    const shown = LANES.filter(([k]) => now[k].cands.length || then[k].cands.length);
     const top = Math.max(60, ...shown.flatMap(([k]) => [now[k].pct, then[k].pct]));
     const diff = Number(now.ind.pct.toFixed(1)) - Number(then.ind.pct.toFixed(1));   // from the figures on screen, so the subtraction checks out on air
     const was = then.ind.cands.length ? `${then.ind.pct.toFixed(1)}% in ${year}` : "";
@@ -97,7 +98,7 @@
       : (was ? `Independent vote share was <b>${then.ind.pct.toFixed(1)}%</b> in ${year}<small>no votes counted yet in 2026</small>` : `No independent on the ballot here in ${year}<small>no votes counted yet in 2026</small>`);
     const cycle = (label, sub, l, cls = "") => `<div class="cycle ${cls}"><h3>${label}${sub ? `<small>${esc(sub)}</small>` : ""}</h3><div class="rows">${shown.map(([k, name]) => rowHtml(k, name, l[k], top)).join("")}</div></div>`;
     $("body").classList.toggle("tight", shown.length > 2);
-    $("body").innerHTML = `<div class="headline">${headline}</div>${cycle(year, prior.note ? capital(prior.note) : "", then)}${cycle(`2026${counting ? "*" : ""}`, "", now, "now")}`;
+    $("body").innerHTML = `<div class="headline">${headline}</div>${cycle(year, race.office === "S" && (2026 - year) % 6 ? "Other Senate seat" : "", then)}${cycle(`2026${counting ? "*" : ""}`, "", now, "now")}`;
     boxPercentages();
   }
   /** The 2026 box runs from the first percentage to the last, the same distance past each; a lane with no candidate this cycle (a dash) stays outside it. */
@@ -109,7 +110,7 @@
     rows.style.setProperty("--box-bottom", `${rows.offsetHeight - last.offsetTop - last.offsetHeight - 10}px`);
   }
   async function loadPrior() {
-    try { prior = (await (await fetch("./baseline-federal.json")).json()).races?.[raceId] ?? null; } catch { prior = null; }
+    try { history = (await (await fetch("./race-history.json")).json()).races?.[raceId] ?? null; } catch { history = null; }
     priorLoaded = true; render();
   }
   connectFeed({
