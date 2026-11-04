@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="/g/theme-boot.js"></script>
+<meta charset="utf-8">
+<title>Independent Vote by Year</title>
+<link rel="stylesheet" href="./g.css">
+<style>
+  /* C10: votes for candidates who aren't Democrats or Republicans, as a share of every House and Senate vote that year. Each bar stacks the House's part and the Senate's. */
+  .panel { grid-template-rows: auto 1fr auto; }
+  .body { display: grid; grid-template-rows: auto 1fr; gap: 14px; min-height: 0; }
+  .legend { display: flex; justify-content: flex-end; gap: 30px; font-size: 26px; color: var(--muted); }
+  .legend i { display: inline-block; width: 24px; height: 24px; border-radius: 4px; vertical-align: -4px; margin-right: 10px; }
+  .house { background: var(--ind); } .senate { background: color-mix(in srgb, var(--ind) 45%, #fff); }
+  .bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; min-height: 0; }
+  .yr { display: grid; grid-template-rows: 1fr auto; min-height: 0; text-align: center; }
+  .col { position: relative; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 3px solid var(--rule); }
+  .total { font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 14px; }
+  .stack { width: 62%; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; }
+  .seg { display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: var(--ind-fg, #fff); min-height: 0; overflow: hidden; }
+  .seg.senate { color: #1a1600; }
+  .year { font-size: 44px; font-weight: 700; margin-top: 14px; } .year small { font-size: 24px; font-weight: 400; color: var(--muted); margin-left: 10px; }
+  .abs { font-size: 34px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .parts { font-size: 24px; color: var(--muted); margin-top: 2px; white-space: nowrap; }
+  .now .year { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="head"><div><div class="kicker">Independent vote</div><div class="title">By year <small>Share of all House and Senate votes</small></div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="legend"><span><i class="house"></i>House</span><span><i class="senate"></i>Senate</span></div>
+    <div class="bars" id="bars"></div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · Ind = not Dem or Rep</span><span id="updated"></span></div>
+</div>
+<script type="module">
+  import { connectFeed, freshness, clockS, fmt } from "./feed.js";
+  const q = new URLSearchParams(location.search);
+  if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
+  const $ = (id) => document.getElementById(id);
+  const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n);
+  const LABEL_MIN = 0.42;   // a segment under this many points is too short to hold its number
+  let races = null, base = null;
+
+  /** Tonight's totals, the same way the past years were added up: every vote in a House or Senate race not cast for a Democrat or Republican. */
+  function current() {
+    const out = { S: { other: 0, total: 0 }, H: { other: 0, total: 0 } };
+    let reporting = 0, list = 0, votes = 0, expected = 0;
+    for (const r of races.values()) {
+      if (r.office !== "S" && r.office !== "H") continue;
+      list++;
+      const pct = r.eevp || r.precinctsPct || 0;
+      if (r.totalVotes > 0) { reporting++; votes += r.totalVotes; if (pct > 0) expected += r.totalVotes / (pct / 100); }
+      for (const c of r.candidates) { const v = c.votes ?? 0; out[r.office].total += v; if (c.party !== "Dem" && c.party !== "GOP") out[r.office].other += v; }
+    }
+    return { ...out, reporting, list, share: expected ? Math.min(100, votes / expected * 100) : 0 };
+  }
+  function render() {
+    if (!races || !base) return;
+    const now = current(), nat = base.national ?? {};
+    const years = ["2020", "2022", "2024"].map((y) => ({ y, S: nat[y]?.S, H: nat[y]?.H })).filter((x) => x.S && x.H);
+    const stillCounting = now.share < 98;
+    years.push({ y: "2026", S: now.S, H: now.H, live: true });
+    const rows = years.map((x) => { const all = x.S.total + x.H.total; return { ...x, all, sPct: all ? x.S.other / all * 100 : 0, hPct: all ? x.H.other / all * 100 : 0, other: x.S.other + x.H.other }; });
+    const top = Math.max(...rows.map((r) => r.sPct + r.hPct), 0.1);
+    $("bars").innerHTML = rows.map((r) => {
+      const empty = !r.all, sum = r.sPct + r.hPct, h = (p) => `${(p / top) * 100}%`;
+      const seg = (cls, p) => `<div class="seg ${cls}" style="flex:0 0 ${p / sum * 100}%">${p >= LABEL_MIN * (top / 2.2) ? `${p.toFixed(1)}%` : ""}</div>`;
+      return `<div class="yr ${r.live ? "now" : ""}"><div class="col" style="--h:${sum / top}">
+          <div class="total">${empty ? "—" : `${sum.toFixed(1)}%`}</div>
+          <div class="stack" style="height:calc((100% - 96px) * ${sum / top})">${empty ? "" : seg("senate", r.sPct) + seg("house", r.hPct)}</div></div>
+        <div><div class="year">${r.y}${r.live && stillCounting ? "<small>so far</small>" : ""}</div>
+          <div class="abs">${empty ? "—" : `${compact(r.other)} votes`}</div>
+          <div class="parts">${empty ? "&nbsp;" : `House ${compact(r.H.other)} · Senate ${compact(r.S.other)}`}</div></div></div>`;
+    }).join("");
+    $("reporting").innerHTML = stillCounting ? `2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
+    $("updated").textContent = `Updated ${clockS()}`;
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => { races = s.races; base = await feed.baselineFederal(); render(); },
+    onUpdate: (s) => { races = s.races; render(); },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+</script>
+</body>
+</html>

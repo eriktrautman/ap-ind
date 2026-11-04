@@ -687,6 +687,16 @@
       <p>Three-panel explainers for recurring questions (caucusing, committees, how a majority is formed). Template; editorial writes the copy.</p></div>
     </div>
 
+    <div class="card">
+      <div class="mock">
+        <div style="display:flex;gap:18px;align-items:flex-end;height:100%;justify-content:center;padding:8px 14px">
+          <div style="width:44px;background:#d4af37;height:62%"></div><div style="width:44px;background:#d4af37;height:48%"></div><div style="width:44px;background:#d4af37;height:58%"></div><div style="width:44px;background:#d4af37;height:40%"></div>
+        </div>
+      </div>
+      <div class="cap"><h3><span class="n">C10</span> Independent vote by year <span class="tag live">live</span></h3>
+      <p>Votes for candidates who aren't Democrats or Republicans as a share of all House and Senate votes, for 2020, 2022, 2024 and 2026. Each bar stacks the House and the Senate, with the vote counts below.</p></div>
+    </div>
+
   </div>
 </section>
 
@@ -1299,6 +1309,7 @@
     "C5": ["ap", "every independent candidate's votes and pct, eevp and call status, across all Senate and House races"],
     "C6": ["derived", "sum of non-Dem/GOP votes across every race; 2024 share from AP's 2024 feed"],
     "C7": ["mixed", "results from AP; poll numbers from the compiled polling dataset"],
+    "C10": ["derived", "sum of non-Dem/GOP votes in House and Senate races; 2020, 2022 and 2024 from AP's feeds for those years"],
     "C8": ["derived", "holdovers and current composition from the AP Trend report; the scenario arithmetic is the project's"],
     "C9": ["ext", "editorial copy, no data"],
     "D1": ["ap", "call status, winner, leader per Senate race; map geometry is Census (us-atlas)"],
@@ -1359,6 +1370,7 @@
     "C5": [[R, "voteCount, votePct, eevp, winner for every non-Dem/GOP candidate"], [RP("parties-partycodes-Live"), "which codes count as independent or third party"]],
     "C6": [[R, "sum of voteCount for non-Dem/GOP candidates across all races"], [H24, "2024 share"], [RP("parties-partycodes-Live"), "which codes count as independent or third party"]],
     "C7": [[R, "results"], ["compiled polling dataset", "final poll per race"]],
+    "C10": [[R, "tonight's non-Dem/GOP voteCount by office"], ["config/baseline-federal.json", "2020, 2022 and 2024 national House and Senate totals"]],
     "C8": [[RP("Trend-s-20261103-US-Live"), "Holdovers, Current, Won, Leading by party incl. 'Others caucus with Dem/GOP'"], [R, "calls in the featured races"]],
     "C9": [["editorial", "copy only"]],
     "D1": [[R, "raceCallStatus, winner, leader per Senate race"], ["us-atlas states-10m", "geometry"]],
@@ -1407,6 +1419,7 @@
     "C1": EEVP + " " + CALL,
     "C5": "Shares are of the vote counted so far, so a race at 10% in sits beside one at 90%; the % in is on every row and races under 5% in are left out.",
     "C6": "A partial national sum is skewed toward whichever states have closed; the West Coast lands last.",
+    "C10": "Tonight's bar is partial until the count ends. Each year has different Senate seats and uncontested House seats, 'independent' includes third parties, and AP's data omits non-major candidates in the 2022 ranked-choice races.",
     "C8": "Scenario only. An independent winning does not mean an independent bloc: Bodnar has not committed on caucusing; Osborn, Bengs and Hill say neither party. Say \"could\", not \"will\".",
     "D1": CALL + " Hatched states are leading-but-uncalled; say \"leading\", not \"winning\".",
     "D2": CALL + " State shading is the majority of called seats, not the whole delegation.",
