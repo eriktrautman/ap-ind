@@ -36,7 +36,7 @@
   <div class="body">
     <div class="legend"><span><i class="house"></i>House</span><span><i class="senate"></i>Senate</span></div>
     <div class="bars" id="bars"></div>
-    <div class="note">Ind = not Dem or Rep · Not counted: Sanders and King, who caucus with Democrats</div>
+    <div class="note">Ind = not Dem or Rep · Not counted: Sanders and King, who caucus with Democrats<span id="caucus"></span></div>
   </div>
   <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC</span><span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="#E8892B" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span><span id="updated"></span></div>
 </div>
@@ -83,6 +83,8 @@
         <div><div class="year">${r.y}${r.live && stillCounting ? "<small>so far</small>" : ""}</div>
           <div class="abs">${empty ? "—" : `${compact(r.other)}`}</div></div></div>`;
     }).join("");
+    const caucus = years.map((x) => [x.y, Object.values(x.S.caucusDem ?? {}).reduce((a, b) => a + b, 0)]).filter(([, v]) => v);
+    $("caucus").textContent = caucus.length ? ` (${caucus.map(([y, v], i) => `${compact(v)}${i ? "" : " votes"} in ${y}`).join(", ")})` : "";
     $("reporting").innerHTML = stillCounting ? `2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
     const latest = [...races.values()].reduce((m, r) => (r.lastUpdated > m ? r.lastUpdated : m), "");
     $("updated").textContent = latest ? `Updated ${dateOf(latest)}` : "";
