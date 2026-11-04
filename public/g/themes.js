@@ -16,6 +16,7 @@ export const DEFAULT_THEME = "election-night-v1";   // the stylesheet a fresh st
 
 export const THEMES = {
   "election-producer": { name: "Election Producer", tokens: {} },   // empty: the stylesheets' own values, the look the pages are written in
+  "shareable": { name: "Shareable", tokens: {} },   // Election Producer's colours, for charts meant to be posted. What sets it apart is in feed.js: the byline, a gray source dot, AP alone as the source, the date on the stamp, and a black outer background
   "election-night-v1": {
     name: "geniots, v1, 10.30.26",
     tokens: {
@@ -57,10 +58,6 @@ export const THEMES = {
     },
   },
 };
-
-// Shareable: charts meant to be posted, on Democracy Dashboard's light colours and face. What sets it apart is in g.css: the byline shows, the
-// source dot is gray, the source is AP alone, the Updated stamp carries date and time, and a page that names no background is black.
-THEMES.shareable = { ...THEMES["democracy-dashboard"], name: "Shareable" };
 
 /** Style-guide token → the variables the outputs are written against (graphics first, then the ticker's names). */
 export const AIR_VARS = {

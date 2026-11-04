@@ -959,8 +959,8 @@ function renderTickerUrl() {
   const l = liveTickerUrl(); $("liveurl").textContent = l; $("liveurl").href = l; $("liveopen").href = l;
 }
 for (const [btn, fn, label] of [["tickercopy", tickerUrl, "Copy Draft URL"], ["livecopy", liveTickerUrl, "Copy Live URL"]]) $(btn).addEventListener("click", async () => { try { await navigator.clipboard.writeText(fn()); $(btn).textContent = "Copied"; setTimeout(() => ($(btn).textContent = label), 1500); } catch {} });
-$("previewframe").addEventListener("click", () => window.open(tickerUrl(), "_blank", "noopener"));
-$("liveframe").addEventListener("click", () => window.open(liveTickerUrl(), "_blank", "noopener"));
+$("previewframe").addEventListener("click", () => window.open(withTheme(tickerUrl()), "_blank", "noopener"));
+$("liveframe").addEventListener("click", () => window.open(withTheme(liveTickerUrl()), "_blank", "noopener"));
 
 // ---------- Live Screens ----------
 // Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
@@ -1157,7 +1157,7 @@ document.addEventListener("click", async (e) => {
   const copy = e.target.closest("[data-copy]");
   if (copy) { const u = copy.dataset.copy === "live" ? screenLiveUrl(key) : screenDraftUrl(key); const label = copy.textContent; try { await navigator.clipboard.writeText(u); copy.textContent = "Copied"; setTimeout(() => (copy.textContent = label), 1500); } catch {} return; }
   const fr = e.target.closest(".frame[data-open]");
-  if (fr) { window.open(fr.dataset.open === "live" ? screenLiveUrl(key) : screenDraftUrl(key), "_blank", "noopener"); return; }
+  if (fr) { window.open(withTheme(fr.dataset.open === "live" ? screenLiveUrl(key) : screenDraftUrl(key)), "_blank", "noopener"); return; }
   const act = e.target.closest("button[data-act]")?.dataset.act;
   if (act === "publish") publishScreen(key); else if (act === "pull") pullScreen(key);
 });

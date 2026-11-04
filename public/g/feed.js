@@ -201,7 +201,7 @@ export function fmt(n) {
 }
 
 /** RULE: every time shown on air carries its zone. Default Eastern, written "ET" (never EST/EDT); ?tz=CT|MT|PT|AKT|HT
- *  switches a page. clock(when) -> "9:41 PM ET"; clockS(when) -> "9:41:05 PM ET" for Updated stamps. */
+ *  switches a page. clock(when) -> "9:41 PM ET"; clockS(when) -> "9:41:05 PM ET" for Updated stamps; dateS(when) -> "Nov 4, 2026". */
 const ZONES = { ET: "America/New_York", CT: "America/Chicago", MT: "America/Denver", PT: "America/Los_Angeles", AKT: "America/Anchorage", HT: "Pacific/Honolulu" };
 const TZ = (() => { const t = String(new URLSearchParams(location.search).get("tz") ?? "ET").toUpperCase(); return ZONES[t] ? t : "ET"; })();
 export function clock(when = Date.now(), { seconds = false } = {}) {
@@ -209,7 +209,8 @@ export function clock(when = Date.now(), { seconds = false } = {}) {
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", ...(seconds ? { second: "2-digit" } : {}), timeZone: ZONES[TZ] }) + " " + TZ;
 }
-export const clockS = (when) => clock(when, { seconds: true });
+/** Under the Shareable stylesheet a stamp carries its date: a posted chart is read long after the night. */
+export const clockS = (when) => `${document.documentElement.dataset.theme === "shareable" ? `${dateS(when)}, ` : ""}${clock(when, { seconds: true })}`;
 /** "Nov 4, 2026" in the page's zone. */
 export function dateS(when = Date.now()) {
   const d = when instanceof Date ? when : new Date(when);
@@ -281,7 +282,27 @@ if (typeof document !== "undefined") {
       else if (!need && note) note.remove();
     }
   };
-  document.addEventListener("DOMContentLoaded", () => { syncIncNote(); new MutationObserver(syncIncNote).observe(document.body, { childList: true, subtree: true }); });
+  // The Shareable stylesheet, here and not in g.css because a few charts (B5, ...) carry their own stylesheet: .share-only shows only under it, .not-share only under the others.
+  document.head.insertAdjacentHTML("beforeend", `<style>.credit { display: flex; flex: none; align-items: center; gap: 12px; margin-left: 24px; font-size: 27px; font-weight: 700; color: var(--muted); white-space: nowrap; } .credit svg { width: 34px; height: 34px; } html:not([data-theme="shareable"]) .share-only { display: none; } html[data-theme="shareable"] .not-share { display: none; } html[data-theme="shareable"] .foot { align-items: center; } html[data-theme="shareable"] .foot > #updated { margin-left: auto; } html[data-theme="shareable"] .foot .dot:not(.stale, .dead) { background: var(--muted); } html[data-theme="shareable"] body:not([class*="bg-"]) { background: #000; }</style>`);
+  const BYLINE = `<span class="credit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M23 12 17.5 21.526H6.5L1 12l5.5-9.526h11zM19 12 15.5 18.062h-7L5 12l3.5-6.062h7z"/></svg>Erik Trautman</span>`;
+  /** Under the Shareable stylesheet every footer has the byline and names AP alone. */
+  const syncShareFooter = () => {
+    const foot = document.querySelector(".foot");
+    if (!foot) return;
+    const walk = document.createTreeWalker(foot, NodeFilter.SHOW_TEXT), VIA = " via lightship.media";
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const at = n.nodeValue.indexOf(VIA);
+      if (at < 0 || n.parentElement.classList.contains("not-share")) continue;
+      const via = n.splitText(at); via.splitText(VIA.length);
+      const wrap = document.createElement("span"); wrap.className = "not-share"; via.replaceWith(wrap); wrap.append(via);
+    }
+    const share = document.documentElement.dataset.theme === "shareable", byline = foot.querySelector(".credit");
+    if (share && !byline) foot.insertAdjacentHTML("beforeend", BYLINE);
+    else if (!share && byline) byline.remove();
+  };
+  const syncFooter = () => { syncIncNote(); syncShareFooter(); };
+  document.addEventListener("ep-theme", syncFooter);
+  document.addEventListener("DOMContentLoaded", () => { syncFooter(); new MutationObserver(syncFooter).observe(document.body, { childList: true, subtree: true }); });
 }
 /** The name after the tag: nothing for a measure's options (the tag says Yes or No), else the candidate's name. */
 export const candName = (c, full = false) => (isOption(c) ? "" : (full ? c?.name : c?.last ?? c?.name) ?? "");
