@@ -6,26 +6,22 @@
 <title>Independent Vote by Year</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* C10: votes for candidates who aren't Democrats or Republicans, as a share of every House and Senate vote that year. Each bar stacks the House's part and the Senate's. Sanders and King aren't in it: they stand beside it in Democratic blue, on the same scale. */
+  /* C10: votes for candidates who aren't Democrats or Republicans, as a share of every House and Senate vote that year. Each bar stacks the House's part and the Senate's. */
   .panel { grid-template-rows: auto 1fr auto; }
   .body { display: grid; grid-template-rows: auto 1fr; gap: 14px; min-height: 0; }
   .legend { display: flex; justify-content: flex-end; gap: 30px; font-size: 26px; color: var(--muted); }
   .legend i { display: inline-block; width: 24px; height: 24px; border-radius: 4px; vertical-align: -4px; margin-right: 10px; }
-  .house { background: var(--ind); } .senate { background: color-mix(in srgb, var(--ind) 45%, #fff); } .caucus { background: var(--dem); }
+  .house { background: var(--ind); } .senate { background: color-mix(in srgb, var(--ind) 45%, #fff); }
   .bars { display: grid; grid-template-columns: repeat(9, 1fr); gap: 16px; min-height: 0; }
   .yr { display: grid; grid-template-rows: 1fr auto; min-height: 0; text-align: center; }
-  .col { position: relative; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; border-bottom: 3px solid var(--rule); }
-  .total { width: 72%; font-size: 44px; font-weight: 700; line-height: 1; margin-bottom: 14px; }
-  .stack { width: 72%; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; }
+  .col { position: relative; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 3px solid var(--rule); }
+  .total { font-size: 44px; font-weight: 700; line-height: 1; margin-bottom: 14px; }
+  .stack { width: 82%; display: flex; flex-direction: column; border-radius: 6px 6px 0 0; overflow: hidden; }
   .seg { display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: var(--ind-fg, #fff); min-height: 0; overflow: hidden; }
   .seg.senate { color: #1a1600; }
-  .slices { position: absolute; right: 0; bottom: 0; width: 22%; display: flex; flex-direction: column; gap: 2px; border-radius: 4px 4px 0 0; overflow: hidden; }
-  .slices i { display: block; min-height: 0; background: var(--dem); }
   .year { font-size: 34px; font-weight: 700; margin-top: 12px; } .year small { display: block; font-size: 20px; line-height: 1; font-weight: 400; color: var(--muted); height: 20px; } .yr:not(.now) .year::after { content: ""; display: block; height: 20px; }
   .abs { font-size: 26px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .parts { font-size: 20px; line-height: 1.25; color: var(--muted); margin-top: 2px; white-space: nowrap; }
-  .named { height: 56px; display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 4px; }
-  .named b { font-size: 19px; line-height: 25px; padding: 0 8px; border-radius: 4px; color: #fff; background: var(--dem); white-space: nowrap; }
   .now .year { color: var(--gold); }
   #updated { white-space: nowrap; }
 </style>
@@ -34,10 +30,10 @@
 <div class="panel">
   <div class="head"><div><div class="kicker">Independent vote</div><div class="title">By year <small>Votes for independents, share of all House and Senate votes</small></div></div><div class="reporting" id="reporting"></div></div>
   <div class="body">
-    <div class="legend"><span><i class="house"></i>House</span><span><i class="senate"></i>Senate</span><span><i class="caucus"></i>King and Sanders, not counted</span></div>
+    <div class="legend"><span><i class="house"></i>House</span><span><i class="senate"></i>Senate</span></div>
     <div class="bars" id="bars"></div>
   </div>
-  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC · Ind = not Dem or Rep · Blue, not counted: King and Sanders, who caucus with Democrats</span><span id="updated"></span></div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media, FEC · Ind = not Dem or Rep · Not counted: Sanders and King, who caucus with Democrats</span><span id="updated"></span></div>
 </div>
 <script type="module">
   import { connectFeed, freshness } from "./feed.js";
@@ -47,7 +43,7 @@
   const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n);
   const LABEL_MIN = 0.11;   // a segment under this share of the tallest bar is too short to hold its number
   const YEARS = ["2010", "2012", "2014", "2016", "2018", "2020", "2022", "2024"];
-  // Sanders and King run as independents and caucus with Democrats, so they aren't counted here. They get their own blue slices, and their votes stay in the total.
+  // Sanders and King run as independents and caucus with Democrats, so they aren't counted here. Their votes stay in the total.
   const countedOther = (o) => o.other - Object.values(o.caucusDem ?? {}).reduce((a, b) => a + b, 0);
   const dateOf = (iso) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" });
   let races = null, base = null;
@@ -75,17 +71,13 @@
     const top = Math.max(...rows.map((r) => r.sPct + r.hPct), 0.1);
     $("bars").innerHTML = rows.map((r) => {
       const empty = !r.all, sum = r.sPct + r.hPct, h = (p) => `${(p / top) * 100}%`;
-      const named = Object.entries(r.S?.caucusDem ?? {}).sort(([a], [b]) => a.localeCompare(b));   // King over Sanders, the same way every year
-      const caucus = named.reduce((a, [, v]) => a + v, 0);
       const seg = (cls, p) => `<div class="seg ${cls}" style="flex:0 0 ${p / sum * 100}%">${p >= LABEL_MIN * top ? `${p.toFixed(1)}%` : ""}</div>`;
       return `<div class="yr ${r.live ? "now" : ""}"><div class="col" style="--h:${sum / top}">
           <div class="total">${empty ? "—" : `${sum.toFixed(1)}%`}</div>
-          <div class="stack" style="height:calc((100% - 96px) * ${sum / top})">${empty ? "" : seg("senate", r.sPct) + seg("house", r.hPct)}</div>
-          ${caucus ? `<div class="slices" style="height:calc((100% - 96px) * ${caucus / r.all * 100 / top})">${named.map(([, v]) => `<i style="flex:${v} 0 0"></i>`).join("")}</div>` : ""}</div>
+          <div class="stack" style="height:calc((100% - 96px) * ${sum / top})">${empty ? "" : seg("senate", r.sPct) + seg("house", r.hPct)}</div></div>
         <div><div class="year">${r.y}${r.live && stillCounting ? "<small>so far</small>" : ""}</div>
           <div class="abs">${empty ? "—" : `${compact(r.other)}`}</div>
-          <div class="parts">${empty ? "&nbsp;<br>&nbsp;" : `House ${compact(r.hOther)}<br>Senate ${compact(r.sOther)}`}</div>
-          <div class="named">${caucus ? named.map(([n, v]) => `<b>${n} ${compact(v)}</b>`).join("") : ""}</div></div></div>`;
+          <div class="parts">${empty ? "&nbsp;<br>&nbsp;" : `House ${compact(r.hOther)}<br>Senate ${compact(r.sOther)}`}</div></div></div>`;
     }).join("");
     $("reporting").innerHTML = stillCounting ? `2026: <b>${Math.round(now.share)}%</b> of expected vote in` : "";
     const latest = [...races.values()].reduce((m, r) => (r.lastUpdated > m ? r.lastUpdated : m), "");
