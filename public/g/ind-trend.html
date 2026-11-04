@@ -12,7 +12,7 @@
   .legend { display: flex; justify-content: flex-end; gap: 30px; font-size: 26px; color: var(--muted); }
   .legend i { display: inline-block; width: 24px; height: 24px; border-radius: 4px; vertical-align: -4px; margin-right: 10px; }
   .house { background: var(--ind); } .senate { background: color-mix(in srgb, var(--ind) 45%, #fff); }
-  .bars { display: grid; grid-template-columns: repeat(9, 1fr); gap: 16px; min-height: 0; }
+  .bars { display: grid; grid-template-columns: repeat(8, 1fr); gap: 16px; min-height: 0; }
   .yr { display: grid; grid-template-rows: 1fr auto; min-height: 0; text-align: center; }
   .col { position: relative; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 3px solid var(--rule); }
   .total { font-size: 44px; font-weight: 700; line-height: 1; margin-bottom: 14px; }
@@ -44,7 +44,7 @@
   const $ = (id) => document.getElementById(id);
   const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n);
   const LABEL_MIN = 0.11;   // a segment under this share of the tallest bar is too short to hold its number
-  const YEARS = ["2010", "2012", "2014", "2016", "2018", "2020", "2022", "2024"];
+  const YEARS = ["2012", "2014", "2016", "2018", "2020", "2022", "2024"];
   // Sanders and King run as independents and caucus with Democrats, so they aren't counted here. Their votes stay in the total.
   const countedOther = (o) => o.other - Object.values(o.caucusDem ?? {}).reduce((a, b) => a + b, 0);
   let races = null, base = null;

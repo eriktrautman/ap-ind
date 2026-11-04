@@ -700,7 +700,7 @@
         </div>
       </div>
       <div class="cap"><h3><span class="n">C10</span> Independent vote by year <span class="tag live">live</span></h3>
-      <p>Votes for candidates who aren't Democrats or Republicans as a share of all House and Senate votes, for each election from 2010 through 2026, leaving out Bernie Sanders and Angus King, who caucus with Democrats. Each bar stacks the House and the Senate, with the vote counts below.</p></div>
+      <p>Votes for candidates who aren't Democrats or Republicans as a share of all House and Senate votes, for each election from 2012 through 2026, leaving out Bernie Sanders and Angus King, who caucus with Democrats. Each bar stacks the House and the Senate, with the vote counts below.</p></div>
     </div>
 
     <div class="card half">
@@ -1323,7 +1323,7 @@
     "C6": ["derived", "sum of non-Dem/GOP votes across every race; 2024 share from AP's 2024 feed"],
     "C7": ["mixed", "results from AP; poll numbers from the compiled polling dataset"],
     "C11": ["ext", "Gallup's published party identification tables, annual and quarterly, in config/gallup-party-id.json"],
-    "C10": ["derived", "sum of non-Dem/GOP votes in House and Senate races; 2012 through 2024 from AP's feeds for those years, 2010 and 2014 from the FEC; not Sanders or King"],
+    "C10": ["derived", "sum of non-Dem/GOP votes in House and Senate races; 2012 through 2024 from AP's feeds for those years, except 2014 from the FEC, since AP's totals are wrong for Maine; not Sanders or King"],
     "C8": ["derived", "holdovers and current composition from the AP Trend report; the scenario arithmetic is the project's"],
     "C9": ["ext", "editorial copy, no data"],
     "D1": ["ap", "call status, winner, leader per Senate race; map geometry is Census (us-atlas)"],
@@ -1386,7 +1386,7 @@
     "C6": [[R, "sum of voteCount for non-Dem/GOP candidates across all races"], [H24, "2024 share"], [RP("parties-partycodes-Live"), "which codes count as independent or third party"]],
     "C7": [[R, "results"], ["compiled polling dataset", "final poll per race"]],
     "C11": [["config/gallup-party-id.json", "Gallup annual averages from 1988 (leaners from 1991) and quarters from 2015"]],
-    "C10": [[R, "tonight's non-Dem/GOP voteCount by office"], ["config/baseline-federal.json", "2010 through 2024 national House and Senate totals"]],
+    "C10": [[R, "tonight's non-Dem/GOP voteCount by office"], ["config/baseline-federal.json", "2012 through 2024 national House and Senate totals"]],
     "C8": [[RP("Trend-s-20261103-US-Live"), "Holdovers, Current, Won, Leading by party incl. 'Others caucus with Dem/GOP'"], [R, "calls in the featured races"]],
     "C9": [["editorial", "copy only"]],
     "D1": [[R, "raceCallStatus, winner, leader per Senate race"], ["us-atlas states-10m", "geometry"]],
