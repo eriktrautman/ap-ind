@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-04T18:42:29Z",
+  updated: "2026-11-04T18:43:52Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -292,6 +292,8 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-04T18:43:52Z", what: "C10 and B17 credit their source as AP, without via lightship.media." },
+  { t: "2026-11-04T18:43:18Z", what: "B17 drops the AP CALL flag and boxes the 2026 percentages in yellow, as C10 boxes its current year." },
   { t: "2026-11-04T18:42:29Z", what: "On a chart with the byline the live source dot is the footnotes' gray too; a stale or dead feed still shows amber or red." },
   { t: "2026-11-04T18:41:31Z", what: "The Erik Trautman byline is grayscale in the footnotes' gray, styled once in g.css; C10 and B17 carry it." },
   { t: "2026-11-04T18:38:54Z", what: "B17 Independent comparison (S141): Nebraska and Montana first, every slate race works. Montana compares with its own seat in 2020, when no independent ran; Nebraska with Osborn's 2024 race." },
