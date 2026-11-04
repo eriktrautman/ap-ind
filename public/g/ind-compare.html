@@ -74,7 +74,7 @@
   function rowHtml(key, label, lane, top) {
     const multi = lane.cands.length > 1;
     const segs = lane.cands.filter((c) => c.share > 0).map((c, i) => `<div class="seg ${key} ${key === "ind" && i ? "minor" : ""}" style="flex:0 0 ${c.share / top * 100}%${key === "ind" ? `;background:${indColor(i)}` : ""}">${c.share / top >= .08 ? `${esc(c.last)}${incStar(c)}` : ""}</div>`).join("");
-    const names = key === "ind" && multi ? `<div class="names">${lane.cands.map((c, i) => `<span><i style="background:${indColor(i)}"></i>${esc(c.last)}${incStar(c)} ${c.share.toFixed(1)}%</span>`).join("")}</div>` : "";
+    const names = key === "ind" && (multi || lane.cands[0]?.share / top < .08) ? `<div class="names">${lane.cands.map((c, i) => `<span><i style="background:${indColor(i)}"></i>${esc(c.last)}${incStar(c)} ${c.share.toFixed(1)}%</span>`).join("")}</div>` : "";
     return `<div class="row"><div class="who">${label}</div><div class="track">${segs || `<div class="none">No ${key === "ind" ? "independent" : label} on the ballot</div>`}</div><div class="tot">${lane.cands.length ? `<b>${lane.pct.toFixed(1)}%</b>` : `<b class="dash">—</b>`}<span>${lane.votes ? fmt(lane.votes) : ""}</span></div></div>${names}`;
   }
 
