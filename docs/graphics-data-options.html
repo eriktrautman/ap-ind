@@ -542,6 +542,12 @@
       <div class="cap"><h3><span class="n">B16</span> Photo live race result <span class="tag live">live</span></h3>
       <p>The live result with the candidates' faces, cut out and fading into the race card art, their share in big numbers over them. The six slate races show their set lineup with everyone else on an Other line; any other race shows its two leaders. Up to four faces.</p></div>
     </div>
+
+    <div class="card half">
+      <div class="embed" data-src="/g/ind-compare.html?demo=1&amp;id=28594&amp;bg=black"><span class="live-tag">WORKING PAGE · SAMPLE DATA</span></div>
+      <div class="cap"><h3><span class="n">B17</span> Independent comparison <span class="tag live">live</span></h3>
+      <p>One race's independent vote this cycle against its last result on file. Independent is anyone who isn't a Democrat or Republican; their bar stacks candidate by candidate, so the total reads against each party's bar, in both cycles. Works for any seat with a last result on file: the six slate races today.</p></div>
+    </div>
   </div>
 </section>
 
@@ -1301,6 +1307,7 @@
     "B12": ["ext", "AP VoteCast is a separate AP product; not in the entitlement"],
     "B13": ["derived", "county units from the live feed (every state, every 10 minutes) against AP's 2024 presidential result by county; the like-for-like aggregate is computed by the project"],
     "B16": ["ap", "every candidate's voteCount, pct, winner flag and eevp; faces from public/g/cutouts"],
+    "B17": ["derived", "tonight's voteCount by candidate, grouped as non-Dem/GOP, GOP and Dem, against the seat's last result in config/baseline-federal.json"],
     "B14": ["ap", "the two leaders by voteCount with pct, winner flag and eevp; before results the pair comes from the latest public poll and incumbency"],
     "C1": ["ap", "votes, eevp, call status for the seven races"],
     "C2": ["mixed", "which states have an independent on the federal ballot comes from AP's candidate list; the 217 filings count is FEC"],
@@ -1362,6 +1369,7 @@
     "B12": [["AP VoteCast", "separate AP product; not in this key"]],
     "B13": [[RC, "per-area voteCount, eevp (featured states)"], ["GET /v3/elections/2024-11-05?officeID=P&statePostal=XX&level=ru", "2024 presidential by area, stored once in config/baseline-2024-pres.json"], ["/geo/<ST>.json", "area geometry matching AP's units"]],
     "B16": [[R, "candidates[] voteCount, votePct, winner, incumbent; eevp"], ["public/g/cutouts", "cut-out faces from the race cards"]],
+    "B17": [[R, "candidates[] voteCount, party, incumbent; eevp"], ["config/baseline-federal.json", "the seat's last result by candidate"]],
     "B14": [[R, "candidates[] voteCount, votePct, winner, incumbent; eevp"], ["config/candidates.json", "bios, party labels, photo credits"], ["config/polls.json", "latest public poll"], ["config/baseline-federal.json", "last result for the seat"]],
     "C1": [[R, "voteCount, eevp, raceCallStatus for the seven featured races"]],
     "C2": [[R, "candidates[].party per race (which states have a non-major candidate)"], ["FEC", "filings count"]],
@@ -1414,6 +1422,7 @@
     "B9": "Alaska and Maine tabulate ranked-choice rounds days after election night; on the night only first-choice totals exist. A first-round leader under 50% can lose. Do not call a winner from round one.",
     "B10": "Compares only counties that have reported; the swing figure can flip as more counties come in.",
     "B16": "The lineup is fixed for the six slate races, so a face does not move as the lead changes; anyone else is on the Other line.",
+    "B17": "The last result is the same seat, except Nebraska, which uses Osborn's 2024 race for the other seat, so Senate cycles differ: 2020 for Montana, Idaho and South Dakota. Tonight is partial until the count ends. Write-ins under 1% and anyone past the feed's top six are left out of the bars.",
     "B14": "Before any votes the pair is a reading of one poll, not a forecast; say which poll. Once counting starts the pair is whoever leads, which can change early in the night. A third candidate is summarised as everyone else.",
     "B13": "Compares only areas with at least 10% of their expected vote in, and only against the same areas' 2024 totals; the number moves as areas report. Early in the night it reflects which areas reported first, not a trend. Alaska has no 2024 area-level baseline (statewide only).",
     "C1": EEVP + " " + CALL,

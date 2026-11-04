@@ -132,6 +132,7 @@ export const CHARTS = [
   { id: "B14", kind: "race", name: "Head-to-head",                  page: "/g/head-to-head.html", built: true },
   { id: "B15", kind: "race", name: "Race called",                   page: "/g/called.html", built: true },
   { id: "B16", kind: "race", name: "Photo live race result",        page: "/g/photo-race.html", built: true, added: "2026-11-03", only: (r) => r?.kind !== "measure" && r?.office !== "I" },
+  { id: "B17", kind: "race", name: "Independent comparison",        page: "/g/ind-compare.html", built: true, added: "2026-11-04", only: (r) => FEATURED_RACES.some((f) => f.id === r?.id) },   // a race needs a last result in config/baseline-federal.json
   // C: the independent movement
   { id: "C1",  kind: "movement", name: "Featured races board",      page: "/g/board.html",     built: true },
   { id: "C2",  kind: "movement", name: "Independents across the map", page: "/g/ind-map.html",              built: true },
