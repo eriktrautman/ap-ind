@@ -9,7 +9,7 @@ import { writeFileSync, readFileSync } from "node:fs";
 const key = process.env.AP_API_KEY;
 if (!key) throw new Error("AP_API_KEY not set");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-// national["2022"] (C6, D10) came from data/ap-history.sqlite by the same rule and is kept across runs of this script.
+// national["2022"] (C6, D10) came from data/ap-history.sqlite by the same rule and is kept across runs of this script, as are the other years C10 uses (2010 and 2014 from the FEC, analytics/scripts/fec_totals.py).
 const PLACEHOLDER = new Set(["Total Write-ins", "Other", "Write-ins", "Blank", "Scattering"]);
 const NOT_IND = new Set(["Dem", "GOP", "NP", "Yes", "No"]);
 
@@ -51,6 +51,7 @@ try { out = { ...JSON.parse(readFileSync(new URL("../config/baseline-federal.jso
     }
   }
   for (const k of ["S", "H"]) { const n = nat[k]; n.demPct = +(n.dem / n.total * 100).toFixed(2); n.gopPct = +(n.gop / n.total * 100).toFixed(2); n.otherPct = +(n.other / n.total * 100).toFixed(2); }
+  if (out.national["2024"]?.S?.caucusDem) nat.S.caucusDem = out.national["2024"].S.caucusDem;   // C10 leaves these votes out; AP's totals don't carry them
   out.national["2024"] = nat;
   console.log("national 2024:", JSON.stringify(nat));
 }
