@@ -158,9 +158,9 @@ test("playlists: General and the slate playlist are served, a publisher changes 
   const doc = (await get(url("/api/playlists"))).json;
   const ryan = doc.users.find((u) => u.name === "Ryan");
   assert.deepEqual(doc.users[0].playlists.map((p) => [p.name, p.items.length]), [["Slate", 36], ["Race Overview", 11], ["Movement Overview", 3]]);
-  assert.deepEqual(doc.users[0].playlists[0].items, ryan.playlists[0].items, "General's Slate starts the same as Ryan's");
+  assert.deepEqual(doc.users[0].playlists[0].items.map((i) => (i.chart === "B5" ? { ...i, chart: "B16" } : i)), ryan.playlists[0].items, "General's Slate starts the same as Ryan's, whose B5s are B16s");
   assert.equal(ryan.playlists[0].name, "Slate"); assert.equal(ryan.playlists[0].items.length, 36);
-  assert.deepEqual(ryan.playlists[0].items.slice(0, 2).map((i) => [i.chart, i.race]), [["B5", "NE-SEN"], ["B6", "NE-SEN"]]);
+  assert.deepEqual(ryan.playlists[0].items.slice(0, 2).map((i) => [i.chart, i.race]), [["B16", "NE-SEN"], ["B6", "NE-SEN"]]);
   assert.equal((await put(url("/api/playlists"), doc)).status, 401, "signed out cannot write");
   const publisher = await signIn(S.base, PASSWORDS.publisher);
   ryan.playlists[0].items.push({ chart: "B14", race: "MT-SEN", state: "", params: { a: "Bodnar" }, bg: "green" });

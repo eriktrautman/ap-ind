@@ -86,16 +86,16 @@ test("the ticker crawl: idle line before data, the crawl order with bundles expa
 test("vercel.json wires the Studio gate, the chart router, the data files and the poll cron, and the build ships what the pages import", () => {
   const v = JSON.parse(readFileSync(`${ROOT}vercel.json`, "utf8"));
   assert.ok(existsSync(ROOT + v.proxy.entrypoint), "proxy entrypoint file");
-  assert.ok(v.proxy.matcher.some((m) => m.startsWith("/studio")));
+  assert.ok(v.proxy.matcher.some((m) => m.startsWith("/studio"))); assert.ok(v.proxy.matcher.includes("/analytics") && v.proxy.matcher.includes("/analytics/:path*"), "Analytics is behind the same gate");
   assert.ok(v.rewrites.some((r) => r.source === "/g/:chart" && r.destination === "/g/chart"));
   assert.ok(v.rewrites.some((r) => r.source === "/data/:path*"));
   const pub = v.rewrites.findIndex((r) => r.source === "/data/producer.json" && r.destination === "/api/published");   // readers get the fresh copy, before the blob rule
   assert.ok(pub >= 0 && pub < v.rewrites.findIndex((r) => r.source === "/data/:path*"), "the published state is read through its function, ahead of the blob rewrite");
   assert.ok(v.crons.some((c) => c.path === "/api/poll"));
-  assert.ok(v.headers.some((h) => h.source.startsWith("/studio") && h.headers.some((x) => x.value === "no-store")));
+  assert.ok(v.headers.some((h) => h.source.includes("studio") && h.source.includes("analytics") && h.headers.some((x) => x.value === "no-store")));
   if (!existsSync(`${ROOT}dist`)) return;   // npm test builds first; test:unit need not
   assert.equal(readFileSync(`${ROOT}dist/g/control.js`, "utf8"), readFileSync(`${ROOT}lib/control.js`, "utf8"), "dist/g/control.js is lib/control.js");
-  for (const f of ["studio/login.html", "studio/index.html", "g/chart.html", "g/polls.json", "g/candidates.json", "ticker.html", "live-screen-one.html"]) assert.ok(existsSync(`${ROOT}dist/${f}`), f);
+  for (const f of ["analytics/index.html", "analytics/county-card.html", "analytics/surprise.js", "analytics/baseline/races.json", "studio/login.html", "studio/index.html", "g/chart.html", "g/polls.json", "g/candidates.json", "ticker.html", "live-screen-one.html"]) assert.ok(existsSync(`${ROOT}dist/${f}`), f);
 });
 
 test("stored playlists from before General gain it once, keep what they had, and a producer's removal sticks", () => {
