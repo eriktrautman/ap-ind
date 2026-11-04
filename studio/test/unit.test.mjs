@@ -68,7 +68,7 @@ test("the ticker crawl: idle line before data, the crawl order with bundles expa
   assert.deepEqual([undefined, "", "x", "20", 150, -3].map(tickerMinInOf), [null, null, null, 20, 100, 0]);
   assert.equal(normalize({}).tickerMinIn, null);
   assert.equal(normalize({ tickerMinIn: 25 }).tickerMinIn, 25);
-  // A write-in reaches a graphic only over 1%, or as the winner; a race is never left with nobody.
+  // A write-in appears only over 1%, or as the winner; a race is never left with nobody.
   const wi = (name, pct, winner = false) => ({ name, pct, winner });
   assert.deepEqual(hideSmallWriteIns([wi("A", 50), wi("B (write-in)", 1), wi("C (write-in)", 1.1), wi("D Write-in", 0, true), wi("E", 0)]).map((c) => c.name), ["A", "C (write-in)", "D Write-in", "E"]);
   assert.deepEqual(hideSmallWriteIns([wi("F (write-in)", 0)]).map((c) => c.name), ["F (write-in)"]);

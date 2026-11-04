@@ -12,7 +12,7 @@
 //             message within 5 s falls back to polling on its own.
 // Usage: const feed = connectFeed({ onSnapshot, onUpdate, onStatus });
 
-import { FEATURED_RACES, canonicalAddress, hideSmallWriteIns, partyLetter } from "./control.js";
+import { FEATURED_RACES, canonicalAddress, partyLetter } from "./control.js";
 import { watchTheme } from "./themes.js";
 watchTheme();   // the published stylesheet, or the address's ?theme=; repainted within seconds of a push
 
@@ -104,7 +104,6 @@ export function connectFeed(handlers) {
     index = await maybeFabricate(index);
     // The curated independent is flagged on every candidate record (older files lack the flag).
     for (const r of index.races) for (const c of r.candidates) c.featured = !!c.featured || FEATURED_CANDS.has(c.id) || (!r.featured && !!c.independent);
-    for (const r of index.races) r.candidates = hideSmallWriteIns(r.candidates);
     state.connected = true;
     if (first) { first = false; apply({ type: "snapshot", races: index.races, status: statusView(index) }); return; }
     const changed = index.races.filter((r) => { const old = state.races.get(r.id); return !old || raceKey(old) !== raceKey(r); });

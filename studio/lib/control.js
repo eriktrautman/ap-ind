@@ -85,7 +85,7 @@ export const FEATURED_RACES = [
 /** The ticker's results threshold: null (off), or a whole percent from 0 to 100. */
 export const tickerMinInOf = (v) => { if (v === null || v === undefined || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null; };
 
-// A write-in reaches a graphic only once it is over 1% of the vote, or has won. AP's names carry "(write-in)". A race is never left with nobody.
+// A write-in appears nowhere until it is over 1% of the vote, or has won: the poller drops the rest before it writes its files. AP's names carry "(write-in)". A race is never left with nobody.
 const isWriteIn = (c) => /\bwrite-?\s?in\b/i.test(c.name ?? "");
 export function hideSmallWriteIns(cands) { const kept = cands.filter((c) => !isWriteIn(c) || c.winner || c.pct > 1); return kept.length ? kept : cands; }
 

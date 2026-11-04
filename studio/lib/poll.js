@@ -13,6 +13,7 @@
 
 import { fetchRaces, fetchTrend, normalizeTrend, normalizeRace, normalizeCounties, cfg, setOverrides } from "./ap.js";
 import { writeJson, readJson, defaultSettings } from "./store.js";
+import { hideSmallWriteIns } from "./control.js";
 
 const CANDIDATE_INDEX = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/config/candidates.json";
 const PHOTO_MANIFEST = "https://cdn.jsdelivr.net/gh/eriktrautman/ap-ind@main/config/photos.json";
@@ -113,6 +114,7 @@ export async function pollOnce({ run = Date.now(), log = console.log, fresh = fa
   const cur = await curated();
   const ph = await photoManifest();
   for (const r of races) {
+    r.candidates = hideSmallWriteIns(r.candidates);   // before anything reads the list, so no output ever sees one; totalVotes and each pct still count them
     r.hasIndependent = r.candidates.some((c) => c.independent);
     r.featured = cur.size ? [...cur.values()].some((c) => c.raceId === r.id && c.featured) : false;
     for (const c of r.candidates) {
