@@ -978,10 +978,14 @@ $("liveframe").addEventListener("click", () => window.open(withTheme(liveTickerU
 // ---------- Live Screens ----------
 // Two fixed pages, /live-screen-a and /live-screen-b. Each row: the draft on the left (chart, race or state and the
 // chart's own parameters, saved on this page), an arrow with Publish and Pull, and the published page on the right.
+/** The Start year input on a chart that draws a series over the years: every other year from its first; the default is the whole series. */
+const startYear = (first, last) => ({ k: "from", label: "Start year", options: Array.from({ length: (last - first) / 2 + 1 }, (_, i) => [String(first + i * 2), String(first + i * 2)]) });
 const SCREEN_PARAMS = {
   I1: [{ k: "image", label: "Image", get options() { return library.images.map((x) => [x.file, x.name]); } }, { k: "layout", label: "Layout", options: IMAGE_LAYOUTS }, { k: "caption", label: "Caption", ph: "optional: a line shown over the image" }, { k: "showcredit", label: "Credit on air", options: [["1", "Show the credit"]] }],
   B1: [{ k: "cand", label: "Candidate", ph: "last name or AP id; empty = the featured candidate" }],
-  C11: [{ k: "view", label: "View", options: [["lean", "with independents who lean to a party"]] }],
+  C4: [startYear(1991, 2025)],
+  C10: [startYear(2012, 2024)],
+  C11: [startYear(1988, 2024), { k: "view", label: "View", options: [["lean", "with independents who lean to a party"]] }],
   B17: [{ k: "year", label: "Comparison year", options: [2024, 2022, 2020, 2018, 2016, 2014, 2012].map((y) => [String(y), String(y)]) }],   // default: the prior midterm with this race on file
   B15: [{ k: "line", label: "History line", ph: "empty = the last result for this seat" }],
   B14: [{ k: "a", label: "Left candidate", ph: "last name; empty = the race's lineup, else the leaders" }, { k: "b", label: "Right candidate", ph: "last name" }],

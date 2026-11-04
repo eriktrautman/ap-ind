@@ -44,7 +44,7 @@
   const $ = (id) => document.getElementById(id);
   const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n);
   const LABEL_MIN = 0.11;   // a segment under this share of the tallest bar is too short to hold its number
-  const YEARS = ["2012", "2014", "2016", "2018", "2020", "2022", "2024"];
+  const YEARS = ["2012", "2014", "2016", "2018", "2020", "2022", "2024"].filter((y) => Number(y) >= (Number(q.get("from")) || 0));   // ?from=2016: the Start year
   // Sanders and King run as independents and caucus with Democrats, so they aren't counted here. Their votes stay in the total.
   const countedOther = (o) => o.other - Object.values(o.caucusDem ?? {}).reduce((a, b) => a + b, 0);
   let races = null, base = null;
@@ -70,6 +70,7 @@
     years.push({ y: "2026", S: now.S, H: now.H, live: true });
     const rows = years.map((x) => { const all = x.S.total + x.H.total; return { ...x, all, sOther: countedOther(x.S), hOther: countedOther(x.H), sPct: all ? countedOther(x.S) / all * 100 : 0, hPct: all ? countedOther(x.H) / all * 100 : 0, other: countedOther(x.S) + countedOther(x.H) }; });
     const top = Math.max(...rows.map((r) => r.sPct + r.hPct), 0.1);
+    $("bars").style.gridTemplateColumns = `repeat(${rows.length}, 1fr)`;
     $("bars").innerHTML = rows.map((r) => {
       const empty = !r.all, sum = r.sPct + r.hPct, h = (p) => `${(p / top) * 100}%`;
       const seg = (cls, p) => `<div class="seg ${cls}" style="flex:0 0 ${p / sum * 100}%">${p >= LABEL_MIN * top ? `${p.toFixed(1)}%` : ""}</div>`;

@@ -6,7 +6,7 @@
 <title>Party Identification</title>
 <link rel="stylesheet" href="./g.css">
 <style>
-  /* C11: Gallup's party identification, annual averages since 1988 with the latest quarter dashed on the end. ?view=lean adds the independents who lean to a party (Gallup asks from 1991). */
+  /* C11: Gallup's party identification, annual averages since 1988 with the latest quarter dashed on the end. ?view=lean adds the independents who lean to a party (Gallup asks from 1991). ?from=2010: the Start year. */
   .panel { grid-template-rows: auto 1fr auto; }
   .body { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; min-height: 0; }
   .headline { font-size: 46px; font-weight: 700; line-height: 1.15; }
@@ -36,14 +36,16 @@
   const W = 1584, H = 570, L = 70, R = 300, T = 16, B = 46;
 
   function render(d) {
-    const annual = lean ? d.annualLean : d.annual, last = (lean ? d.quarterlyLean : d.quarterly).at(-1);
+    const full = lean ? d.annualLean : d.annual, last = (lean ? d.quarterlyLean : d.quarterly).at(-1);
+    const start = Math.min(Number(q.get("from")) || 0, Number(full.at(-1).when) - 1), annual = full.filter((r) => Number(r.when) >= start);
     const first = Number(annual[0].when), end = Number(last.when.slice(0, 4)) + (Number(last.when.slice(-1)) - 1) / 4;
     const all = [...annual, last].flatMap((r) => LINES.map(([k]) => r[k]));
     const lo = Math.floor(Math.min(...all) / 5) * 5, hi = Math.ceil(Math.max(...all) / 5) * 5;
     const x = (y) => L + (y - first) / (end - first) * (W - L - R), y = (v) => T + (hi - v) / (hi - lo) * (H - T - B);
     let svg = "";
     for (let v = lo; v <= hi; v += 5) svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L - 14}" y="${y(v) + 9}" text-anchor="end">${v}%</text>`;
-    for (let yr = Math.ceil(first / 4) * 4; yr <= end; yr += 4) svg += `<text class="axis" x="${x(yr)}" y="${H - 6}" text-anchor="middle">${yr}</text>`;
+    const every = end - first < 12 ? 2 : 4;
+    for (let yr = Math.ceil(first / every) * every; yr <= end; yr += every) svg += `<text class="axis" x="${x(yr)}" y="${H - 6}" text-anchor="middle">${yr}</text>`;
     const year = Number(annual.at(-1).when);
     for (const [k, , color] of LINES) {
       svg += `<polyline class="line ${k}" style="stroke:var(${color})" points="${annual.map((r) => `${x(Number(r.when))},${y(r[k])}`).join(" ")}"/>`;
