@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script src="/g/theme-boot.js"></script>
+<meta charset="utf-8">
+<title>County Shift</title>
+<link rel="stylesheet" href="/g/g.css">
+<style>
+  /* The broadcast format, as B6: each county coloured by how far it has moved from its 2024 presidential margin. ?id=<raceID> ?bg=black|green|... */
+  .panel { grid-template-rows: auto 1fr auto; }
+  .body { display: grid; grid-template-columns: 1fr 660px; gap: 48px; min-height: 0; }
+  .map { background: rgba(0,0,0,.25); border-radius: 8px; padding: 16px; position: relative; min-height: 0; }
+  .map svg { width: 100%; height: 100%; display: block; }
+  .legend { position: absolute; left: 24px; bottom: 16px; display: flex; align-items: center; gap: 12px; font-size: 22px; color: var(--muted); }
+  .legend .ramp { width: 240px; height: 18px; border-radius: 3px; background: linear-gradient(90deg, #1d6fe0, #e8e8ea 50%, #e0322c); }
+  .legend i { display: inline-block; width: 22px; height: 22px; border-radius: 3px; margin-left: 14px; background: repeating-linear-gradient(45deg, #3a4c74 0 2px, #1b2a4a 2px 7px); }
+  .side { display: grid; grid-template-rows: auto auto 1fr; gap: 16px; min-height: 0; overflow: hidden; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 26px; font-size: 26px; }
+  .stats div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+  .stats span { color: var(--muted); } .stats b { white-space: nowrap; }
+  .verdict { font-size: 30px; font-weight: 700; color: var(--gold); min-height: 38px; }
+  table { font-size: 25px; } td.r, th.r { text-align: right; } td.b { font-weight: 600; white-space: nowrap; max-width: 300px; overflow: hidden; text-overflow: ellipsis; } .m { color: var(--muted); }
+  .why { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--muted); margin-left: 10px; vertical-align: 2px; }
+  .legend .wbox { display: inline-block; width: 22px; height: 22px; border-radius: 3px; border: 3px solid #fff; box-sizing: border-box; margin-left: 14px; }
+  .ii { color: var(--gold); }
+  .rd { color: #ff7b75; } .dd { color: #7db4ff; }
+</style>
+</head>
+<body>
+<div class="panel" id="card">
+  <div class="head"><div><div class="kicker">County shift from 2024</div><div class="title" id="title">Loading…</div></div><div class="reporting" id="reporting"></div></div>
+  <div class="body">
+    <div class="map"><svg id="map" viewBox="0 0 960 640"></svg><div class="legend" id="legend"></div></div>
+    <div class="side">
+      <div class="verdict" id="verdict"></div>
+      <div class="stats" id="stats"></div>
+      <div style="min-height:0;overflow:hidden"><table><thead><tr><th>Bellwether counties</th><th class="r">In</th><th class="r">Now</th><th class="r">2024</th><th class="r">Shift</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </div>
+  </div>
+  <div class="foot"><span><span class="dot" id="dot"></span>Source: AP via lightship.media · 2024: AP · Forecast: On Point Politics · Rating: Cook</span><span id="updated"></span></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<script type="module">
+  import { connectFeed, freshness, fmt, officeText, normName, loadGeo, clockS } from "/g/feed.js";
+  import { scoreRace, projectRace, sides, pickBellwethers, fmtMargin, fmtShift } from "/analytics/surprise.js";
+  const q = new URLSearchParams(location.search), raceId = q.get("id"), bg = q.get("bg");
+  if (bg) document.body.classList.add(`bg-${bg}`);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const MIN_IN = 50;   // below this a county's lean mostly says which votes came first, so it is hatched rather than coloured
+  const ramp = d3.scaleLinear().domain([-20, 0, 20]).range(["#1d6fe0", "#e8e8ea", "#e0322c"]).clamp(true);
+  const data = await Promise.all([fetch("/analytics/baseline/races.json").then((r) => r.json()), fetch("/analytics/baseline/county2024.json").then((r) => r.json())]);
+  const bases = new Map(data[0].races.map((b) => [b.id, b])), base24 = data[1];
+  let race = null, base = null, geo = null, counties = null, past = null;
+  window.cardReady = false;
+
+  function ensureHatch(svg) {
+    if (!svg.select("#notcounted").empty()) return;
+    const pat = svg.append("defs").append("pattern").attr("id", "notcounted").attr("width", 10).attr("height", 10).attr("patternUnits", "userSpaceOnUse").attr("patternTransform", "rotate(45)");
+    pat.append("rect").attr("width", 10).attr("height", 10).attr("fill", "#1b2a4a"); pat.append("rect").attr("width", 2.5).attr("height", 10).attr("fill", "#3a4c74");
+  }
+  /** One county's numbers: its margin now against the same place's 2024 presidential margin. */
+  function unit(u, pair) {
+    const r = u.votes[pair.r.id] ?? 0, d = u.votes[pair.d.id] ?? 0, tot = Object.values(u.votes).reduce((s, v) => s + v, 0);
+    const b = past?.get(normName(u.name)), now = tot ? (r - d) / tot * 100 : null;
+    return { u, tot, t: b?.t ?? 0, in: u.eevp || u.precinctsPct || 0, now, then: b?.m ?? null, shift: now != null && b ? now - b.m : null };
+  }
+  function render() {
+    if (!race) { $("title").textContent = "Race not found"; return; }
+    const proj = counties && past ? projectRace(race, base, counties, (n) => past.get(normName(n))) : null;
+    const pair = sides(race, base), s = scoreRace(race, base, proj), L = s.dLetter ?? "D";
+    $("title").innerHTML = `${esc(race.stateName)} <small>${esc(officeText(race))}</small>${race.called ? '<span class="call">AP CALL</span>' : ""}`;
+    $("reporting").innerHTML = race.totalVotes ? `<b>${Math.round(race.eevp || race.precinctsPct)}%</b> of expected vote in` : "No results yet";
+    $("updated").textContent = `Updated ${clockS(race.lastUpdated)}`;
+    $("verdict").textContent = s.flags[0]?.t ?? (s.safe && s.now != null ? "Safe seat: no surprise here" : s.marginCounts ? "In line with the forecast" : s.status === "unscored" ? "Not scored: no two-party contest" : s.oneBatch ? "One big batch so far: too early to judge" : race.totalVotes ? "Too early to judge" : "Waiting for votes");
+    const m = base?.model;
+    $("stats").innerHTML = [["Now", fmtMargin(s.now, L)], ["Projected", proj?.usable ? fmtMargin(proj.margin, L) : "—"], ["Forecast", fmtMargin(m?.margin, L)], ["Finished", proj ? `${proj.n} · ${Math.round(proj.coverage * 100)}% of vote` : "none yet"], ["Cook", base?.cook ?? "not listed"], ["Polls", m?.pollAvg != null && m?.nPolls ? fmtMargin(m.pollAvg, L) : "—"], ["2024 pres", fmtMargin(base?.pres2024?.marginRD)], ["2022", base?.y2022 && !base.y2022.otherLines ? fmtMargin(base.y2022.marginRD) : "—"]].map(([k, v]) => `<div><span>${k}</span><b>${esc(v)}</b></div>`).join("");
+    $("legend").innerHTML = `<span>${L} shift</span><span class="ramp"></span><span>R shift</span><i></i><span>under ${MIN_IN}% in</span><b class="wbox"></b><span>bellwether</span>`;
+    const units = pair && counties ? counties.map((u) => unit(u, pair)) : [];
+    const key = (d) => geo.kind === "county" ? String(d.id) : normName(d.properties.name), uKey = (x) => geo.kind === "county" ? String(x.u.fips) : normName(x.u.name);
+    const byKey = new Map(units.map((x) => [uKey(x), x]));
+    const top = pickBellwethers(units);
+    const sh = (x) => x.shift == null ? "—" : `<b>${Math.abs(x.shift).toFixed(1)}</b>`;
+    $("rows").innerHTML = top.map((x) => `<tr><td class="b">${esc(x.u.name)}<span class="why">${x.why === "big" ? "BIG" : "MOST IN"}</span></td><td class="r m">${Math.round(x.in)}%</td><td class="r">${x.tot ? fmtMargin(x.now, L) : "—"}</td><td class="r m">${fmtMargin(x.then)}</td><td class="r ${x.in < MIN_IN ? "m" : x.shift > 0 ? "rd" : L === "I" ? "ii" : "dd"}">${sh(x)}</td></tr>`).join("") || `<tr><td colspan="5" class="m">Waiting for county results.</td></tr>`;
+    if (!geo) return;
+    const svg = d3.select("#map"); ensureHatch(svg);
+    const listed = new Set(top.map(uKey));
+    const sel = svg.selectAll("path").data(geo.feats, (d) => d.id);
+    sel.enter().append("path").attr("d", geo.path).merge(sel)
+      .attr("stroke", (d) => listed.has(key(d)) ? "#fff" : "#071222").attr("stroke-width", (d) => listed.has(key(d)) ? 3.5 : 0.8)
+      .style("fill", (d) => { const x = byKey.get(key(d)); return x && x.shift != null && x.in >= MIN_IN ? ramp(x.shift) : "url(#notcounted)"; })
+      .filter((d) => listed.has(key(d))).raise();   // on top, so a neighbour's border cannot cut the white outline
+    window.cardReady = true;
+  }
+  const feed = connectFeed({
+    onSnapshot: async (s) => {
+      race = s.races.get(raceId); base = bases.get(raceId);
+      if (race) {
+        past = new Map(Object.entries(base24[race.state]?.n ?? {}).map(([n, v]) => [normName(n), v]));
+        geo = await loadGeo(race.state, [960, 570]);   // 570 leaves room under the map for the legend
+        counties = await feed.counties(raceId);
+      }
+      render();
+    },
+    onUpdate: async (s, msg) => {
+      if (msg.changed?.some((r) => r.id === raceId)) { race = s.races.get(raceId); render(); }
+      if (msg.type === "counties" && race) { counties = await feed.counties(raceId); render(); }
+    },
+    onStatus: (s) => { $("dot").className = `dot ${freshness(s.status)}`; },
+  });
+  /** The whole 1920x1080 card as a PNG, for the page around this frame to copy. */
+  window.snapshot = () => htmlToImage.toBlob(document.documentElement, { width: 1920, height: 1080, pixelRatio: 1, cacheBust: false, backgroundColor: bg ? undefined : undefined });
+</script>
+</body>
+</html>

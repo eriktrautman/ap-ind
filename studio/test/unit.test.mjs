@@ -35,7 +35,8 @@ test("a sign-in cookie opens the Studio for its account only, and dies when tamp
     const cookie = issueCookie({ headers: {} }, a).split(";")[0];
     assert.equal(cookieAccount(`other=1; ${cookie}`)?.name, "Test Person");
     assert.equal(studioGate("/studio", cookie), false, "the gate opens for it");
-    for (const p of ["/studio", "/studio/studio.js", "/studio/cards.js"]) assert.equal(studioGate(p, ""), true, `${p} is held without it`);
+    for (const p of ["/studio", "/studio/studio.js", "/studio/cards.js", "/analytics", "/analytics/county-card", "/analytics/baseline/races.json"]) assert.equal(studioGate(p, ""), true, `${p} is held without it`);
+    assert.equal(studioGate("/analytics", cookie), false, "Analytics opens for it too");
     for (const p of ["/studio/login", "/studio/studio.css", "/ticker", "/g/B5", "/"]) assert.equal(studioGate(p, ""), false, `${p} is open`);
     assert.equal(cookieAccount(cookie.slice(0, -1) + "x"), null, "tampered");
     const [, key, sig] = cookie.split("=")[1].split(".");

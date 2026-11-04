@@ -160,7 +160,7 @@ const META = {
   startedAt: "2026-10-26T23:16:49Z", // ISO time when the build began
   phase: "Built; semantic addresses, one publish",
   note: "S109 (B12) blocked on the AP VoteCast licence; E8 and E9 complete",
-  updated: "2026-11-04T06:08:12Z",
+  updated: "2026-11-04T16:56:49Z",
 };
 const EPICS = {
   E0: "Foundations: state model and data plumbing",
@@ -291,6 +291,7 @@ const QUESTIONS = [
   { q: "2024 shares for C6 and D10.", d: "Computed once from the local history database if it holds 2024 results, otherwise hand-entered constants. Confirm which.", a: "Not the SQLite database; it is not deployed. A script fetches 2024 results from the AP API once and commits them as config JSON (story S39)." },
 ];
 const LOG = [
+  { t: "2026-11-04T16:56:49Z", what: "Analytics joins the site at /analytics, signed-in only, linked from the Studio footer: live surprises against Cook and a forecast on a US map, county charts to copy at 1080p, bellwether counties, a Flips view and every race in a table. Built in a sandbox during election night and merged once the freeze lifted." },
   { t: "2026-11-04T06:08:12Z", what: "Write-ins under 1% are gone everywhere, not just from graphics: the rule moved from the graphics feed into the poller (S140), on the local branch post-broadcast-fixes." },
   { t: "2026-11-04T05:48:26Z", what: "The five items queued for after the broadcast are built on the local branch post-broadcast-fixes, unpushed under the freeze (S136 to S140). The opacity bug was on every output with a stylesheet: ?opacity=40 came back opaque on production, and stays at 40% with this fix. The failing playlists test from e86806f is still parked." },
   { t: "2026-11-03T21:58:27Z", what: "Every 200 px Ballotpedia candidate photo is now the full-size original: 556 uploaded under new names (full-<id>.jpg), old files kept, config/photos.json updated by studio/scripts/upgrade-thumb-photos.mjs; 14 originals were no bigger and stay. McDermott uses the Alaska Libertarian Party headshot." },

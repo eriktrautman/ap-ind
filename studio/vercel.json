@@ -5,7 +5,7 @@
   "cleanUrls": true,
   "proxy": {
     "entrypoint": "proxy.js",
-    "matcher": ["/studio", "/studio/:path*"]
+    "matcher": ["/studio", "/studio/:path*", "/analytics", "/analytics/:path*"]
   },
   "crons": [
     {
@@ -38,7 +38,7 @@
       ]
     },
     {
-      "source": "/studio/(.*)",
+      "source": "/(studio|analytics)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

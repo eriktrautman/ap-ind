@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Analytics · Election Producer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg: #0b1120; --card: #131b2e; --line: #26324d; --fg: #eef2f9; --muted: #93a1bb; --gold: #facc15; --dem: #5b9dff; --gop: #ff6b64; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 20px; } .spacer { flex: 1; } .muted { color: var(--muted); } .small { font-size: 12.5px; }
+  button, select, input { font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; }
+  button { cursor: pointer; } button.on { background: #24406f; border-color: #3d65a8; } button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; font-weight: 600; }
+  a { color: #8ab8ff; }
+  main { padding: 16px 20px 40px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; } .tile b { display: block; font-size: 26px; } .tile > span { color: var(--muted); font-size: 12.5px; } [hidden] { display: none !important; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .box h2 { margin: 0 0 8px; font-size: 14px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  #usmap { width: 100%; display: block; } #usmap path.st { cursor: pointer; } #usmap path.st:hover { opacity: .8; }
+  .legend { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; } .ramp { width: 170px; height: 12px; border-radius: 3px; background: linear-gradient(90deg, #1d6fe0, #e8e8ea 50%, #e0322c); }
+  .list { max-height: 560px; overflow: auto; display: grid; gap: 6px; }
+  .item { display: block; width: 100%; text-align: left; background: #0f1729; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  .item:hover { border-color: #4a6aa8; } .item b { font-size: 15px; } .item .why { color: var(--gold); font-size: 13px; } .item.s3 { border-left: 4px solid #facc15; } .item.s2 { border-left: 4px solid #f59e0b; } .item.s1 { border-left: 4px solid #64748b; } .item.s0 { border-left: 4px dashed #475569; }
+  .sect { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 8px 0 2px; }
+  .frame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; border-radius: 6px; } .frame iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; } .bar h2 { margin: 0; font-size: 20px; color: var(--fg); text-transform: none; letter-spacing: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; } th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; } th { color: var(--muted); font-weight: 600; cursor: pointer; position: sticky; top: 0; background: var(--card); } td:first-child, th:first-child, td.l, th.l { text-align: left; }
+  tbody tr:hover { background: #1a2540; } tr.pick { background: #223560; } tr[data-race] { cursor: pointer; } .tablewrap { overflow: auto; max-height: 76vh; } .flag { color: var(--gold); text-align: left; white-space: normal; min-width: 180px; }
+  .R { color: var(--gop); } .D { color: var(--dem); } .I { color: var(--gold); }
+  #toast { position: fixed; right: 20px; bottom: 20px; background: #1f6feb; color: #fff; padding: 10px 16px; border-radius: 8px; font-weight: 600; } .warn { color: #fbbf24; }
+  .countdown { display: flex; align-items: center; gap: 8px; } .countdown b { display: block; font-size: 14px; line-height: 1.15; font-variant-numeric: tabular-nums; min-width: 128px; } .countdown span { display: block; font-size: 12px; line-height: 1.2; color: var(--muted); }
+  .countdown circle { fill: none; stroke-width: 3; } .countdown .track { stroke: var(--line); } .countdown .arc { stroke: #5b9dff; stroke-linecap: round; stroke-dasharray: 59.7; transition: stroke-dashoffset 1s linear; }
+  .countdown.soon .arc { stroke: var(--gold); animation: cdpulse 1.2s ease-in-out infinite; } .countdown.old .arc { stroke: #fbbf24; } .countdown.old span { color: #fbbf24; } .countdown.dead .arc { stroke: #f87171; animation: none; } .countdown.dead span { color: #f87171; }
+  @keyframes cdpulse { 50% { opacity: .35; } }
+  .split { display: inline-flex; gap: 18px; } .split > span { display: inline-flex; align-items: center; gap: 7px; } .dotk { width: 13px; height: 13px; border-radius: 50%; background: var(--fg); } .sqk { width: 13px; height: 13px; border-radius: 3px; border: 2.5px solid var(--fg); }
+  .seg { display: inline-flex; } .seg button { border-radius: 0; margin-left: -1px; } .seg button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; } .seg button:last-child { border-radius: 0 6px 6px 0; } .seg button.on { position: relative; }
+  .keyg { display: inline-flex; align-items: center; gap: 5px; } .keyg svg { display: block; }
+  details { margin-top: 12px; } summary { cursor: pointer; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Surprises</h1>
+  <div class="countdown" id="countdown" title="New results reach the site about once a minute. The page picks them up within 15 seconds of that."><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><circle cx="12" cy="12" r="9.5" class="track"/><circle cx="12" cy="12" r="9.5" class="arc" id="cdarc" transform="rotate(-90 12 12)"/></svg><div><b id="cdtext">Reading the feed…</b><span id="fresh"></span></div></div>
+  <span class="spacer"></span>
+  <button id="vmap" class="on">Map</button><button id="vflips">Flips</button><button id="vtable">All races</button>
+  <div class="seg" id="office" role="group" aria-label="Which races count"><button class="on" data-office="">All</button><button data-office="Senate">Senate</button><button data-office="House">House</button><button data-office="Governor">Governor</button></div>
+  <a class="small" href="/analytics/baseline/races.csv" download>races.csv</a>
+  <a class="small" href="/studio">Studio</a>
+</header>
+<main>
+  <div class="tiles" id="tiles"></div>
+  <div id="pmap">
+    <div class="grid">
+      <div class="box"><svg id="usmap" viewBox="0 0 975 610"></svg>
+        <div class="legend" id="legend"><span>Better for D than forecast</span><span class="ramp"></span><span>Better for R than forecast</span><span class="keyg"><svg width="46" height="20"><circle cx="10" cy="10" r="9" fill="#2f7bf0"/><circle cx="33" cy="10" r="9" fill="#e5403a"/></svg> surprises cooking, D and R</span><span class="keyg"><svg width="46" height="20"><rect x="2" y="2" width="16" height="16" rx="3" fill="#0b1120" stroke="#5b9dff" stroke-width="2.5"/><rect x="26" y="2" width="16" height="16" rx="3" fill="#0b1120" stroke="#ff6b64" stroke-width="2.5"/></svg> AP has called</span><span>· gray: nothing judged yet · click a state for its counties</span></div></div>
+      <div class="box"><h2>Biggest surprises</h2><div class="list" id="list"></div></div>
+    </div>
+    <div class="box" id="state" hidden style="margin-top:14px">
+      <div class="bar"><h2 id="sname"></h2><select id="srace"></select><span class="spacer"></span>
+        <label class="small muted">Background <select id="sbg"><option value="black">Black</option><option value="green">Green Key</option><option value="capitol">Capitol</option><option value="flag">Flag</option><option value="panels">Panels</option><option value="">Transparent</option></select></label>
+        <button class="primary" id="copy">Copy at 1080p</button><button id="dl">Download PNG</button><button id="sclose">Close</button></div>
+      <div class="frame" id="frame"><iframe id="card" title="County chart"></iframe></div>
+      <div class="tablewrap" style="margin-top:12px;max-height:340px"><table id="stable"></table></div>
+    </div>
+  </div>
+  <div id="pflips" hidden><div class="tiles" id="ftiles"></div><div id="flists"></div></div>
+  <div id="ptable" hidden><div class="box"><div class="bar"><input id="q" placeholder="Filter: NE-SEN, Toss Up, Texas…" size="30"><span class="muted small" id="tcount"></span></div><div class="tablewrap"><table id="atable"></table></div></div></div>
+  <details><summary>How a surprise is decided, and where the numbers come from</summary><div class="small muted" id="method" style="max-width:110ch"></div></details>
+</main>
+<div id="toast" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script type="module">
+  import { connectFeed, clockS, normName } from "/g/feed.js";
+  import { scoreRace, projectRace, summarize, byState, flipOf, fmtMargin, fmtShift, NEARLY_ALL_PCT, EARLY_PCT, DONE_EEVP, DONE_PRECINCTS, MIN_COUNTIES, MIN_COVERAGE, NOTABLE_PTS, BIG_PTS, SAFE_PTS } from "/analytics/surprise.js";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const { meta, races: baseRows } = await fetch("/analytics/baseline/races.json").then((r) => r.json());
+  const bases = new Map(baseRows.map((b) => [b.id, b]));
+  const raw2024 = await fetch("/analytics/baseline/county2024.json").then((r) => r.json());
+  const past2024 = Object.fromEntries(Object.entries(raw2024).map(([st, v]) => [st, new Map(Object.entries(v.n).map(([n, x]) => [normName(n), x]))]));
+  const unitsByRace = new Map();   // race id -> county rows, from each state's county file
+  let officeNow = "";
+  let live = new Map(), scores = [], selState = null, selRace = null, sortKey = "score", sortDir = -1;
+  const ramp = d3.scaleLinear().domain([-15, 0, 15]).range(["#1d6fe0", "#e8e8ea", "#e0322c"]).clamp(true);
+  const color = (m, L = "D") => m == null ? "" : m > 0 ? "R" : L;
+  // The cell fills from the left as the vote comes in, faintly enough to read over.
+  const pctCell = (p) => p ? `<td style="background:linear-gradient(90deg,rgba(125,170,255,.2) ${Math.min(100, p).toFixed(1)}%,transparent ${Math.min(100, p).toFixed(1)}%)">${Math.round(p)}%</td>` : "<td>—</td>";
+  const mark = (m, L = "D") => `<span class="${color(m, L)}">${fmtMargin(m, L)}</span>`;
+
+  // ---------- US map ----------
+  const us = await fetch("/analytics/baseline/counties-10m.json").then((r) => r.json());
+  const FIPS = { "01":"AL","02":"AK","04":"AZ","05":"AR","06":"CA","08":"CO","09":"CT","10":"DE","11":"DC","12":"FL","13":"GA","15":"HI","16":"ID","17":"IL","18":"IN","19":"IA","20":"KS","21":"KY","22":"LA","23":"ME","24":"MD","25":"MA","26":"MI","27":"MN","28":"MS","29":"MO","30":"MT","31":"NE","32":"NV","33":"NH","34":"NJ","35":"NM","36":"NY","37":"NC","38":"ND","39":"OH","40":"OK","41":"OR","42":"PA","44":"RI","45":"SC","46":"SD","47":"TN","48":"TX","49":"UT","50":"VT","51":"VA","53":"WA","54":"WV","55":"WI","56":"WY" };
+  const feats = topojson.feature(us, us.objects.states).features.filter((f) => FIPS[f.id]).map((f) => Object.assign(f, { postal: FIPS[f.id] }));
+  const path = d3.geoPath(d3.geoAlbersUsa().fitSize([975, 610], { type: "FeatureCollection", features: feats }));
+  const svg = d3.select("#usmap");
+  svg.append("g").selectAll("path").data(feats, (d) => d.id).enter().append("path").attr("class", "st").attr("d", path).attr("stroke", "#0b1120").attr("stroke-width", 0.8).on("click", (e, d) => openState(d.postal));
+  const labels = svg.append("g").style("pointer-events", "none");
+
+  // States too small to hold their marks get them out to sea, on a line back to the state.
+  const OUT = { VT: [838, 62], NH: [905, 88], MA: [948, 150], RI: [948, 196], CT: [936, 236], NJ: [918, 278], DE: [918, 318], MD: [918, 358], DC: [870, 398] };
+  const GOLD = { D: "#2f7bf0", R: "#e5403a" }, LINE = { D: "#7db4ff", R: "#ff8a84" };
+  function drawMap(st) {
+    svg.selectAll("path.st").attr("fill", (d) => { const x = st.get(d.postal); return x?.gap != null ? ramp(x.gap) : x?.counting ? "#3a4763" : "#222c44"; });
+    svg.selectAll("g.hl").remove();
+    svg.insert("g", () => labels.node()).attr("class", "hl").selectAll("path").data(feats.filter((d) => d.postal === selState)).enter().append("path").attr("d", path).attr("fill", "none").style("pointer-events", "none").attr("stroke", "#fff").attr("stroke-width", 2.4);
+    labels.selectAll("*").remove();
+    for (const d of feats) {
+      const x = st.get(d.postal); if (!x?.surprises) continue;
+      const marks = [["cook", "D", x.cookD], ["cook", "R", x.cookR], ["called", "D", x.calledD], ["called", "R", x.calledR]].filter((m) => m[2] > 0);
+      const [cx, cy] = path.centroid(d), at = OUT[d.postal] ?? [cx, cy], W = marks.length * 24 + (OUT[d.postal] ? 26 : 0);
+      if (OUT[d.postal]) labels.append("line").attr("x1", cx).attr("y1", cy).attr("x2", at[0] - W / 2 + 4).attr("y2", at[1]).attr("stroke", "#93a1bb").attr("stroke-width", 1);
+      const g = labels.append("g").attr("class", "micro").attr("data-state", d.postal).attr("transform", `translate(${at[0] - W / 2},${at[1]})`);
+      g.append("rect").attr("x", -3).attr("y", -13).attr("width", W + 2).attr("height", 26).attr("rx", 13).attr("fill", "#0b1120").attr("opacity", 0.72);
+      let dx = 0;
+      if (OUT[d.postal]) { g.append("text").attr("x", 11).attr("text-anchor", "middle").attr("dominant-baseline", "central").attr("font-size", 11).attr("font-weight", 700).attr("fill", "#cbd5e1").text(d.postal); dx = 26; }
+      for (const [kind, side, n] of marks) {
+        const m = g.append("g").attr("class", `mk ${kind} ${side}`).attr("transform", `translate(${dx + 10},0)`);
+        if (kind === "cook") m.append("circle").attr("r", 10).attr("fill", GOLD[side]);
+        else m.append("rect").attr("x", -9).attr("y", -9).attr("width", 18).attr("height", 18).attr("rx", 3).attr("fill", "#0b1120").attr("stroke", LINE[side]).attr("stroke-width", 2.5);
+        m.append("text").attr("text-anchor", "middle").attr("dominant-baseline", "central").attr("font-size", 13).attr("font-weight", 700).attr("fill", kind === "cook" ? "#fff" : LINE[side]).text(n);
+        dx += 24;
+      }
+    }
+  }
+
+  // ---------- numbers ----------
+  function compute() {
+    const off = officeNow;
+    scores = [...live.values()].filter((r) => bases.has(r.id)).map((r) => { const b = bases.get(r.id), past = past2024[r.state]; const proj = past ? projectRace(r, b, unitsByRace.get(r.id), (n) => past.get(normName(n))) : null; return { ...scoreRace(r, b, proj), base: b, race: r }; }).filter((s) => !off || s.office === off);
+    render();
+  }
+  function tiles(sum) {
+    const dir = sum.hasDirection ? fmtShift(sum.medianGap) : "needs 5 judged races";
+    $("tiles").innerHTML = [[`<span class="split"><span title="Surprises still coming in, no AP call yet"><i class="dotk"></i>${sum.comingIn}</span><span title="Surprises AP has called"><i class="sqk"></i>${sum.called}</span></span>`, `surprises coming in / AP called · ${sum.big} big · ${sum.safeShifts} safe seats set aside`], [`${sum.upsets}`, "upsets against Cook"], [`<span class="D">${sum.towardD}</span> / <span class="R">${sum.towardR}</span>`, "surprises toward D / toward R"], [sum.hasDirection ? `${Math.abs(sum.medianGap).toFixed(1)} ${sum.medianGap > 0 ? "R" : "D"}` : "—", `overall lean vs forecast: ${dir}`]].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join("");
+  }
+  // ---------- flips ----------
+  const flipStages = [["called", "AP called", "Seats AP has called for the other party."], ["likely", "Likely", "No call yet, but nearly all the vote is in or finished counties point this way."], ["ahead", "Ahead for now", "The other party is ahead, with too little in to judge. These often change."]];
+  function flips() {
+    const all = scores.map((s) => ({ s, f: flipOf(s.race, s.base, s) })).filter((x) => x.f);
+    const called = all.filter((x) => x.f.stage === "called");
+    const net = (office) => { const a = called.filter((x) => !office || x.s.office === office); const gain = (t) => a.filter((x) => x.f.to === t).length - a.filter((x) => x.f.from === t).length; return { d: gain("D"), r: gain("R"), n: a.length }; };
+    const sg = (n) => (n > 0 ? `+${n}` : `${n}`);
+    $("ftiles").innerHTML = [["Senate", "Senate"], ["House", "House"], ["Governor", "Governors"]].map(([o, t]) => { const v = net(o); return `<div class="tile"><b><span class="D">D ${sg(v.d)}</span> · <span class="R">R ${sg(v.r)}</span></b><span>${t}: net from ${v.n} called flip${v.n === 1 ? "" : "s"}</span></div>`; }).join("") + `<div class="tile"><b>${all.filter((x) => x.f.stage === "likely").length}</b><span>likely flips, no call yet</span></div>`;
+    const tag = (t) => `<span class="${t}">${t}</span>`;
+    $("flists").innerHTML = flipStages.map(([k, title, note]) => {
+      const rows = all.filter((x) => x.f.stage === k).sort((a, b) => ({ Senate: 0, Governor: 1, House: 2 }[a.s.office] - { Senate: 0, Governor: 1, House: 2 }[b.s.office]) || a.s.label.localeCompare(b.s.label, undefined, { numeric: true }));
+      return `<div class="box" style="margin-bottom:12px"><h2>${title} (${rows.length})</h2><p class="small muted" style="margin:0 0 8px">${note}</p>${rows.length ? `<div class="tablewrap"><table><thead><tr><th>Race</th><th class="l">Seat</th><th class="l">Candidate</th><th class="l">Cook</th><th>Forecast</th><th>Now</th><th>% in</th><th class="l">Surprise?</th></tr></thead><tbody>${rows.map(({ s, f }) => `<tr data-race="${esc(s.id)}"><td><b>${esc(s.label)}</b></td><td class="l">${tag(f.from)} → ${tag(f.to)}</td><td class="l">${esc(f.name)}</td><td class="l">${esc(s.base?.cook ?? "not listed")}</td><td>${mark(s.base?.model?.margin, s.dLetter)}</td><td>${s.now == null ? "—" : mark(s.now, s.dLetter)}</td>${pctCell(s.pct)}<td class="flag">${s.severity > 0 ? esc(s.flags[0].t) : `<span class="muted">${f.stage === "ahead" ? "Too early to say" : "Expected"}</span>`}</td></tr>`).join("")}</tbody></table></div>` : `<div class="muted small">None yet.</div>`}</div>`;
+    }).join("");
+  }
+  $("flists").addEventListener("click", (e) => { const tr = e.target.closest("tr[data-race]"); if (tr) openRace(tr.dataset.race); });
+  const projNote = (p) => `${p.n} finished ${p.n === 1 ? "county" : "counties"}, ${Math.round(p.coverage * 100)}% of the vote, ${Math.abs(p.shift).toFixed(1)} ${p.shift > 0 ? "R" : "D"} from 2024`;
+  const whyLine = (s) => `${esc(s.base?.cook ?? "Cook: not listed")} · ${s.basis === "counties" ? `${fmtMargin(s.judged, s.dLetter)} projected, ${fmtMargin(s.now, s.dLetter)} now` : `${fmtMargin(s.now, s.dLetter)} now`} vs ${fmtMargin(s.base?.model?.margin, s.dLetter)} forecast · ${Math.round(s.pct)}% in${s.called ? " · AP call" : ""}${s.basis === "counties" ? `<br>${esc(projNote(s.proj))}` : ""}`;
+  function list() {
+    const flagged = scores.filter((s) => s.status === "scored" && s.severity > 0).sort((a, b) => b.score - a.score);
+    const early = scores.filter((s) => s.status === "early" && s.flags.length).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)).slice(0, 15);
+    const item = (s) => `<button class="item s${s.severity}" data-race="${esc(s.id)}"><b>${esc(s.label)}</b> <span class="${s.gap > 0 ? "R" : s.dLetter ?? "D"}">${fmtShift(s.gap, s.dLetter)}</span><div class="why">${esc(s.flags.map((f) => f.t).join(" · "))}</div><div class="small muted">${whyLine(s)}</div></button>`;
+    $("list").innerHTML = (flagged.length ? flagged.map(item).join("") : `<div class="muted small">No surprises yet. A margin is judged once ${NEARLY_ALL_PCT}% of the expected vote is in, or once enough counties have really finished to project from. An AP call against Cook counts straight away.</div>`) + (early.length ? `<div class="sect">Early signals: counts can still move a lot</div>` + early.map(item).join("") : "");
+  }
+  function render() {
+    const st = byState(scores), sum = summarize(scores);
+    tiles(sum); drawMap(st); list();
+    if (selState) stateTable();
+    if (!$("ptable").hidden) allTable();
+    if (!$("pflips").hidden) flips();
+  }
+
+  // ---------- tables ----------
+  const COLS = [["label", "Race"], ["office", "Office"], ["cook", "Cook"], ["forecast", "Forecast"], ["polls", "Polls"], ["y2022", "2022"], ["pres", "2024 pres"], ["now", "Now"], ["proj", "Projected"], ["pct", "% in"], ["gap", "From forecast"], ["vs24", "vs 2024"], ["flags", "Flag"]];
+  const val = (s, k) => ({ label: s.label, office: s.office, cook: s.base?.cook ?? "", forecast: s.base?.model?.margin ?? null, polls: s.base?.model?.nPolls ? s.base.model.pollAvg : null, y2022: s.base?.y2022?.marginRD ?? null, pres: s.base?.pres2024?.marginRD ?? null, now: s.now, proj: s.proj?.usable ? s.proj.margin : null, pct: s.pct, gap: s.gap == null ? null : Math.abs(s.gap), vs24: s.vs2024 == null ? null : Math.abs(s.vs2024), flags: s.flags.map((f) => f.t).join(" · "), score: s.score }[k]);
+  const row = (s) => { const L = s.dLetter ?? (s.race?.candidates?.some((c) => c.last && s.base?.model?.dem?.endsWith(c.last) && c.party !== "Dem") ? "I" : "D"), y = s.base?.y2022;
+    return `<tr data-race="${esc(s.id)}" class="${s.id === selRace ? "pick" : ""}"><td><b>${esc(s.label)}</b></td><td class="l">${esc(s.office)}</td><td class="l">${esc(s.base?.cook ?? "not listed")}</td><td>${mark(s.base?.model?.margin, L)}</td><td>${s.base?.model?.nPolls ? mark(s.base.model.pollAvg, L) : "—"}</td><td title="${y?.otherLines ? "Different district lines in 2022" : y?.stateHouse ? "This seat wasn't up in 2022: the state's total 2022 House vote" : ""}">${y ? mark(y.marginRD) + (y.otherLines ? "*" : y?.stateHouse ? "†" : "") : "—"}</td><td>${mark(s.base?.pres2024?.marginRD)}</td><td>${s.now == null ? "—" : mark(s.now, L)}</td><td title="${s.proj?.usable ? esc(`${projNote(s.proj)}; ${s.proj.confidence} confidence`) : ""}">${s.proj?.usable ? mark(s.proj.margin, L) + (s.proj.confidence === "low" ? "?" : "") : "—"}</td>${pctCell(s.pct)}<td>${s.gap == null ? "—" : `<span class="${s.gap > 0 ? "R" : L}">${fmtShift(s.gap, L)}</span>`}</td><td>${s.vs2024 == null ? "—" : fmtShift(s.vs2024, L)}</td><td class="flag">${esc(s.flags.map((f) => f.t).join(" · "))}${s.safe && !s.flags.length && s.now != null ? `<span class="muted">Safe seat</span>` : ""}</td></tr>`; };
+  const head = () => `<thead><tr>${COLS.map(([k, t]) => `<th data-k="${k}" class="${["office", "cook", "flags"].includes(k) ? "l" : ""}">${t}${sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr></thead>`;
+  const sorted = (a) => [...a].sort((x, y) => { const p = val(x, sortKey), q = val(y, sortKey); if (p == null && q == null) return x.label.localeCompare(y.label); if (p == null) return 1; if (q == null) return -1; return (typeof p === "string" ? p.localeCompare(q) : p - q) * sortDir || x.label.localeCompare(y.label); });
+  function allTable() {
+    const f = $("q").value.trim().toLowerCase();
+    const a = scores.filter((s) => !f || `${s.label} ${s.base?.cook} ${s.base?.stateName} ${s.office}`.toLowerCase().includes(f));
+    $("tcount").textContent = `${a.length} of ${scores.length} races · * different district lines in 2022 · † seat not up in 2022, so the state's House vote · ? low-confidence projection`;
+    $("atable").innerHTML = head() + `<tbody>${sorted(a).map(row).join("")}</tbody>`;
+  }
+  function stateTable() { $("stable").innerHTML = head() + `<tbody>${sorted(scores.filter((s) => s.state === selState)).map(row).join("")}</tbody>`; }
+  for (const t of ["atable", "stable"]) $(t).addEventListener("click", (e) => {
+    const th = e.target.closest("th[data-k]"); if (th) { if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ["label", "office", "cook"].includes(sortKey) ? 1 : -1; } render(); return; }
+    const tr = e.target.closest("tr[data-race]"); if (tr) openRace(tr.dataset.race);
+  });
+  $("list").addEventListener("click", (e) => { const b = e.target.closest("[data-race]"); if (b) openRace(b.dataset.race); });
+
+  // ---------- a state ----------
+  const STATEWIDE = (s) => s.office === "Senate" || s.office === "Governor";
+  function openRace(id) { const r = live.get(id); if (!r) return; showView("map"); openState(r.state, id); }
+  function openState(st, id, scroll = true) {
+    selState = st;
+    const wanted = bases.get(id)?.office;
+    if (id && officeNow && wanted !== officeNow) { officeNow = ""; for (const x of $("office").children) x.classList.toggle("on", x.dataset.office === ""); compute(); }
+    const inOffice = baseRows.filter((b) => b.state === st && (!officeNow || b.office === officeNow));
+    const inState = inOffice.length ? inOffice : baseRows.filter((b) => b.state === st);   // no such race here this year: show what the state has
+    const ordered = [...inState].sort((a, b) => ({ Senate: 0, Governor: 1, House: 2 }[a.office] - { Senate: 0, Governor: 1, House: 2 }[b.office]) || a.label.localeCompare(b.label, undefined, { numeric: true }));
+    const flagged = scores.filter((s) => s.state === st && s.severity > 0).sort((a, b) => b.score - a.score)[0];
+    const mostVotes = ordered.map((b) => live.get(b.id)).filter((r) => r?.totalVotes).sort((a, b) => (b.office !== "H") - (a.office !== "H") || b.totalVotes - a.totalVotes)[0];
+    selRace = id ?? flagged?.id ?? mostVotes?.id ?? ordered[0]?.id;
+    $("sname").textContent = ordered[0]?.stateName ?? st;
+    $("srace").innerHTML = ordered.map((b) => `<option value="${esc(b.id)}" ${b.id === selRace ? "selected" : ""}>${esc(b.label)}</option>`).join("");
+    $("state").hidden = false; loadCard(); render();
+    try { history.replaceState(null, "", `#${st}/${selRace}`); } catch {}
+    if (scroll) $("state").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function loadCard() { $("card").src = `/analytics/county-card?id=${encodeURIComponent(selRace)}${$("sbg").value ? `&bg=${$("sbg").value}` : ""}`; fit(); }
+  const fit = () => { const w = $("frame").clientWidth; $("card").style.transform = `scale(${w / 1920})`; };
+  addEventListener("resize", fit);
+  $("srace").addEventListener("change", (e) => { selRace = e.target.value; loadCard(); render(); try { history.replaceState(null, "", `#${selState}/${selRace}`); } catch {} });
+  $("sbg").addEventListener("change", loadCard);
+  $("sclose").addEventListener("click", () => { selState = selRace = null; $("state").hidden = true; render(); try { history.replaceState(null, "", location.pathname); } catch {} });
+  const toast = (t) => { $("toast").textContent = t; $("toast").hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { $("toast").hidden = true; }, 3500); };
+  const shot = () => $("card").contentWindow.snapshot();
+  $("copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.write([new ClipboardItem({ "image/png": shot() })]); toast("Copied at 1920×1080"); }
+    catch (e) { toast(`Could not copy: ${e.message}. Use Download PNG.`); }
+  });
+  $("dl").addEventListener("click", async () => {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(await shot()); a.download = `${live.get(selRace)?.label ?? "chart"}-county-shift.png`; a.click(); URL.revokeObjectURL(a.href);
+  });
+
+  // ---------- page ----------
+  function showView(v) { $("pmap").hidden = v !== "map"; $("ptable").hidden = v !== "table"; $("pflips").hidden = v !== "flips"; $("tiles").hidden = v === "flips"; $("vflips").classList.toggle("on", v === "flips"); $("vmap").classList.toggle("on", v === "map"); $("vtable").classList.toggle("on", v === "table"); if (v === "map") fit(); render(); }
+  $("vmap").addEventListener("click", () => showView("map")); $("vtable").addEventListener("click", () => showView("table")); $("vflips").addEventListener("click", () => showView("flips"));
+  $("office").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-office]"); if (!b) return;
+    officeNow = b.dataset.office;
+    for (const x of $("office").children) x.classList.toggle("on", x === b);
+    compute();
+    if (selState) openState(selState, undefined, false);
+  });
+  $("q").addEventListener("input", allTable);
+  $("method").innerHTML = `<p>Every margin is Republican minus Democrat. A race's <b>miss</b> is its judged margin minus the forecast margin. A margin is judged in one of two ways, because early counts lean heavily one way depending on what's counted first and AP can call a safe race with 1% in. With ${NEARLY_ALL_PCT}%+ of the expected vote in, the <b>count</b> itself. Before that, a <b>projection</b>: the race's 2024 presidential margin plus how far its finished counties have moved from 2024, weighted by size. A finished county has ${DONE_EEVP}%+ of its expected vote and ${DONE_PRECINCTS}%+ of its precincts in. A projection needs ${MIN_COUNTIES}+ finished counties and ${Math.round(MIN_COVERAGE * 100)}%+ of the vote, and it's low confidence under 40% of the vote or when those counties look nothing like the whole race. A low-confidence projection can only raise a notable miss. House projections skip counties the district only partly covers. Before any of that, a big miss with ${EARLY_PCT}%+ in is only an <b>early signal</b>, isn't counted, and is left out entirely when the vote is mostly one batch with few precincts reporting.</p>
+    <p><b>Safe seats.</b> If the same side was forecast to win and is ahead, both by ${SAFE_PTS}+ points, the race isn't flagged however far it moved: R+26 becoming R+19 isn't news, while R+26 becoming R+8 is. Those races still count toward the overall lean, and they're left out of the average miss and the map colors. Among surprises of the same kind, closer races rank higher.</p>
+    <p><b>Upset:</b> AP calls a race for the side Cook rated behind. <b>Favorite behind:</b> the same before a call, on the judged margin. <b>Forecast's favorite lost:</b> a Cook Toss Up called against a forecast favorite of 3+ points. <b>Big miss:</b> ${BIG_PTS}+ points, or past twice the forecast's own uncertainty. <b>Notable miss:</b> ${NOTABLE_PTS}+ points, or outside the forecast's 80% range.</p>
+    <p><b>Flips</b> compare the winner, or whoever is ahead, with the party AP says holds the seat. On redrawn districts that can be a seat that changed on paper. A flip isn't a surprise by itself: "Expected" means it's in line with the forecast.</p>
+    <p><b>Bellwether counties</b> on the county charts are outlined in white: the three biggest by 2024 vote, plus the two most counted among those with at least 1% of the race's 2024 vote. They're counties worth watching because of their size or progress, not ones proven to predict the result.</p>
+    <p><b>Sources.</b> Cook: ${esc(meta.sources.cook)}. House races missing from that table show as "not listed". Forecast: ${esc(meta.sources.model)}; 538 closed in 2025. Polling: ${esc(meta.sources.polls)}. 2022: ${esc(meta.sources.y2022)}; districts with an asterisk had different lines, so they aren't compared. 2024: ${esc(meta.sources.pres2024)}. County maps compare a county's margin in this race with its 2024 presidential margin, which is a guide rather than a like-for-like result. Built ${esc(meta.built)}.</p>`;
+  // Every state with votes has a county file: read them a few at a time, once a minute.
+  const statesWithVotes = () => [...new Set([...live.values()].filter((r) => r.totalVotes).map((r) => r.state))];
+  async function refreshCounties() {
+    const sts = statesWithVotes();
+    for (let i = 0; i < sts.length; i += 6) await Promise.all(sts.slice(i, i + 6).map(async (st) => {
+      try { const d = await fetch(`/data/state/${st}.json?t=${Math.floor(Date.now() / 30000)}`, { cache: "no-store" }).then((r) => r.ok ? r.json() : null);
+        for (const r of d?.races ?? []) if (r.counties?.length) unitsByRace.set(r.id, r.counties); } catch {}
+    }));
+    if (live.size) compute();
+  }
+  setInterval(refreshCounties, 60_000);
+  let firstCounties = true;
+  const apply = (s) => { live = s.races; compute(); if (firstCounties) { firstCounties = false; refreshCounties(); } };
+  // The countdown: when the next results should reach the site. Reads only the small status file, every 5 seconds. Its clock starts when new data
+  // is first seen here, because that is when it reaches this page; the feed's own age is shown beside it.
+  const CYCLE = 60;
+  let dataAt = null, seenAt = null, statusFails = 0;
+  const ago = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`; };
+  async function readStatus() {
+    try {
+      const st = await fetch(`/data/status.json?t=${Math.floor(Date.now() / 5000)}`, { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); });
+      statusFails = 0;
+      const at = st.lastApSuccess ? Date.parse(st.lastApSuccess) : null;
+      if (at && at !== dataAt) { if (dataAt) seenAt = Date.now(); dataAt = at; }
+      if (!seenAt && at) seenAt = Math.min(Date.now(), at + 60_000);   // first read: assume it arrived about as late as it usually does
+    } catch { statusFails++; }
+  }
+  function tick() {
+    const box = $("countdown"); if (!dataAt) return;
+    const left = CYCLE - (Date.now() - seenAt) / 1000, age = Date.now() - dataAt;
+    const dead = statusFails >= 6 || age > 5 * 60_000, old = age > 3 * 60_000;
+    box.classList.toggle("dead", dead); box.classList.toggle("old", old && !dead); box.classList.toggle("soon", left <= 0 && !old && !dead);
+    $("cdarc").style.strokeDashoffset = 59.7 * (1 - Math.max(0, Math.min(1, left / CYCLE)));
+    $("cdtext").textContent = dead ? (statusFails >= 6 ? "Can't reach the feed" : "Feed has stopped") : left > 0 ? `Next update ~${Math.ceil(left)}s` : "Update any moment";
+    $("fresh").textContent = `AP data ${ago(age)} old`;
+  }
+  await readStatus(); tick();
+  setInterval(readStatus, 5000); setInterval(tick, 1000);
+  connectFeed({ onSnapshot: (s) => { apply(s); const m = location.hash.match(/^#([A-Z]{2})\/(.+)$/); if (m) openState(m[1], m[2]); }, onUpdate: apply, });
+</script>
+</body>
+</html>

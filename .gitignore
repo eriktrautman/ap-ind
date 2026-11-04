@@ -17,6 +17,9 @@ node_modules/
 dist/
 npm-debug.log*
 
+# analytics source downloads: rebuilt by analytics/scripts/build_baselines.py
+analytics/raw/
+
 # os / editor
 .DS_Store
 .vscode/

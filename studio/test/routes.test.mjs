@@ -47,7 +47,7 @@ test("the race index, the poller status and the published state are served as JS
 
 // ---- signing in ----
 test("signed out: the Studio is not served, the sign-in page is, a wrong password is refused, every write is 401", async () => {
-  for (const p of ["/studio", "/studio/studio.js", "/studio/cards.js"]) {
+  for (const p of ["/studio", "/studio/studio.js", "/studio/cards.js", "/analytics", "/analytics/county-card", "/analytics/baseline/races.json"]) {
     const r = await get(url(p));
     assert.equal(r.status, 302, p); assert.match(r.location ?? "", /\/studio\/login$/, p);
     assert.ok(!r.text.includes("PRODUCER ACTIONS"), `${p} leaked the page`);
