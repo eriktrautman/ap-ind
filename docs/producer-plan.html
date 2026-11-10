@@ -268,6 +268,7 @@ const STORIES = [
   { id: "S138", epic: "E6", pts: 1, status: "done", title: "Watch Party: filter the race list by poll closing time, in the viewer's own time zone.", doneAt: "2026-11-04T05:48:26Z" },
   { id: "S137", epic: "E6", pts: 3, status: "done", title: "Ticker setting: only races with results, with an adjustable percent in. Reads the number the crawl prints as % in (AP's estimated vote, else precincts). Off by default; a called race with votes stays; text always crawls. minin= on the ticker's address.", doneAt: "2026-11-04T05:48:26Z" },
   { id: "S144", epic: "E6", pts: 2, status: "done", title: "A Start year input (?from=) on the charts that draw a series over the years: C4, C10 and C11.", doneAt: "2026-11-04T19:43:05Z" },
+  { id: "S145", epic: "E6", pts: 2, status: "done", title: "The chart builder is a bordered box headed by the chart id; C4 and C11 label their year axes through a shared yearTicks (public/g/scale.js) that picks the step from the Start year.", doneAt: "2026-11-10T16:11:03Z" },
   { id: "S143", epic: "E6", pts: 3, status: "done", title: "C11 Party identification (Gallup): independents, Democrats and Republicans as annual averages since 1988, dashed to the latest quarter, with a view that counts leaners. The data is Gallup's own published tables, in config/gallup-party-id.json, refreshed by scripts/fetch-gallup-party-id.mjs.", doneAt: "2026-11-04T19:30:58Z" },
   { id: "S142", epic: "E6", pts: 5, status: "done", title: "Sharing, a Studio panel under Live Screens: one chart built in this browser and never published, with a larger preview, Copy as a picture at 1080p, 1200×675 and 4K, and Open at each size in a new tab (/share). It starts on the Shareable stylesheet.", doneAt: "2026-11-04T19:27:00Z" },
   { id: "S141", epic: "E6", pts: 3, status: "done", title: "B17 Independent comparison: a race's independent vote this cycle against its last result on file. Independent is anyone who isn't a Democrat or Republican; their bar stacks by candidate beside each party's bar. Any seat in config/baseline-federal.json, the six slate races today.", doneAt: "2026-11-04T18:38:54Z" },
@@ -296,6 +297,7 @@ const QUESTIONS = [
 ];
 const LOG = [
   { t: "2026-11-04T19:43:05Z", what: "Start year on C4, C10 and C11 (S144); the default still shows each whole series. B17 keeps its own Comparison year." },
+  { t: "2026-11-10T16:11:03Z", what: "Chart builder box with the chart id (S145); C11 from 2016 labels every year to 2026, C4 every other Congress, both from one shared axis helper." },
   { t: "2026-11-04T19:41:08Z", what: "C10 starts at 2012, where AP's data starts; 2010 existed only from the FEC. 2014 stays on the FEC's totals, since AP's are wrong for Maine." },
   { t: "2026-11-04T19:33:32Z", what: "C11's footer follows the pattern: the source dot is on, the redundant Through line is off." },
   { t: "2026-11-04T19:30:58Z", what: "C11 Party identification (S143), from Gallup's party affiliation and quarterly pages: independents a record 45% in 2025, 46% in Q3 2026." },

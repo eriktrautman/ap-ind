@@ -1029,7 +1029,9 @@ function specFormHtml(s, attr, bgAttr, bg) {
     : `<label>${esc(p.label)}<input ${attr} data-p="${p.k}" value="${esc(s.params[p.k] ?? "")}" placeholder="${esc(p.ph ?? "")}" maxlength="200"></label>`).join("");
   const bgSel = `<label>Outer Background${selectHtml(bgAttr, BG_OPTIONS, bg)}</label>`;
   const chartBgSel = chartTakesBackground(s.chart) ? `<label>Chart Background${selectHtml(`${attr} data-p="chartbg"`, CHART_BG_OPTIONS, s.params?.chartbg ?? "")}</label>` : "";
-  return chartSel + raceSel + stateSel + extra + bgSel + chartBgSel;
+  // The chart's id, large, so the builder says at a glance which chart it is building (the id is how charts are named on air and in playlists).
+  const head = `<div class="buildhead"><span class="k">Chart Builder</span><span class="chartid" title="Chart id">${esc(s.chart ?? "")}</span><span class="buildname">${esc(chart?.name ?? "")}</span></div>`;
+  return head + chartSel + raceSel + stateSel + extra + bgSel + chartBgSel;
 }
 function screenForm(key) { return specFormHtml(draft[key], `data-sk="${key}"`, `data-page="${key}"`, pageBg(key)); }
 function screenLiveTable(key) {

@@ -28,6 +28,7 @@
 </div>
 <script type="module">
   import "./feed.js";   // the stylesheet and the footer, as on every chart
+  import { yearTicks } from "./scale.js";
   const q = new URLSearchParams(location.search);
   if (q.get("bg")) document.body.classList.add(`bg-${q.get("bg")}`);
   const $ = (id) => document.getElementById(id);
@@ -44,8 +45,7 @@
     const x = (y) => L + (y - first) / (end - first) * (W - L - R), y = (v) => T + (hi - v) / (hi - lo) * (H - T - B);
     let svg = "";
     for (let v = lo; v <= hi; v += 5) svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="axis" x="${L - 14}" y="${y(v) + 9}" text-anchor="end">${v}%</text>`;
-    const every = end - first < 12 ? 2 : 4;
-    for (let yr = Math.ceil(first / every) * every; yr <= end; yr += every) svg += `<text class="axis" x="${x(yr)}" y="${H - 6}" text-anchor="middle">${yr}</text>`;
+    for (const yr of yearTicks(first, end, W - L - R)) svg += `<text class="axis" x="${x(yr)}" y="${H - 6}" text-anchor="middle">${yr}</text>`;
     const year = Number(annual.at(-1).when);
     for (const [k, , color] of LINES) {
       svg += `<polyline class="line ${k}" style="stroke:var(${color})" points="${annual.map((r) => `${x(Number(r.when))},${y(r[k])}`).join(" ")}"/>`;
